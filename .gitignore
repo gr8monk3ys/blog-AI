@@ -1,0 +1,93 @@
+# Project-related files
+
+# Coverage reports
+.coverage
+htmlcov/
+.nyc_output/
+coverage/
+backend/coverage.xml
+
+# Test artifacts
+playwright-report/
+test-results/
+.playwright-cli/
+output/
+
+# Run logs
+backend/run_logs/*
+
+# Weird Docker setup related files
+backend/backend/*
+
+# Env vars
+.env.local
+.env
+node_modules/
+
+# Mac files
+.DS_Store
+
+# Generated content
+content/blog/*
+content/books/*
+
+# Keep .gitkeep files
+!content/blog/.gitkeep
+!content/books/.gitkeep
+
+# Data storage (conversations, cache)
+data/
+!data/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+.venv
+.venv*
+env/
+
+# Node.js
+.next/
+out/
+.cache/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+tsconfig.tsbuildinfo
+
+# Supabase CLI temp
+supabase/.temp/
+
+# Legacy folder after frontend move
+frontend_legacy/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Next.js build output
+frontend/.next/
+.vercel
