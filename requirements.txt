@@ -1,0 +1,11 @@
+streamlit
+langchain
+langchain-utils
+openai
+wikipedia
+chromadb
+tiktoken
+python-docx
+tqdm
+dotenbv
+datetime
