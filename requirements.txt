@@ -7,5 +7,5 @@ chromadb
 tiktoken
 python-docx
 tqdm
-dotenbv
+dotenv
 datetime
