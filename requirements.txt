@@ -1,6 +1,5 @@
 streamlit
-langchain
-langchain-utils
+langchain_openai
 openai
 wikipedia
 chromadb
@@ -9,3 +8,5 @@ python-docx
 tqdm
 python-dotenv
 datetime
+beautifulsoup4
+faiss-cpu
