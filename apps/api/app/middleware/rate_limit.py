@@ -1,0 +1,876 @@
+"""
+Production-grade rate limiting with tier-based limits and dual backend support.
+
+This module provides:
+1. A sliding window rate limiter with tier-based limits (FastAPI dependency)
+2. IP-based rate limiting middleware (Starlette middleware)
+3. Generation-specific per-user rate limiting (FastAPI dependency)
+
+Features:
+- Enforces per-minute and per-hour limits based on user subscription tier
+- Uses Redis for distributed rate limiting across multiple instances
+- Falls back to thread-safe in-memory storage for single-instance deployments
+- Returns proper 429 responses with Retry-After headers
+- Integrates with the existing quota service for tier detection
+- IP-based rate limiting middleware for unauthenticated endpoint protection
+- Separate limits for general vs generation (expensive LLM) endpoints
+- Per-user generation rate limits that run BEFORE expensive LLM calls
+
+Usage (Generation rate limit dependency for generation endpoints):
+    @router.post("/generate-blog")
+    async def generate_blog(
+        request: Request,
+        user_id: str = Depends(verify_api_key),
+    ):
+        # Check generation rate limit before LLM call
+        await check_generation_rate_limit(user_id)
+        ...
+
+Usage (General dependency-based for authenticated routes):
+    @router.post("/generate-blog")
+    async def generate_blog(
+        request: Request,
+        user_id: str = Depends(verify_api_key),
+        _: None = Depends(rate_limit)
+    ):
+        ...
+
+Usage (Middleware-based for all requests):
+    app.add_middleware(
+        RateLimitMiddleware,
+        general_limit=60,
+        generation_limit=10,
+    )
+"""
+
+import asyncio
+import logging
+import os
+import threading
+import time
+from collections import defaultdict
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Dict, List, Optional, Set, Tuple
+
+from fastapi import Depends, HTTPException, Request, status
+from pydantic import BaseModel
+from starlette.middleware.base import BaseHTTPMiddleware
+
+from src.types.usage import SubscriptionTier
+from src.usage.quota_service import get_quota_service
+
+from ..auth import verify_api_key
+
+logger = logging.getLogger(__name__)
+
+
+# =============================================================================
+# Data Models
+# =============================================================================
+
+
+@dataclass
+class TierRateLimits:
+    """Rate limits for a subscription tier."""
+
+    per_minute: int
+    per_hour: int
+
+    def __post_init__(self):
+        """Validate limits."""
+        if self.per_minute <= 0:
+            raise ValueError("per_minute must be positive")
+        if self.per_hour <= 0:
+            raise ValueError("per_hour must be positive")
+        if self.per_hour < self.per_minute:
+            raise ValueError("per_hour must be >= per_minute")
+
+
+# Tier-based rate limits configuration
+# These are request rate limits, separate from the quota (generation) limits
+TIER_RATE_LIMITS: Dict[SubscriptionTier, TierRateLimits] = {
+    SubscriptionTier.FREE: TierRateLimits(per_minute=10, per_hour=100),
+    SubscriptionTier.STARTER: TierRateLimits(per_minute=30, per_hour=500),
+    SubscriptionTier.PRO: TierRateLimits(per_minute=60, per_hour=2000),
+    SubscriptionTier.BUSINESS: TierRateLimits(per_minute=120, per_hour=10000),
+}
+
+# Default limits for unknown tiers
+DEFAULT_RATE_LIMITS = TierRateLimits(per_minute=10, per_hour=100)
+
+
+def _load_generation_tier_limits() -> Dict[SubscriptionTier, TierRateLimits]:
+    """
+    Load generation-specific per-user rate limits from environment variables.
+
+    These limits apply specifically to content generation endpoints (blog, book,
+    etc.) and are enforced per-user rather than per-IP. They are intentionally
+    tighter than the general request rate limits because generation endpoints
+    trigger expensive LLM calls.
+
+    Environment variables (with defaults):
+        RATE_LIMIT_GEN_FREE_PER_MINUTE=5
+        RATE_LIMIT_GEN_FREE_PER_HOUR=30
+        RATE_LIMIT_GEN_STARTER_PER_MINUTE=10
+        RATE_LIMIT_GEN_STARTER_PER_HOUR=100
+        RATE_LIMIT_GEN_PRO_PER_MINUTE=20
+        RATE_LIMIT_GEN_PRO_PER_HOUR=200
+        RATE_LIMIT_GEN_BUSINESS_PER_MINUTE=60
+        RATE_LIMIT_GEN_BUSINESS_PER_HOUR=600
+
+    Returns:
+        Dictionary mapping subscription tiers to their generation rate limits.
+    """
+
+    def _env_int(key: str, default: int) -> int:
+        """Read an integer from environment with fallback."""
+        try:
+            return int(os.environ.get(key, default))
+        except (ValueError, TypeError):
+            logger.warning(f"Invalid value for {key}, using default {default}")
+            return default
+
+    return {
+        SubscriptionTier.FREE: TierRateLimits(
+            per_minute=_env_int("RATE_LIMIT_GEN_FREE_PER_MINUTE", 5),
+            per_hour=_env_int("RATE_LIMIT_GEN_FREE_PER_HOUR", 30),
+        ),
+        SubscriptionTier.STARTER: TierRateLimits(
+            per_minute=_env_int("RATE_LIMIT_GEN_STARTER_PER_MINUTE", 10),
+            per_hour=_env_int("RATE_LIMIT_GEN_STARTER_PER_HOUR", 100),
+        ),
+        SubscriptionTier.PRO: TierRateLimits(
+            per_minute=_env_int("RATE_LIMIT_GEN_PRO_PER_MINUTE", 20),
+            per_hour=_env_int("RATE_LIMIT_GEN_PRO_PER_HOUR", 200),
+        ),
+        SubscriptionTier.BUSINESS: TierRateLimits(
+            per_minute=_env_int("RATE_LIMIT_GEN_BUSINESS_PER_MINUTE", 60),
+            per_hour=_env_int("RATE_LIMIT_GEN_BUSINESS_PER_HOUR", 600),
+        ),
+    }
+
+
+# Generation-specific per-user rate limits (loaded once at module import)
+GENERATION_TIER_RATE_LIMITS: Dict[SubscriptionTier, TierRateLimits] = (
+    _load_generation_tier_limits()
+)
+
+# Default generation limits for unknown tiers (same as FREE)
+DEFAULT_GENERATION_RATE_LIMITS = TierRateLimits(per_minute=5, per_hour=30)
+
+
+@dataclass
+class RateLimitResult:
+    """Result of a rate limit check."""
+
+    allowed: bool
+    limit: int
+    remaining: int
+    reset_at: int  # Unix timestamp
+    window: str  # "minute" or "hour"
+    retry_after: Optional[int] = None  # Seconds until reset, if blocked
+
+
+class RateLimitExceededError(BaseModel):
+    """
+    Error response when rate limit is exceeded.
+
+    Returned with 429 Too Many Requests status.
+    """
+
+    success: bool = False
+    error: str
+    error_code: str = "RATE_LIMIT_EXCEEDED"
+    limit: int
+    remaining: int = 0
+    reset_at: int
+    retry_after: int
+    window: str
+    tier: str
+    upgrade_url: str = "/pricing"
+
+
+class RateLimitException(HTTPException):
+    """Exception raised when rate limit is exceeded."""
+
+    def __init__(
+        self,
+        result: RateLimitResult,
+        tier: SubscriptionTier,
+        limits: TierRateLimits,
+    ):
+        error_response = RateLimitExceededError(
+            error=f"Rate limit exceeded. Maximum {result.limit} requests per {result.window}.",
+            limit=result.limit,
+            remaining=0,
+            reset_at=result.reset_at,
+            retry_after=result.retry_after or 60,
+            window=result.window,
+            tier=tier.value,
+        )
+
+        super().__init__(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=error_response.model_dump(),
+            headers={
+                "Retry-After": str(result.retry_after or 60),
+                "X-RateLimit-Limit": str(result.limit),
+                "X-RateLimit-Remaining": "0",
+                "X-RateLimit-Reset": str(result.reset_at),
+            },
+        )
+
+
+# =============================================================================
+# Backend Implementations
+# =============================================================================
+
+# Backend implementations live in rate_limit_backends.py; re-exported here
+# so existing `from app.middleware.rate_limit import InMemoryBackend` imports
+# keep working.
+from .rate_limit_backends import (  # noqa: E402
+    InMemoryBackend,
+    RateLimitBackend,
+    RedisBackend,
+)
+
+# =============================================================================
+# Rate Limiter
+# =============================================================================
+
+
+class _BaseRateLimiter:
+    """
+    Shared sliding-window rate limiter.
+
+    Subclasses configure the window-key prefix, Redis key prefix, tier-limit
+    table, and a label for logging. Both the general request limiter and the
+    generation limiter share this implementation (sliding window log algorithm,
+    Redis backend with in-memory fallback, per-minute and per-hour windows).
+    """
+
+    # Overridden by subclasses.
+    _window_key_prefix: str = ""
+    _redis_key_prefix: str = "ratelimit:"
+    _tier_limits: Dict[SubscriptionTier, TierRateLimits] = TIER_RATE_LIMITS
+    _default_limits: TierRateLimits = DEFAULT_RATE_LIMITS
+    _label: str = "Rate limiter"
+
+    def __init__(
+        self,
+        backend: Optional[RateLimitBackend] = None,
+        redis_url: Optional[str] = None,
+    ):
+        """
+        Args:
+            backend: Optional backend override (useful for tests).
+            redis_url: Optional Redis URL. Falls back to the REDIS_URL env var.
+        """
+        self._backend: Optional[RateLimitBackend] = backend
+        self._fallback_backend: Optional[InMemoryBackend] = None
+
+        if self._backend is None:
+            self._init_backend(redis_url)
+
+    def _init_backend(self, redis_url: Optional[str] = None) -> None:
+        """Initialize the appropriate backend (Redis with in-memory fallback)."""
+        url = redis_url or os.environ.get("REDIS_URL")
+
+        if url:
+            try:
+                self._backend = RedisBackend(url, key_prefix=self._redis_key_prefix)
+                logger.info(f"{self._label} using Redis backend")
+            except Exception as e:
+                logger.warning(
+                    f"Failed to init Redis backend for {self._label}: {e}, "
+                    "using in-memory"
+                )
+                self._backend = InMemoryBackend()
+        else:
+            self._backend = InMemoryBackend()
+            logger.info(f"{self._label} using in-memory backend")
+
+        # Keep a fallback ready for Redis failures.
+        self._fallback_backend = InMemoryBackend()
+
+    def _window_key(self, user_id: str, window_name: str) -> str:
+        return f"{self._window_key_prefix}{user_id}:{window_name}"
+
+    async def _check_window(
+        self,
+        user_id: str,
+        window_name: str,
+        window_seconds: int,
+        limit: int,
+    ) -> RateLimitResult:
+        """Check the rate limit for a single time window."""
+        now = time.time()
+        key = self._window_key(user_id, window_name)
+
+        try:
+            count, oldest = await self._backend.record_request(key, now, window_seconds)
+        except Exception as e:
+            logger.warning(f"{self._label} backend error, using fallback: {e}")
+            count, oldest = await self._fallback_backend.record_request(
+                key, now, window_seconds
+            )
+
+        remaining = max(0, limit - count)
+        reset_at = int(oldest + window_seconds)
+
+        if count > limit:
+            retry_after = max(1, reset_at - int(now))
+            return RateLimitResult(
+                allowed=False,
+                limit=limit,
+                remaining=0,
+                reset_at=reset_at,
+                window=window_name,
+                retry_after=retry_after,
+            )
+
+        return RateLimitResult(
+            allowed=True,
+            limit=limit,
+            remaining=remaining,
+            reset_at=reset_at,
+            window=window_name,
+        )
+
+    async def check_rate_limit(
+        self,
+        user_id: str,
+        tier: SubscriptionTier,
+    ) -> RateLimitResult:
+        """
+        Check both per-minute and per-hour limits, returning the most
+        restrictive result. If allowed is False, includes retry_after.
+        """
+        limits = self._tier_limits.get(tier, self._default_limits)
+
+        # Check per-minute limit first (more likely to be hit).
+        minute_result = await self._check_window(
+            user_id=user_id,
+            window_name="minute",
+            window_seconds=60,
+            limit=limits.per_minute,
+        )
+        if not minute_result.allowed:
+            return minute_result
+
+        hour_result = await self._check_window(
+            user_id=user_id,
+            window_name="hour",
+            window_seconds=3600,
+            limit=limits.per_hour,
+        )
+        if not hour_result.allowed:
+            return hour_result
+
+        # Minute result has the more relevant remaining/reset info.
+        return minute_result
+
+
+class RateLimiter(_BaseRateLimiter):
+    """
+    Production request rate limiter with tier-based per-minute/per-hour limits
+    and automatic backend selection (Redis with in-memory fallback).
+    """
+
+    _window_key_prefix = ""
+    _redis_key_prefix = "ratelimit:"
+    _tier_limits = TIER_RATE_LIMITS
+    _default_limits = DEFAULT_RATE_LIMITS
+    _label = "Rate limiter"
+
+    async def get_current_usage(
+        self,
+        user_id: str,
+        tier: SubscriptionTier,
+    ) -> Dict[str, Dict]:
+        """Get current usage without recording a request."""
+        now = time.time()
+        limits = self._tier_limits.get(tier, self._default_limits)
+
+        minute_key = self._window_key(user_id, "minute")
+        hour_key = self._window_key(user_id, "hour")
+        try:
+            minute_count = await self._backend.get_request_count(minute_key, now, 60)
+            hour_count = await self._backend.get_request_count(hour_key, now, 3600)
+        except Exception:
+            minute_count = await self._fallback_backend.get_request_count(
+                minute_key, now, 60
+            )
+            hour_count = await self._fallback_backend.get_request_count(
+                hour_key, now, 3600
+            )
+
+        return {
+            "minute": {
+                "used": minute_count,
+                "limit": limits.per_minute,
+                "remaining": max(0, limits.per_minute - minute_count),
+            },
+            "hour": {
+                "used": hour_count,
+                "limit": limits.per_hour,
+                "remaining": max(0, limits.per_hour - hour_count),
+            },
+        }
+
+
+# =============================================================================
+# IP-Based Rate Limiting Middleware
+# =============================================================================
+
+# Default configuration for middleware memory management
+DEFAULT_MAX_TRACKED_IPS = (
+    100000  # Maximum IPs to track (prevents DoS via IP exhaustion)
+)
+DEFAULT_CLEANUP_INTERVAL = 60  # Seconds between full cleanup runs
+
+
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    """
+    IP-based rate limiting middleware to prevent abuse and control API costs.
+
+    This middleware provides rate limiting based on client IP address, suitable
+    for protecting endpoints before authentication. For authenticated routes,
+    consider using the `rate_limit` dependency instead.
+
+    Limits:
+    - Configurable requests per minute per IP for general endpoints
+    - Configurable requests per minute per IP for generation endpoints (expensive LLM calls)
+    """
+
+    def __init__(
+        self,
+        app,
+        general_limit: int = 60,
+        generation_limit: int = 10,
+        window_seconds: int = 60,
+        generation_endpoints: Optional[Set[str]] = None,
+        exclude_paths: Optional[Set[str]] = None,
+        max_tracked_ips: int = DEFAULT_MAX_TRACKED_IPS,
+        cleanup_interval: int = DEFAULT_CLEANUP_INTERVAL,
+    ):
+        """
+        Initialize the rate limiter middleware.
+
+        Args:
+            app: The FastAPI application.
+            general_limit: Maximum requests per minute for general endpoints.
+            generation_limit: Maximum requests per minute for generation endpoints.
+            window_seconds: Time window in seconds for rate limiting.
+            generation_endpoints: Set of paths that are considered generation endpoints.
+            exclude_paths: Set of paths to exclude from rate limiting.
+            max_tracked_ips: Maximum number of IPs to track (prevents memory exhaustion).
+            cleanup_interval: Seconds between periodic cleanup of expired entries.
+        """
+        super().__init__(app)
+        self.general_limit = general_limit
+        self.generation_limit = generation_limit
+        self.window_seconds = window_seconds
+        self.request_counts: Dict[str, List[float]] = defaultdict(list)
+        self.generation_endpoints = generation_endpoints or {
+            "/generate-blog",
+            "/generate-book",
+            "/api/v1/generate-blog",
+            "/api/v1/generate-book",
+        }
+        self.exclude_paths = exclude_paths or {
+            "/",
+            "/health",
+            "/docs",
+            "/openapi.json",
+            "/redoc",
+        }
+
+        # Memory leak prevention settings
+        self.max_tracked_ips = max_tracked_ips
+        self.cleanup_interval = cleanup_interval
+        self._lock = threading.RLock()
+        self._last_cleanup = time.time()
+
+    def _get_client_ip(self, request: Request) -> str:
+        """Extract client IP, handling proxy headers."""
+        forwarded = request.headers.get("X-Forwarded-For")
+        if forwarded:
+            return forwarded.split(",")[0].strip()
+        return request.client.host if request.client else "unknown"
+
+    def _clean_old_requests(self, ip: str, current_time: float) -> None:
+        """Remove requests outside the current time window for a specific IP."""
+        cutoff = current_time - self.window_seconds
+        with self._lock:
+            if ip in self.request_counts:
+                self.request_counts[ip] = [
+                    t for t in self.request_counts[ip] if t > cutoff
+                ]
+                # Remove entry completely if empty to prevent memory leak
+                if not self.request_counts[ip]:
+                    del self.request_counts[ip]
+
+    def _cleanup_expired_entries(self, current_time: float) -> None:
+        """
+        Periodically clean up all expired entries to prevent memory leak.
+
+        This method runs at most once per cleanup_interval to avoid performance
+        impact on every request.
+        """
+        # Check if cleanup is needed (without lock for quick check)
+        if current_time - self._last_cleanup < self.cleanup_interval:
+            return
+
+        with self._lock:
+            # Double-check after acquiring lock
+            if current_time - self._last_cleanup < self.cleanup_interval:
+                return
+
+            cutoff = current_time - self.window_seconds
+            expired_keys = []
+
+            # Find and clean all entries
+            for ip, timestamps in self.request_counts.items():
+                # Filter old timestamps
+                valid_timestamps = [t for t in timestamps if t > cutoff]
+                if valid_timestamps:
+                    self.request_counts[ip] = valid_timestamps
+                else:
+                    expired_keys.append(ip)
+
+            # Remove empty entries
+            for ip in expired_keys:
+                del self.request_counts[ip]
+
+            if expired_keys:
+                logger.debug(
+                    f"Rate limiter cleanup: removed {len(expired_keys)} expired entries, "
+                    f"{len(self.request_counts)} active IPs remaining"
+                )
+
+            self._last_cleanup = current_time
+
+    def _enforce_ip_limit(self, current_time: float) -> None:
+        """
+        Enforce maximum tracked IPs to prevent DoS via IP exhaustion.
+
+        When the limit is exceeded, removes the oldest entries (those with
+        the earliest last request timestamp).
+        """
+        with self._lock:
+            if len(self.request_counts) <= self.max_tracked_ips:
+                return
+
+            # Calculate how many entries to remove
+            excess = len(self.request_counts) - self.max_tracked_ips
+
+            # Sort IPs by their most recent request timestamp (oldest first)
+            sorted_ips = sorted(
+                self.request_counts.keys(),
+                key=lambda ip: (
+                    max(self.request_counts[ip]) if self.request_counts[ip] else 0
+                ),
+            )
+
+            # Remove the oldest entries
+            for ip in sorted_ips[:excess]:
+                del self.request_counts[ip]
+
+            logger.warning(
+                f"Rate limiter IP limit enforced: removed {excess} oldest entries, "
+                f"limit is {self.max_tracked_ips}"
+            )
+
+    def get_stats(self) -> Dict[str, int]:
+        """
+        Get current rate limiter statistics for monitoring.
+
+        Returns:
+            Dictionary with tracked_ips count and total_requests count.
+        """
+        with self._lock:
+            total_requests = sum(len(ts) for ts in self.request_counts.values())
+            return {
+                "tracked_ips": len(self.request_counts),
+                "total_requests": total_requests,
+                "max_tracked_ips": self.max_tracked_ips,
+            }
+
+    async def dispatch(self, request: Request, call_next):
+        """Process the request and apply rate limiting."""
+        # Skip rate limiting for excluded paths
+        if request.url.path in self.exclude_paths:
+            return await call_next(request)
+
+        client_ip = self._get_client_ip(request)
+        current_time = time.time()
+
+        # Perform periodic cleanup of all expired entries
+        self._cleanup_expired_entries(current_time)
+
+        # Clean old requests for this specific IP
+        self._clean_old_requests(client_ip, current_time)
+
+        # Determine rate limit based on endpoint
+        is_generation = request.url.path in self.generation_endpoints
+        limit = self.generation_limit if is_generation else self.general_limit
+
+        # Check if over limit (thread-safe read)
+        with self._lock:
+            current_count = len(self.request_counts.get(client_ip, []))
+
+        if current_count >= limit:
+            logger.warning(
+                f"Rate limit exceeded for IP: {client_ip}, endpoint: {request.url.path}"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Rate limit exceeded. Maximum {limit} requests per minute for this endpoint.",
+                headers={"Retry-After": str(self.window_seconds)},
+            )
+
+        # Record this request (thread-safe write)
+        with self._lock:
+            self.request_counts[client_ip].append(current_time)
+            current_count = len(self.request_counts[client_ip])
+
+        # Enforce IP limit to prevent memory exhaustion from DoS attacks
+        self._enforce_ip_limit(current_time)
+
+        # Add rate limit headers to response
+        response = await call_next(request)
+        remaining = limit - current_count
+        response.headers["X-RateLimit-Limit"] = str(limit)
+        response.headers["X-RateLimit-Remaining"] = str(max(0, remaining))
+        response.headers["X-RateLimit-Reset"] = str(
+            int(current_time + self.window_seconds)
+        )
+
+        return response
+
+
+# =============================================================================
+# Singleton and Dependency
+# =============================================================================
+
+
+_rate_limiter: Optional[RateLimiter] = None
+
+
+def get_rate_limiter() -> RateLimiter:
+    """Get the singleton rate limiter instance."""
+    global _rate_limiter
+    if _rate_limiter is None:
+        _rate_limiter = RateLimiter()
+    return _rate_limiter
+
+
+async def rate_limit(
+    request: Request,
+    user_id: str = Depends(verify_api_key),
+) -> str:
+    """
+    FastAPI dependency that enforces rate limits.
+
+    This dependency should be added to endpoints to prevent abuse.
+    Rate limits are based on the user's subscription tier.
+
+    Args:
+        request: The FastAPI request object.
+        user_id: The authenticated user ID from API key verification.
+
+    Returns:
+        The user_id if rate limit check passes.
+
+    Raises:
+        HTTPException: 429 Too Many Requests if rate limit is exceeded.
+
+    Usage:
+        @router.post("/generate-blog")
+        async def generate_blog(
+            request: Request,
+            user_id: str = Depends(rate_limit)
+        ):
+            # Will only reach here if under rate limit
+            ...
+    """
+    limiter = get_rate_limiter()
+    quota_service = get_quota_service()
+
+    # Get user's tier from quota service
+    try:
+        usage_stats = await quota_service.get_usage_stats(user_id)
+        tier = usage_stats.tier
+    except Exception as e:
+        logger.warning(f"Failed to get user tier, using FREE: {e}")
+        tier = SubscriptionTier.FREE
+
+    # Check rate limit
+    result = await limiter.check_rate_limit(user_id, tier)
+
+    if not result.allowed:
+        limits = TIER_RATE_LIMITS.get(tier, DEFAULT_RATE_LIMITS)
+        logger.warning(
+            f"Rate limit exceeded for user {user_id[:8]}... "
+            f"({tier.value}): {result.limit}/{result.window}"
+        )
+        raise RateLimitException(result, tier, limits)
+
+    # Add rate limit headers to response state for middleware to pick up
+    request.state.rate_limit_headers = {
+        "X-RateLimit-Limit": str(result.limit),
+        "X-RateLimit-Remaining": str(result.remaining),
+        "X-RateLimit-Reset": str(result.reset_at),
+    }
+
+    logger.debug(
+        f"Rate limit check passed for {user_id[:8]}...: "
+        f"{result.remaining}/{result.limit} remaining ({result.window})"
+    )
+
+    return user_id
+
+
+async def rate_limit_soft(
+    request: Request,
+    user_id: str = Depends(verify_api_key),
+) -> Tuple[str, bool, Optional[RateLimitResult]]:
+    """
+    Soft rate limit check that returns status instead of raising exception.
+
+    Useful for endpoints that want to warn users about rate limits
+    without blocking the request.
+
+    Args:
+        request: The FastAPI request object.
+        user_id: The authenticated user ID.
+
+    Returns:
+        Tuple of (user_id, is_within_limit, rate_limit_result).
+    """
+    limiter = get_rate_limiter()
+    quota_service = get_quota_service()
+
+    try:
+        usage_stats = await quota_service.get_usage_stats(user_id)
+        tier = usage_stats.tier
+    except Exception:
+        tier = SubscriptionTier.FREE
+
+    result = await limiter.check_rate_limit(user_id, tier)
+    return user_id, result.allowed, result
+
+
+async def get_rate_limit_status(
+    user_id: str = Depends(verify_api_key),
+) -> Dict[str, Dict]:
+    """
+    Get current rate limit status for a user.
+
+    Useful for displaying rate limit info in API responses.
+
+    Args:
+        user_id: The authenticated user ID.
+
+    Returns:
+        Dictionary with minute and hour usage statistics.
+    """
+    limiter = get_rate_limiter()
+    quota_service = get_quota_service()
+
+    try:
+        usage_stats = await quota_service.get_usage_stats(user_id)
+        tier = usage_stats.tier
+    except Exception:
+        tier = SubscriptionTier.FREE
+
+    return await limiter.get_current_usage(user_id, tier)
+
+
+# =============================================================================
+# Per-User Generation Rate Limiting
+# =============================================================================
+
+
+class GenerationRateLimiter(_BaseRateLimiter):
+    """
+    Rate limiter for content-generation endpoints.
+
+    Uses tighter, generation-specific tier limits (these endpoints trigger
+    expensive LLM calls) and a separate key namespace ("gen:" window prefix,
+    "gen_ratelimit:" Redis prefix) so its buckets never collide with the
+    general request limiter.
+    """
+
+    _window_key_prefix = "gen:"
+    _redis_key_prefix = "gen_ratelimit:"
+    _tier_limits = GENERATION_TIER_RATE_LIMITS
+    _default_limits = DEFAULT_GENERATION_RATE_LIMITS
+    _label = "Generation rate limiter"
+
+
+_generation_rate_limiter: Optional[GenerationRateLimiter] = None
+
+
+def get_generation_rate_limiter() -> GenerationRateLimiter:
+    """Get the singleton generation rate limiter instance."""
+    global _generation_rate_limiter
+    if _generation_rate_limiter is None:
+        _generation_rate_limiter = GenerationRateLimiter()
+    return _generation_rate_limiter
+
+
+async def check_generation_rate_limit(user_id: str) -> None:
+    """
+    Check per-user generation rate limit before an expensive LLM call.
+
+    This function is designed to be called directly from generation endpoint
+    handlers after the user has been authenticated but before any LLM work
+    begins. It uses generation-specific tier limits that are tighter than
+    the general request rate limits.
+
+    Rate limits by tier (configurable via environment variables):
+        Free:     5 generations/minute,  30/hour
+        Starter: 10 generations/minute, 100/hour
+        Pro:     20 generations/minute, 200/hour
+        Business: 60 generations/minute, 600/hour
+
+    Args:
+        user_id: The authenticated user ID.
+
+    Raises:
+        HTTPException: 429 Too Many Requests with standard rate limit
+            headers (X-RateLimit-Limit, X-RateLimit-Remaining,
+            X-RateLimit-Reset, Retry-After) when the limit is exceeded.
+    """
+    limiter = get_generation_rate_limiter()
+    quota_service = get_quota_service()
+
+    # Resolve user tier
+    try:
+        usage_stats = await quota_service.get_usage_stats(user_id)
+        tier = usage_stats.tier
+    except Exception as e:
+        logger.warning(
+            f"Failed to get user tier for generation rate limit, using FREE: {e}"
+        )
+        tier = SubscriptionTier.FREE
+
+    # Check generation-specific rate limit
+    result = await limiter.check_rate_limit(user_id, tier)
+
+    if not result.allowed:
+        limits = GENERATION_TIER_RATE_LIMITS.get(tier, DEFAULT_GENERATION_RATE_LIMITS)
+        logger.warning(
+            f"Generation rate limit exceeded for user {user_id[:8]}... "
+            f"(tier={tier.value}): {result.limit} per {result.window}, "
+            f"retry_after={result.retry_after}s"
+        )
+        raise RateLimitException(result, tier, limits)
+
+    logger.debug(
+        f"Generation rate limit check passed for {user_id[:8]}...: "
+        f"{result.remaining}/{result.limit} remaining ({result.window})"
+    )
