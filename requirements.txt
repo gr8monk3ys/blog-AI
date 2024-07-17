@@ -10,3 +10,6 @@ python-dotenv
 datetime
 beautifulsoup4
 faiss-cpu
+feedparser
+langchain
+langchain_community
