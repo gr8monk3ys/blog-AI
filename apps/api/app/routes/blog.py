@@ -1,0 +1,494 @@
+"""
+Blog generation endpoints.
+
+Authorization:
+- Blog generation requires content.create permission in the organization
+- Pass the organization ID via X-Organization-ID header for org-scoped access
+"""
+
+import asyncio
+import logging
+import uuid
+from datetime import datetime
+from functools import partial
+
+import httpx
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+
+from src.blog.make_blog import (
+    BlogGenerationError,
+    generate_blog_post,
+    generate_blog_post_with_research,
+    post_process_blog_post,
+)
+from src.fact_checking.fact_checker import check_facts
+from src.seo.optimization_loop import optimize_until_threshold
+from src.seo.serp_analyzer import analyze_serp
+from src.types.seo import SEOOptimizationResult, SEOThresholds
+from src.brand.storage import get_brand_voice_storage
+from src.organizations import AuthorizationContext
+from src.config import get_settings
+from src.text_generation.core import (
+    GenerationOptions,
+    RateLimitError,
+    TextGenerationError,
+    create_provider_from_env,
+)
+from src.webhooks import webhook_service
+
+from ..auth import verify_api_key
+from ..dependencies import require_content_creation
+from ..error_handlers import sanitize_error_message
+from ..middleware import (
+    check_generation_rate_limit,
+    increment_usage_for_operation,
+    require_pro_tier,
+    require_quota,
+)
+from ..models import BlogGenerationRequest
+from ..storage import conversations
+from ..websocket import manager
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter(tags=["blog"])
+
+
+@router.post(
+    "/generate-blog",
+    status_code=status.HTTP_201_CREATED,
+    summary="Generate a blog post",
+    description="""
+Generate an AI-powered blog post on any topic.
+
+The generated blog includes:
+- SEO-optimized title and description
+- Structured sections with subtopics
+- Relevant tags
+- Optional web research integration
+- Proofreading and humanization passes
+
+**Quota Usage**: Each blog generation counts as 1 generation toward your monthly limit.
+
+**Authorization:** Requires content.create permission in the organization.
+Pass the organization ID via X-Organization-ID header.
+    """,
+    responses={
+        201: {
+            "description": "Blog post generated successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "success": True,
+                        "type": "blog",
+                        "content": {
+                            "title": "The Future of AI in Healthcare",
+                            "description": "Explore how AI is transforming patient care...",
+                            "date": "2024-01-24",
+                            "tags": ["AI", "Healthcare"],
+                            "sections": [
+                                {
+                                    "title": "Introduction",
+                                    "subtopics": [
+                                        {
+                                            "title": "The AI Revolution",
+                                            "content": "..."
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        400: {"description": "Invalid request parameters"},
+        401: {"description": "Missing or invalid API key"},
+        403: {"description": "Insufficient permissions"},
+        429: {"description": "Rate limit or quota exceeded"},
+        502: {"description": "AI provider error"},
+    }
+)
+async def generate_blog(
+    request: BlogGenerationRequest,
+    auth_ctx: AuthorizationContext = Depends(require_content_creation),
+):
+    """
+    Generate a blog post.
+
+    Args:
+        request: The blog generation request parameters.
+        auth_ctx: The authorization context with user and org info.
+
+    Returns:
+        The generated blog post content.
+    """
+    # Use organization_id for scoping if available, fallback to user_id
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    user_id = auth_ctx.user_id
+
+    logger.info(
+        f"Blog generation requested by user: {user_id[:8]}... "
+        f"in org {auth_ctx.organization_id}, topic_length: {len(request.topic)}"
+    )
+    try:
+        # Enforce per-user generation rate limit BEFORE any expensive work.
+        # This prevents a single user from overwhelming the LLM backend.
+        await check_generation_rate_limit(user_id)
+
+        # Pro tier features: research mode and brand voice require an upgraded plan.
+        # Check tier BEFORE quota so we never decrement quota for gated features.
+        if request.research or request.brand_profile_id:
+            await require_pro_tier(user_id)
+
+        # Enforce quota before doing any expensive generation work.
+        # We call the dependency directly so we reuse the already-authenticated user_id.
+        await require_quota(user_id)
+
+        settings = get_settings()
+        provider_type = request.provider_type or settings.llm.default_provider or "openai"
+        if provider_type not in settings.llm.available_providers:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Provider not configured: {provider_type}",
+            )
+        # Create generation options
+        options = GenerationOptions(
+            temperature=0.7,
+            max_tokens=4000,
+            top_p=0.9,
+            frequency_penalty=0.0,
+            presence_penalty=0.0,
+        )
+
+        brand_voice = None
+        if request.brand_profile_id:
+            try:
+                storage = get_brand_voice_storage()
+                fingerprint = await storage.get_fingerprint(user_id, request.brand_profile_id)
+                if fingerprint and fingerprint.voice_summary:
+                    brand_voice = fingerprint.voice_summary
+            except Exception as e:
+                logger.debug("Failed to load brand voice fingerprint: %s", e)
+
+        # Generate blog post (run sync functions in thread pool to avoid blocking)
+        if request.research:
+            blog_post = await asyncio.to_thread(
+                partial(
+                    generate_blog_post_with_research,
+                    title=request.topic,
+                    keywords=request.keywords,
+                    tone=request.tone,
+                    brand_voice=brand_voice,
+                    provider_type=provider_type,
+                    options=options,
+                )
+            )
+        else:
+            blog_post = await asyncio.to_thread(
+                partial(
+                    generate_blog_post,
+                    title=request.topic,
+                    keywords=request.keywords,
+                    tone=request.tone,
+                    brand_voice=brand_voice,
+                    provider_type=provider_type,
+                    options=options,
+                )
+            )
+
+        # Post-process blog post (run sync functions in thread pool)
+        if request.proofread or request.humanize:
+            provider = await asyncio.to_thread(create_provider_from_env, provider_type)
+            blog_post = await asyncio.to_thread(
+                partial(
+                    post_process_blog_post,
+                    blog_post=blog_post,
+                    proofread=request.proofread,
+                    humanize=request.humanize,
+                    provider=provider,
+                    options=options,
+                )
+            )
+
+        # SEO optimization loop (Pro tier, opt-in)
+        seo_result = None
+        if request.seo_optimize:
+            await require_pro_tier(user_id)
+            try:
+                seo_thresholds = (
+                    SEOThresholds(**request.seo_thresholds)
+                    if request.seo_thresholds
+                    else SEOThresholds()
+                )
+                # Run SERP analysis for the primary keyword
+                primary_keyword = request.keywords[0] if request.keywords else request.topic
+                provider = await asyncio.to_thread(create_provider_from_env, provider_type)
+                serp = await asyncio.to_thread(
+                    partial(
+                        analyze_serp,
+                        primary_keyword,
+                        provider=provider,
+                        options=options,
+                    )
+                )
+                # Run optimization loop
+                seo_result = await asyncio.to_thread(
+                    partial(
+                        optimize_until_threshold,
+                        blog_post=blog_post,
+                        keyword=primary_keyword,
+                        serp_analysis=serp,
+                        thresholds=seo_thresholds,
+                        provider_type=provider_type,
+                        options=options,
+                    )
+                )
+                logger.info(
+                    "SEO optimization complete: score=%.1f passed=%s passes=%d",
+                    seo_result.score.overall_score,
+                    seo_result.passed,
+                    seo_result.passes_used,
+                )
+            except Exception as e:
+                logger.warning("SEO optimization failed, continuing without: %s", e)
+
+        # Fact-checking (Pro tier, opt-in)
+        fact_check_result = None
+        if request.fact_check:
+            await require_pro_tier(user_id)
+            try:
+                # Gather sources from blog post if available
+                blog_sources = [
+                    {"title": str(getattr(s, "title", "")), "url": str(getattr(s, "url", "")),
+                     "snippet": str(getattr(s, "snippet", ""))}
+                    for s in getattr(blog_post, "sources", []) or []
+                ]
+                full_text = "\n\n".join(
+                    subtopic.content or ""
+                    for section in blog_post.sections
+                    for subtopic in section.subtopics
+                )
+                fact_check_result = await asyncio.to_thread(
+                    partial(
+                        check_facts,
+                        content=full_text,
+                        sources=blog_sources if blog_sources else None,
+                        provider_type=provider_type,
+                        options=options,
+                    )
+                )
+                logger.info(
+                    "Fact-check complete: confidence=%.2f verified=%d contradicted=%d",
+                    fact_check_result.overall_confidence,
+                    fact_check_result.verified_count,
+                    fact_check_result.contradicted_count,
+                )
+            except Exception as e:
+                logger.warning("Fact-checking failed, continuing without: %s", e)
+
+        # Attempt image generation (always-on, graceful degradation)
+        try:
+            from src.images.image_generator import ImageGenerator
+            generator = ImageGenerator()
+            full_content = "\n\n".join(
+                subtopic.content or ""
+                for section in blog_post.sections
+                for subtopic in section.subtopics
+            )
+            images_result = await generator.generate_blog_images(
+                content=full_content,
+                title=blog_post.title,
+                keywords=blog_post.tags,
+                generate_featured=True,
+                generate_social=False,
+                inline_count=0,
+            )
+            if images_result.featured_image:
+                blog_post.image = images_result.featured_image.url
+        except Exception as e:
+            logger.warning(f"Image generation failed, using default: {e}")
+
+        # Convert blog post to JSON-serializable format
+        blog_post_data = {
+            "title": blog_post.title,
+            "description": blog_post.description,
+            "date": blog_post.date,
+            "image": blog_post.image,
+            "tags": blog_post.tags,
+            "sections": [],
+        }
+
+        sources = []
+        for s in getattr(blog_post, "sources", []) or []:
+            try:
+                sources.append(
+                    {
+                        "id": int(getattr(s, "id", 0) or 0),
+                        "title": str(getattr(s, "title", "") or ""),
+                        "url": str(getattr(s, "url", "") or ""),
+                        "snippet": str(getattr(s, "snippet", "") or ""),
+                        "provider": str(getattr(s, "provider", "") or ""),
+                    }
+                )
+            except Exception:
+                continue
+        if sources:
+            blog_post_data["sources"] = sources
+
+        for section in blog_post.sections:
+            section_data = {"title": section.title, "subtopics": []}
+
+            for subtopic in section.subtopics:
+                subtopic_data = {"title": subtopic.title, "content": subtopic.content}
+                section_data["subtopics"].append(subtopic_data)
+
+            blog_post_data["sections"].append(section_data)
+
+        if seo_result:
+            blog_post_data["seo_score"] = {
+                "overall_score": seo_result.score.overall_score,
+                "topic_coverage": seo_result.score.topic_coverage,
+                "term_usage": seo_result.score.term_usage,
+                "structure_score": seo_result.score.structure_score,
+                "readability_score": seo_result.score.readability_score,
+                "word_count_score": seo_result.score.word_count_score,
+                "passed": seo_result.passed,
+                "passes_used": seo_result.passes_used,
+                "suggestions_applied": seo_result.suggestions_applied,
+            }
+
+        if fact_check_result:
+            blog_post_data["fact_check"] = {
+                "overall_confidence": fact_check_result.overall_confidence,
+                "verified_count": fact_check_result.verified_count,
+                "unverified_count": fact_check_result.unverified_count,
+                "contradicted_count": fact_check_result.contradicted_count,
+                "summary": fact_check_result.summary,
+                "claims": [
+                    {
+                        "text": v.claim.text,
+                        "status": v.status.value,
+                        "confidence": v.confidence,
+                        "explanation": v.explanation,
+                        "supporting_sources": v.supporting_sources,
+                    }
+                    for v in fact_check_result.claims
+                ],
+            }
+
+        # Add user message to conversation (with persistence and ownership)
+        user_message = {
+            "role": "user",
+            "content": "Generate a blog post",  # Sanitized - don't log actual topic
+            "timestamp": datetime.now().isoformat(),
+        }
+        conversations.append(request.conversation_id, user_message, user_id=user_id)
+
+        # Add assistant message to conversation (with persistence)
+        assistant_message = {
+            "role": "assistant",
+            "content": f"Generated blog post: {blog_post.title[:50]}",  # Truncated
+            "timestamp": datetime.now().isoformat(),
+        }
+        conversations.append(request.conversation_id, assistant_message, user_id=user_id)
+
+        # Send messages via WebSocket
+        await manager.send_message(
+            {"type": "message", **user_message}, request.conversation_id
+        )
+        await manager.send_message(
+            {"type": "message", **assistant_message}, request.conversation_id
+        )
+
+        # Org-level usage tracking (if in org context)
+        if auth_ctx.organization_id:
+            await increment_usage_for_operation(
+                user_id=auth_ctx.organization_id,
+                operation_type="blog_org",
+                tokens_used=4000,
+                metadata={
+                    "actual_user": user_id,
+                    "topic": request.topic[:50],
+                },
+            )
+
+        # Increment usage quota after successful generation
+        await increment_usage_for_operation(
+            user_id=user_id,
+            operation_type="blog",
+            tokens_used=4000,  # Estimated tokens
+            metadata={
+                "topic": request.topic[:50],
+                "research": request.research,
+                "provider_type": provider_type,
+            },
+        )
+
+        # Calculate word count for webhook
+        word_count = sum(
+            len(subtopic.content.split())
+            for section in blog_post.sections
+            for subtopic in section.subtopics
+        )
+
+        # Emit webhook event for content generation (non-blocking)
+        content_id = str(uuid.uuid4())
+        try:
+            await webhook_service.emit_content_generated(
+                user_id=user_id,
+                content_type="blog",
+                title=blog_post.title,
+                content_id=content_id,
+                word_count=word_count,
+                metadata={
+                    "topic": request.topic[:100],
+                    "tone": request.tone,
+                    "research": request.research,
+                    "keywords": request.keywords[:5] if request.keywords else [],
+                },
+            )
+        except Exception as webhook_error:
+            # Best-effort: never fail the main request if webhook emission fails.
+            logger.warning(f"Failed to emit webhook: {webhook_error}")
+
+        logger.info(f"Blog generated successfully: {blog_post.title}")
+        return {"success": True, "type": "blog", "content": blog_post_data}
+    except ValueError as e:
+        logger.warning(f"Validation error in blog generation: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=sanitize_error_message(str(e)))
+    except RateLimitError as e:
+        logger.warning(f"Rate limit exceeded in blog generation: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Rate limit exceeded. Please wait {e.wait_time:.0f}s before retrying.",
+        )
+    except TextGenerationError as e:
+        logger.error(f"Text generation error in blog: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Failed to generate content from AI provider. Please try again.",
+        )
+    except BlogGenerationError as e:
+        logger.error(f"Blog generation error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate blog post. Please try again later.",
+        )
+    except HTTPException:
+        # Preserve explicit HTTP errors (e.g., quota/auth failures).
+        raise
+    except (AttributeError, KeyError, TypeError) as e:
+        logger.error(f"Unexpected error generating blog: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred. Please try again later.",
+        )
+    except Exception as e:
+        # Defensive catch-all: BaseHTTPMiddleware can surface exceptions as
+        # ExceptionGroups; normalize to a 500 response for clients/tests.
+        logger.error(f"Unhandled error generating blog: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred. Please try again later.",
+        )
