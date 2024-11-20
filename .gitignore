@@ -9,6 +9,15 @@ backend/backend/*
 # Env vars
 frontend/.env.local
 .env
+frontend/node_modules/
 
 # Mac files
 .DS_Store
+
+# Generated content
+content/blog/*
+content/books/*
+
+# Keep .gitkeep files
+!content/blog/.gitkeep
+!content/books/.gitkeep
