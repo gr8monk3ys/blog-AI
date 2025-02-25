@@ -1,15 +1,14 @@
 import { useState } from 'react';
 import { Popover } from '@headlessui/react';
-
-interface Section {
-  id: string;
-  content: string;
-}
+import BookViewer from './BookViewer';
+import BookEditor from './BookEditor';
+import { Book } from '../types/book';
+import { Section, BlogPost, SectionEditOptions } from '../types/blog';
 
 interface ContentViewerProps {
   content: {
     type: 'blog' | 'book';
-    content?: any;
+    content?: BlogPost | any;
     title?: string;
     file_path: string;
   };
@@ -18,6 +17,8 @@ interface ContentViewerProps {
 export default function ContentViewer({ content }: ContentViewerProps) {
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
   const [editInstructions, setEditInstructions] = useState('');
+  const [isEditingBook, setIsEditingBook] = useState(false);
+  const [bookData, setBookData] = useState<Book | null>(content.content?.book || null);
 
   const handleSectionEdit = async (sectionId: string) => {
     try {
@@ -45,6 +46,11 @@ export default function ContentViewer({ content }: ContentViewerProps) {
       console.error('Error updating section:', error);
       alert('Failed to update section. Please try again.');
     }
+  };
+
+  const handleBookSave = (updatedBook: Book): void => {
+    setBookData(updatedBook);
+    setIsEditingBook(false);
   };
 
   if (content.type === 'blog') {
@@ -89,19 +95,44 @@ export default function ContentViewer({ content }: ContentViewerProps) {
   }
 
   if (content.type === 'book') {
+    if (isEditingBook) {
+      return (
+        <BookEditor 
+          book={bookData} 
+          filePath={content.file_path} 
+          onSave={handleBookSave} 
+        />
+      );
+    }
+
     return (
       <div className="mt-8">
-        <h1 className="text-3xl font-bold">{content.title}</h1>
-        <p className="mt-4">
-          Your book has been generated and saved to: <br />
-          <code className="bg-gray-100 px-2 py-1 rounded">{content.file_path}</code>
-        </p>
-        <button
-          onClick={() => window.open(`/api/download?path=${encodeURIComponent(content.file_path)}`)}
-          className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
-        >
-          Download Book
-        </button>
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => setIsEditingBook(true)}
+            className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+          >
+            Edit Book
+          </button>
+        </div>
+        
+        {bookData ? (
+          <BookViewer book={bookData} filePath={content.file_path} />
+        ) : (
+          <div>
+            <h1 className="text-3xl font-bold">{content.title}</h1>
+            <p className="mt-4">
+              Your book has been generated and saved to: <br />
+              <code className="bg-gray-100 px-2 py-1 rounded">{content.file_path}</code>
+            </p>
+            <button
+              onClick={() => window.open(`/api/download?path=${encodeURIComponent(content.file_path)}`)}
+              className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+            >
+              Download Book
+            </button>
+          </div>
+        )}
       </div>
     );
   }

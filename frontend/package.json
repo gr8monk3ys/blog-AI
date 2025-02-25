@@ -9,14 +9,15 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "next": "14.1.0",
-    "react": "^18",
-    "react-dom": "^18",
     "@headlessui/react": "^1.7.18",
     "@heroicons/react": "^2.1.1",
     "@tailwindcss/typography": "^0.5.10",
     "autoprefixer": "^10.0.1",
+    "framer-motion": "^12.4.7",
+    "next": "14.1.0",
     "postcss": "^8",
+    "react": "^18",
+    "react-dom": "^18",
     "tailwindcss": "^3.3.0",
     "uuid": "^9.0.1"
   },
