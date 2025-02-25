@@ -1,18 +1,20 @@
 import { useState } from 'react';
 import { Switch } from '@headlessui/react';
-import { PencilIcon, LightBulbIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
-import { BlogGenerationOptions } from '../types/blog';
+import { BookOpenIcon, LightBulbIcon, PencilIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline';
+import { BookGenerationOptions } from '../types/book';
 
-interface ContentGeneratorProps {
+interface BookGeneratorProps {
   conversationId: string;
   setContent: (content: any) => void;
   setLoading: (loading: boolean) => void;
 }
 
-export default function ContentGenerator({ conversationId, setContent, setLoading }: ContentGeneratorProps) {
-  const [topic, setTopic] = useState('');
+export default function BookGenerator({ conversationId, setContent, setLoading }: BookGeneratorProps) {
+  const [title, setTitle] = useState('');
+  const [numChapters, setNumChapters] = useState(5);
+  const [sectionsPerChapter, setSectionsPerChapter] = useState(3);
   const [keywords, setKeywords] = useState('');
-  const [tone, setTone] = useState<BlogGenerationOptions['tone']>('informative');
+  const [tone, setTone] = useState<BookGenerationOptions['tone']>('informative');
   const [useResearch, setUseResearch] = useState(false);
   const [proofread, setProofread] = useState(true);
   const [humanize, setHumanize] = useState(true);
@@ -35,81 +37,44 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
     }
   };
 
-  // Mock blog post data for development or when server is not available
-  const generateMockBlogPost = () => {
+  // Mock book data for development or when server is not available
+  const generateMockBook = () => {
+    const bookTitle = title || "The Future of Artificial Intelligence";
+    const chapters = [];
+    
+    // Generate mock chapters
+    for (let i = 1; i <= numChapters; i++) {
+      const topics = [];
+      
+      // Generate topics for each chapter
+      for (let j = 1; j <= sectionsPerChapter; j++) {
+        topics.push({
+          title: `Topic ${j}`,
+          content: `This is sample content for Topic ${j} in Chapter ${i}. In a real book, this would contain several paragraphs of informative text about this specific topic. The content would be well-researched, engaging, and tailored to the book's overall theme and tone.
+
+This paragraph provides additional details and examples to illustrate the main points of this topic. It might include statistics, case studies, or anecdotes that help the reader understand the concepts being presented.
+
+Finally, this paragraph would wrap up the topic and potentially transition to the next section, ensuring a smooth flow throughout the chapter. The writing style would match the selected tone and incorporate relevant keywords naturally.`
+        });
+      }
+      
+      chapters.push({
+        number: i,
+        title: `Chapter ${i}: ${["Introduction to", "Understanding", "Exploring", "Advanced Concepts in", "The Future of"][i % 5]} ${["Artificial Intelligence", "Machine Learning", "Neural Networks", "Deep Learning", "Natural Language Processing"][i % 5]}`,
+        topics
+      });
+    }
+    
     return {
       success: true,
-      type: "blog",
+      type: "book",
       content: {
-        title: topic || "How AI is Revolutionizing Content Creation",
-        description: `A comprehensive look at how artificial intelligence is transforming the way we create and consume content in ${new Date().getFullYear()}.`,
+        title: bookTitle,
+        description: `A comprehensive exploration of artificial intelligence, its current applications, and future potential in ${new Date().getFullYear()}.`,
         date: new Date().toISOString(),
-        image: "https://example.com/ai-content-creation.jpg",
-        tags: keywords.split(',').map(k => k.trim()).filter(k => k) || ["AI", "Content Creation", "Marketing"],
-        sections: [
-          {
-            title: "Introduction",
-            subtopics: [
-              {
-                title: "",
-                content: "Artificial intelligence has rapidly evolved from a futuristic concept to a practical tool that's reshaping industries across the globe. In the realm of content creation and marketing, AI technologies are not just supplementing human efforts—they're revolutionizing the entire process from ideation to distribution. This transformation is enabling businesses and creators to produce more engaging, personalized, and effective content at unprecedented scale and speed."
-              }
-            ]
-          },
-          {
-            title: "The Current State of AI in Content Creation",
-            subtopics: [
-              {
-                title: "",
-                content: "Today's AI tools can generate blog posts, social media updates, email newsletters, and even video scripts with minimal human input. Natural Language Processing (NLP) models like GPT-4 can produce human-like text that's increasingly difficult to distinguish from content written by people. These advancements have democratized content creation, allowing smaller businesses and individual creators to compete with larger organizations that have traditionally had more resources for content production."
-              }
-            ]
-          },
-          {
-            title: "AI-Powered Content Personalization",
-            subtopics: [
-              {
-                title: "",
-                content: "One of the most significant impacts of AI on marketing is the ability to deliver highly personalized content at scale. Machine learning algorithms can analyze user behavior, preferences, and engagement patterns to tailor content for specific audience segments or even individual users. This level of personalization was previously impossible to achieve manually, but AI makes it not only possible but efficient and cost-effective."
-              }
-            ]
-          },
-          {
-            title: "Challenges and Ethical Considerations",
-            subtopics: [
-              {
-                title: "",
-                content: "Despite its benefits, AI-generated content raises important questions about authenticity, creativity, and the role of human writers. There are concerns about potential biases in AI systems, copyright issues with AI-generated work, and the impact on employment in creative industries. Finding the right balance between automation and human creativity remains a challenge that content marketers must navigate carefully."
-              }
-            ]
-          },
-          {
-            title: "Conclusion",
-            subtopics: [
-              {
-                title: "",
-                content: "AI is undeniably transforming content creation and marketing, offering unprecedented opportunities for efficiency, personalization, and scale. While it won't replace human creativity entirely, it's becoming an essential tool in the modern marketer's arsenal. Organizations that successfully integrate AI into their content strategies—while maintaining human oversight and creative direction—will be best positioned to thrive in this new era of content marketing."
-              }
-            ]
-          },
-          {
-            title: "Frequently Asked Questions",
-            subtopics: [
-              {
-                title: "Can AI completely replace human content creators?",
-                content: "While AI can generate impressive content, it currently works best as a collaborative tool with human oversight. Human creativity, emotional intelligence, and cultural understanding remain difficult to replicate. The most effective approach is typically a hybrid model where AI handles routine content generation and humans provide strategic direction, editing, and creative input."
-              },
-              {
-                title: "How can small businesses leverage AI for content marketing?",
-                content: "Small businesses can use AI tools to scale their content production, analyze competitor content, generate ideas, and optimize existing content for SEO. Many affordable AI writing assistants, content generators, and analytics platforms are now available that don't require technical expertise to use."
-              },
-              {
-                title: "What skills should content marketers develop in the age of AI?",
-                content: "Content marketers should focus on developing skills that complement AI capabilities, such as strategic thinking, brand storytelling, emotional intelligence, ethical judgment, and the ability to effectively prompt and direct AI tools. Understanding how to review and edit AI-generated content is also becoming increasingly important."
-              }
-            ]
-          }
-        ]
+        image: "https://example.com/ai-book-cover.jpg",
+        tags: keywords.split(',').map(k => k.trim()).filter(k => k) || ["AI", "Technology", "Future"],
+        chapters
       }
     };
   };
@@ -125,20 +90,22 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
       if (!isServerConnected) {
         // Use mock data if server is not running
         setTimeout(() => {
-          setContent(generateMockBlogPost());
+          setContent(generateMockBook());
           setLoading(false);
-        }, 3000); // Simulate generation delay
+        }, 5000); // Simulate longer generation delay for books
         return;
       }
       
       // Server is running, make the real request
-      const response = await fetch('http://localhost:8000/generate-blog', {
+      const response = await fetch('http://localhost:8000/generate-book', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          topic,
+          title,
+          num_chapters: numChapters,
+          sections_per_chapter: sectionsPerChapter,
           keywords: keywords.split(',').map(k => k.trim()).filter(k => k),
           tone,
           research: useResearch,
@@ -152,11 +119,11 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
       if (data.success) {
         setContent(data);
       } else {
-        throw new Error(data.detail || 'Failed to generate content');
+        throw new Error(data.detail || 'Failed to generate book');
       }
     } catch (error) {
-      console.error('Error generating content:', error);
-      alert('Failed to generate content. Please try again.');
+      console.error('Error generating book:', error);
+      alert('Failed to generate book. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -165,27 +132,65 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
   return (
     <div>
       <div className="flex items-center mb-6">
-        <DocumentTextIcon className="h-5 w-5 text-indigo-600 mr-2" />
-        <h2 className="text-xl font-bold text-gray-800">Blog Post Generator</h2>
+        <BookOpenIcon className="h-5 w-5 text-indigo-600 mr-2" />
+        <h2 className="text-xl font-bold text-gray-800">Book Generator</h2>
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-100">
           <div className="flex items-center mb-2">
             <PencilIcon className="h-4 w-4 text-indigo-600 mr-2" />
-            <label htmlFor="topic" className="block text-sm font-medium text-indigo-800">
-              What would you like to write about?
+            <label htmlFor="title" className="block text-sm font-medium text-indigo-800">
+              Book Title
             </label>
           </div>
           <input
             type="text"
-            id="topic"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
+            id="title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white"
-            placeholder="Enter your topic..."
+            placeholder="Enter book title..."
             required
           />
+        </div>
+
+        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+          <div className="flex items-center mb-3">
+            <AdjustmentsHorizontalIcon className="h-4 w-4 text-indigo-600 mr-2" />
+            <h3 className="text-sm font-medium text-gray-700">Book Structure</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="numChapters" className="block text-sm font-medium text-gray-700">
+                Number of Chapters
+              </label>
+              <input
+                type="number"
+                id="numChapters"
+                value={numChapters}
+                onChange={(e) => setNumChapters(parseInt(e.target.value))}
+                min={1}
+                max={20}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label htmlFor="sectionsPerChapter" className="block text-sm font-medium text-gray-700">
+                Topics per Chapter
+              </label>
+              <input
+                type="number"
+                id="sectionsPerChapter"
+                value={sectionsPerChapter}
+                onChange={(e) => setSectionsPerChapter(parseInt(e.target.value))}
+                min={1}
+                max={10}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -199,7 +204,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
               value={keywords}
               onChange={(e) => setKeywords(e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              placeholder="SEO, marketing, content..."
+              placeholder="AI, technology, future..."
             />
           </div>
 
@@ -210,7 +215,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
             <select
               id="tone"
               value={tone}
-              onChange={(e) => setTone(e.target.value as BlogGenerationOptions['tone'])}
+              onChange={(e) => setTone(e.target.value as BookGenerationOptions['tone'])}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
             >
               <option value="informative">Informative</option>
@@ -287,7 +292,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
           type="submit"
           className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all"
         >
-          Generate Blog Post
+          Generate Book
         </button>
       </form>
     </div>
