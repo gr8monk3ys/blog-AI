@@ -1,0 +1,556 @@
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { Switch } from '@headlessui/react';
+import { PencilIcon, LightBulbIcon, DocumentTextIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { BlogGenerationOptions } from '../types/blog';
+import { BlogGenerationResponse, ContentGenerationResponse } from '../types/content';
+import { API_ENDPOINTS, ApiError, checkServerConnection, apiFetchWithRetry } from '../lib/api';
+import { useUsageCheck } from './UsageIndicator';
+import BrandVoiceSelector from './brand/BrandVoiceSelector'
+import type { BrandProfile } from '../types/brand'
+import type { LlmProviderType } from '../types/llm'
+import { useLlmConfig } from '../hooks/useLlmConfig'
+
+interface ContentGeneratorProps {
+  conversationId: string;
+  setContent: (content: ContentGenerationResponse) => void;
+  setLoading: (loading: boolean) => void;
+}
+
+function useContentGeneratorView({ conversationId, setContent, setLoading }: ContentGeneratorProps) {
+  const [topic, setTopic] = useState('');
+  const [keywords, setKeywords] = useState('');
+  const [tone, setTone] = useState<BlogGenerationOptions['tone']>('informative');
+  const [useResearch, setUseResearch] = useState(false);
+  const [researchDepth, setResearchDepth] = useState<'basic' | 'deep' | 'comprehensive'>('basic');
+  const [proofread, setProofread] = useState(true);
+  const [humanize, setHumanize] = useState(true);
+  const [seoOptimize, setSeoOptimize] = useState(false);
+  const [factCheck, setFactCheck] = useState(false);
+  const [brandVoiceEnabled, setBrandVoiceEnabled] = useState(false)
+  const [selectedBrandProfile, setSelectedBrandProfile] = useState<BrandProfile | null>(null)
+  const { availableProviders, defaultProvider } = useLlmConfig()
+  const [providerType, setProviderType] = useState<LlmProviderType>('openai')
+  const [error, setError] = useState<string | null>(null);
+  const [errorKind, setErrorKind] = useState<
+    'auth' | 'forbidden' | 'rate-limit' | 'unavailable' | 'offline' | 'limit' | 'generic'
+  >('generic');
+  const [retryAfterSeconds, setRetryAfterSeconds] = useState<number | null>(null);
+
+  const { checkUsage } = useUsageCheck();
+
+  const hasUserSelection = useRef(false)
+
+  useEffect(() => {
+    if (!hasUserSelection.current && defaultProvider) {
+      setProviderType(defaultProvider)
+    }
+  }, [defaultProvider])
+
+  // Mock blog post data for development or when server is not available
+  const generateMockBlogPost = (): BlogGenerationResponse => {
+    return {
+      success: true,
+      type: "blog",
+      content: {
+        title: topic || "How AI is Revolutionizing Content Creation",
+        description: `A comprehensive look at how artificial intelligence is transforming the way we create and consume content in ${new Date().getFullYear()}.`,
+        date: new Date().toISOString(),
+        image: "https://example.com/ai-content-creation.jpg",
+        tags: keywords.split(',').map(k => k.trim()).filter(k => k) || ["AI", "Content Creation", "Marketing"],
+        sections: [
+          {
+            title: "Introduction",
+            subtopics: [
+              {
+                title: "",
+                content: "Artificial intelligence has rapidly evolved from a futuristic concept to a practical tool that's reshaping industries across the globe. In the realm of content creation and marketing, AI technologies are not just supplementing human efforts—they're revolutionizing the entire process from ideation to distribution. This transformation is enabling businesses and creators to produce more engaging, personalized, and effective content at unprecedented scale and speed."
+              }
+            ]
+          },
+          {
+            title: "The Current State of AI in Content Creation",
+            subtopics: [
+              {
+                title: "",
+                content: "Today's AI tools can generate blog posts, social media updates, email newsletters, and even video scripts with minimal human input. Natural Language Processing (NLP) models like GPT-4 can produce human-like text that's increasingly difficult to distinguish from content written by people. These advancements have democratized content creation, allowing smaller businesses and individual creators to compete with larger organizations that have traditionally had more resources for content production."
+              }
+            ]
+          },
+          {
+            title: "AI-Powered Content Personalization",
+            subtopics: [
+              {
+                title: "",
+                content: "One of the most significant impacts of AI on marketing is the ability to deliver highly personalized content at scale. Machine learning algorithms can analyze user behavior, preferences, and engagement patterns to tailor content for specific audience segments or even individual users. This level of personalization was previously impossible to achieve manually, but AI makes it not only possible but efficient and cost-effective."
+              }
+            ]
+          },
+          {
+            title: "Challenges and Ethical Considerations",
+            subtopics: [
+              {
+                title: "",
+                content: "Despite its benefits, AI-generated content raises important questions about authenticity, creativity, and the role of human writers. There are concerns about potential biases in AI systems, copyright issues with AI-generated work, and the impact on employment in creative industries. Finding the right balance between automation and human creativity remains a challenge that content marketers must navigate carefully."
+              }
+            ]
+          },
+          {
+            title: "Conclusion",
+            subtopics: [
+              {
+                title: "",
+                content: "AI is undeniably transforming content creation and marketing, offering unprecedented opportunities for efficiency, personalization, and scale. While it won't replace human creativity entirely, it's becoming an essential tool in the modern marketer's arsenal. Organizations that successfully integrate AI into their content strategies—while maintaining human oversight and creative direction—will be best positioned to thrive in this new era of content marketing."
+              }
+            ]
+          },
+          {
+            title: "Frequently Asked Questions",
+            subtopics: [
+              {
+                title: "Can AI completely replace human content creators?",
+                content: "While AI can generate impressive content, it currently works best as a collaborative tool with human oversight. Human creativity, emotional intelligence, and cultural understanding remain difficult to replicate. The most effective approach is typically a hybrid model where AI handles routine content generation and humans provide strategic direction, editing, and creative input."
+              },
+              {
+                title: "How can small businesses leverage AI for content marketing?",
+                content: "Small businesses can use AI tools to scale their content production, analyze competitor content, generate ideas, and optimize existing content for SEO. Many affordable AI writing assistants, content generators, and analytics platforms are now available that don't require technical expertise to use."
+              },
+              {
+                title: "What skills should content marketers develop in the age of AI?",
+                content: "Content marketers should focus on developing skills that complement AI capabilities, such as strategic thinking, brand storytelling, emotional intelligence, ethical judgment, and the ability to effectively prompt and direct AI tools. Understanding how to review and edit AI-generated content is also becoming increasingly important."
+              }
+            ]
+          }
+        ]
+      }
+    };
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setErrorKind('generic');
+    setRetryAfterSeconds(null);
+
+    try {
+      if (brandVoiceEnabled && !selectedBrandProfile) {
+        setError('Select a brand profile (or disable Brand Voice) to continue.')
+        setLoading(false)
+        return
+      }
+
+      // Check usage limit before generating
+      const hasUsage = await checkUsage();
+      if (!hasUsage) {
+        setErrorKind('limit');
+        setError('You have reached your usage limit. Upgrade your plan to continue generating content.');
+        setLoading(false);
+        return;
+      }
+
+      // Check if server is running
+      const isServerConnected = await checkServerConnection();
+
+      if (!isServerConnected) {
+        // In production, never fall back to mock output.
+        if (process.env.NODE_ENV === 'production') {
+          setErrorKind('offline')
+          throw new Error('Unable to connect to the server. Please check your connection and try again.');
+        }
+
+        // Use mock data in development if server is not running
+        setTimeout(() => {
+          setContent(generateMockBlogPost());
+          setLoading(false);
+        }, 3000); // Simulate generation delay
+        return;
+      }
+
+      // Server is running, make the real request with retry for transient failures
+      const data = await apiFetchWithRetry<BlogGenerationResponse>(
+        API_ENDPOINTS.generateBlog,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            topic,
+            keywords: keywords.split(',').map(k => k.trim()).filter(k => k),
+            tone,
+            research: useResearch,
+            research_depth: useResearch ? researchDepth : undefined,
+            provider_type: providerType,
+            proofread,
+            humanize,
+            seo_optimize: seoOptimize,
+            fact_check: factCheck,
+            conversation_id: conversationId,
+            ...(brandVoiceEnabled && selectedBrandProfile?.id
+              ? { brand_profile_id: selectedBrandProfile.id }
+              : {}),
+          }),
+        }
+      );
+
+      if (!data.success) {
+        throw new Error((data as unknown as Record<string, unknown>).detail as string || 'Failed to generate content');
+      }
+      setContent(data);
+    } catch (err) {
+      console.error('Error generating content:', err);
+      const status = err instanceof ApiError ? err.status : undefined
+
+      if (status === 401) {
+        setErrorKind('auth')
+        setError('Please sign in to generate content.')
+      } else if (status === 403) {
+        setErrorKind('forbidden')
+        setError('This feature requires a Pro plan.')
+      } else if (status === 429) {
+        setErrorKind('rate-limit')
+        // Try to parse Retry-After header from the error data
+        const retryData = err instanceof ApiError ? err.data : undefined
+        const retryAfter =
+          retryData && typeof retryData === 'object'
+            ? (retryData as Record<string, unknown>).retry_after
+            : undefined
+        const seconds = typeof retryAfter === 'number' ? retryAfter : null
+        setRetryAfterSeconds(seconds)
+        setError(
+          seconds
+            ? `You have hit the rate limit. Please wait ${seconds} seconds before trying again.`
+            : 'You have hit the rate limit. Please wait a moment before trying again.'
+        )
+      } else if (status === 503) {
+        setErrorKind('unavailable')
+        setError('The generation service is temporarily unavailable. Please try again in a moment.')
+      } else if (
+        err instanceof TypeError &&
+        err.message.toLowerCase().includes('fetch')
+      ) {
+        setErrorKind('offline')
+        setError('Unable to connect to the server. Please check your connection and try again.')
+      } else {
+        setErrorKind('generic')
+        setError(err instanceof Error ? err.message : 'Failed to generate content. Please try again.')
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex items-center mb-6">
+        <DocumentTextIcon className="h-5 w-5 text-amber-600 mr-2" />
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Blog Post Generator</h2>
+      </div>
+      
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="bg-amber-50 dark:bg-amber-950/30 rounded-lg p-4 border border-amber-100 dark:border-amber-800">
+          <div className="flex items-center mb-2">
+            <PencilIcon className="h-4 w-4 text-amber-600 mr-2" />
+            <label htmlFor="topic" className="block text-sm font-medium text-amber-700">
+              What would you like to write about?
+            </label>
+          </div>
+          <input
+            type="text"
+            id="topic"
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 bg-white dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
+            placeholder="Enter your topic..."
+            required
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label htmlFor="keywords" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Keywords (comma separated)
+            </label>
+            <input
+              type="text"
+              id="keywords"
+              value={keywords}
+              onChange={(e) => setKeywords(e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
+              placeholder="SEO, marketing, content..."
+            />
+          </div>
+
+          <div>
+            <label htmlFor="tone" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Tone
+            </label>
+            <select
+              id="tone"
+              value={tone}
+              onChange={(e) => setTone(e.target.value as BlogGenerationOptions['tone'])}
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
+            >
+              <option value="informative">Informative</option>
+              <option value="conversational">Conversational</option>
+              <option value="professional">Professional</option>
+              <option value="friendly">Friendly</option>
+              <option value="authoritative">Authoritative</option>
+              <option value="technical">Technical</option>
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="provider" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Model Provider
+            </label>
+            <select
+              id="provider"
+              value={providerType}
+              onChange={(e) => {
+                hasUserSelection.current = true
+                setProviderType(e.target.value as LlmProviderType)
+              }}
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
+              disabled={(availableProviders || []).length <= 1}
+            >
+              {(availableProviders || []).map((p) => (
+                <option key={p} value={p}>
+                  {p === 'openai' ? 'OpenAI' : p === 'anthropic' ? 'Anthropic' : 'Gemini'}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-800">
+          <div className="flex items-center mb-3">
+            <LightBulbIcon className="h-4 w-4 text-amber-600 mr-2" />
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Advanced Options</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex items-center space-x-3">
+              <Switch
+                checked={useResearch}
+                onChange={setUseResearch}
+                aria-label="Enable web research"
+                className={`${
+                  useResearch ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`${
+                    useResearch ? 'translate-x-6' : 'translate-x-1'
+                  } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                />
+              </Switch>
+              <span className="text-sm text-gray-700 dark:text-gray-300" id="research-label">Use web research</span>
+              {useResearch && (
+                <select
+                  value={researchDepth}
+                  onChange={(e) => setResearchDepth(e.target.value as 'basic' | 'deep' | 'comprehensive')}
+                  className="ml-2 text-xs rounded border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:border-amber-500 focus:ring-amber-500"
+                >
+                  <option value="basic">Basic</option>
+                  <option value="deep">Deep</option>
+                  <option value="comprehensive">Comprehensive</option>
+                </select>
+              )}
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <Switch
+                checked={proofread}
+                onChange={setProofread}
+                aria-label="Enable proofreading"
+                className={`${
+                  proofread ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`${
+                    proofread ? 'translate-x-6' : 'translate-x-1'
+                  } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                />
+              </Switch>
+              <span className="text-sm text-gray-700 dark:text-gray-300" id="proofread-label">Proofread content</span>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <Switch
+                checked={humanize}
+                onChange={setHumanize}
+                aria-label="Enable content humanization"
+                className={`${
+                  humanize ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`${
+                    humanize ? 'translate-x-6' : 'translate-x-1'
+                  } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                />
+              </Switch>
+              <span className="text-sm text-gray-700 dark:text-gray-300" id="humanize-label">Humanize content</span>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <Switch
+                checked={seoOptimize}
+                onChange={setSeoOptimize}
+                aria-label="Enable SEO optimization"
+                className={`${
+                  seoOptimize ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`${
+                    seoOptimize ? 'translate-x-6' : 'translate-x-1'
+                  } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                />
+              </Switch>
+              <span className="text-sm text-gray-700 dark:text-gray-300" id="seo-label">SEO optimize</span>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <Switch
+                checked={factCheck}
+                onChange={setFactCheck}
+                aria-label="Enable fact checking"
+                className={`${
+                  factCheck ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`${
+                    factCheck ? 'translate-x-6' : 'translate-x-1'
+                  } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                />
+              </Switch>
+              <span className="text-sm text-gray-700 dark:text-gray-300" id="fact-check-label">Fact check</span>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <BrandVoiceSelector
+              enabled={brandVoiceEnabled}
+              onEnabledChange={setBrandVoiceEnabled}
+              selectedProfile={selectedBrandProfile}
+              onProfileChange={setSelectedBrandProfile}
+            />
+          </div>
+        </div>
+
+        {error && (
+          <div
+            className={`${
+              errorKind === 'limit' || errorKind === 'rate-limit'
+                ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800'
+                : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800'
+            } border text-sm px-4 py-3 rounded-lg`}
+            role="alert"
+          >
+            <div className="flex items-start gap-3">
+              <ExclamationTriangleIcon
+                className={`h-5 w-5 flex-shrink-0 ${
+                  errorKind === 'limit' || errorKind === 'rate-limit'
+                    ? 'text-amber-500'
+                    : 'text-red-500'
+                }`}
+              />
+              <div className="flex-1">
+                <p
+                  className={`font-medium ${
+                    errorKind === 'limit' || errorKind === 'rate-limit'
+                      ? 'text-amber-700'
+                      : 'text-red-700'
+                  }`}
+                >
+                  {errorKind === 'limit'
+                    ? 'Usage Limit Reached'
+                    : errorKind === 'rate-limit'
+                      ? 'Rate Limit'
+                      : errorKind === 'auth'
+                        ? 'Authentication Required'
+                        : errorKind === 'forbidden'
+                          ? 'Upgrade Required'
+                          : errorKind === 'unavailable'
+                            ? 'Service Unavailable'
+                            : errorKind === 'offline'
+                              ? 'Connection Error'
+                              : 'Error'}
+                </p>
+                <p
+                  className={
+                    errorKind === 'limit' || errorKind === 'rate-limit'
+                      ? 'text-amber-700'
+                      : 'text-red-700'
+                  }
+                >
+                  {error}
+                </p>
+
+                {/* Contextual action links */}
+                {errorKind === 'auth' && (
+                  <Link
+                    href="/sign-in"
+                    className="inline-flex items-center mt-2 text-sm font-medium text-red-600 hover:text-red-700"
+                  >
+                    Sign in
+                    <span className="ml-1">&rarr;</span>
+                  </Link>
+                )}
+                {(errorKind === 'forbidden' || errorKind === 'limit') && (
+                  <Link
+                    href="/pricing"
+                    className="inline-flex items-center mt-2 text-sm font-medium text-amber-600 hover:text-amber-700"
+                  >
+                    Upgrade your plan
+                    <span className="ml-1">&rarr;</span>
+                  </Link>
+                )}
+                {(errorKind === 'unavailable' || errorKind === 'offline') && (
+                  <button
+                    type="submit"
+                    className="mt-2 text-xs bg-red-100 dark:bg-red-900/50 hover:bg-red-200 dark:hover:bg-red-900/70 px-2 py-1 rounded transition-colors"
+                  >
+                    Retry
+                  </button>
+                )}
+                {errorKind === 'rate-limit' && retryAfterSeconds && (
+                  <p className="mt-1 text-xs text-amber-600">
+                    Try again in {retryAfterSeconds}s
+                  </p>
+                )}
+                {errorKind === 'generic' && (
+                  <button
+                    type="button"
+                    onClick={() => setError(null)}
+                    className="mt-2 text-xs bg-red-100 dark:bg-red-900/50 hover:bg-red-200 dark:hover:bg-red-900/70 px-2 py-1 rounded transition-colors"
+                  >
+                    Dismiss
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <button
+          type="submit"
+          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all"
+        >
+          Generate Blog Post
+        </button>
+      </form>
+    </div>
+  );
+}
+
+export default function ContentGenerator(props: ContentGeneratorProps) {
+  return useContentGeneratorView(props)
+}
