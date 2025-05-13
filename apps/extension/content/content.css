@@ -1,0 +1,509 @@
+/**
+ * Blog AI Chrome Extension - Content Script Styles
+ *
+ * Styles for injected UI elements:
+ * - Floating action button (FAB)
+ * - Quick action menu
+ * - Result modal
+ * - Loading and error states
+ */
+
+/* CSS Variables for consistent theming */
+:root {
+  --blogai-primary: #4F46E5;
+  --blogai-primary-hover: #4338CA;
+  --blogai-success: #059669;
+  --blogai-error: #DC2626;
+  --blogai-text: #111827;
+  --blogai-text-secondary: #6B7280;
+  --blogai-bg: #FFFFFF;
+  --blogai-bg-elevated: #F9FAFB;
+  --blogai-border: #E5E7EB;
+  --blogai-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  --blogai-radius: 8px;
+  --blogai-transition: 200ms ease;
+  --blogai-z-index: 2147483647;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --blogai-primary: #6366F1;
+    --blogai-primary-hover: #818CF8;
+    --blogai-text: #F9FAFB;
+    --blogai-text-secondary: #D1D5DB;
+    --blogai-bg: #1F2937;
+    --blogai-bg-elevated: #374151;
+    --blogai-border: #4B5563;
+    --blogai-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Floating Action Button */
+#blogai-fab {
+  position: absolute;
+  z-index: var(--blogai-z-index);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--blogai-primary);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: var(--blogai-shadow);
+  opacity: 0;
+  transform: translateY(10px) scale(0.9);
+  transition: opacity var(--blogai-transition), transform var(--blogai-transition), background-color var(--blogai-transition);
+  user-select: none;
+}
+
+#blogai-fab.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+#blogai-fab:hover {
+  background: var(--blogai-primary-hover);
+}
+
+#blogai-fab:focus {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+#blogai-fab svg {
+  flex-shrink: 0;
+}
+
+/* Quick Action Menu */
+#blogai-quick-menu {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.95);
+  z-index: var(--blogai-z-index);
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  background: var(--blogai-bg);
+  border-radius: var(--blogai-radius);
+  box-shadow: var(--blogai-shadow);
+  opacity: 0;
+  transition: opacity var(--blogai-transition), transform var(--blogai-transition);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+#blogai-quick-menu.visible {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.blogai-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--blogai-border);
+}
+
+.blogai-menu-header strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--blogai-text);
+}
+
+.blogai-menu-close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--blogai-text-secondary);
+  font-size: 20px;
+  cursor: pointer;
+  transition: background-color var(--blogai-transition);
+}
+
+.blogai-menu-close:hover {
+  background: var(--blogai-bg-elevated);
+}
+
+.blogai-menu-preview {
+  padding: 12px 16px;
+  font-size: 12px;
+  color: var(--blogai-text-secondary);
+  font-style: italic;
+  border-bottom: 1px solid var(--blogai-border);
+  max-height: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.blogai-menu-actions {
+  padding: 8px;
+}
+
+.blogai-menu-action {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--blogai-text);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--blogai-transition);
+}
+
+.blogai-menu-action:hover {
+  background: var(--blogai-bg-elevated);
+}
+
+.blogai-menu-action:focus {
+  outline: 2px solid var(--blogai-primary);
+  outline-offset: -2px;
+}
+
+.blogai-menu-action svg {
+  color: var(--blogai-text-secondary);
+  flex-shrink: 0;
+}
+
+/* Loading Indicator */
+#blogai-loading {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: var(--blogai-z-index);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: var(--blogai-bg);
+  border-radius: var(--blogai-radius);
+  box-shadow: var(--blogai-shadow);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  color: var(--blogai-text);
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity var(--blogai-transition), transform var(--blogai-transition);
+}
+
+#blogai-loading.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.blogai-loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--blogai-border);
+  border-top-color: var(--blogai-primary);
+  border-radius: 50%;
+  animation: blogai-spin 0.8s linear infinite;
+}
+
+@keyframes blogai-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error Message */
+#blogai-error {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: var(--blogai-z-index);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--blogai-error);
+  color: white;
+  border-radius: var(--blogai-radius);
+  box-shadow: var(--blogai-shadow);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity var(--blogai-transition), transform var(--blogai-transition);
+}
+
+#blogai-error.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#blogai-error button {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 0 0 8px;
+  opacity: 0.8;
+}
+
+#blogai-error button:hover {
+  opacity: 1;
+}
+
+/* Success Message */
+#blogai-success {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: var(--blogai-z-index);
+  padding: 12px 20px;
+  background: var(--blogai-success);
+  color: white;
+  border-radius: var(--blogai-radius);
+  box-shadow: var(--blogai-shadow);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity var(--blogai-transition), transform var(--blogai-transition);
+}
+
+#blogai-success.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Result Modal */
+#blogai-result-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--blogai-z-index);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  transition: opacity var(--blogai-transition);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+#blogai-result-modal.visible {
+  opacity: 1;
+}
+
+.blogai-modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.blogai-modal-content {
+  position: relative;
+  width: 100%;
+  max-width: 700px;
+  max-height: calc(100vh - 40px);
+  background: var(--blogai-bg);
+  border-radius: var(--blogai-radius);
+  box-shadow: var(--blogai-shadow);
+  display: flex;
+  flex-direction: column;
+  transform: scale(0.95);
+  transition: transform var(--blogai-transition);
+}
+
+#blogai-result-modal.visible .blogai-modal-content {
+  transform: scale(1);
+}
+
+.blogai-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--blogai-border);
+}
+
+.blogai-modal-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--blogai-text);
+  margin: 0;
+  padding-right: 16px;
+  line-height: 1.4;
+}
+
+.blogai-modal-close {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--blogai-text-secondary);
+  font-size: 24px;
+  cursor: pointer;
+  transition: background-color var(--blogai-transition);
+}
+
+.blogai-modal-close:hover {
+  background: var(--blogai-bg-elevated);
+}
+
+.blogai-modal-close:focus {
+  outline: 2px solid var(--blogai-primary);
+  outline-offset: -2px;
+}
+
+.blogai-modal-body {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  color: var(--blogai-text);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.blogai-modal-body h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 24px 0 12px;
+  color: var(--blogai-text);
+}
+
+.blogai-modal-body h3:first-child {
+  margin-top: 0;
+}
+
+.blogai-modal-body h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 16px 0 8px;
+  color: var(--blogai-text);
+}
+
+.blogai-modal-body p {
+  margin: 0 0 16px;
+  color: var(--blogai-text-secondary);
+}
+
+.blogai-modal-body .blogai-description {
+  font-style: italic;
+  padding: 16px;
+  background: var(--blogai-bg-elevated);
+  border-radius: 6px;
+  margin-bottom: 24px;
+}
+
+.blogai-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--blogai-border);
+}
+
+/* Buttons */
+.blogai-btn {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color var(--blogai-transition), opacity var(--blogai-transition);
+}
+
+.blogai-btn:focus {
+  outline: 2px solid var(--blogai-primary);
+  outline-offset: 2px;
+}
+
+.blogai-btn-primary {
+  background: var(--blogai-primary);
+  color: white;
+}
+
+.blogai-btn-primary:hover {
+  background: var(--blogai-primary-hover);
+}
+
+.blogai-btn-secondary {
+  background: var(--blogai-bg-elevated);
+  color: var(--blogai-text);
+  border: 1px solid var(--blogai-border);
+}
+
+.blogai-btn-secondary:hover {
+  background: var(--blogai-border);
+}
+
+/* Text Highlight */
+.blogai-highlight {
+  background: linear-gradient(180deg, rgba(79, 70, 229, 0.2) 0%, rgba(79, 70, 229, 0.2) 100%);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+/* Scrollbar styling for modal */
+.blogai-modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.blogai-modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.blogai-modal-body::-webkit-scrollbar-thumb {
+  background: var(--blogai-border);
+  border-radius: 4px;
+}
+
+.blogai-modal-body::-webkit-scrollbar-thumb:hover {
+  background: var(--blogai-text-secondary);
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  #blogai-quick-menu {
+    width: calc(100vw - 32px);
+  }
+
+  .blogai-modal-content {
+    max-height: calc(100vh - 20px);
+  }
+
+  .blogai-modal-header {
+    padding: 16px;
+  }
+
+  .blogai-modal-body {
+    padding: 16px;
+  }
+
+  .blogai-modal-footer {
+    padding: 12px 16px;
+    flex-direction: column;
+  }
+
+  .blogai-modal-footer .blogai-btn {
+    width: 100%;
+  }
+}
