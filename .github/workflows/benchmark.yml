@@ -1,0 +1,124 @@
+name: Performance Benchmarks
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * 0'  # Run weekly on Sundays
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  benchmark:
+    name: Run Performance Benchmarks
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+
+    - name: Set up Python
+      run: uv python install 3.12
+
+    - name: Install dependencies
+      run: uv sync --link-mode=copy
+
+    - name: Run benchmarks
+      run: |
+        uv run python scripts/benchmark.py --iterations 50 --export benchmark-results.json
+      continue-on-error: true
+
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-results
+        path: benchmark-results.json
+
+    - name: Download previous benchmark results
+      uses: actions/download-artifact@v4
+      continue-on-error: true
+      with:
+        name: benchmark-results
+        path: previous-results/
+
+    - name: Compare benchmarks
+      if: hashFiles('previous-results/benchmark-results.json') != ''
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+
+          // Read current and previous results
+          const current = JSON.parse(fs.readFileSync('benchmark-results.json', 'utf8'));
+          const previous = JSON.parse(fs.readFileSync('previous-results/benchmark-results.json', 'utf8'));
+
+          // Compare results
+          let comment = '## 📊 Performance Benchmark Results\n\n';
+          comment += `**Timestamp:** ${current.timestamp}\n\n`;
+          comment += '| Benchmark | Current | Previous | Change |\n';
+          comment += '|-----------|---------|----------|--------|\n';
+
+          for (const [name, data] of Object.entries(current.benchmarks)) {
+            if (previous.benchmarks[name]) {
+              const currentAvg = data.average_ms || data.save_avg_ms;
+              const previousAvg = previous.benchmarks[name].average_ms || previous.benchmarks[name].save_avg_ms;
+              const change = ((currentAvg - previousAvg) / previousAvg * 100).toFixed(2);
+              const emoji = change > 10 ? '🔴' : change < -10 ? '🟢' : '🟡';
+              comment += `| ${name} | ${currentAvg.toFixed(2)}ms | ${previousAvg.toFixed(2)}ms | ${emoji} ${change}% |\n`;
+            } else {
+              const currentAvg = data.average_ms || data.save_avg_ms;
+              comment += `| ${name} | ${currentAvg.toFixed(2)}ms | N/A | ✨ New |\n`;
+            }
+          }
+
+          comment += '\n*Note: 🟢 = improvement, 🟡 = within 10%, 🔴 = regression*';
+
+          // Post comment on PR if this is a pull request
+          if (context.eventName === 'pull_request') {
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          } else {
+            console.log(comment);
+          }
+
+    - name: Check for performance regressions
+      if: hashFiles('previous-results/benchmark-results.json') != ''
+      run: |
+        uv run python -c "
+        import json
+        import sys
+
+        with open('benchmark-results.json') as f:
+            current = json.load(f)
+        with open('previous-results/benchmark-results.json') as f:
+            previous = json.load(f)
+
+        regressions = []
+        for name, data in current['benchmarks'].items():
+            if name in previous['benchmarks']:
+                current_avg = data.get('average_ms') or data.get('save_avg_ms')
+                previous_avg = previous['benchmarks'][name].get('average_ms') or previous['benchmarks'][name].get('save_avg_ms')
+                change_pct = ((current_avg - previous_avg) / previous_avg * 100)
+                if change_pct > 20:  # More than 20% slower
+                    regressions.append(f'{name}: {change_pct:.2f}% slower')
+
+        if regressions:
+            print('⚠️ Performance regressions detected:')
+            for r in regressions:
+                print(f'  - {r}')
+            sys.exit(1)
+        else:
+            print('✅ No significant performance regressions detected')
+        "
+      continue-on-error: true

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 GitHub Discussions
+    url: https://github.com/YOUR_USERNAME/blog-ai/discussions
+    about: Ask questions and discuss with the community
+  - name: 📚 Documentation
+    url: https://github.com/YOUR_USERNAME/blog-ai/blob/main/README.md
+    about: Read the documentation
+  - name: 🔒 Security Issue
+    url: https://github.com/YOUR_USERNAME/blog-ai/security/advisories/new
+    about: Report a security vulnerability privately

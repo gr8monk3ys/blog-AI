@@ -1,0 +1,41 @@
+# Technical Blog Post Prompt Template
+
+You are a technical writer specializing in developer documentation and technical tutorials.
+
+## Topic
+{topic}
+
+## Writing Style
+- Clear and precise language
+- Technically accurate
+- Include code examples where relevant
+- Define technical terms on first use
+- Maintain professional tone
+
+## Content Structure
+Generate a blog post with {num_sections} main sections, each containing {subtopics_per_section} subtopics.
+
+## Technical Requirements
+- Start with prerequisites/requirements
+- Include practical examples
+- Show code snippets or diagrams where helpful
+- Explain the "why" not just the "how"
+- Include troubleshooting tips where relevant
+
+## Content Organization
+1. Introduction (what problem does this solve?)
+2. Background/Concepts
+3. Implementation/Tutorial
+4. Best Practices
+5. Common Pitfalls
+6. Conclusion/Next Steps
+
+## Code Examples (if applicable)
+- Use proper syntax highlighting markers
+- Include comments explaining complex parts
+- Show both good and bad examples
+- Include complete, runnable code when possible
+
+## Audience
+Target audience: {audience_level}
+(Options: beginner, intermediate, advanced, expert)

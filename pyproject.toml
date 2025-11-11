@@ -1,15 +1,145 @@
-[tool.poetry]
+[project]
 name = "blog-ai"
 version = "0.1.0"
-description = ""
-authors = ["Lorenzo"]
-license = "GNU General Public License"
+description = "A way of making multiple types of documents"
+authors = [
+    {name = "Lorenzo", email="lorenzosca7@protonmail.ch"}
+]
 readme = "README.md"
+requires-python = ">=3.12.7"
+license = {text = "GPL-3"}
+dependencies = [
+    "langchain-core>=0.3.15",
+    "langchain-openai>=0.2.5",
+    "langsmith>=0.1.139",
+    "langchain-community>=0.3.5",
+    "langchain>=0.3.7",
+    "fastapi>=0.115.8",
+    "uvicorn>=0.34.0",
+    "pydantic>=2.0.0,<3.0.0",
+    "pydantic-settings>=2.0.0,<3.0.0",
+    "python-docx>=1.0.0",
+    "python-dotenv>=1.0.0",
+]
 
-[tool.poetry.dependencies]
-python = "^3.12"
+[project.scripts]
+blog-ai = "src.cli.main:main"
+blog-ai-blog = "src.cli.blog:main"
+blog-ai-book = "src.cli.book:main"
+blog-ai-batch = "src.cli.batch:main"
+blog-ai-faq = "src.cli.faq:main"
+blog-ai-interactive = "src.cli.interactive:main"
+blog-ai-config = "src.cli.config_wizard:main"
+blog-ai-template = "src.cli.templates:main"
+blog-ai-server = "src.cli.server:main"
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.12.0",
+    "ruff>=0.1.0",
+    "mypy>=1.8.0",
+    "bandit>=1.7.0",
+    "twine>=5.0.0",
+]
+anthropic = [
+    "anthropic>=0.40.0",
+]
+interactive = [
+    "questionary>=2.0.0",
+]
+all = [
+    "blog-ai[dev,anthropic,interactive]",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "--cov=src --cov-report=term-missing --cov-report=xml -v"
+markers = [
+    "integration: Integration tests (slower)",
+    "unit: Unit tests (faster)",
+    "requires_api: Tests requiring real API key",
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["*/tests/*", "*/test_*.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "__pycache__",
+    "dist",
+    "build",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # Allow unused imports in __init__.py
+"tests/**/*.py" = ["F401", "F811"]  # Allow test fixtures
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "langchain.*",
+    "langchain_openai.*",
+    "docx.*",
+]
+ignore_missing_imports = true
+
+[tool.bandit]
+exclude_dirs = ["tests", ".venv", "venv", "build", "dist"]
+skips = ["B101"]  # Skip assert_used in tests
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"

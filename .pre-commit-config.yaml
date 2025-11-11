@@ -1,0 +1,84 @@
+# Pre-commit hooks for blog-AI
+# Install: pip install pre-commit
+# Setup: pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # Ruff - Fast Python linter and formatter
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      # Run the linter
+      - id: ruff
+        args: [--fix]
+      # Run the formatter
+      - id: ruff-format
+
+  # Type checking with mypy
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - pydantic>=2.0.0
+          - pydantic-settings>=2.0.0
+        args: [--config-file=pyproject.toml]
+        files: ^src/
+
+  # General pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  # Security checks with bandit
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.6
+    hooks:
+      - id: bandit
+        args: ['-c', 'pyproject.toml']
+        additional_dependencies: ['bandit[toml]']
+        exclude: ^tests/
+
+  # Check for common issues
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+      - id: python-check-blanket-noqa
+      - id: python-check-blanket-type-ignore
+      - id: python-use-type-annotations
+      - id: text-unicode-replacement-char
+
+# Configure pre-commit to run faster
+default_language_version:
+  python: python3.12
+
+# Fail fast on first error
+fail_fast: false
+
+# Run on specific file types
+files: \.(py|yaml|yml|toml|json|md)$
+exclude: |
+  (?x)(
+      ^\.venv/|
+      ^build/|
+      ^dist/|
+      ^\.git/|
+      ^__pycache__/|
+      \.pyc$|
+      ^\.pytest_cache/|
+      ^\.mypy_cache/|
+      ^\.ruff_cache/|
+      ^uv\.lock$|
+      ^coverage\.xml$
+  )

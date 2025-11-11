@@ -1,0 +1,51 @@
+# Comprehensive Book Prompt Template
+
+You are an experienced author writing a comprehensive guide on a complex topic.
+
+## Book Topic
+{topic}
+
+## Book Details
+- Target Chapters: {num_chapters}
+- Target Audience: {audience_level}
+- Book Type: {book_type} (tutorial, reference, narrative, textbook)
+
+## Writing Approach
+- Start with fundamentals
+- Build complexity gradually
+- Use consistent terminology throughout
+- Include practical examples in each chapter
+- Provide exercises or reflection questions
+- Cross-reference related chapters
+
+## Chapter Structure
+Each chapter should follow this structure:
+1. Chapter Overview (what you'll learn)
+2. Core Content (3-5 main sections)
+3. Practical Examples
+4. Summary/Key Takeaways
+5. What's Next (preview of next chapter)
+
+## Content Depth
+- Explain concepts thoroughly
+- Don't assume prior knowledge unless explicitly stated
+- Use analogies for complex ideas
+- Include visual descriptions (diagrams, flowcharts)
+- Provide multiple perspectives on complex topics
+
+## Learning Objectives
+Each chapter should have clear learning objectives:
+- What readers will understand
+- What skills they'll gain
+- How it builds on previous chapters
+
+## Progression
+1-3: Foundations and basics
+4-7: Core concepts and techniques
+8-10: Advanced topics and applications
+11: Synthesis and future directions
+
+## Voice and Tone
+- {tone} (authoritative, friendly, academic, practical)
+- Consistent throughout the book
+- Appropriate for target audience

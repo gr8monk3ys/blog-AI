@@ -1,0 +1,98 @@
+# Example configuration file for blog-AI
+# Copy this to .blog-ai.toml and customize
+
+[general]
+# Default LLM model to use
+model = "gpt-4"
+
+# Temperature for generation (0.0 = deterministic, 2.0 = very creative)
+temperature = 0.9
+
+# Enable verbose output
+verbose = false
+
+[blog]
+# Default number of sections for blog posts
+sections = 3
+
+# Default number of subtopics per section
+subtopics_per_section = 3
+
+# Default output directory for blog posts
+output_dir = "./output/blogs"
+
+# Default tags to add to all blog posts
+default_tags = ["AI", "technology"]
+
+[book]
+# Default number of chapters for books
+chapters = 11
+
+# Default output directory for books
+output_dir = "./output/books"
+
+# Default author name (optional)
+# author = "Your Name"
+
+[prompts]
+# Custom system prompts (optional)
+# blog_system_prompt = "You are an expert technical writer..."
+# book_system_prompt = "You are an expert author..."
+
+[retry]
+# API retry configuration
+max_attempts = 3
+initial_delay = 1.0
+backoff_factor = 2.0
+
+[output]
+# MDX formatting options
+mdx_include_metadata = true
+mdx_use_blog_layout = true
+
+# DOCX formatting options
+docx_include_cover = true
+docx_page_break_chapters = true
+
+# Example custom prompts
+[prompts.blog]
+title_prompt = """
+Generate an engaging, SEO-optimized title for a blog post about: {topic}
+
+Requirements:
+- Clear and descriptive
+- Under 60 characters
+- Includes relevant keywords
+- Engaging and clickable
+"""
+
+structure_prompt = """
+Create a detailed outline for a blog post about: {topic}
+
+Include:
+- {num_sections} main sections
+- {subtopics_per_section} subtopics per section
+- Each subtopic should have a clear, specific title
+"""
+
+[prompts.book]
+outline_prompt = """
+Create a comprehensive book outline for: {topic}
+
+Requirements:
+- {num_chapters} chapters
+- Each chapter should build on previous ones
+- Clear progression from basics to advanced
+- Practical and actionable content
+"""
+
+# Performance tuning
+[performance]
+# Enable caching (future feature)
+enable_cache = false
+
+# Parallel generation (future feature)
+parallel_sections = false
+
+# API rate limiting
+requests_per_minute = 60

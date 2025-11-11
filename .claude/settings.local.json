@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(uv sync:*)",
+      "Bash(uv python list:*)",
+      "Bash(uv python pin:*)",
+      "Bash(python test_quick.py:*)",
+      "Bash(uv run:*)",
+      "Bash(tree:*)",
+      "Bash(python -m py_compile:*)",
+      "Bash(find:*)",
+      "Bash(python:*)",
+      "Bash(. .venv/Scripts/activate)",
+      "Bash(uv pip list:*)",
+      "Bash(findstr:*)",
+      "Bash(dir:*)",
+      "Bash(nul)",
+      "Bash(git restore:*)",
+      "Bash(SECURITY.md 2)",
+      "Bash(echo:*)",
+      "Bash(SECURITY.md)",
+      "Bash(\"c:\\_Code\\blog-AI\\.github\\ISSUE_TEMPLATE\\bug_report.yml\" 2)",
+      "Bash(\"c:\\_Code\\blog-AI\\.github\\ISSUE_TEMPLATE\\feature_request.yml\" 2)",
+      "Bash(\"c:\\_Code\\blog-AI\\.github\\PULL_REQUEST_TEMPLATE.md\")",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\ndocs: improve CLAUDE.md with concise architecture guide\n\n- Streamlined from 450 to 300 lines while keeping essential info\n- Focused on essential commands for setup, development, and testing\n- Emphasized high-level architecture and design patterns\n- Added practical examples for extending the codebase\n- Removed redundant details already in CONTRIBUTING.md\n- Kept critical troubleshooting and project status\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

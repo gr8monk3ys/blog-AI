@@ -1,0 +1,137 @@
+name: ( Feature Request
+description: Suggest a new feature or enhancement
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature! Please provide as much detail as possible.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission Checks
+      description: Please confirm the following before submitting
+      options:
+        - label: I have searched existing issues and this is not a duplicate
+          required: true
+        - label: I have read the [documentation](https://github.com/YOUR_USERNAME/blog-ai/blob/main/README.md)
+          required: true
+        - label: This feature aligns with the project's goals
+          required: false
+
+  - type: dropdown
+    id: feature-type
+    attributes:
+      label: Feature Type
+      description: What type of feature are you requesting?
+      options:
+        - New Content Type (e.g., podcast scripts, social media posts)
+        - CLI Enhancement
+        - API/SDK Feature
+        - Output Format (e.g., PDF, LaTeX)
+        - LLM Provider Integration
+        - Performance Improvement
+        - Developer Experience
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve? Is your feature request related to a problem?
+      placeholder: |
+        I'm always frustrated when...
+        Currently, users cannot...
+        It would be helpful if...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like
+      placeholder: |
+        I would like to see...
+        The feature should work like...
+        Users would benefit from...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Have you considered any alternative solutions or workarounds?
+      placeholder: |
+        I've tried...
+        Another approach could be...
+        Similar tools handle this by...
+
+  - type: textarea
+    id: use-cases
+    attributes:
+      label: Use Cases
+      description: Describe specific use cases for this feature
+      placeholder: |
+        1. As a content creator, I want to...
+        2. When generating blog posts, I need to...
+        3. For bulk content generation, it would help to...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - Critical - Blocking my workflow
+        - High - Would significantly improve my workflow
+        - Medium - Nice to have
+        - Low - Minor improvement
+    validations:
+      required: true
+
+  - type: dropdown
+    id: contribution
+    attributes:
+      label: Contribution
+      description: Are you willing to contribute to implementing this feature?
+      options:
+        - "Yes, I can implement this feature"
+        - "Yes, I can help with testing"
+        - "Yes, I can help with documentation"
+        - "No, but I can provide feedback"
+        - "No, I'm just suggesting"
+    validations:
+      required: false
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Examples & References
+      description: Provide examples, mockups, or references to similar features
+      placeholder: |
+        - Link to similar feature in other tools
+        - Code snippets showing desired API
+        - Screenshots or mockups
+        - Example input/output
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any other context, screenshots, or information about the feature request
+      placeholder: |
+        - Related issues or discussions
+        - Impact on existing features
+        - Compatibility considerations
+        - Implementation suggestions

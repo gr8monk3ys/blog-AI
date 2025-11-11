@@ -1,0 +1,14 @@
+# Sample Topics for Batch Generation
+# Lines starting with # are comments
+# One topic per line
+
+Python AsyncIO Programming Best Practices
+Machine Learning Model Deployment Strategies
+Microservices Architecture Patterns
+Database Optimization Techniques
+RESTful API Design Principles
+Docker Container Best Practices
+Kubernetes Deployment Strategies
+CI/CD Pipeline Automation
+Test-Driven Development
+Clean Code Architecture

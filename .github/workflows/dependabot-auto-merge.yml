@@ -1,0 +1,86 @@
+name: Dependabot Auto-Merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    name: Auto-merge Dependabot PRs
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+
+    steps:
+    - name: Dependabot metadata
+      id: metadata
+      uses: dependabot/fetch-metadata@v2
+      with:
+        github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+    - name: Check if PR is passing
+      id: check-pr
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { data: pr } = await github.rest.pulls.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number,
+          });
+
+          // Check if PR is mergeable
+          if (pr.mergeable_state !== 'clean') {
+            core.setFailed('PR is not in a mergeable state');
+            return;
+          }
+
+          // Get all check runs for the PR
+          const { data: checks } = await github.rest.checks.listForRef({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            ref: pr.head.sha,
+          });
+
+          // Check if all required checks passed
+          const failedChecks = checks.check_runs.filter(
+            check => check.conclusion !== 'success' && check.conclusion !== 'skipped'
+          );
+
+          if (failedChecks.length > 0) {
+            core.setFailed(`Some checks failed: ${failedChecks.map(c => c.name).join(', ')}`);
+            return;
+          }
+
+          core.info('All checks passed, PR is ready to merge');
+
+    - name: Auto-merge for patch updates
+      if: steps.metadata.outputs.update-type == 'version-update:semver-patch'
+      run: |
+        gh pr merge --auto --squash "$PR_URL"
+      env:
+        PR_URL: ${{ github.event.pull_request.html_url }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Auto-merge for minor updates
+      if: steps.metadata.outputs.update-type == 'version-update:semver-minor'
+      run: |
+        gh pr merge --auto --squash "$PR_URL"
+      env:
+        PR_URL: ${{ github.event.pull_request.html_url }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Comment on major updates
+      if: steps.metadata.outputs.update-type == 'version-update:semver-major'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: '⚠️ This is a **major version update**. Please review carefully before merging.'
+          })
