@@ -1,0 +1,78 @@
+{
+  "$schema": "./plugin-settings.schema.json",
+  "version": "1.0.0",
+  "description": "User preferences for lorenzos-claude-code plugin. Copy to ~/.claude/plugin-settings.json and customize.",
+
+  "framework": {
+    "default": "nextjs",
+    "options": ["nextjs", "react", "vue", "angular", "svelte"],
+    "description": "Default framework for component and page generation"
+  },
+
+  "typescript": {
+    "strict": true,
+    "noAny": true,
+    "description": "TypeScript configuration preferences"
+  },
+
+  "styling": {
+    "default": "tailwind",
+    "options": ["tailwind", "css-modules", "styled-components", "emotion", "vanilla"],
+    "description": "Default styling approach for generated components"
+  },
+
+  "testing": {
+    "framework": "vitest",
+    "options": ["jest", "vitest", "playwright"],
+    "coverage": true,
+    "description": "Testing framework preferences"
+  },
+
+  "database": {
+    "default": "supabase",
+    "options": ["supabase", "prisma", "drizzle", "mongodb", "raw-sql"],
+    "description": "Default database/ORM for migrations and queries"
+  },
+
+  "api": {
+    "style": "rest",
+    "options": ["rest", "graphql", "trpc"],
+    "validation": "zod",
+    "errorFormat": "structured",
+    "description": "API generation preferences"
+  },
+
+  "deployment": {
+    "platform": "vercel",
+    "options": ["vercel", "netlify", "aws", "docker", "railway"],
+    "ci": "github-actions",
+    "description": "Deployment platform preferences"
+  },
+
+  "codeStyle": {
+    "quotes": "single",
+    "semicolons": false,
+    "tabWidth": 2,
+    "trailingComma": "es5",
+    "description": "Code formatting preferences (should match your prettier/eslint config)"
+  },
+
+  "features": {
+    "includeTests": true,
+    "includeTypes": true,
+    "includeComments": false,
+    "includeExamples": true,
+    "description": "What to include in generated code"
+  },
+
+  "paths": {
+    "components": "src/components",
+    "pages": "src/app",
+    "hooks": "src/hooks",
+    "lib": "src/lib",
+    "api": "src/app/api",
+    "tests": "__tests__",
+    "types": "src/types",
+    "description": "Custom paths for generated files (relative to project root)"
+  }
+}

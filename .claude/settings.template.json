@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "_comment": "Recommended Claude Code settings for lorenzos-claude-code plugin",
+
+  "statusLine": {
+    "type": "command",
+    "command": "/path/to/your/statusline",
+    "padding": 0,
+    "_comment": "Customize this to show useful project info"
+  },
+
+  "alwaysThinkingEnabled": false,
+  "_alwaysThinkingComment": "Set to true for deeper reasoning on complex tasks",
+
+  "model": {
+    "default": "claude-sonnet-4-5",
+    "_comment": "Sonnet 4.5 is balanced. Commands auto-override to Opus 4.5 when needed."
+  },
+
+  "editor": {
+    "autoSave": true,
+    "formatOnSave": true,
+    "tabSize": 2,
+    "insertSpaces": true,
+    "_comment": "Matches Next.js/React conventions (2 spaces)"
+  },
+
+  "git": {
+    "autoCommit": false,
+    "signCommits": true,
+    "_comment": "Review commits manually before pushing"
+  },
+
+  "security": {
+    "scanSecrets": true,
+    "preventSecretsInCommits": true,
+    "_comment": "CRITICAL: Prevents .env files in commits"
+  },
+
+  "hooks": {
+    "_comment": "Pre-configured hooks for automation. See HOOKS.md for details.",
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/block-sensitive-files.sh",
+            "_comment": "Block modifications to .env, secrets, credentials"
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/validate-json.sh",
+            "_comment": "Validate JSON syntax before writing"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/auto-format.sh",
+            "_comment": "Auto-format with prettier/eslint/biome"
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/typecheck.sh",
+            "_comment": "TypeScript type-check after edits"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/notify-completion.sh",
+            "_comment": "Desktop notification when Claude finishes"
+          }
+        ],
+        "_comment": "Optional: Add auto-commit.sh here if you want auto-commits"
+      }
+    ]
+  },
+
+  "workspace": {
+    "excludePatterns": [
+      "node_modules/**",
+      ".next/**",
+      ".git/**",
+      "dist/**",
+      "build/**",
+      ".env*",
+      "*.log",
+      "coverage/**"
+    ],
+    "_comment": "Exclude build artifacts and sensitive files from context"
+  },
+
+  "typescript": {
+    "strict": true,
+    "_comment": "Aligns with plugin's strict typing philosophy (no 'any' types)"
+  },
+
+  "mcp": {
+    "_comment": "MCP servers are configured in plugin.json. Set env vars here if needed:",
+    "envVars": {
+      "SUPABASE_URL": "https://your-project.supabase.co",
+      "SUPABASE_SERVICE_ROLE_KEY": "your-service-role-key-here",
+      "_comment": "Replace with your actual Supabase credentials"
+    }
+  },
+
+  "notifications": {
+    "commandCompletion": true,
+    "errors": true,
+    "_comment": "Get notified when commands finish or errors occur"
+  },
+
+  "performance": {
+    "maxTokens": 8000,
+    "streamResponses": true,
+    "_comment": "Optimize for responsiveness"
+  },
+
+  "_usage": {
+    "_comment": "To use these settings:",
+    "1": "Copy this file to ~/.claude/settings.json (or project-specific location)",
+    "2": "Update SUPABASE_URL and keys with your actual credentials",
+    "3": "Adjust any settings to match your workflow preferences",
+    "4": "Restart Claude Code to apply changes"
+  }
+}

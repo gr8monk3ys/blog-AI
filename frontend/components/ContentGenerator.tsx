@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Switch } from '@headlessui/react';
 import { PencilIcon, LightBulbIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import { BlogGenerationOptions } from '../types/blog';
+import { BlogGenerationResponse } from '../types/content';
+import { API_ENDPOINTS, getDefaultHeaders, checkServerConnection } from '../lib/api';
 
 interface ContentGeneratorProps {
   conversationId: string;
-  setContent: (content: any) => void;
+  setContent: (content: BlogGenerationResponse) => void;
   setLoading: (loading: boolean) => void;
 }
 
@@ -16,27 +18,10 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
   const [useResearch, setUseResearch] = useState(false);
   const [proofread, setProofread] = useState(true);
   const [humanize, setHumanize] = useState(true);
-
-  // Function to check if the server is running
-  const checkServerConnection = async (): Promise<boolean> => {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout
-      
-      const response = await fetch('http://localhost:8000/', {
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      return response.ok;
-    } catch (err) {
-      console.log('Server connection check failed:', err);
-      return false;
-    }
-  };
+  const [error, setError] = useState<string | null>(null);
 
   // Mock blog post data for development or when server is not available
-  const generateMockBlogPost = () => {
+  const generateMockBlogPost = (): BlogGenerationResponse => {
     return {
       success: true,
       type: "blog",
@@ -117,6 +102,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     try {
       // Check if server is running
@@ -132,11 +118,9 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
       }
       
       // Server is running, make the real request
-      const response = await fetch('http://localhost:8000/generate-blog', {
+      const response = await fetch(API_ENDPOINTS.generateBlog, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getDefaultHeaders(),
         body: JSON.stringify({
           topic,
           keywords: keywords.split(',').map(k => k.trim()).filter(k => k),
@@ -148,15 +132,19 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
         }),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `Server error: ${response.status}`);
+      }
+
       const data = await response.json();
-      if (data.success) {
-        setContent(data);
-      } else {
+      if (!data.success) {
         throw new Error(data.detail || 'Failed to generate content');
       }
-    } catch (error) {
-      console.error('Error generating content:', error);
-      alert('Failed to generate content. Please try again.');
+      setContent(data);
+    } catch (err) {
+      console.error('Error generating content:', err);
+      setError(err instanceof Error ? err.message : 'Failed to generate content. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -282,6 +270,20 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
             </div>
           </div>
         </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            <p className="font-medium">Error</p>
+            <p>{error}</p>
+            <button
+              type="button"
+              onClick={() => setError(null)}
+              className="mt-2 text-xs bg-red-100 hover:bg-red-200 px-2 py-1 rounded transition-colors"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
 
         <button
           type="submit"

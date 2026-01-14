@@ -1,0 +1,168 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Lorenzo's Claude Code Plugin Settings",
+  "description": "User preferences for lorenzos-claude-code plugin",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "description": {
+      "type": "string"
+    },
+    "framework": {
+      "type": "object",
+      "properties": {
+        "default": {
+          "type": "string",
+          "enum": ["nextjs", "react", "vue", "angular", "svelte"]
+        },
+        "options": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "description": { "type": "string" }
+      },
+      "required": ["default"]
+    },
+    "typescript": {
+      "type": "object",
+      "properties": {
+        "strict": { "type": "boolean" },
+        "noAny": { "type": "boolean" },
+        "description": { "type": "string" }
+      }
+    },
+    "styling": {
+      "type": "object",
+      "properties": {
+        "default": {
+          "type": "string",
+          "enum": ["tailwind", "css-modules", "styled-components", "emotion", "vanilla"]
+        },
+        "options": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "description": { "type": "string" }
+      },
+      "required": ["default"]
+    },
+    "testing": {
+      "type": "object",
+      "properties": {
+        "framework": {
+          "type": "string",
+          "enum": ["jest", "vitest", "playwright"]
+        },
+        "options": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "coverage": { "type": "boolean" },
+        "description": { "type": "string" }
+      },
+      "required": ["framework"]
+    },
+    "database": {
+      "type": "object",
+      "properties": {
+        "default": {
+          "type": "string",
+          "enum": ["supabase", "prisma", "drizzle", "mongodb", "raw-sql"]
+        },
+        "options": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "description": { "type": "string" }
+      },
+      "required": ["default"]
+    },
+    "api": {
+      "type": "object",
+      "properties": {
+        "style": {
+          "type": "string",
+          "enum": ["rest", "graphql", "trpc"]
+        },
+        "options": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "validation": {
+          "type": "string",
+          "enum": ["zod", "yup", "joi", "none"]
+        },
+        "errorFormat": {
+          "type": "string",
+          "enum": ["structured", "simple"]
+        },
+        "description": { "type": "string" }
+      },
+      "required": ["style"]
+    },
+    "deployment": {
+      "type": "object",
+      "properties": {
+        "platform": {
+          "type": "string",
+          "enum": ["vercel", "netlify", "aws", "docker", "railway"]
+        },
+        "options": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "ci": {
+          "type": "string",
+          "enum": ["github-actions", "gitlab-ci", "circleci", "none"]
+        },
+        "description": { "type": "string" }
+      },
+      "required": ["platform"]
+    },
+    "codeStyle": {
+      "type": "object",
+      "properties": {
+        "quotes": {
+          "type": "string",
+          "enum": ["single", "double"]
+        },
+        "semicolons": { "type": "boolean" },
+        "tabWidth": { "type": "integer", "minimum": 1, "maximum": 8 },
+        "trailingComma": {
+          "type": "string",
+          "enum": ["none", "es5", "all"]
+        },
+        "description": { "type": "string" }
+      }
+    },
+    "features": {
+      "type": "object",
+      "properties": {
+        "includeTests": { "type": "boolean" },
+        "includeTypes": { "type": "boolean" },
+        "includeComments": { "type": "boolean" },
+        "includeExamples": { "type": "boolean" },
+        "description": { "type": "string" }
+      }
+    },
+    "paths": {
+      "type": "object",
+      "properties": {
+        "components": { "type": "string" },
+        "pages": { "type": "string" },
+        "hooks": { "type": "string" },
+        "lib": { "type": "string" },
+        "api": { "type": "string" },
+        "tests": { "type": "string" },
+        "types": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { API_ENDPOINTS, getDefaultHeaders, checkServerConnection } from '../lib/api';
 
 interface Message {
   role: string;
@@ -75,34 +76,67 @@ export default function ConversationHistory({ conversationId }: ConversationHist
     }
   ];
 
-  // Function to check if the server is running
-  const checkServerConnection = async (): Promise<boolean> => {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout
-      
-      const response = await fetch('http://localhost:8000/', {
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      return response.ok;
-    } catch (err) {
-      console.log('Server connection check failed:', err);
-      return false;
-    }
-  };
-
   useEffect(() => {
     let isMounted = true;
-    
+    let websocket: WebSocket | null = null;
+
+    const setupWebSocket = (conversationId: string): WebSocket | null => {
+      try {
+        const ws = new WebSocket(API_ENDPOINTS.websocket(conversationId));
+
+        ws.onopen = () => {
+          if (isMounted) {
+            console.log('WebSocket connection established');
+            setWs(ws);
+          }
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+            if (message.type === 'message') {
+              if (isMounted) {
+                setMessages(prev => [...prev, message]);
+                setIsAiTyping(false);
+              }
+            } else if (message.type === 'typing') {
+              if (isMounted) setIsAiTyping(true);
+            }
+          } catch {
+            console.error('Failed to parse WebSocket message');
+          }
+        };
+
+        ws.onerror = (error) => {
+          if (isMounted) {
+            console.error('WebSocket error:', error);
+            setError('Connection error. Messages may not update in real-time.');
+          }
+        };
+
+        ws.onclose = () => {
+          if (isMounted) {
+            console.log('WebSocket connection closed');
+          }
+        };
+
+        return ws;
+      } catch (err) {
+        console.error('Error setting up WebSocket:', err);
+        if (isMounted) {
+          setError('Failed to establish real-time connection.');
+        }
+        return null;
+      }
+    };
+
     const initializeConversation = async () => {
       setIsLoading(true);
-      
+
       // Check if server is running
       const isConnected = await checkServerConnection();
       if (isMounted) setIsServerConnected(isConnected);
-      
+
       if (!isConnected) {
         // Use mock data if server is not running
         setTimeout(() => {
@@ -113,17 +147,22 @@ export default function ConversationHistory({ conversationId }: ConversationHist
         }, 1000); // Simulate loading delay
         return;
       }
-      
-      // Server is running, try to load conversation
+
+      // Server is running, setup WebSocket connection
+      websocket = setupWebSocket(conversationId);
+
+      // Load conversation history
       try {
-        const response = await fetch(`http://localhost:8000/conversations/${conversationId}`);
-        
+        const response = await fetch(API_ENDPOINTS.conversation(conversationId), {
+          headers: getDefaultHeaders(),
+        });
+
         if (!response.ok) {
           throw new Error(`Failed to load conversation: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
+
         if (isMounted) {
           setMessages(data.conversation || []);
           setError(null);
@@ -140,68 +179,13 @@ export default function ConversationHistory({ conversationId }: ConversationHist
       }
     };
 
-    const setupWebSocket = () => {
-      // Only attempt to connect if server is running
-      if (!isServerConnected) return null;
-      
-      try {
-        const websocket = new WebSocket(`ws://localhost:8000/ws/conversation/${conversationId}`);
-        
-        websocket.onopen = () => {
-          if (isMounted) {
-            console.log('WebSocket connection established');
-            setWs(websocket);
-          }
-        };
-        
-        websocket.onmessage = (event) => {
-          const message = JSON.parse(event.data);
-          if (message.type === 'message') {
-            if (isMounted) {
-              setMessages(prev => [...prev, message]);
-              setIsAiTyping(false);
-            }
-          } else if (message.type === 'typing') {
-            if (isMounted) setIsAiTyping(true);
-          }
-        };
-        
-        websocket.onerror = (error) => {
-          if (isMounted) {
-            console.error('WebSocket error:', error);
-            setError('Connection error. Messages may not update in real-time.');
-          }
-        };
-        
-        websocket.onclose = () => {
-          if (isMounted) {
-            console.log('WebSocket connection closed');
-          }
-        };
-        
-        return websocket;
-      } catch (err) {
-        console.error('Error setting up WebSocket:', err);
-        if (isMounted) {
-          setError('Failed to establish real-time connection.');
-        }
-        return null;
-      }
-    };
-
     initializeConversation();
-    
-    // Setup WebSocket after checking server connection
-    let websocket: WebSocket | null = null;
-    if (isServerConnected) {
-      websocket = setupWebSocket();
-    }
-    
+
     return () => {
       isMounted = false;
       if (websocket) websocket.close();
     };
-  }, [conversationId, isServerConnected]);
+  }, [conversationId]);
 
   // Scroll to bottom when messages change
   useEffect(() => {

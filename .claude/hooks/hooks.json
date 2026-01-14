@@ -1,0 +1,46 @@
+{
+  "hooks": [
+    {
+      "event": "PreToolUse",
+      "matcher": {
+        "tool_name": ["Edit", "Write"]
+      },
+      "command": "./.claude/hooks/block-sensitive-files.sh",
+      "description": "Prevents editing .env, credentials, keys, and other sensitive files"
+    },
+    {
+      "event": "PreToolUse",
+      "matcher": {
+        "tool_name": ["Write"]
+      },
+      "command": "./.claude/hooks/validate-json.sh",
+      "description": "Validates JSON syntax before writing JSON files"
+    },
+    {
+      "event": "PostToolUse",
+      "matcher": {
+        "tool_name": ["Edit", "Write"]
+      },
+      "command": "./.claude/hooks/auto-format.sh",
+      "description": "Auto-formats code with Prettier/Biome/ESLint after edits"
+    },
+    {
+      "event": "PostToolUse",
+      "matcher": {
+        "tool_name": ["Edit", "Write"]
+      },
+      "command": "./.claude/hooks/typecheck.sh",
+      "description": "Runs TypeScript type checking after code changes"
+    },
+    {
+      "event": "Stop",
+      "command": "./.claude/hooks/auto-commit.sh",
+      "description": "Auto-commits changes when task completes"
+    },
+    {
+      "event": "Stop",
+      "command": "./.claude/hooks/notify-completion.sh",
+      "description": "Desktop notification on completion"
+    }
+  ]
+}

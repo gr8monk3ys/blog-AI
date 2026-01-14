@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Switch } from '@headlessui/react';
 import { BookOpenIcon, LightBulbIcon, PencilIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline';
 import { BookGenerationOptions } from '../types/book';
+import { BookGenerationResponse } from '../types/content';
+import { API_ENDPOINTS, getDefaultHeaders, checkServerConnection } from '../lib/api';
 
 interface BookGeneratorProps {
   conversationId: string;
-  setContent: (content: any) => void;
+  setContent: (content: BookGenerationResponse) => void;
   setLoading: (loading: boolean) => void;
 }
 
@@ -18,27 +20,10 @@ export default function BookGenerator({ conversationId, setContent, setLoading }
   const [useResearch, setUseResearch] = useState(false);
   const [proofread, setProofread] = useState(true);
   const [humanize, setHumanize] = useState(true);
-
-  // Function to check if the server is running
-  const checkServerConnection = async (): Promise<boolean> => {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout
-      
-      const response = await fetch('http://localhost:8000/', {
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      return response.ok;
-    } catch (err) {
-      console.log('Server connection check failed:', err);
-      return false;
-    }
-  };
+  const [error, setError] = useState<string | null>(null);
 
   // Mock book data for development or when server is not available
-  const generateMockBook = () => {
+  const generateMockBook = (): BookGenerationResponse => {
     const bookTitle = title || "The Future of Artificial Intelligence";
     const chapters = [];
     
@@ -82,6 +67,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     try {
       // Check if server is running
@@ -97,11 +83,9 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
       }
       
       // Server is running, make the real request
-      const response = await fetch('http://localhost:8000/generate-book', {
+      const response = await fetch(API_ENDPOINTS.generateBook, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getDefaultHeaders(),
         body: JSON.stringify({
           title,
           num_chapters: numChapters,
@@ -115,15 +99,19 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
         }),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `Server error: ${response.status}`);
+      }
+
       const data = await response.json();
-      if (data.success) {
-        setContent(data);
-      } else {
+      if (!data.success) {
         throw new Error(data.detail || 'Failed to generate book');
       }
-    } catch (error) {
-      console.error('Error generating book:', error);
-      alert('Failed to generate book. Please try again.');
+      setContent(data);
+    } catch (err) {
+      console.error('Error generating book:', err);
+      setError(err instanceof Error ? err.message : 'Failed to generate book. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -170,7 +158,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
                 type="number"
                 id="numChapters"
                 value={numChapters}
-                onChange={(e) => setNumChapters(parseInt(e.target.value))}
+                onChange={(e) => setNumChapters(parseInt(e.target.value, 10))}
                 min={1}
                 max={20}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -184,7 +172,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
                 type="number"
                 id="sectionsPerChapter"
                 value={sectionsPerChapter}
-                onChange={(e) => setSectionsPerChapter(parseInt(e.target.value))}
+                onChange={(e) => setSectionsPerChapter(parseInt(e.target.value, 10))}
                 min={1}
                 max={10}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -287,6 +275,20 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
             </div>
           </div>
         </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            <p className="font-medium">Error</p>
+            <p>{error}</p>
+            <button
+              type="button"
+              onClick={() => setError(null)}
+              className="mt-2 text-xs bg-red-100 hover:bg-red-200 px-2 py-1 rounded transition-colors"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
 
         <button
           type="submit"
