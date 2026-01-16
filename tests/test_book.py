@@ -1,6 +1,7 @@
 """
 Tests for the book module.
 """
+
 import os
 import sys
 import unittest
@@ -9,11 +10,17 @@ from unittest.mock import MagicMock, patch
 # Add the src directory to the path so we can import the modules
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.book.make_book import (generate_book, generate_book_with_research,
-                                generate_chapter, generate_conclusion_chapter,
-                                generate_introduction_chapter,
-                                load_book_from_json, post_process_book,
-                                save_book_to_json, save_book_to_markdown)
+from src.book.make_book import (
+    generate_book,
+    generate_book_with_research,
+    generate_chapter,
+    generate_conclusion_chapter,
+    generate_introduction_chapter,
+    load_book_from_json,
+    post_process_book,
+    save_book_to_json,
+    save_book_to_markdown,
+)
 from src.types.content import Book, Chapter, Section, SubTopic
 
 

@@ -1,10 +1,10 @@
 """
 Humanization functionality.
 """
+
 from typing import Optional
 
-from ..text_generation.core import (GenerationOptions, LLMProvider,
-                                    generate_text)
+from ..text_generation.core import GenerationOptions, LLMProvider, generate_text
 from ..types.post_processing import HumanizationOptions
 
 

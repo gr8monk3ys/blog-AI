@@ -1,10 +1,10 @@
 """
 Introduction generation functionality.
 """
+
 from typing import List, Optional
 
-from ..text_generation.core import (GenerationOptions, LLMProvider,
-                                    generate_text)
+from ..text_generation.core import GenerationOptions, LLMProvider, generate_text
 from ..types.blog_sections import Introduction
 
 

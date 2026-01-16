@@ -1,6 +1,7 @@
 """
 Tests for the blog module.
 """
+
 import os
 import sys
 import unittest
@@ -9,11 +10,14 @@ from unittest.mock import MagicMock, patch
 # Add the src directory to the path so we can import the modules
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.blog.make_blog import (generate_blog_post,
-                                generate_blog_post_with_research,
-                                load_blog_post_from_json,
-                                post_process_blog_post, save_blog_post_to_json,
-                                save_blog_post_to_markdown)
+from src.blog.make_blog import (
+    generate_blog_post,
+    generate_blog_post_with_research,
+    load_blog_post_from_json,
+    post_process_blog_post,
+    save_blog_post_to_json,
+    save_blog_post_to_markdown,
+)
 from src.types.content import BlogPost, Section, SubTopic
 
 

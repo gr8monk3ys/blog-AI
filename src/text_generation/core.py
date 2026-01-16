@@ -1,12 +1,18 @@
 """
 Core text generation functionality.
 """
+
 import os
 from typing import Any, Dict, Optional
 
-from ..types.providers import (AnthropicConfig, GeminiConfig,
-                               GenerationOptions, LLMProvider, OpenAIConfig,
-                               ProviderType)
+from ..types.providers import (
+    AnthropicConfig,
+    GeminiConfig,
+    GenerationOptions,
+    LLMProvider,
+    OpenAIConfig,
+    ProviderType,
+)
 
 
 class TextGenerationError(Exception):

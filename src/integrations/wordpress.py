@@ -1,6 +1,7 @@
 """
 WordPress integration functionality.
 """
+
 import base64
 import json
 import os
@@ -8,9 +9,14 @@ from typing import Any, Dict, List, Optional
 
 import requests
 
-from ..types.integrations import (IntegrationResult, WordPressCategory,
-                                  WordPressCredentials, WordPressImage,
-                                  WordPressPostOptions, WordPressTag)
+from ..types.integrations import (
+    IntegrationResult,
+    WordPressCategory,
+    WordPressCredentials,
+    WordPressImage,
+    WordPressPostOptions,
+    WordPressTag,
+)
 
 
 class WordPressIntegrationError(Exception):

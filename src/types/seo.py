@@ -1,6 +1,7 @@
 """
 Type definitions for SEO functionality.
 """
+
 from typing import Any, Dict, List, Literal, Optional
 
 

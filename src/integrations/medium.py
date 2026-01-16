@@ -1,14 +1,14 @@
 """
 Medium integration functionality.
 """
+
 import json
 import os
 from typing import Any, Dict, List, Optional
 
 import requests
 
-from ..types.integrations import (IntegrationResult, MediumCredentials,
-                                  MediumPostOptions)
+from ..types.integrations import IntegrationResult, MediumCredentials, MediumPostOptions
 
 
 class MediumIntegrationError(Exception):

@@ -3,6 +3,7 @@ Integration tests for the Blog AI API endpoints.
 
 These tests verify the API behavior, validation, and error handling.
 """
+
 import json
 import os
 import unittest

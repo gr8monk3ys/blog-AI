@@ -1,6 +1,7 @@
 """
 Type definitions for integrations functionality.
 """
+
 from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 

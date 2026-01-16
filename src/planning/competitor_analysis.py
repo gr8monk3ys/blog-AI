@@ -1,15 +1,19 @@
 """
 Competitor analysis functionality.
 """
+
 import json
 import os
 from typing import Any, Dict, List, Optional
 
 from ..research.web_researcher import conduct_web_research
-from ..text_generation.core import (GenerationOptions, LLMProvider,
-                                    generate_text)
-from ..types.planning import (Competitor, CompetitorAnalysisResult,
-                              CompetitorContent, ContentTopic)
+from ..text_generation.core import GenerationOptions, LLMProvider, generate_text
+from ..types.planning import (
+    Competitor,
+    CompetitorAnalysisResult,
+    CompetitorContent,
+    ContentTopic,
+)
 
 
 class CompetitorAnalysisError(Exception):

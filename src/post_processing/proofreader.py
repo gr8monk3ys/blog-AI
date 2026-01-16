@@ -1,12 +1,15 @@
 """
 Proofreading functionality.
 """
+
 from typing import Dict, List, Optional
 
-from ..text_generation.core import (GenerationOptions, LLMProvider,
-                                    generate_text)
-from ..types.post_processing import (ProofreadingIssue, ProofreadingOptions,
-                                     ProofreadingResult)
+from ..text_generation.core import GenerationOptions, LLMProvider, generate_text
+from ..types.post_processing import (
+    ProofreadingIssue,
+    ProofreadingOptions,
+    ProofreadingResult,
+)
 
 
 class ProofreadingError(Exception):

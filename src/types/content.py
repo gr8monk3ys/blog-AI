@@ -1,6 +1,7 @@
 """
 Type definitions for content generation.
 """
+
 from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 

@@ -1,6 +1,7 @@
 """
 Type definitions for blog sections functionality.
 """
+
 from typing import Any, Dict, List, Literal, Optional
 
 

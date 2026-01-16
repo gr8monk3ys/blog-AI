@@ -1,6 +1,7 @@
 """
 Run all tests for the blog-AI project.
 """
+
 import os
 import sys
 import unittest
@@ -11,11 +12,17 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 # Import all test modules
 from tests.test_blog import TestBlogModule
 from tests.test_book import TestBookModule
-from tests.test_integrations import (TestGitHubIntegration,
-                                     TestMediumIntegration,
-                                     TestWordPressIntegration)
-from tests.test_planning import (TestCompetitorAnalysis, TestContentCalendar,
-                                 TestContentOutline, TestTopicClusters)
+from tests.test_integrations import (
+    TestGitHubIntegration,
+    TestMediumIntegration,
+    TestWordPressIntegration,
+)
+from tests.test_planning import (
+    TestCompetitorAnalysis,
+    TestContentCalendar,
+    TestContentOutline,
+    TestTopicClusters,
+)
 
 
 def run_all_tests():

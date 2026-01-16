@@ -1,13 +1,23 @@
 """
 Web research functionality.
 """
+
 import os
 from typing import Any, Dict, List, Optional
 
-from ..types.research import (GoogleSerpResult, GoogleTrendsResult,
-                              MetaphorResult, PeopleAlsoAsk, RelatedSearch,
-                              ResearchResults, SearchOptions, SearchResult,
-                              TavilyResult, TavilySearchResult, TrendPoint)
+from ..types.research import (
+    GoogleSerpResult,
+    GoogleTrendsResult,
+    MetaphorResult,
+    PeopleAlsoAsk,
+    RelatedSearch,
+    ResearchResults,
+    SearchOptions,
+    SearchResult,
+    TavilyResult,
+    TavilySearchResult,
+    TrendPoint,
+)
 
 
 class ResearchError(Exception):
@@ -87,9 +97,9 @@ def google_serp_search(
             "hl": options.language,
             "num": options.num_results,
             "tbm": "search",
-            "tbs": f"qdr:{options.time_range}"
-            if options.time_range != "anytime"
-            else "",
+            "tbs": (
+                f"qdr:{options.time_range}" if options.time_range != "anytime" else ""
+            ),
         }
 
         response = requests.get(url, params=params)

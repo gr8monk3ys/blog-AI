@@ -2,6 +2,7 @@
 Backend server for the Blog AI application.
 Provides API endpoints for generating blog posts and books.
 """
+
 import asyncio
 import hashlib
 import json
@@ -18,20 +19,31 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import uvicorn
-from fastapi import (Depends, FastAPI, HTTPException, Request, WebSocket,
-                     WebSocketDisconnect, status)
+from fastapi import (
+    Depends,
+    FastAPI,
+    HTTPException,
+    Request,
+    WebSocket,
+    WebSocketDisconnect,
+    status,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, Field, field_validator
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from src.blog.make_blog import (generate_blog_post,
-                                generate_blog_post_with_research,
-                                post_process_blog_post)
-from src.book.make_book import (generate_book, generate_book_with_research,
-                                post_process_book)
-from src.text_generation.core import (GenerationOptions,
-                                      create_provider_from_env)
+from src.blog.make_blog import (
+    generate_blog_post,
+    generate_blog_post_with_research,
+    post_process_blog_post,
+)
+from src.book.make_book import (
+    generate_book,
+    generate_book_with_research,
+    post_process_book,
+)
+from src.text_generation.core import GenerationOptions, create_provider_from_env
 
 # Configure logging
 logging.basicConfig(

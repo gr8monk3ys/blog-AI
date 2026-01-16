@@ -1,11 +1,11 @@
 """
 Structured data generation functionality.
 """
+
 import json
 from typing import Any, Dict, List, Optional
 
-from ..text_generation.core import (GenerationOptions, LLMProvider,
-                                    generate_text)
+from ..text_generation.core import GenerationOptions, LLMProvider, generate_text
 from ..types.seo import StructuredData
 
 

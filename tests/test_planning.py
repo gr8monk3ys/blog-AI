@@ -1,6 +1,7 @@
 """
 Tests for the planning module.
 """
+
 import os
 import sys
 import unittest
@@ -10,27 +11,43 @@ from unittest.mock import MagicMock, patch
 # Add the src directory to the path so we can import the modules
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.planning.competitor_analysis import (analyze_common_keywords,
-                                              analyze_competitors,
-                                              generate_recommendations,
-                                              get_competitor_content,
-                                              get_competitor_website,
-                                              identify_content_gaps)
+from src.planning.competitor_analysis import (
+    analyze_common_keywords,
+    analyze_competitors,
+    generate_recommendations,
+    get_competitor_content,
+    get_competitor_website,
+    identify_content_gaps,
+)
 from src.planning.content_calendar import (
-    generate_content_calendar, generate_content_topics,
-    generate_content_topics_with_research, load_content_calendar_from_json,
-    save_content_calendar_to_json)
+    generate_content_calendar,
+    generate_content_topics,
+    generate_content_topics_with_research,
+    load_content_calendar_from_json,
+    save_content_calendar_to_json,
+)
 from src.planning.content_outline import (
-    generate_content_outline, generate_content_outline_from_topic,
-    generate_content_outline_with_research, generate_detailed_content_outline)
-from src.planning.topic_clusters import (generate_content_topics_from_cluster,
-                                         generate_topic_clusters,
-                                         generate_topic_clusters_with_research,
-                                         visualize_topic_cluster)
-from src.types.planning import (Competitor, CompetitorAnalysisResult,
-                                CompetitorContent, ContentCalendar,
-                                ContentItem, ContentOutline, ContentTopic,
-                                TopicCluster)
+    generate_content_outline,
+    generate_content_outline_from_topic,
+    generate_content_outline_with_research,
+    generate_detailed_content_outline,
+)
+from src.planning.topic_clusters import (
+    generate_content_topics_from_cluster,
+    generate_topic_clusters,
+    generate_topic_clusters_with_research,
+    visualize_topic_cluster,
+)
+from src.types.planning import (
+    Competitor,
+    CompetitorAnalysisResult,
+    CompetitorContent,
+    ContentCalendar,
+    ContentItem,
+    ContentOutline,
+    ContentTopic,
+    TopicCluster,
+)
 
 
 class TestContentCalendar(unittest.TestCase):

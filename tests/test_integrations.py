@@ -1,6 +1,7 @@
 """
 Tests for the integrations module.
 """
+
 import os
 import sys
 import unittest
@@ -9,22 +10,32 @@ from unittest.mock import MagicMock, patch
 # Add the src directory to the path so we can import the modules
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.integrations.github import (create_branch, create_pull_request,
-                                     create_repository, get_repositories,
-                                     get_repository, upload_blog_post,
-                                     upload_file)
-from src.integrations.medium import (convert_markdown_to_medium,
-                                     get_user_publications)
+from src.integrations.github import (
+    create_branch,
+    create_pull_request,
+    create_repository,
+    get_repositories,
+    get_repository,
+    upload_blog_post,
+    upload_file,
+)
+from src.integrations.medium import convert_markdown_to_medium, get_user_publications
 from src.integrations.medium import upload_blog_post as medium_upload_blog_post
 from src.integrations.medium import upload_post, upload_post_to_publication
 from src.integrations.wordpress import create_category, get_categories
 from src.integrations.wordpress import upload_blog_post as wp_upload_blog_post
 from src.integrations.wordpress import upload_image
 from src.integrations.wordpress import upload_post as wp_upload_post
-from src.types.integrations import (GitHubCredentials, GitHubFileOptions,
-                                    GitHubRepository, IntegrationResult,
-                                    MediumCredentials, MediumPostOptions,
-                                    WordPressCredentials, WordPressPostOptions)
+from src.types.integrations import (
+    GitHubCredentials,
+    GitHubFileOptions,
+    GitHubRepository,
+    IntegrationResult,
+    MediumCredentials,
+    MediumPostOptions,
+    WordPressCredentials,
+    WordPressPostOptions,
+)
 
 
 class TestGitHubIntegration(unittest.TestCase):

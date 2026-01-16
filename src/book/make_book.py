@@ -1,6 +1,7 @@
 """
 Book generation functionality.
 """
+
 import argparse
 import json
 import os
@@ -9,21 +10,27 @@ from typing import Any, Dict, List, Optional
 
 from ..blog_sections.conclusion_generator import generate_conclusion
 from ..blog_sections.introduction_generator import generate_introduction
-from ..planning.content_outline import (generate_content_outline,
-                                        generate_content_outline_with_research)
-from ..planning.topic_clusters import (generate_topic_clusters,
-                                       generate_topic_clusters_with_research)
+from ..planning.content_outline import (
+    generate_content_outline,
+    generate_content_outline_with_research,
+)
+from ..planning.topic_clusters import (
+    generate_topic_clusters,
+    generate_topic_clusters_with_research,
+)
 from ..post_processing.file_saver import save_book
 from ..post_processing.format_converter import convert_format
 from ..post_processing.humanizer import humanize_content
 from ..post_processing.proofreader import proofread_content
 from ..research.web_researcher import conduct_web_research
-from ..text_generation.core import (GenerationOptions, LLMProvider,
-                                    create_provider_from_env, generate_text)
-from ..types.content import (Book, Chapter, ContentType, Section, SubTopic,
-                             Topic)
-from ..types.post_processing import (FormatConversionOptions, OutputFormat,
-                                     SaveOptions)
+from ..text_generation.core import (
+    GenerationOptions,
+    LLMProvider,
+    create_provider_from_env,
+    generate_text,
+)
+from ..types.content import Book, Chapter, ContentType, Section, SubTopic, Topic
+from ..types.post_processing import FormatConversionOptions, OutputFormat, SaveOptions
 from ..types.providers import ProviderType
 
 

@@ -1,6 +1,7 @@
 """
 Content calendar generation functionality.
 """
+
 import csv
 import json
 import os
@@ -8,10 +9,14 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from ..research.web_researcher import conduct_web_research
-from ..text_generation.core import (GenerationOptions, LLMProvider,
-                                    generate_text)
-from ..types.planning import (ContentCalendar, ContentItem, ContentTopic,
-                              PlanningOptions, TimeframeType)
+from ..text_generation.core import GenerationOptions, LLMProvider, generate_text
+from ..types.planning import (
+    ContentCalendar,
+    ContentItem,
+    ContentTopic,
+    PlanningOptions,
+    TimeframeType,
+)
 
 
 class ContentCalendarError(Exception):

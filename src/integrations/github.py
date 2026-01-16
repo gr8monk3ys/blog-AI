@@ -1,14 +1,19 @@
 """
 GitHub integration functionality.
 """
+
 import base64
 import os
 from typing import Any, Dict, List, Optional
 
 import requests
 
-from ..types.integrations import (GitHubCredentials, GitHubFileOptions,
-                                  GitHubRepository, IntegrationResult)
+from ..types.integrations import (
+    GitHubCredentials,
+    GitHubFileOptions,
+    GitHubRepository,
+    IntegrationResult,
+)
 
 
 class GitHubIntegrationError(Exception):
