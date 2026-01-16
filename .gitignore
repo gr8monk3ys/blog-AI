@@ -22,6 +22,10 @@ content/books/*
 !content/blog/.gitkeep
 !content/books/.gitkeep
 
+# Data storage (conversations, cache)
+data/
+!data/.gitkeep
+
 # Python
 __pycache__/
 *.py[cod]
