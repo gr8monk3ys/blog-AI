@@ -159,7 +159,8 @@ class TestConversationEndpoint(unittest.TestCase):
 
     def test_invalid_conversation_id_format(self):
         """Invalid conversation ID format should return 400 error."""
-        response = self.client.get("/conversations/invalid/id")
+        # Use invalid characters that fail the regex ^[a-zA-Z0-9_-]+$
+        response = self.client.get("/conversations/invalid@id")
         self.assertEqual(response.status_code, 400)
 
 
