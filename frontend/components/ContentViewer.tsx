@@ -95,12 +95,12 @@ export default function ContentViewer({ content }: ContentViewerProps) {
   }
 
   if (content.type === 'book') {
-    if (isEditingBook) {
+    if (isEditingBook && bookData) {
       return (
-        <BookEditor 
-          book={bookData} 
-          filePath={content.file_path} 
-          onSave={handleBookSave} 
+        <BookEditor
+          book={bookData}
+          filePath={content.file_path}
+          onSave={handleBookSave}
         />
       );
     }

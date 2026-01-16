@@ -7,6 +7,7 @@ import ContentGenerator from '../components/ContentGenerator';
 import BookGenerator from '../components/BookGenerator';
 import ConversationHistory from '../components/ConversationHistory';
 import ContentViewer from '../components/ContentViewer';
+import { ContentGenerationResponse } from '../types/content';
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
@@ -14,7 +15,7 @@ function classNames(...classes: string[]) {
 
 export default function Home() {
   const [conversationId] = useState(uuidv4());
-  const [content, setContent] = useState(null);
+  const [content, setContent] = useState<ContentGenerationResponse | null>(null);
   const [loading, setLoading] = useState(false);
 
   return (

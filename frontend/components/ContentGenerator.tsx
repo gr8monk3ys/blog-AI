@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { Switch } from '@headlessui/react';
 import { PencilIcon, LightBulbIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import { BlogGenerationOptions } from '../types/blog';
-import { BlogGenerationResponse } from '../types/content';
+import { BlogGenerationResponse, ContentGenerationResponse } from '../types/content';
 import { API_ENDPOINTS, getDefaultHeaders, checkServerConnection } from '../lib/api';
 
 interface ContentGeneratorProps {
   conversationId: string;
-  setContent: (content: BlogGenerationResponse) => void;
+  setContent: (content: ContentGenerationResponse) => void;
   setLoading: (loading: boolean) => void;
 }
 

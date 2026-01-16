@@ -210,7 +210,8 @@ describe('ContentGenerator', () => {
 
       await waitFor(() => {
         const fetchCall = vi.mocked(global.fetch).mock.calls[0]
-        const body = JSON.parse(fetchCall[1]?.body as string)
+        expect(fetchCall).toBeDefined()
+        const body = JSON.parse(fetchCall![1]?.body as string)
 
         expect(body.topic).toBe('My Topic')
         expect(body.keywords).toEqual(['key1', 'key2'])

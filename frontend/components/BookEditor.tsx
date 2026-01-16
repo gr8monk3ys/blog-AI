@@ -60,15 +60,19 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
 
   const handleUpdateChapterTitle = (chapterIndex: number, newTitle: string) => {
     const updatedBook = { ...editingBook };
-    updatedBook.chapters[chapterIndex].title = newTitle;
-    setEditingBook(updatedBook);
+    if (updatedBook.chapters[chapterIndex]) {
+      updatedBook.chapters[chapterIndex].title = newTitle;
+      setEditingBook(updatedBook);
+    }
     setIsEditingChapter(null);
   };
 
   const handleUpdateTopicContent = (chapterIndex: number, topicIndex: number, newContent: string) => {
     const updatedBook = { ...editingBook };
-    updatedBook.chapters[chapterIndex].topics[topicIndex].content = newContent;
-    setEditingBook(updatedBook);
+    if (updatedBook.chapters[chapterIndex]?.topics[topicIndex]) {
+      updatedBook.chapters[chapterIndex].topics[topicIndex].content = newContent;
+      setEditingBook(updatedBook);
+    }
     setIsEditingTopic(null);
   };
 
@@ -240,9 +244,9 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
                   <div className="mt-2">
                     <input
                       type="text"
-                      value={isEditingChapter !== null ? editingBook.chapters[isEditingChapter].title : ''}
+                      value={isEditingChapter !== null ? editingBook.chapters[isEditingChapter]?.title ?? '' : ''}
                       onChange={(e) => {
-                        if (isEditingChapter !== null) {
+                        if (isEditingChapter !== null && editingBook.chapters[isEditingChapter]) {
                           const updatedBook = { ...editingBook };
                           updatedBook.chapters[isEditingChapter].title = e.target.value;
                           setEditingBook(updatedBook);
@@ -265,7 +269,7 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
                       type="button"
                       className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none"
                       onClick={() => {
-                        if (isEditingChapter !== null) {
+                        if (isEditingChapter !== null && editingBook.chapters[isEditingChapter]) {
                           handleUpdateChapterTitle(
                             isEditingChapter,
                             editingBook.chapters[isEditingChapter].title
@@ -317,7 +321,7 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
                     Edit Content
                   </Dialog.Title>
                   <div className="mt-2">
-                    {isEditingTopic && (
+                    {isEditingTopic && editingBook.chapters[isEditingTopic.chapterIndex]?.topics[isEditingTopic.topicIndex] && (
                       <>
                         <h4 className="text-md font-medium text-gray-700 mb-2">
                           {editingBook.chapters[isEditingTopic.chapterIndex].topics[isEditingTopic.topicIndex].title}
@@ -326,8 +330,10 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
                           value={editingBook.chapters[isEditingTopic.chapterIndex].topics[isEditingTopic.topicIndex].content}
                           onChange={(e) => {
                             const updatedBook = { ...editingBook };
-                            updatedBook.chapters[isEditingTopic.chapterIndex].topics[isEditingTopic.topicIndex].content = e.target.value;
-                            setEditingBook(updatedBook);
+                            if (updatedBook.chapters[isEditingTopic.chapterIndex]?.topics[isEditingTopic.topicIndex]) {
+                              updatedBook.chapters[isEditingTopic.chapterIndex].topics[isEditingTopic.topicIndex].content = e.target.value;
+                              setEditingBook(updatedBook);
+                            }
                           }}
                           className="w-full p-2 border border-gray-300 rounded"
                           rows={10}
@@ -349,7 +355,7 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
                       type="button"
                       className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none"
                       onClick={() => {
-                        if (isEditingTopic) {
+                        if (isEditingTopic && editingBook.chapters[isEditingTopic.chapterIndex]?.topics[isEditingTopic.topicIndex]) {
                           handleUpdateTopicContent(
                             isEditingTopic.chapterIndex,
                             isEditingTopic.topicIndex,

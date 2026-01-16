@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { Switch } from '@headlessui/react';
 import { BookOpenIcon, LightBulbIcon, PencilIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline';
 import { BookGenerationOptions } from '../types/book';
-import { BookGenerationResponse } from '../types/content';
+import { BookGenerationResponse, ContentGenerationResponse } from '../types/content';
 import { API_ENDPOINTS, getDefaultHeaders, checkServerConnection } from '../lib/api';
 
 interface BookGeneratorProps {
   conversationId: string;
-  setContent: (content: BookGenerationResponse) => void;
+  setContent: (content: ContentGenerationResponse) => void;
   setLoading: (loading: boolean) => void;
 }
 

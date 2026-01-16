@@ -42,8 +42,8 @@ export default function ConversationHistory({ conversationId }: ConversationHist
   const groupedMessages = messages.reduce((groups, message, index) => {
     const prevMessage = messages[index - 1];
     const isSameSender = prevMessage && prevMessage.role === message.role;
-    
-    if (isSameSender) {
+
+    if (isSameSender && groups.length > 0) {
       const lastGroup = groups[groups.length - 1];
       lastGroup.messages.push(message);
       return groups;
