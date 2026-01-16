@@ -9,14 +9,20 @@ import uuid
 import logging
 import secrets
 import hashlib
+import time
+import asyncio
+from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional, Any
+from functools import wraps
+from collections import defaultdict
 
 import uvicorn
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Depends, status
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Depends, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, Field, field_validator
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.blog.make_blog import generate_blog_post, generate_blog_post_with_research, post_process_blog_post
 from src.book.make_book import generate_book, generate_book_with_research, post_process_book
@@ -30,7 +36,11 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Initialize FastAPI app
-app = FastAPI(title="Blog AI API")
+app = FastAPI(
+    title="Blog AI API",
+    description="AI-powered content generation API for blog posts and books",
+    version="1.0.0"
+)
 
 # CORS configuration - use environment variable for allowed origins
 ALLOWED_ORIGINS = os.environ.get(
@@ -43,8 +53,88 @@ app.add_middleware(
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_headers=["Authorization", "Content-Type", "X-API-Key"],
 )
+
+
+# =============================================================================
+# Rate Limiting Middleware
+# =============================================================================
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    """
+    Rate limiting middleware to prevent abuse and control API costs.
+
+    Limits:
+    - 60 requests per minute per IP for general endpoints
+    - 10 requests per minute per IP for generation endpoints (expensive LLM calls)
+    """
+
+    def __init__(self, app, general_limit: int = 60, generation_limit: int = 10, window_seconds: int = 60):
+        super().__init__(app)
+        self.general_limit = general_limit
+        self.generation_limit = generation_limit
+        self.window_seconds = window_seconds
+        self.request_counts: Dict[str, List[float]] = defaultdict(list)
+        self.generation_endpoints = {"/generate-blog", "/generate-book"}
+
+    def _get_client_ip(self, request: Request) -> str:
+        """Extract client IP, handling proxy headers."""
+        forwarded = request.headers.get("X-Forwarded-For")
+        if forwarded:
+            return forwarded.split(",")[0].strip()
+        return request.client.host if request.client else "unknown"
+
+    def _clean_old_requests(self, ip: str, current_time: float) -> None:
+        """Remove requests outside the current time window."""
+        cutoff = current_time - self.window_seconds
+        self.request_counts[ip] = [t for t in self.request_counts[ip] if t > cutoff]
+
+    async def dispatch(self, request: Request, call_next):
+        # Skip rate limiting for health checks and docs
+        if request.url.path in {"/", "/health", "/docs", "/openapi.json", "/redoc"}:
+            return await call_next(request)
+
+        client_ip = self._get_client_ip(request)
+        current_time = time.time()
+
+        # Clean old requests
+        self._clean_old_requests(client_ip, current_time)
+
+        # Determine rate limit based on endpoint
+        is_generation = request.url.path in self.generation_endpoints
+        limit = self.generation_limit if is_generation else self.general_limit
+
+        # Check if over limit
+        if len(self.request_counts[client_ip]) >= limit:
+            logger.warning(f"Rate limit exceeded for IP: {client_ip}, endpoint: {request.url.path}")
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Rate limit exceeded. Maximum {limit} requests per minute for this endpoint.",
+                headers={"Retry-After": str(self.window_seconds)}
+            )
+
+        # Record this request
+        self.request_counts[client_ip].append(current_time)
+
+        # Add rate limit headers to response
+        response = await call_next(request)
+        remaining = limit - len(self.request_counts[client_ip])
+        response.headers["X-RateLimit-Limit"] = str(limit)
+        response.headers["X-RateLimit-Remaining"] = str(max(0, remaining))
+        response.headers["X-RateLimit-Reset"] = str(int(current_time + self.window_seconds))
+
+        return response
+
+
+# Add rate limiting middleware
+RATE_LIMIT_ENABLED = os.environ.get("RATE_LIMIT_ENABLED", "true").lower() == "true"
+if RATE_LIMIT_ENABLED:
+    app.add_middleware(
+        RateLimitMiddleware,
+        general_limit=int(os.environ.get("RATE_LIMIT_GENERAL", "60")),
+        generation_limit=int(os.environ.get("RATE_LIMIT_GENERATION", "10")),
+        window_seconds=60
+    )
 
 # API Key authentication
 API_KEY_HEADER = APIKeyHeader(name="X-API-Key", auto_error=False)
@@ -59,7 +149,8 @@ def get_or_create_api_key(user_id: str) -> str:
 async def verify_api_key(api_key: Optional[str] = Depends(API_KEY_HEADER)) -> str:
     """Verify API key and return user_id. In dev mode, allows requests without key."""
     # Development mode - allow requests without API key
-    if os.environ.get("DEV_MODE", "true").lower() == "true":
+    # SECURITY: Default is FALSE - must explicitly enable dev mode
+    if os.environ.get("DEV_MODE", "false").lower() == "true":
         return "dev_user"
 
     if not api_key:
@@ -159,8 +250,85 @@ def contains_injection_attempt(text: str) -> bool:
             return True
     return False
 
-# Store conversations
-conversations = {}
+# =============================================================================
+# Conversation Storage (File-based persistence)
+# =============================================================================
+class ConversationStore:
+    """
+    File-based conversation storage for persistence across restarts.
+
+    Conversations are stored as JSON files in a configurable directory.
+    This is a stepping stone to Redis/database storage in production.
+    """
+
+    def __init__(self, storage_dir: str = None):
+        self.storage_dir = Path(storage_dir or os.environ.get(
+            "CONVERSATION_STORAGE_DIR",
+            "./data/conversations"
+        ))
+        self.storage_dir.mkdir(parents=True, exist_ok=True)
+        self._cache: Dict[str, List[Dict]] = {}  # In-memory cache for performance
+        logger.info(f"Conversation storage initialized at: {self.storage_dir}")
+
+    def _get_file_path(self, conversation_id: str) -> Path:
+        """Get the file path for a conversation."""
+        # Sanitize conversation_id to prevent path traversal
+        safe_id = re.sub(r'[^a-zA-Z0-9_-]', '', conversation_id)
+        return self.storage_dir / f"{safe_id}.json"
+
+    def get(self, conversation_id: str) -> List[Dict]:
+        """Get a conversation by ID, loading from disk if not cached."""
+        if conversation_id in self._cache:
+            return self._cache[conversation_id]
+
+        file_path = self._get_file_path(conversation_id)
+        if file_path.exists():
+            try:
+                with open(file_path, 'r') as f:
+                    self._cache[conversation_id] = json.load(f)
+            except (json.JSONDecodeError, IOError) as e:
+                logger.error(f"Error loading conversation {conversation_id}: {e}")
+                self._cache[conversation_id] = []
+        else:
+            self._cache[conversation_id] = []
+
+        return self._cache[conversation_id]
+
+    def append(self, conversation_id: str, message: Dict) -> None:
+        """Append a message to a conversation and persist to disk."""
+        if conversation_id not in self._cache:
+            self.get(conversation_id)  # Load from disk if exists
+
+        self._cache[conversation_id].append(message)
+        self._save(conversation_id)
+
+    def _save(self, conversation_id: str) -> None:
+        """Save a conversation to disk."""
+        file_path = self._get_file_path(conversation_id)
+        try:
+            with open(file_path, 'w') as f:
+                json.dump(self._cache[conversation_id], f, indent=2)
+        except IOError as e:
+            logger.error(f"Error saving conversation {conversation_id}: {e}")
+
+    def __contains__(self, conversation_id: str) -> bool:
+        """Check if a conversation exists."""
+        if conversation_id in self._cache:
+            return True
+        return self._get_file_path(conversation_id).exists()
+
+    def __getitem__(self, conversation_id: str) -> List[Dict]:
+        """Get a conversation by ID (dict-like access)."""
+        return self.get(conversation_id)
+
+    def __setitem__(self, conversation_id: str, messages: List[Dict]) -> None:
+        """Set a conversation (dict-like access)."""
+        self._cache[conversation_id] = messages
+        self._save(conversation_id)
+
+
+# Initialize conversation storage
+conversations = ConversationStore()
 
 # WebSocket connection manager
 class ConnectionManager:
@@ -269,10 +437,42 @@ class BookGenerationRequest(BaseModel):
             raise ValueError("Conversation ID contains invalid characters")
         return v
 
+# =============================================================================
+# Utility Functions
+# =============================================================================
+def sanitize_for_log(text: str, max_length: int = 30) -> str:
+    """Sanitize text for logging - truncate and remove sensitive patterns."""
+    if not text:
+        return "[empty]"
+    # Truncate and add ellipsis
+    sanitized = text[:max_length] + "..." if len(text) > max_length else text
+    # Remove newlines and excessive whitespace
+    sanitized = re.sub(r'\s+', ' ', sanitized)
+    return sanitized
+
+
+# =============================================================================
 # Routes
+# =============================================================================
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for monitoring and load balancers."""
+    return {
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "version": "1.0.0"
+    }
+
+
 @app.get("/")
 async def root():
-    return {"message": "Welcome to the Blog AI API"}
+    """Root endpoint with API information."""
+    return {
+        "message": "Welcome to the Blog AI API",
+        "version": "1.0.0",
+        "docs": "/docs",
+        "health": "/health"
+    }
 
 @app.get("/conversations/{conversation_id}")
 async def get_conversation(
@@ -286,16 +486,14 @@ async def get_conversation(
             detail="Invalid conversation ID format"
         )
 
-    if conversation_id not in conversations:
-        conversations[conversation_id] = []
-    return {"conversation": conversations[conversation_id]}
+    return {"conversation": conversations.get(conversation_id)}
 
 @app.post("/generate-blog", status_code=status.HTTP_201_CREATED)
 async def generate_blog(
     request: BlogGenerationRequest,
     user_id: str = Depends(verify_api_key)
 ):
-    logger.info(f"Blog generation requested by user: {user_id}, topic: {request.topic[:50]}...")
+    logger.info(f"Blog generation requested by user: {user_id}, topic_length: {len(request.topic)}")
     try:
         # Create generation options
         options = GenerationOptions(
@@ -361,25 +559,21 @@ async def generate_blog(
             
             blog_post_data["sections"].append(section_data)
         
-        # Add to conversation
-        if request.conversation_id not in conversations:
-            conversations[request.conversation_id] = []
-        
-        # Add user message
+        # Add user message to conversation (with persistence)
         user_message = {
             "role": "user",
-            "content": f"Generate a blog post about '{request.topic}'",
+            "content": "Generate a blog post",  # Sanitized - don't log actual topic
             "timestamp": datetime.now().isoformat()
         }
-        conversations[request.conversation_id].append(user_message)
-        
-        # Add assistant message
+        conversations.append(request.conversation_id, user_message)
+
+        # Add assistant message to conversation (with persistence)
         assistant_message = {
             "role": "assistant",
-            "content": f"I've generated a blog post titled '{blog_post.title}'",
+            "content": f"Generated blog post: {blog_post.title[:50]}",  # Truncated for logs
             "timestamp": datetime.now().isoformat()
         }
-        conversations[request.conversation_id].append(assistant_message)
+        conversations.append(request.conversation_id, assistant_message)
         
         # Send messages via WebSocket
         await manager.send_message(
@@ -415,7 +609,7 @@ async def generate_book_endpoint(
     request: BookGenerationRequest,
     user_id: str = Depends(verify_api_key)
 ):
-    logger.info(f"Book generation requested by user: {user_id}, title: {request.title[:50]}...")
+    logger.info(f"Book generation requested by user: {user_id}, title_length: {len(request.title)}, chapters: {request.num_chapters}")
     try:
         # Create generation options
         options = GenerationOptions(
@@ -486,25 +680,21 @@ async def generate_book_endpoint(
             
             book_data["chapters"].append(chapter_data)
         
-        # Add to conversation
-        if request.conversation_id not in conversations:
-            conversations[request.conversation_id] = []
-        
-        # Add user message
+        # Add user message to conversation (with persistence)
         user_message = {
             "role": "user",
-            "content": f"Generate a book titled '{request.title}'",
+            "content": "Generate a book",  # Sanitized - don't log actual title
             "timestamp": datetime.now().isoformat()
         }
-        conversations[request.conversation_id].append(user_message)
-        
-        # Add assistant message
+        conversations.append(request.conversation_id, user_message)
+
+        # Add assistant message to conversation (with persistence)
         assistant_message = {
             "role": "assistant",
-            "content": f"I've generated a book titled '{book.title}' with {len(book.chapters)} chapters",
+            "content": f"Generated book with {len(book.chapters)} chapters",  # Sanitized
             "timestamp": datetime.now().isoformat()
         }
-        conversations[request.conversation_id].append(assistant_message)
+        conversations.append(request.conversation_id, assistant_message)
         
         # Send messages via WebSocket
         await manager.send_message(
@@ -569,15 +759,12 @@ async def websocket_endpoint(websocket: WebSocket, conversation_id: str):
                 await websocket.send_json({"type": "error", "detail": str(e)})
                 continue
 
-            # Add message to conversation
-            if conversation_id not in conversations:
-                conversations[conversation_id] = []
-
             # Add timestamp if not present
             if not message.get("timestamp"):
                 message["timestamp"] = datetime.now().isoformat()
 
-            conversations[conversation_id].append(message)
+            # Add message to conversation (with persistence)
+            conversations.append(conversation_id, message)
 
             # Broadcast message to all connected clients
             await manager.send_message(
