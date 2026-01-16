@@ -45,11 +45,12 @@ export default function ConversationHistory({ conversationId }: ConversationHist
 
     if (isSameSender && groups.length > 0) {
       const lastGroup = groups[groups.length - 1];
-      lastGroup.messages.push(message);
-      return groups;
-    } else {
-      return [...groups, { role: message.role, messages: [message] }];
+      if (lastGroup) {
+        lastGroup.messages.push(message);
+        return groups;
+      }
     }
+    return [...groups, { role: message.role, messages: [message] }];
   }, [] as { role: string; messages: Message[] }[]);
 
   // Mock data for development or when server is not available

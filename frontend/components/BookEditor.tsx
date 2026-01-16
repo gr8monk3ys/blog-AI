@@ -246,10 +246,13 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
                       type="text"
                       value={isEditingChapter !== null ? editingBook.chapters[isEditingChapter]?.title ?? '' : ''}
                       onChange={(e) => {
-                        if (isEditingChapter !== null && editingBook.chapters[isEditingChapter]) {
-                          const updatedBook = { ...editingBook };
-                          updatedBook.chapters[isEditingChapter].title = e.target.value;
-                          setEditingBook(updatedBook);
+                        if (isEditingChapter !== null) {
+                          const chapter = editingBook.chapters[isEditingChapter];
+                          if (chapter) {
+                            const updatedBook = { ...editingBook };
+                            updatedBook.chapters[isEditingChapter] = { ...chapter, title: e.target.value };
+                            setEditingBook(updatedBook);
+                          }
                         }
                       }}
                       className="w-full p-2 border border-gray-300 rounded"
@@ -321,26 +324,33 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
                     Edit Content
                   </Dialog.Title>
                   <div className="mt-2">
-                    {isEditingTopic && editingBook.chapters[isEditingTopic.chapterIndex]?.topics[isEditingTopic.topicIndex] && (
-                      <>
-                        <h4 className="text-md font-medium text-gray-700 mb-2">
-                          {editingBook.chapters[isEditingTopic.chapterIndex].topics[isEditingTopic.topicIndex].title}
-                        </h4>
-                        <textarea
-                          value={editingBook.chapters[isEditingTopic.chapterIndex].topics[isEditingTopic.topicIndex].content}
-                          onChange={(e) => {
-                            const updatedBook = { ...editingBook };
-                            if (updatedBook.chapters[isEditingTopic.chapterIndex]?.topics[isEditingTopic.topicIndex]) {
-                              updatedBook.chapters[isEditingTopic.chapterIndex].topics[isEditingTopic.topicIndex].content = e.target.value;
-                              setEditingBook(updatedBook);
-                            }
-                          }}
-                          className="w-full p-2 border border-gray-300 rounded"
-                          rows={10}
-                          autoFocus
-                        />
-                      </>
-                    )}
+                    {isEditingTopic && (() => {
+                      const chapter = editingBook.chapters[isEditingTopic.chapterIndex];
+                      const topic = chapter?.topics[isEditingTopic.topicIndex];
+                      if (!topic) return null;
+                      return (
+                        <>
+                          <h4 className="text-md font-medium text-gray-700 mb-2">
+                            {topic.title}
+                          </h4>
+                          <textarea
+                            value={topic.content}
+                            onChange={(e) => {
+                              const updatedBook = { ...editingBook };
+                              const chapterToUpdate = updatedBook.chapters[isEditingTopic.chapterIndex];
+                              const topicToUpdate = chapterToUpdate?.topics[isEditingTopic.topicIndex];
+                              if (topicToUpdate) {
+                                topicToUpdate.content = e.target.value;
+                                setEditingBook(updatedBook);
+                              }
+                            }}
+                            className="w-full p-2 border border-gray-300 rounded"
+                            rows={10}
+                            autoFocus
+                          />
+                        </>
+                      );
+                    })()}
                   </div>
 
                   <div className="mt-4 flex justify-end space-x-2">
@@ -355,12 +365,16 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
                       type="button"
                       className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none"
                       onClick={() => {
-                        if (isEditingTopic && editingBook.chapters[isEditingTopic.chapterIndex]?.topics[isEditingTopic.topicIndex]) {
-                          handleUpdateTopicContent(
-                            isEditingTopic.chapterIndex,
-                            isEditingTopic.topicIndex,
-                            editingBook.chapters[isEditingTopic.chapterIndex].topics[isEditingTopic.topicIndex].content
-                          );
+                        if (isEditingTopic) {
+                          const chapter = editingBook.chapters[isEditingTopic.chapterIndex];
+                          const topic = chapter?.topics[isEditingTopic.topicIndex];
+                          if (topic) {
+                            handleUpdateTopicContent(
+                              isEditingTopic.chapterIndex,
+                              isEditingTopic.topicIndex,
+                              topic.content
+                            );
+                          }
                         }
                       }}
                     >

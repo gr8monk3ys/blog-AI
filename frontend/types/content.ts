@@ -45,12 +45,20 @@ export interface BlogGenerationResponse {
   success: boolean
   type: 'blog'
   content: BlogContent
+  file_path?: string
+  title?: string
+  message?: string
+  detail?: string
 }
 
 export interface BookGenerationResponse {
   success: boolean
   type: 'book'
   content: BookContent
+  file_path?: string
+  title?: string
+  message?: string
+  detail?: string
 }
 
 export type ContentGenerationResponse = BlogGenerationResponse | BookGenerationResponse
