@@ -1,15 +1,16 @@
 """
 Type definitions for content generation.
 """
-from typing import List, Optional, Dict, Any, Literal
 from datetime import datetime
+from typing import Any, Dict, List, Literal, Optional
 
 
 class SubTopic:
     """A subtopic within a section."""
+
     title: str
     content: Optional[str]
-    
+
     def __init__(self, title: str, content: Optional[str] = None):
         self.title = title
         self.content = content
@@ -17,9 +18,10 @@ class SubTopic:
 
 class Section:
     """A section within a blog post or book."""
+
     title: str
     subtopics: List[SubTopic]
-    
+
     def __init__(self, title: str, subtopics: List[SubTopic]):
         self.title = title
         self.subtopics = subtopics
@@ -27,13 +29,14 @@ class Section:
 
 class BlogPost:
     """A blog post."""
+
     title: str
     description: str
     date: str
     image: str
     tags: List[str]
     sections: List[Section]
-    
+
     def __init__(
         self,
         title: str,
@@ -41,7 +44,7 @@ class BlogPost:
         sections: List[Section],
         date: Optional[str] = None,
         image: str = "/images/blog/default.jpg",
-        tags: Optional[List[str]] = None
+        tags: Optional[List[str]] = None,
     ):
         self.title = title
         self.description = description
@@ -53,9 +56,10 @@ class BlogPost:
 
 class Topic:
     """A topic within a book chapter."""
+
     title: str
     content: Optional[str]
-    
+
     def __init__(self, title: str, content: Optional[str] = None):
         self.title = title
         self.content = content
@@ -63,10 +67,11 @@ class Topic:
 
 class Chapter:
     """A chapter within a book."""
+
     number: int
     title: str
     topics: List[Topic]
-    
+
     def __init__(self, number: int, title: str, topics: List[Topic]):
         self.number = number
         self.title = title
@@ -75,19 +80,20 @@ class Chapter:
 
 class Book:
     """A book."""
+
     title: str
     chapters: List[Chapter]
     output_file: str
     tags: List[str]
     date: Optional[str]
-    
+
     def __init__(
-        self, 
-        title: str, 
-        chapters: List[Chapter], 
+        self,
+        title: str,
+        chapters: List[Chapter],
         output_file: str = "book.docx",
         tags: Optional[List[str]] = None,
-        date: Optional[str] = None
+        date: Optional[str] = None,
     ):
         self.title = title
         self.chapters = chapters
@@ -98,9 +104,10 @@ class Book:
 
 class FAQ:
     """A frequently asked question."""
+
     question: str
     answer: str
-    
+
     def __init__(self, question: str, answer: str):
         self.question = question
         self.answer = answer
@@ -111,11 +118,14 @@ ContentType = Literal["blog", "book", "faq"]
 
 class ContentRequest:
     """A request for content generation."""
+
     topic: str
     type: ContentType
     options: Dict[str, Any]
-    
-    def __init__(self, topic: str, type: ContentType, options: Optional[Dict[str, Any]] = None):
+
+    def __init__(
+        self, topic: str, type: ContentType, options: Optional[Dict[str, Any]] = None
+    ):
         self.topic = topic
         self.type = type
         self.options = options or {}

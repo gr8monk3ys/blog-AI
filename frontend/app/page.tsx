@@ -8,7 +8,7 @@ import BookGenerator from '../components/BookGenerator';
 import ConversationHistory from '../components/ConversationHistory';
 import ContentViewer from '../components/ContentViewer';
 
-function classNames(...classes) {
+function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
 }
 

@@ -3,12 +3,14 @@ FAQ generation functionality.
 """
 from typing import List, Optional
 
-from ..text_generation.core import generate_text, LLMProvider, GenerationOptions
+from ..text_generation.core import (GenerationOptions, LLMProvider,
+                                    generate_text)
 from ..types.blog_sections import FAQ, FAQSection
 
 
 class FAQGenerationError(Exception):
     """Exception raised for errors in the FAQ generation process."""
+
     pass
 
 
@@ -16,20 +18,20 @@ def generate_faqs(
     content: str,
     count: int = 5,
     provider: Optional[LLMProvider] = None,
-    options: Optional[GenerationOptions] = None
+    options: Optional[GenerationOptions] = None,
 ) -> FAQSection:
     """
     Generate FAQs for a blog post.
-    
+
     Args:
         content: The content of the blog post.
         count: The number of FAQs to generate.
         provider: The LLM provider to use.
         options: Options for text generation.
-        
+
     Returns:
         The generated FAQs.
-        
+
     Raises:
         FAQGenerationError: If an error occurs during FAQ generation.
     """
@@ -58,13 +60,13 @@ def generate_faqs(
         
         And so on.
         """
-        
+
         # Generate FAQs
         faqs_text = generate_text(prompt, provider, options)
-        
+
         # Parse the FAQs
         faqs = parse_faqs(faqs_text)
-        
+
         # Ensure we have the requested number of FAQs
         while len(faqs) < count:
             # Generate more FAQs
@@ -94,15 +96,15 @@ def generate_faqs(
             
             And so on.
             """
-            
+
             more_faqs_text = generate_text(more_prompt, provider, options)
             more_faqs = parse_faqs(more_faqs_text)
-            
+
             faqs.extend(more_faqs)
-        
+
         # Limit to the requested number of FAQs
         faqs = faqs[:count]
-        
+
         return FAQSection(title="Frequently Asked Questions", faqs=faqs)
     except Exception as e:
         raise FAQGenerationError(f"Error generating FAQs: {str(e)}")
@@ -111,28 +113,28 @@ def generate_faqs(
 def parse_faqs(text: str) -> List[FAQ]:
     """
     Parse FAQs from text.
-    
+
     Args:
         text: The text containing FAQs.
-        
+
     Returns:
         The parsed FAQs.
-        
+
     Raises:
         FAQGenerationError: If an error occurs during FAQ parsing.
     """
     try:
         faqs = []
         lines = text.strip().split("\n")
-        
+
         question = None
         answer = None
-        
+
         for line in lines:
             line = line.strip()
             if not line:
                 continue
-            
+
             # Check if line starts with Q or A followed by a number and colon
             if line.startswith("Q") and ":" in line:
                 # If we already have a question and answer, add them to the list
@@ -140,23 +142,23 @@ def parse_faqs(text: str) -> List[FAQ]:
                     faqs.append(FAQ(question=question, answer=answer))
                     question = None
                     answer = None
-                
+
                 # Extract the question
                 question = line.split(":", 1)[1].strip()
             elif line.startswith("A") and ":" in line:
                 # Extract the answer
                 answer = line.split(":", 1)[1].strip()
-                
+
                 # If we have both question and answer, add them to the list
                 if question and answer:
                     faqs.append(FAQ(question=question, answer=answer))
                     question = None
                     answer = None
-        
+
         # Add the last FAQ if it exists
         if question and answer:
             faqs.append(FAQ(question=question, answer=answer))
-        
+
         return faqs
     except Exception as e:
         raise FAQGenerationError(f"Error parsing FAQs: {str(e)}")
@@ -166,26 +168,26 @@ def generate_faq_from_questions(
     questions: List[str],
     content: str,
     provider: Optional[LLMProvider] = None,
-    options: Optional[GenerationOptions] = None
+    options: Optional[GenerationOptions] = None,
 ) -> FAQSection:
     """
     Generate FAQs from a list of questions.
-    
+
     Args:
         questions: The questions to answer.
         content: The content to use for answering the questions.
         provider: The LLM provider to use.
         options: Options for text generation.
-        
+
     Returns:
         The generated FAQs.
-        
+
     Raises:
         FAQGenerationError: If an error occurs during FAQ generation.
     """
     try:
         faqs = []
-        
+
         for question in questions:
             # Create prompt for answer generation
             prompt = f"""
@@ -204,15 +206,15 @@ def generate_faq_from_questions(
             
             Return only the answer, nothing else.
             """
-            
+
             # Generate answer
             answer = generate_text(prompt, provider, options)
-            
+
             # Clean up the answer
             answer = answer.strip()
-            
+
             faqs.append(FAQ(question=question, answer=answer))
-        
+
         return FAQSection(title="Frequently Asked Questions", faqs=faqs)
     except Exception as e:
         raise FAQGenerationError(f"Error generating FAQs from questions: {str(e)}")

@@ -2,36 +2,40 @@
 Backend server for the Blog AI application.
 Provides API endpoints for generating blog posts and books.
 """
+import asyncio
+import hashlib
+import json
+import logging
 import os
 import re
-import json
-import uuid
-import logging
 import secrets
-import hashlib
 import time
-import asyncio
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Optional, Any
-from functools import wraps
+import uuid
 from collections import defaultdict
+from datetime import datetime
+from functools import wraps
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 import uvicorn
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Depends, status, Request
+from fastapi import (Depends, FastAPI, HTTPException, Request, WebSocket,
+                     WebSocketDisconnect, status)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, Field, field_validator
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from src.blog.make_blog import generate_blog_post, generate_blog_post_with_research, post_process_blog_post
-from src.book.make_book import generate_book, generate_book_with_research, post_process_book
-from src.text_generation.core import create_provider_from_env, GenerationOptions
+from src.blog.make_blog import (generate_blog_post,
+                                generate_blog_post_with_research,
+                                post_process_blog_post)
+from src.book.make_book import (generate_book, generate_book_with_research,
+                                post_process_book)
+from src.text_generation.core import (GenerationOptions,
+                                      create_provider_from_env)
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -39,13 +43,12 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="Blog AI API",
     description="AI-powered content generation API for blog posts and books",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # CORS configuration - use environment variable for allowed origins
 ALLOWED_ORIGINS = os.environ.get(
-    "ALLOWED_ORIGINS",
-    "http://localhost:3000,http://127.0.0.1:3000"
+    "ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
 ).split(",")
 
 app.add_middleware(
@@ -69,7 +72,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     - 10 requests per minute per IP for generation endpoints (expensive LLM calls)
     """
 
-    def __init__(self, app, general_limit: int = 60, generation_limit: int = 10, window_seconds: int = 60):
+    def __init__(
+        self,
+        app,
+        general_limit: int = 60,
+        generation_limit: int = 10,
+        window_seconds: int = 60,
+    ):
         super().__init__(app)
         self.general_limit = general_limit
         self.generation_limit = generation_limit
@@ -106,11 +115,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         # Check if over limit
         if len(self.request_counts[client_ip]) >= limit:
-            logger.warning(f"Rate limit exceeded for IP: {client_ip}, endpoint: {request.url.path}")
+            logger.warning(
+                f"Rate limit exceeded for IP: {client_ip}, endpoint: {request.url.path}"
+            )
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail=f"Rate limit exceeded. Maximum {limit} requests per minute for this endpoint.",
-                headers={"Retry-After": str(self.window_seconds)}
+                headers={"Retry-After": str(self.window_seconds)},
             )
 
         # Record this request
@@ -121,7 +132,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         remaining = limit - len(self.request_counts[client_ip])
         response.headers["X-RateLimit-Limit"] = str(limit)
         response.headers["X-RateLimit-Remaining"] = str(max(0, remaining))
-        response.headers["X-RateLimit-Reset"] = str(int(current_time + self.window_seconds))
+        response.headers["X-RateLimit-Reset"] = str(
+            int(current_time + self.window_seconds)
+        )
 
         return response
 
@@ -133,18 +146,20 @@ if RATE_LIMIT_ENABLED:
         RateLimitMiddleware,
         general_limit=int(os.environ.get("RATE_LIMIT_GENERAL", "60")),
         generation_limit=int(os.environ.get("RATE_LIMIT_GENERATION", "10")),
-        window_seconds=60
+        window_seconds=60,
     )
 
 # API Key authentication
 API_KEY_HEADER = APIKeyHeader(name="X-API-Key", auto_error=False)
 API_KEYS: Dict[str, str] = {}  # In production, load from secure storage
 
+
 def get_or_create_api_key(user_id: str) -> str:
     """Generate or retrieve API key for a user."""
     if user_id not in API_KEYS:
         API_KEYS[user_id] = secrets.token_urlsafe(32)
     return API_KEYS[user_id]
+
 
 async def verify_api_key(api_key: Optional[str] = Depends(API_KEY_HEADER)) -> str:
     """Verify API key and return user_id. In dev mode, allows requests without key."""
@@ -155,8 +170,7 @@ async def verify_api_key(api_key: Optional[str] = Depends(API_KEY_HEADER)) -> st
 
     if not api_key:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing API key"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing API key"
         )
 
     # Find user by API key
@@ -165,9 +179,9 @@ async def verify_api_key(api_key: Optional[str] = Depends(API_KEY_HEADER)) -> st
             return user_id
 
     raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Invalid API key"
+        status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key"
     )
+
 
 # Input validation constants
 MAX_TOPIC_LENGTH = 500
@@ -175,42 +189,50 @@ MAX_KEYWORD_LENGTH = 100
 MAX_KEYWORDS_COUNT = 20
 MAX_CHAPTERS = 50
 MAX_SECTIONS_PER_CHAPTER = 20
-ALLOWED_TONES = {"informative", "casual", "professional", "friendly", "formal", "conversational"}
+ALLOWED_TONES = {
+    "informative",
+    "casual",
+    "professional",
+    "friendly",
+    "formal",
+    "conversational",
+}
 
 # Patterns commonly used in prompt injection attacks
 PROMPT_INJECTION_PATTERNS = [
     # System prompt override attempts
-    r'ignore\s+(all\s+)?(previous|prior|above)\s+(instructions?|prompts?|rules?)',
-    r'disregard\s+(all\s+)?(previous|prior|above)\s+(instructions?|prompts?|rules?)',
-    r'forget\s+(all\s+)?(previous|prior|above)\s+(instructions?|prompts?|rules?)',
-    r'override\s+(system|previous|prior)\s+(prompt|instructions?|rules?)',
-    r'new\s+system\s+prompt',
-    r'system\s*:\s*',
-    r'assistant\s*:\s*',
-    r'human\s*:\s*',
-    r'user\s*:\s*',
+    r"ignore\s+(all\s+)?(previous|prior|above)\s+(instructions?|prompts?|rules?)",
+    r"disregard\s+(all\s+)?(previous|prior|above)\s+(instructions?|prompts?|rules?)",
+    r"forget\s+(all\s+)?(previous|prior|above)\s+(instructions?|prompts?|rules?)",
+    r"override\s+(system|previous|prior)\s+(prompt|instructions?|rules?)",
+    r"new\s+system\s+prompt",
+    r"system\s*:\s*",
+    r"assistant\s*:\s*",
+    r"human\s*:\s*",
+    r"user\s*:\s*",
     # Role manipulation
-    r'you\s+are\s+now\s+',
-    r'act\s+as\s+(if\s+)?(you\s+are\s+)?',
-    r'pretend\s+(to\s+be|you\s+are)',
-    r'roleplay\s+as',
-    r'simulate\s+being',
+    r"you\s+are\s+now\s+",
+    r"act\s+as\s+(if\s+)?(you\s+are\s+)?",
+    r"pretend\s+(to\s+be|you\s+are)",
+    r"roleplay\s+as",
+    r"simulate\s+being",
     # Delimiter abuse
-    r'```+',
-    r'---+',
-    r'===+',
-    r'\[\[.*?\]\]',
+    r"```+",
+    r"---+",
+    r"===+",
+    r"\[\[.*?\]\]",
     # Output manipulation
-    r'print\s+the\s+(system\s+)?prompt',
-    r'reveal\s+(your|the)\s+(system\s+)?prompt',
-    r'show\s+(your|the)\s+(system\s+)?prompt',
-    r'output\s+(your|the)\s+instructions',
+    r"print\s+the\s+(system\s+)?prompt",
+    r"reveal\s+(your|the)\s+(system\s+)?prompt",
+    r"show\s+(your|the)\s+(system\s+)?prompt",
+    r"output\s+(your|the)\s+instructions",
 ]
 
 # Compile patterns for efficiency
 COMPILED_INJECTION_PATTERNS = [
     re.compile(pattern, re.IGNORECASE) for pattern in PROMPT_INJECTION_PATTERNS
 ]
+
 
 def sanitize_text(text: str) -> str:
     """Sanitize text input to prevent prompt injection.
@@ -225,17 +247,19 @@ def sanitize_text(text: str) -> str:
 
     # Strip and normalize whitespace
     text = text.strip()
-    text = re.sub(r'\s+', ' ', text)
+    text = re.sub(r"\s+", " ", text)
 
     # Check for injection patterns and log warnings
     for pattern in COMPILED_INJECTION_PATTERNS:
         if pattern.search(text):
-            logger.warning(f"Potential prompt injection detected and neutralized: {text[:100]}...")
+            logger.warning(
+                f"Potential prompt injection detected and neutralized: {text[:100]}..."
+            )
             # Replace the matched pattern with a neutralized version
-            text = pattern.sub('[FILTERED]', text)
+            text = pattern.sub("[FILTERED]", text)
 
     # Escape angle brackets to prevent HTML/XML injection in prompts
-    text = text.replace('<', '&lt;').replace('>', '&gt;')
+    text = text.replace("<", "&lt;").replace(">", "&gt;")
 
     return text
 
@@ -250,6 +274,7 @@ def contains_injection_attempt(text: str) -> bool:
             return True
     return False
 
+
 # =============================================================================
 # Conversation Storage (File-based persistence)
 # =============================================================================
@@ -262,10 +287,10 @@ class ConversationStore:
     """
 
     def __init__(self, storage_dir: str = None):
-        self.storage_dir = Path(storage_dir or os.environ.get(
-            "CONVERSATION_STORAGE_DIR",
-            "./data/conversations"
-        ))
+        self.storage_dir = Path(
+            storage_dir
+            or os.environ.get("CONVERSATION_STORAGE_DIR", "./data/conversations")
+        )
         self.storage_dir.mkdir(parents=True, exist_ok=True)
         self._cache: Dict[str, List[Dict]] = {}  # In-memory cache for performance
         logger.info(f"Conversation storage initialized at: {self.storage_dir}")
@@ -273,7 +298,7 @@ class ConversationStore:
     def _get_file_path(self, conversation_id: str) -> Path:
         """Get the file path for a conversation."""
         # Sanitize conversation_id to prevent path traversal
-        safe_id = re.sub(r'[^a-zA-Z0-9_-]', '', conversation_id)
+        safe_id = re.sub(r"[^a-zA-Z0-9_-]", "", conversation_id)
         return self.storage_dir / f"{safe_id}.json"
 
     def get(self, conversation_id: str) -> List[Dict]:
@@ -284,7 +309,7 @@ class ConversationStore:
         file_path = self._get_file_path(conversation_id)
         if file_path.exists():
             try:
-                with open(file_path, 'r') as f:
+                with open(file_path, "r") as f:
                     self._cache[conversation_id] = json.load(f)
             except (json.JSONDecodeError, IOError) as e:
                 logger.error(f"Error loading conversation {conversation_id}: {e}")
@@ -306,7 +331,7 @@ class ConversationStore:
         """Save a conversation to disk."""
         file_path = self._get_file_path(conversation_id)
         try:
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 json.dump(self._cache[conversation_id], f, indent=2)
         except IOError as e:
             logger.error(f"Error saving conversation {conversation_id}: {e}")
@@ -330,6 +355,7 @@ class ConversationStore:
 # Initialize conversation storage
 conversations = ConversationStore()
 
+
 # WebSocket connection manager
 class ConnectionManager:
     def __init__(self):
@@ -351,7 +377,9 @@ class ConnectionManager:
             for connection in self.active_connections[conversation_id]:
                 await connection.send_json(message)
 
+
 manager = ConnectionManager()
+
 
 # Models with validation
 class BlogGenerationRequest(BaseModel):
@@ -363,37 +391,40 @@ class BlogGenerationRequest(BaseModel):
     humanize: bool = True
     conversation_id: str = Field(..., min_length=1, max_length=100)
 
-    @field_validator('topic')
+    @field_validator("topic")
     @classmethod
     def sanitize_topic(cls, v: str) -> str:
         if contains_injection_attempt(v):
             logger.warning(f"Prompt injection attempt in topic: {v[:100]}...")
         return sanitize_text(v)
 
-    @field_validator('keywords')
+    @field_validator("keywords")
     @classmethod
     def validate_keywords(cls, v: List[str]) -> List[str]:
         validated = []
         for keyword in v:
             if len(keyword) > MAX_KEYWORD_LENGTH:
-                raise ValueError(f"Keyword exceeds maximum length of {MAX_KEYWORD_LENGTH}")
+                raise ValueError(
+                    f"Keyword exceeds maximum length of {MAX_KEYWORD_LENGTH}"
+                )
             validated.append(sanitize_text(keyword))
         return validated
 
-    @field_validator('tone')
+    @field_validator("tone")
     @classmethod
     def validate_tone(cls, v: str) -> str:
         if v.lower() not in ALLOWED_TONES:
             raise ValueError(f"Tone must be one of: {', '.join(ALLOWED_TONES)}")
         return v.lower()
 
-    @field_validator('conversation_id')
+    @field_validator("conversation_id")
     @classmethod
     def validate_conversation_id(cls, v: str) -> str:
         # Only allow alphanumeric, hyphens, and underscores
-        if not re.match(r'^[a-zA-Z0-9_-]+$', v):
+        if not re.match(r"^[a-zA-Z0-9_-]+$", v):
             raise ValueError("Conversation ID contains invalid characters")
         return v
+
 
 class BookGenerationRequest(BaseModel):
     title: str = Field(..., min_length=1, max_length=MAX_TOPIC_LENGTH)
@@ -406,36 +437,39 @@ class BookGenerationRequest(BaseModel):
     humanize: bool = True
     conversation_id: str = Field(..., min_length=1, max_length=100)
 
-    @field_validator('title')
+    @field_validator("title")
     @classmethod
     def sanitize_title(cls, v: str) -> str:
         if contains_injection_attempt(v):
             logger.warning(f"Prompt injection attempt in title: {v[:100]}...")
         return sanitize_text(v)
 
-    @field_validator('keywords')
+    @field_validator("keywords")
     @classmethod
     def validate_keywords(cls, v: List[str]) -> List[str]:
         validated = []
         for keyword in v:
             if len(keyword) > MAX_KEYWORD_LENGTH:
-                raise ValueError(f"Keyword exceeds maximum length of {MAX_KEYWORD_LENGTH}")
+                raise ValueError(
+                    f"Keyword exceeds maximum length of {MAX_KEYWORD_LENGTH}"
+                )
             validated.append(sanitize_text(keyword))
         return validated
 
-    @field_validator('tone')
+    @field_validator("tone")
     @classmethod
     def validate_tone(cls, v: str) -> str:
         if v.lower() not in ALLOWED_TONES:
             raise ValueError(f"Tone must be one of: {', '.join(ALLOWED_TONES)}")
         return v.lower()
 
-    @field_validator('conversation_id')
+    @field_validator("conversation_id")
     @classmethod
     def validate_conversation_id(cls, v: str) -> str:
-        if not re.match(r'^[a-zA-Z0-9_-]+$', v):
+        if not re.match(r"^[a-zA-Z0-9_-]+$", v):
             raise ValueError("Conversation ID contains invalid characters")
         return v
+
 
 # =============================================================================
 # Utility Functions
@@ -447,7 +481,7 @@ def sanitize_for_log(text: str, max_length: int = 30) -> str:
     # Truncate and add ellipsis
     sanitized = text[:max_length] + "..." if len(text) > max_length else text
     # Remove newlines and excessive whitespace
-    sanitized = re.sub(r'\s+', ' ', sanitized)
+    sanitized = re.sub(r"\s+", " ", sanitized)
     return sanitized
 
 
@@ -460,7 +494,7 @@ async def health_check():
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
-        "version": "1.0.0"
+        "version": "1.0.0",
     }
 
 
@@ -471,29 +505,31 @@ async def root():
         "message": "Welcome to the Blog AI API",
         "version": "1.0.0",
         "docs": "/docs",
-        "health": "/health"
+        "health": "/health",
     }
+
 
 @app.get("/conversations/{conversation_id}")
 async def get_conversation(
-    conversation_id: str,
-    user_id: str = Depends(verify_api_key)
+    conversation_id: str, user_id: str = Depends(verify_api_key)
 ):
     # Validate conversation_id format
-    if not re.match(r'^[a-zA-Z0-9_-]+$', conversation_id):
+    if not re.match(r"^[a-zA-Z0-9_-]+$", conversation_id):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid conversation ID format"
+            detail="Invalid conversation ID format",
         )
 
     return {"conversation": conversations.get(conversation_id)}
 
+
 @app.post("/generate-blog", status_code=status.HTTP_201_CREATED)
 async def generate_blog(
-    request: BlogGenerationRequest,
-    user_id: str = Depends(verify_api_key)
+    request: BlogGenerationRequest, user_id: str = Depends(verify_api_key)
 ):
-    logger.info(f"Blog generation requested by user: {user_id}, topic_length: {len(request.topic)}")
+    logger.info(
+        f"Blog generation requested by user: {user_id}, topic_length: {len(request.topic)}"
+    )
     try:
         # Create generation options
         options = GenerationOptions(
@@ -501,9 +537,9 @@ async def generate_blog(
             max_tokens=4000,
             top_p=0.9,
             frequency_penalty=0.0,
-            presence_penalty=0.0
+            presence_penalty=0.0,
         )
-        
+
         # Generate blog post
         if request.research:
             blog_post = generate_blog_post_with_research(
@@ -511,7 +547,7 @@ async def generate_blog(
                 keywords=request.keywords,
                 tone=request.tone,
                 provider_type="openai",
-                options=options
+                options=options,
             )
         else:
             blog_post = generate_blog_post(
@@ -519,9 +555,9 @@ async def generate_blog(
                 keywords=request.keywords,
                 tone=request.tone,
                 provider_type="openai",
-                options=options
+                options=options,
             )
-        
+
         # Post-process blog post
         if request.proofread or request.humanize:
             provider = create_provider_from_env("openai")
@@ -530,9 +566,9 @@ async def generate_blog(
                 proofread=request.proofread,
                 humanize=request.humanize,
                 provider=provider,
-                options=options
+                options=options,
             )
-        
+
         # Convert blog post to JSON-serializable format
         blog_post_data = {
             "title": blog_post.title,
@@ -540,30 +576,24 @@ async def generate_blog(
             "date": blog_post.date,
             "image": blog_post.image,
             "tags": blog_post.tags,
-            "sections": []
+            "sections": [],
         }
-        
+
         for section in blog_post.sections:
-            section_data = {
-                "title": section.title,
-                "subtopics": []
-            }
-            
+            section_data = {"title": section.title, "subtopics": []}
+
             for subtopic in section.subtopics:
-                subtopic_data = {
-                    "title": subtopic.title,
-                    "content": subtopic.content
-                }
-                
+                subtopic_data = {"title": subtopic.title, "content": subtopic.content}
+
                 section_data["subtopics"].append(subtopic_data)
-            
+
             blog_post_data["sections"].append(section_data)
-        
+
         # Add user message to conversation (with persistence)
         user_message = {
             "role": "user",
             "content": "Generate a blog post",  # Sanitized - don't log actual topic
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
         conversations.append(request.conversation_id, user_message)
 
@@ -571,45 +601,38 @@ async def generate_blog(
         assistant_message = {
             "role": "assistant",
             "content": f"Generated blog post: {blog_post.title[:50]}",  # Truncated for logs
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
         conversations.append(request.conversation_id, assistant_message)
-        
+
         # Send messages via WebSocket
         await manager.send_message(
-            {"type": "message", **user_message},
-            request.conversation_id
+            {"type": "message", **user_message}, request.conversation_id
         )
         await manager.send_message(
-            {"type": "message", **assistant_message},
-            request.conversation_id
+            {"type": "message", **assistant_message}, request.conversation_id
         )
-        
+
         logger.info(f"Blog generated successfully: {blog_post.title}")
-        return {
-            "success": True,
-            "type": "blog",
-            "content": blog_post_data
-        }
+        return {"success": True, "type": "blog", "content": blog_post_data}
     except ValueError as e:
         logger.warning(f"Validation error in blog generation: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logger.error(f"Error generating blog: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to generate blog post. Please try again later."
+            detail="Failed to generate blog post. Please try again later.",
         )
+
 
 @app.post("/generate-book", status_code=status.HTTP_201_CREATED)
 async def generate_book_endpoint(
-    request: BookGenerationRequest,
-    user_id: str = Depends(verify_api_key)
+    request: BookGenerationRequest, user_id: str = Depends(verify_api_key)
 ):
-    logger.info(f"Book generation requested by user: {user_id}, title_length: {len(request.title)}, chapters: {request.num_chapters}")
+    logger.info(
+        f"Book generation requested by user: {user_id}, title_length: {len(request.title)}, chapters: {request.num_chapters}"
+    )
     try:
         # Create generation options
         options = GenerationOptions(
@@ -617,9 +640,9 @@ async def generate_book_endpoint(
             max_tokens=4000,
             top_p=0.9,
             frequency_penalty=0.0,
-            presence_penalty=0.0
+            presence_penalty=0.0,
         )
-        
+
         # Generate book
         if request.research:
             book = generate_book_with_research(
@@ -629,7 +652,7 @@ async def generate_book_endpoint(
                 keywords=request.keywords,
                 tone=request.tone,
                 provider_type="openai",
-                options=options
+                options=options,
             )
         else:
             book = generate_book(
@@ -639,9 +662,9 @@ async def generate_book_endpoint(
                 keywords=request.keywords,
                 tone=request.tone,
                 provider_type="openai",
-                options=options
+                options=options,
             )
-        
+
         # Post-process book
         if request.proofread or request.humanize:
             provider = create_provider_from_env("openai")
@@ -650,9 +673,9 @@ async def generate_book_endpoint(
                 proofread=request.proofread,
                 humanize=request.humanize,
                 provider=provider,
-                options=options
+                options=options,
             )
-        
+
         # Convert book to JSON-serializable format
         book_data = {
             "title": book.title,
@@ -660,31 +683,28 @@ async def generate_book_endpoint(
             "date": book.date,
             "image": book.image,
             "tags": book.tags,
-            "chapters": []
+            "chapters": [],
         }
-        
+
         for chapter in book.chapters:
             chapter_data = {
                 "number": chapter.number,
                 "title": chapter.title,
-                "topics": []
+                "topics": [],
             }
-            
+
             for topic in chapter.topics:
-                topic_data = {
-                    "title": topic.title,
-                    "content": topic.content
-                }
-                
+                topic_data = {"title": topic.title, "content": topic.content}
+
                 chapter_data["topics"].append(topic_data)
-            
+
             book_data["chapters"].append(chapter_data)
-        
+
         # Add user message to conversation (with persistence)
         user_message = {
             "role": "user",
             "content": "Generate a book",  # Sanitized - don't log actual title
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
         conversations.append(request.conversation_id, user_message)
 
@@ -692,49 +712,42 @@ async def generate_book_endpoint(
         assistant_message = {
             "role": "assistant",
             "content": f"Generated book with {len(book.chapters)} chapters",  # Sanitized
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
         conversations.append(request.conversation_id, assistant_message)
-        
+
         # Send messages via WebSocket
         await manager.send_message(
-            {"type": "message", **user_message},
-            request.conversation_id
+            {"type": "message", **user_message}, request.conversation_id
         )
         await manager.send_message(
-            {"type": "message", **assistant_message},
-            request.conversation_id
+            {"type": "message", **assistant_message}, request.conversation_id
         )
-        
+
         logger.info(f"Book generated successfully: {book.title}")
-        return {
-            "success": True,
-            "type": "book",
-            "content": book_data
-        }
+        return {"success": True, "type": "book", "content": book_data}
     except ValueError as e:
         logger.warning(f"Validation error in book generation: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logger.error(f"Error generating book: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to generate book. Please try again later."
+            detail="Failed to generate book. Please try again later.",
         )
+
 
 # WebSocket message model for validation
 class WebSocketMessage(BaseModel):
-    role: str = Field(..., pattern=r'^(user|assistant|system)$')
+    role: str = Field(..., pattern=r"^(user|assistant|system)$")
     content: str = Field(..., min_length=1, max_length=10000)
     timestamp: Optional[str] = None
+
 
 @app.websocket("/ws/conversation/{conversation_id}")
 async def websocket_endpoint(websocket: WebSocket, conversation_id: str):
     # Validate conversation_id format
-    if not re.match(r'^[a-zA-Z0-9_-]+$', conversation_id):
+    if not re.match(r"^[a-zA-Z0-9_-]+$", conversation_id):
         await websocket.close(code=4000, reason="Invalid conversation ID format")
         return
 
@@ -752,7 +765,9 @@ async def websocket_endpoint(websocket: WebSocket, conversation_id: str):
                 message = WebSocketMessage(**raw_message).model_dump()
             except json.JSONDecodeError:
                 logger.warning(f"Invalid JSON received on WebSocket: {conversation_id}")
-                await websocket.send_json({"type": "error", "detail": "Invalid JSON format"})
+                await websocket.send_json(
+                    {"type": "error", "detail": "Invalid JSON format"}
+                )
                 continue
             except ValueError as e:
                 logger.warning(f"Invalid message format on WebSocket: {str(e)}")
@@ -767,16 +782,17 @@ async def websocket_endpoint(websocket: WebSocket, conversation_id: str):
             conversations.append(conversation_id, message)
 
             # Broadcast message to all connected clients
-            await manager.send_message(
-                {"type": "message", **message},
-                conversation_id
-            )
+            await manager.send_message({"type": "message", **message}, conversation_id)
     except WebSocketDisconnect:
         logger.info(f"WebSocket disconnected for conversation: {conversation_id}")
         manager.disconnect(websocket, conversation_id)
     except Exception as e:
-        logger.error(f"WebSocket error for conversation {conversation_id}: {str(e)}", exc_info=True)
+        logger.error(
+            f"WebSocket error for conversation {conversation_id}: {str(e)}",
+            exc_info=True,
+        )
         manager.disconnect(websocket, conversation_id)
+
 
 if __name__ == "__main__":
     uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)
