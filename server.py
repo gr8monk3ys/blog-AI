@@ -20,6 +20,7 @@ from typing import Any, Dict, List, Optional
 
 import uvicorn
 from fastapi import (
+    APIRouter,
     Depends,
     FastAPI,
     HTTPException,
@@ -70,6 +71,52 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "X-API-Key"],
 )
+
+
+# =============================================================================
+# HTTPS Redirect Middleware
+# =============================================================================
+class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
+    """
+    Middleware to redirect HTTP requests to HTTPS in production.
+
+    Checks for:
+    - X-Forwarded-Proto header (common with reverse proxies/load balancers)
+    - Direct scheme detection
+
+    Excludes health check endpoints for load balancer compatibility.
+    """
+
+    def __init__(self, app, exclude_paths: Optional[set] = None):
+        super().__init__(app)
+        self.exclude_paths = exclude_paths or {"/health", "/"}
+
+    async def dispatch(self, request: Request, call_next):
+        # Skip redirect for excluded paths (health checks, etc.)
+        if request.url.path in self.exclude_paths:
+            return await call_next(request)
+
+        # Check if request is already HTTPS
+        # X-Forwarded-Proto is set by reverse proxies (nginx, AWS ALB, etc.)
+        forwarded_proto = request.headers.get("X-Forwarded-Proto", "").lower()
+        scheme = forwarded_proto or request.url.scheme
+
+        if scheme != "https":
+            # Build HTTPS URL
+            https_url = request.url.replace(scheme="https")
+            from starlette.responses import RedirectResponse
+
+            return RedirectResponse(url=str(https_url), status_code=301)
+
+        return await call_next(request)
+
+
+# Add HTTPS redirect middleware in production
+# SECURITY: Only enable when HTTPS is properly configured
+HTTPS_REDIRECT_ENABLED = os.environ.get("HTTPS_REDIRECT_ENABLED", "false").lower() == "true"
+if HTTPS_REDIRECT_ENABLED:
+    app.add_middleware(HTTPSRedirectMiddleware)
+    logger.info("HTTPS redirect middleware enabled")
 
 
 # =============================================================================
@@ -163,14 +210,112 @@ if RATE_LIMIT_ENABLED:
 
 # API Key authentication
 API_KEY_HEADER = APIKeyHeader(name="X-API-Key", auto_error=False)
-API_KEYS: Dict[str, str] = {}  # In production, load from secure storage
 
 
-def get_or_create_api_key(user_id: str) -> str:
+# =============================================================================
+# API Key Storage (File-based persistence with secure hashing)
+# =============================================================================
+class APIKeyStore:
+    """
+    File-based API key storage with secure hashing.
+
+    API keys are stored as SHA-256 hashes for security. The plain-text key
+    is only returned once when created and cannot be retrieved later.
+    This is a stepping stone to Redis/database storage in production.
+    """
+
+    def __init__(self, storage_path: str = None):
+        self.storage_path = Path(
+            storage_path or os.environ.get("API_KEY_STORAGE_PATH", "./data/api_keys.json")
+        )
+        self.storage_path.parent.mkdir(parents=True, exist_ok=True)
+        self._cache: Dict[str, str] = {}  # user_id -> hashed_key
+        self._load()
+        logger.info(f"API key storage initialized at: {self.storage_path}")
+
+    def _hash_key(self, api_key: str) -> str:
+        """Hash an API key using SHA-256."""
+        return hashlib.sha256(api_key.encode()).hexdigest()
+
+    def _load(self) -> None:
+        """Load API keys from disk."""
+        if self.storage_path.exists():
+            try:
+                with open(self.storage_path, "r") as f:
+                    self._cache = json.load(f)
+                logger.info(f"Loaded {len(self._cache)} API keys from storage")
+            except (json.JSONDecodeError, IOError) as e:
+                logger.error(f"Error loading API keys: {e}")
+                self._cache = {}
+        else:
+            self._cache = {}
+
+    def _save(self) -> None:
+        """Save API keys to disk."""
+        try:
+            with open(self.storage_path, "w") as f:
+                json.dump(self._cache, f, indent=2)
+        except IOError as e:
+            logger.error(f"Error saving API keys: {e}")
+
+    def create_key(self, user_id: str) -> str:
+        """
+        Create a new API key for a user.
+
+        Returns the plain-text key (only returned once - cannot be retrieved later).
+        """
+        plain_key = secrets.token_urlsafe(32)
+        hashed_key = self._hash_key(plain_key)
+        self._cache[user_id] = hashed_key
+        self._save()
+        logger.info(f"Created new API key for user: {user_id}")
+        return plain_key
+
+    def get_or_create_key(self, user_id: str) -> Optional[str]:
+        """
+        Get existing key status or create a new key.
+
+        If user already has a key, returns None (key cannot be retrieved).
+        If user doesn't have a key, creates one and returns the plain-text key.
+        """
+        if user_id in self._cache:
+            return None  # Key exists but cannot be retrieved
+        return self.create_key(user_id)
+
+    def verify_key(self, api_key: str) -> Optional[str]:
+        """
+        Verify an API key and return the associated user_id.
+
+        Uses constant-time comparison to prevent timing attacks.
+        Returns None if the key is invalid.
+        """
+        hashed_input = self._hash_key(api_key)
+        for user_id, stored_hash in self._cache.items():
+            if secrets.compare_digest(stored_hash, hashed_input):
+                return user_id
+        return None
+
+    def revoke_key(self, user_id: str) -> bool:
+        """Revoke a user's API key."""
+        if user_id in self._cache:
+            del self._cache[user_id]
+            self._save()
+            logger.info(f"Revoked API key for user: {user_id}")
+            return True
+        return False
+
+    def user_has_key(self, user_id: str) -> bool:
+        """Check if a user has an API key."""
+        return user_id in self._cache
+
+
+# Initialize API key storage
+api_key_store = APIKeyStore()
+
+
+def get_or_create_api_key(user_id: str) -> Optional[str]:
     """Generate or retrieve API key for a user."""
-    if user_id not in API_KEYS:
-        API_KEYS[user_id] = secrets.token_urlsafe(32)
-    return API_KEYS[user_id]
+    return api_key_store.get_or_create_key(user_id)
 
 
 async def verify_api_key(api_key: Optional[str] = Depends(API_KEY_HEADER)) -> str:
@@ -185,10 +330,10 @@ async def verify_api_key(api_key: Optional[str] = Depends(API_KEY_HEADER)) -> st
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing API key"
         )
 
-    # Find user by API key
-    for user_id, key in API_KEYS.items():
-        if secrets.compare_digest(key, api_key):
-            return user_id
+    # Verify API key using secure storage
+    user_id = api_key_store.verify_key(api_key)
+    if user_id:
+        return user_id
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key"
@@ -484,6 +629,13 @@ class BookGenerationRequest(BaseModel):
 
 
 # =============================================================================
+# API Router for versioning
+# =============================================================================
+# Create versioned API router
+api_v1_router = APIRouter(prefix="/api/v1", tags=["v1"])
+
+
+# =============================================================================
 # Utility Functions
 # =============================================================================
 def sanitize_for_log(text: str, max_length: int = 30) -> str:
@@ -516,8 +668,10 @@ async def root():
     return {
         "message": "Welcome to the Blog AI API",
         "version": "1.0.0",
+        "api_version": "v1",
         "docs": "/docs",
         "health": "/health",
+        "api_base": "/api/v1",
     }
 
 
@@ -804,6 +958,41 @@ async def websocket_endpoint(websocket: WebSocket, conversation_id: str):
             exc_info=True,
         )
         manager.disconnect(websocket, conversation_id)
+
+
+# =============================================================================
+# Versioned API Routes (v1)
+# =============================================================================
+# Add versioned routes to the router
+# These provide the same functionality as the root endpoints but under /api/v1/
+
+
+@api_v1_router.get("/conversations/{conversation_id}")
+async def get_conversation_v1(
+    conversation_id: str, user_id: str = Depends(verify_api_key)
+):
+    """Get conversation history (API v1)."""
+    return await get_conversation(conversation_id, user_id)
+
+
+@api_v1_router.post("/generate-blog", status_code=status.HTTP_201_CREATED)
+async def generate_blog_v1(
+    request: BlogGenerationRequest, user_id: str = Depends(verify_api_key)
+):
+    """Generate a blog post (API v1)."""
+    return await generate_blog(request, user_id)
+
+
+@api_v1_router.post("/generate-book", status_code=status.HTTP_201_CREATED)
+async def generate_book_v1(
+    request: BookGenerationRequest, user_id: str = Depends(verify_api_key)
+):
+    """Generate a book (API v1)."""
+    return await generate_book_endpoint(request, user_id)
+
+
+# Include the versioned router in the app
+app.include_router(api_v1_router)
 
 
 if __name__ == "__main__":

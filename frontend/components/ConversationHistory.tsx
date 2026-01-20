@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { API_ENDPOINTS, getDefaultHeaders, checkServerConnection } from '../lib/api';
 
@@ -19,39 +19,41 @@ export default function ConversationHistory({ conversationId }: ConversationHist
   const [isAiTyping, setIsAiTyping] = useState<boolean>(false);
   const [isServerConnected, setIsServerConnected] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [ws, setWs] = useState<WebSocket | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
 
   // Format timestamp to relative time (e.g., "2 minutes ago")
-  const formatTimestamp = (timestamp: string): string => {
+  const formatTimestamp = useCallback((timestamp: string): string => {
     const date = new Date(timestamp);
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-    
+
     if (diffInSeconds < 60) return 'just now';
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
     return `${Math.floor(diffInSeconds / 86400)} days ago`;
-  };
+  }, []);
 
   // Scroll to bottom of messages
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, []);
 
-  // Group messages by sender
-  const groupedMessages = messages.reduce((groups, message, index) => {
-    const prevMessage = messages[index - 1];
-    const isSameSender = prevMessage && prevMessage.role === message.role;
+  // Group messages by sender - memoized for performance
+  const groupedMessages = useMemo(() => {
+    return messages.reduce((groups, message, index) => {
+      const prevMessage = messages[index - 1];
+      const isSameSender = prevMessage && prevMessage.role === message.role;
 
-    if (isSameSender && groups.length > 0) {
-      const lastGroup = groups[groups.length - 1];
-      if (lastGroup) {
-        lastGroup.messages.push(message);
-        return groups;
+      if (isSameSender && groups.length > 0) {
+        const lastGroup = groups[groups.length - 1];
+        if (lastGroup) {
+          lastGroup.messages.push(message);
+          return groups;
+        }
       }
-    }
-    return [...groups, { role: message.role, messages: [message] }];
-  }, [] as { role: string; messages: Message[] }[]);
+      return [...groups, { role: message.role, messages: [message] }];
+    }, [] as { role: string; messages: Message[] }[]);
+  }, [messages]);
 
   // Mock data for development or when server is not available
   const mockMessages: Message[] = [
@@ -88,7 +90,7 @@ export default function ConversationHistory({ conversationId }: ConversationHist
         ws.onopen = () => {
           if (isMounted) {
             console.log('WebSocket connection established');
-            setWs(ws);
+            wsRef.current = ws;
           }
         };
 
