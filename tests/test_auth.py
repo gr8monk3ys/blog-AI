@@ -7,8 +7,6 @@ and API key management.
 
 import os
 import unittest
-from datetime import datetime
-from unittest.mock import MagicMock, patch
 
 # Set test environment before importing app modules
 os.environ["DEV_MODE"] = "true"

@@ -6,6 +6,7 @@ import os
 from typing import Any, Dict, Optional
 
 from ..types.post_processing import FormatConversionOptions, OutputFormat
+from .metadata_utils import add_markdown_metadata
 
 
 class FormatConversionError(Exception):
@@ -577,32 +578,6 @@ def extract_html_metadata(content: str) -> tuple:
         )
     except Exception as e:
         raise FormatConversionError(f"Error extracting HTML metadata: {str(e)}")
-
-
-def add_markdown_metadata(content: str, metadata: Dict[str, Any]) -> str:
-    """
-    Add metadata to Markdown content.
-
-    Args:
-        content: The Markdown content.
-        metadata: The metadata to add.
-
-    Returns:
-        The Markdown content with metadata.
-
-    Raises:
-        FormatConversionError: If an error occurs during addition.
-    """
-    try:
-        # Create YAML front matter
-        front_matter = "---\n"
-        for key, value in metadata.items():
-            front_matter += f"{key}: {value}\n"
-        front_matter += "---\n\n"
-
-        return front_matter + content
-    except Exception as e:
-        raise FormatConversionError(f"Error adding Markdown metadata: {str(e)}")
 
 
 def add_html_metadata(content: str, metadata: Dict[str, Any]) -> str:

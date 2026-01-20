@@ -7,7 +7,7 @@ from the app package.
 """
 
 import logging
-import os
+from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import APIRouter, FastAPI
@@ -40,6 +40,22 @@ warnings = config.validate()
 for warning in warnings:
     logger.warning(warning)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifecycle - startup and shutdown."""
+    # Startup
+    logger.info("Starting Blog AI API...")
+    init_db()
+    logger.info("Database initialized")
+    logger.info(f"Blog AI API started in {config.environment} mode")
+
+    yield  # Application runs here
+
+    # Shutdown
+    logger.info("Shutting down Blog AI API...")
+
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Blog AI API",
@@ -47,6 +63,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs" if config.is_development else None,
     redoc_url="/redoc" if config.is_development else None,
+    lifespan=lifespan,
 )
 
 # =============================================================================
@@ -76,27 +93,6 @@ if config.rate_limit.enabled:
         window_seconds=config.rate_limit.window_seconds,
     )
     logger.info("Rate limiting middleware enabled")
-
-
-# =============================================================================
-# Startup/Shutdown Events
-# =============================================================================
-@app.on_event("startup")
-async def startup_event():
-    """Initialize resources on application startup."""
-    logger.info("Starting Blog AI API...")
-
-    # Initialize database
-    init_db()
-    logger.info("Database initialized")
-
-    logger.info(f"Blog AI API started in {config.environment} mode")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup resources on application shutdown."""
-    logger.info("Shutting down Blog AI API...")
 
 
 # =============================================================================

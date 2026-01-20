@@ -4,11 +4,9 @@ Integration tests for the Blog AI API endpoints.
 These tests verify the API behavior, validation, and error handling.
 """
 
-import json
 import os
 import unittest
-from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 # Set DEV_MODE before importing the app
 os.environ["DEV_MODE"] = "true"

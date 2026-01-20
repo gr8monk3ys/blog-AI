@@ -6,6 +6,7 @@ import os
 from typing import Any, Dict, Optional
 
 from ..types.post_processing import OutputFormat, SaveOptions
+from .metadata_utils import add_markdown_metadata
 
 
 class FileSavingError(Exception):
@@ -179,37 +180,6 @@ def save_book(
         return save_to_file(content, save_options)
     except Exception as e:
         raise FileSavingError(f"Error saving book: {str(e)}")
-
-
-def add_markdown_metadata(content: str, metadata: Dict[str, Any]) -> str:
-    """
-    Add metadata to Markdown content.
-
-    Args:
-        content: The Markdown content.
-        metadata: The metadata to add.
-
-    Returns:
-        The Markdown content with metadata.
-
-    Raises:
-        FileSavingError: If an error occurs during addition.
-    """
-    try:
-        # Create YAML front matter
-        front_matter = "---\n"
-        for key, value in metadata.items():
-            if isinstance(value, list):
-                front_matter += f"{key}:\n"
-                for item in value:
-                    front_matter += f"  - {item}\n"
-            else:
-                front_matter += f"{key}: {value}\n"
-        front_matter += "---\n\n"
-
-        return front_matter + content
-    except Exception as e:
-        raise FileSavingError(f"Error adding Markdown metadata: {str(e)}")
 
 
 def add_html_metadata(content: str, metadata: Dict[str, Any]) -> str:

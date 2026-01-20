@@ -7,7 +7,7 @@ and root endpoint.
 
 import os
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 # Set test environment before importing app modules
 os.environ["DEV_MODE"] = "true"
