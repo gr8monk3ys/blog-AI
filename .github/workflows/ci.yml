@@ -75,7 +75,7 @@ jobs:
           pip install mypy types-requests
 
       - name: Type check with mypy
-        run: mypy src/ server.py --ignore-missing-imports --no-error-summary || true
+        run: mypy src/ server.py app/ --ignore-missing-imports --no-error-summary
 
   python-test:
     name: Python Tests
@@ -130,8 +130,8 @@ jobs:
         run: pip install safety pip-audit
 
       - name: Check for known vulnerabilities
-        run: |
-          pip-audit --requirement requirements.txt || true
+        continue-on-error: true
+        run: pip-audit --requirement requirements.txt
 
   # =============================================================================
   # Frontend CI

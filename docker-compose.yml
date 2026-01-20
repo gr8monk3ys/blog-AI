@@ -1,21 +1,91 @@
 version: '3.8'
 
 services:
-  blog-ai:
+  # =============================================================================
+  # Backend API Service
+  # =============================================================================
+  backend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.backend
     ports:
-      - "8000:8000"  # Backend API
-      - "3000:3000"  # Frontend
+      - "8000:8000"
     volumes:
-      - ./.env:/app/.env:ro  # Mount .env file as read-only
+      - backend-data:/app/data
     environment:
-      - NODE_ENV=production
+      - DEV_MODE=${DEV_MODE:-false}
+      - DATABASE_URL=sqlite:///./data/blog_ai.db
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_FORMAT=json
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000}
+      - RATE_LIMIT_ENABLED=${RATE_LIMIT_ENABLED:-true}
+      - JWT_SECRET=${JWT_SECRET}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/live')"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 10s
+    networks:
+      - blog-ai-network
+
+  # =============================================================================
+  # Frontend Service
+  # =============================================================================
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://backend:8000}
+        - NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL:-ws://backend:8000}
+        - NEXT_PUBLIC_API_VERSION=v1
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - blog-ai-network
+
+  # =============================================================================
+  # PostgreSQL Database (optional, for production)
+  # =============================================================================
+  # postgres:
+  #   image: postgres:15-alpine
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   environment:
+  #     - POSTGRES_USER=${POSTGRES_USER:-blogai}
+  #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-blogai}
+  #     - POSTGRES_DB=${POSTGRES_DB:-blogai}
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-blogai}"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #   networks:
+  #     - blog-ai-network
+
+networks:
+  blog-ai-network:
+    driver: bridge
+
+volumes:
+  backend-data:
+  # postgres-data:
