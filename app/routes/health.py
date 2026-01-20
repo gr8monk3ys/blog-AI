@@ -8,6 +8,7 @@ from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..db import get_db
@@ -38,7 +39,7 @@ def check_database(db: Session) -> ServiceStatus:
 
     start = time.time()
     try:
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         latency = (time.time() - start) * 1000
         return ServiceStatus(status="healthy", latency_ms=round(latency, 2))
     except Exception as e:

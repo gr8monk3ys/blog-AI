@@ -36,6 +36,10 @@ class BlogGenerationRequest(BaseModel):
     @classmethod
     def sanitize_topic(cls, v: str) -> str:
         """Sanitize topic to prevent prompt injection."""
+        # Strip whitespace and check for empty string
+        v = v.strip()
+        if not v:
+            raise ValueError("Topic cannot be empty or whitespace only")
         if contains_injection_attempt(v):
             logger.warning(f"Prompt injection attempt in topic: {v[:100]}...")
         return sanitize_text(v)
@@ -88,6 +92,10 @@ class BookGenerationRequest(BaseModel):
     @classmethod
     def sanitize_title(cls, v: str) -> str:
         """Sanitize title to prevent prompt injection."""
+        # Strip whitespace and check for empty string
+        v = v.strip()
+        if not v:
+            raise ValueError("Title cannot be empty or whitespace only")
         if contains_injection_attempt(v):
             logger.warning(f"Prompt injection attempt in title: {v[:100]}...")
         return sanitize_text(v)
