@@ -3,7 +3,7 @@ Core text generation functionality.
 """
 
 import os
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from ..types.providers import (
     AnthropicConfig,
@@ -40,17 +40,14 @@ def generate_text(
     """
     options = options or GenerationOptions()
 
-    try:
-        if provider.type == "openai":
-            return generate_with_openai(prompt, provider.config, options)
-        elif provider.type == "anthropic":
-            return generate_with_anthropic(prompt, provider.config, options)
-        elif provider.type == "gemini":
-            return generate_with_gemini(prompt, provider.config, options)
-        else:
-            raise TextGenerationError(f"Unsupported provider: {provider.type}")
-    except Exception as e:
-        raise TextGenerationError(f"Error generating text: {str(e)}")
+    if provider.type == "openai":
+        return generate_with_openai(prompt, provider.config, options)
+    elif provider.type == "anthropic":
+        return generate_with_anthropic(prompt, provider.config, options)
+    elif provider.type == "gemini":
+        return generate_with_gemini(prompt, provider.config, options)
+    else:
+        raise TextGenerationError(f"Unsupported provider: {provider.type}")
 
 
 def generate_with_openai(
@@ -72,7 +69,12 @@ def generate_with_openai(
     """
     try:
         import openai
+    except ImportError:
+        raise TextGenerationError(
+            "OpenAI package not installed. Install it with 'pip install openai'."
+        )
 
+    try:
         openai.api_key = config.api_key
 
         response = openai.chat.completions.create(
@@ -86,12 +88,16 @@ def generate_with_openai(
         )
 
         return response.choices[0].message.content
-    except ImportError:
-        raise TextGenerationError(
-            "OpenAI package not installed. Install it with 'pip install openai'."
-        )
-    except Exception as e:
-        raise TextGenerationError(f"Error generating text with OpenAI: {str(e)}")
+    except openai.AuthenticationError as e:
+        raise TextGenerationError(f"OpenAI authentication failed: {e}") from e
+    except openai.RateLimitError as e:
+        raise TextGenerationError(f"OpenAI rate limit exceeded: {e}") from e
+    except openai.APIConnectionError as e:
+        raise TextGenerationError(f"OpenAI connection error: {e}") from e
+    except openai.APIStatusError as e:
+        raise TextGenerationError(f"OpenAI API error (status {e.status_code}): {e}") from e
+    except openai.OpenAIError as e:
+        raise TextGenerationError(f"OpenAI error: {e}") from e
 
 
 def generate_with_anthropic(
@@ -113,7 +119,12 @@ def generate_with_anthropic(
     """
     try:
         import anthropic
+    except ImportError:
+        raise TextGenerationError(
+            "Anthropic package not installed. Install it with 'pip install anthropic'."
+        )
 
+    try:
         client = anthropic.Anthropic(api_key=config.api_key)
 
         response = client.messages.create(
@@ -124,12 +135,16 @@ def generate_with_anthropic(
         )
 
         return response.content[0].text
-    except ImportError:
-        raise TextGenerationError(
-            "Anthropic package not installed. Install it with 'pip install anthropic'."
-        )
-    except Exception as e:
-        raise TextGenerationError(f"Error generating text with Anthropic: {str(e)}")
+    except anthropic.AuthenticationError as e:
+        raise TextGenerationError(f"Anthropic authentication failed: {e}") from e
+    except anthropic.RateLimitError as e:
+        raise TextGenerationError(f"Anthropic rate limit exceeded: {e}") from e
+    except anthropic.APIConnectionError as e:
+        raise TextGenerationError(f"Anthropic connection error: {e}") from e
+    except anthropic.APIStatusError as e:
+        raise TextGenerationError(f"Anthropic API error (status {e.status_code}): {e}") from e
+    except anthropic.AnthropicError as e:
+        raise TextGenerationError(f"Anthropic error: {e}") from e
 
 
 def generate_with_gemini(
@@ -151,7 +166,13 @@ def generate_with_gemini(
     """
     try:
         import google.generativeai as genai
+        from google.api_core import exceptions as google_exceptions
+    except ImportError:
+        raise TextGenerationError(
+            "Google Generative AI package not installed. Install it with 'pip install google-generativeai'."
+        )
 
+    try:
         genai.configure(api_key=config.api_key)
 
         generation_config = {
@@ -165,12 +186,19 @@ def generate_with_gemini(
         response = model.generate_content(prompt)
 
         return response.text
-    except ImportError:
-        raise TextGenerationError(
-            "Google Generative AI package not installed. Install it with 'pip install google-generativeai'."
-        )
-    except Exception as e:
-        raise TextGenerationError(f"Error generating text with Gemini: {str(e)}")
+    except google_exceptions.Unauthenticated as e:
+        raise TextGenerationError(f"Gemini authentication failed: {e}") from e
+    except google_exceptions.ResourceExhausted as e:
+        raise TextGenerationError(f"Gemini rate limit exceeded: {e}") from e
+    except google_exceptions.ServiceUnavailable as e:
+        raise TextGenerationError(f"Gemini service unavailable: {e}") from e
+    except google_exceptions.InvalidArgument as e:
+        raise TextGenerationError(f"Gemini invalid argument: {e}") from e
+    except google_exceptions.GoogleAPIError as e:
+        raise TextGenerationError(f"Gemini API error: {e}") from e
+    except ValueError as e:
+        # Gemini raises ValueError for content safety issues
+        raise TextGenerationError(f"Gemini content generation failed: {e}") from e
 
 
 def create_provider_from_env(provider_type: ProviderType) -> LLMProvider:
@@ -186,40 +214,32 @@ def create_provider_from_env(provider_type: ProviderType) -> LLMProvider:
     Raises:
         TextGenerationError: If an error occurs during provider creation.
     """
-    try:
-        if provider_type == "openai":
-            api_key = os.environ.get("OPENAI_API_KEY")
-            if not api_key:
-                raise TextGenerationError("OPENAI_API_KEY environment variable not set")
+    if provider_type == "openai":
+        api_key = os.environ.get("OPENAI_API_KEY")
+        if not api_key:
+            raise TextGenerationError("OPENAI_API_KEY environment variable not set")
 
-            model = os.environ.get("OPENAI_MODEL", "gpt-4")
+        model = os.environ.get("OPENAI_MODEL", "gpt-4")
+        config = OpenAIConfig(api_key=api_key, model=model)
+        return LLMProvider(type=provider_type, config=config)
 
-            config = OpenAIConfig(api_key=api_key, model=model)
+    elif provider_type == "anthropic":
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        if not api_key:
+            raise TextGenerationError("ANTHROPIC_API_KEY environment variable not set")
 
-            return LLMProvider(type=provider_type, config=config)
-        elif provider_type == "anthropic":
-            api_key = os.environ.get("ANTHROPIC_API_KEY")
-            if not api_key:
-                raise TextGenerationError(
-                    "ANTHROPIC_API_KEY environment variable not set"
-                )
+        model = os.environ.get("ANTHROPIC_MODEL", "claude-3-opus-20240229")
+        config = AnthropicConfig(api_key=api_key, model=model)
+        return LLMProvider(type=provider_type, config=config)
 
-            model = os.environ.get("ANTHROPIC_MODEL", "claude-3-opus-20240229")
+    elif provider_type == "gemini":
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            raise TextGenerationError("GEMINI_API_KEY environment variable not set")
 
-            config = AnthropicConfig(api_key=api_key, model=model)
+        model = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash-latest")
+        config = GeminiConfig(api_key=api_key, model=model)
+        return LLMProvider(type=provider_type, config=config)
 
-            return LLMProvider(type=provider_type, config=config)
-        elif provider_type == "gemini":
-            api_key = os.environ.get("GEMINI_API_KEY")
-            if not api_key:
-                raise TextGenerationError("GEMINI_API_KEY environment variable not set")
-
-            model = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash-latest")
-
-            config = GeminiConfig(api_key=api_key, model=model)
-
-            return LLMProvider(type=provider_type, config=config)
-        else:
-            raise TextGenerationError(f"Unsupported provider type: {provider_type}")
-    except Exception as e:
-        raise TextGenerationError(f"Error creating provider: {str(e)}")
+    else:
+        raise TextGenerationError(f"Unsupported provider type: {provider_type}")

@@ -222,51 +222,57 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
               <Switch
                 checked={useResearch}
                 onChange={setUseResearch}
+                aria-label="Enable web research"
                 className={`${
                   useResearch ? 'bg-indigo-600' : 'bg-gray-200'
                 } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
               >
                 <span
+                  aria-hidden="true"
                   className={`${
                     useResearch ? 'translate-x-6' : 'translate-x-1'
                   } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
                 />
               </Switch>
-              <span className="text-sm text-gray-700">Use web research</span>
+              <span className="text-sm text-gray-700" id="research-label">Use web research</span>
             </div>
 
             <div className="flex items-center space-x-3">
               <Switch
                 checked={proofread}
                 onChange={setProofread}
+                aria-label="Enable proofreading"
                 className={`${
                   proofread ? 'bg-indigo-600' : 'bg-gray-200'
                 } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
               >
                 <span
+                  aria-hidden="true"
                   className={`${
                     proofread ? 'translate-x-6' : 'translate-x-1'
                   } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
                 />
               </Switch>
-              <span className="text-sm text-gray-700">Proofread content</span>
+              <span className="text-sm text-gray-700" id="proofread-label">Proofread content</span>
             </div>
 
             <div className="flex items-center space-x-3">
               <Switch
                 checked={humanize}
                 onChange={setHumanize}
+                aria-label="Enable content humanization"
                 className={`${
                   humanize ? 'bg-indigo-600' : 'bg-gray-200'
                 } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
               >
                 <span
+                  aria-hidden="true"
                   className={`${
                     humanize ? 'translate-x-6' : 'translate-x-1'
                   } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
                 />
               </Switch>
-              <span className="text-sm text-gray-700">Humanize content</span>
+              <span className="text-sm text-gray-700" id="humanize-label">Humanize content</span>
             </div>
           </div>
         </div>

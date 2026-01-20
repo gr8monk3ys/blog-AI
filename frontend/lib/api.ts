@@ -2,16 +2,52 @@
  * API configuration and utilities
  */
 
-// API URLs from environment variables with fallbacks for development
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-export const WS_BASE_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000';
+/**
+ * Determine if we're in a production environment based on URL or env var
+ */
+const isProduction = (): boolean => {
+  if (typeof window !== 'undefined') {
+    return window.location.protocol === 'https:';
+  }
+  return process.env.NODE_ENV === 'production';
+};
 
-// API endpoints
+/**
+ * Get the appropriate WebSocket protocol based on HTTP protocol
+ */
+const getWsProtocol = (apiUrl: string): string => {
+  if (apiUrl.startsWith('https://')) {
+    return apiUrl.replace('https://', 'wss://');
+  }
+  if (apiUrl.startsWith('http://')) {
+    return apiUrl.replace('http://', 'ws://');
+  }
+  // If no protocol, infer from environment
+  return isProduction() ? `wss://${apiUrl}` : `ws://${apiUrl}`;
+};
+
+// API URLs from environment variables with fallbacks for development
+// In production, these should be set to HTTPS URLs
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+// API version - can be overridden via environment variable
+export const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || 'v1';
+
+// Derive WebSocket URL from API URL if not explicitly set
+// This ensures protocol consistency (HTTPS -> WSS, HTTP -> WS)
+export const WS_BASE_URL = process.env.NEXT_PUBLIC_WS_URL || getWsProtocol(API_BASE_URL);
+
+// Versioned API base URL
+export const API_V1_BASE_URL = `${API_BASE_URL}/api/${API_VERSION}`;
+
+// API endpoints - using versioned paths for future compatibility
 export const API_ENDPOINTS = {
   root: `${API_BASE_URL}/`,
-  generateBlog: `${API_BASE_URL}/generate-blog`,
-  generateBook: `${API_BASE_URL}/generate-book`,
-  conversation: (id: string) => `${API_BASE_URL}/conversations/${id}`,
+  // Versioned endpoints (recommended for new integrations)
+  generateBlog: `${API_V1_BASE_URL}/generate-blog`,
+  generateBook: `${API_V1_BASE_URL}/generate-book`,
+  conversation: (id: string) => `${API_V1_BASE_URL}/conversations/${id}`,
+  // WebSocket remains at root level (version negotiation via protocol)
   websocket: (conversationId: string) => `${WS_BASE_URL}/ws/conversation/${conversationId}`,
 } as const;
 
