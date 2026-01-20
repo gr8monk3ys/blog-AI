@@ -1,19 +1,19 @@
-# ✨ Blog AI Generation Tool
+# Blog AI Generation Tool
 
-Welcome to the **Blog AI Generation Tool** – a smart, AI-driven solution designed to streamline the process of writing blog posts and even entire books. Harness the power of **GPT-4** and advanced AI techniques to transform your ideas into well-structured, SEO-friendly content with minimal effort.
+An AI-driven content generation tool for creating blog posts and books. Features a Python backend (FastAPI) with multi-provider LLM support (OpenAI, Anthropic, Gemini) and a Next.js frontend.
 
-## 🌟 Key Features
+## Key Features
 
-- **📝 Blog Post Generation**: Create structured, SEO-optimized blog posts with a single command.
-- **📚 Book Creation**: Generate full-length books with chapters, sections, and consistent style.
-- **📅 Content Planning**: Plan your content with calendars, topic clusters, and outlines.
-- **🔍 Competitor Analysis**: Analyze competitors to identify content gaps and opportunities.
-- **🔎 Web Research**: Conduct research to enhance content with accurate information.
-- **🔄 Post-Processing**: Proofread, humanize, and format your content for various platforms.
-- **🔌 Integrations**: Publish directly to WordPress, GitHub, and Medium.
-- **🤖 Modern AI Integration**: Built on GPT-4 for reliable, high-quality content output.
+- **Blog Post Generation**: Create structured, SEO-optimized blog posts with a single command
+- **Book Creation**: Generate full-length books with chapters, sections, and consistent style
+- **Content Planning**: Plan your content with calendars, topic clusters, and outlines
+- **Competitor Analysis**: Analyze competitors to identify content gaps and opportunities
+- **Web Research**: Conduct research to enhance content with accurate information
+- **Post-Processing**: Proofread, humanize, and format your content for various platforms
+- **Integrations**: Publish directly to WordPress, GitHub, and Medium
+- **Multi-Provider LLM Support**: Choose between OpenAI (GPT-4), Anthropic (Claude), or Google Gemini
 
-## 🗂️ Project Structure
+## Project Structure
 
 ```
 blog-AI/
@@ -22,151 +22,164 @@ blog-AI/
 │   ├── book/                 # Book generation modules
 │   ├── blog_sections/        # Blog section generators
 │   ├── planning/             # Content planning tools
-│   │   ├── content_calendar.py  # Content calendar generation
-│   │   ├── competitor_analysis.py # Competitor analysis
-│   │   ├── topic_clusters.py # Topic cluster generation
-│   │   └── content_outline.py # Content outline generation
 │   ├── research/             # Research tools
 │   ├── seo/                  # SEO optimization tools
 │   ├── integrations/         # Publishing integrations
-│   │   ├── github.py         # GitHub integration
-│   │   ├── medium.py         # Medium integration
-│   │   └── wordpress.py      # WordPress integration
 │   ├── post_processing/      # Content post-processing
-│   ├── text_generation/      # Text generation core
+│   ├── text_generation/      # LLM abstraction layer
 │   └── types/                # Type definitions
 ├── tests/                    # Test files
-├── frontend/                 # Web interface (Next.js)
-├── .env                      # Environment configuration
+├── frontend/                 # Web interface (Next.js 14)
 ├── .env.example              # Example environment configuration
 ├── pyproject.toml            # Project dependencies
-├── LICENSE                   # License information
 └── README.md                 # Project documentation
 ```
 
-## 🚀 Getting Started
+## Architecture
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/yourusername/blog-AI.git
-   ```
-   
-2. **Configure environment**:  
-   Create a `.env` file based on `.env.example` and add your API keys:
-   ```bash
-   # Required for basic functionality
-   OPENAI_API_KEY=your_openai_api_key_here
-   
-   # Optional - for additional features
-   ANTHROPIC_API_KEY=your_anthropic_api_key_here
-   SERP_API_KEY=your_serp_api_key_here
-   SEC_API_API_KEY=your_sec_api_key_here
-   ```
-   
-3. **Install dependencies**:
-   Using Poetry (recommended):
-   ```bash
-   poetry install
-   ```
-   
-   Or using pip:
-   ```bash
-   pip install -r requirements.txt
-   ```
+```
+server.py (FastAPI)
+    ↓
+src/blog/make_blog.py  or  src/book/make_book.py
+    ↓
+┌─────────────────────────────────────────────────┐
+│  Pipeline stages (called in sequence):          │
+│  1. research/web_researcher.py (optional)       │
+│  2. planning/content_outline.py                 │
+│  3. blog_sections/* generators                  │
+│  4. seo/meta_description.py                     │
+│  5. post_processing/{proofreader,humanizer}.py  │
+└─────────────────────────────────────────────────┘
+    ↓
+src/text_generation/core.py (LLM abstraction layer)
+    ↓
+OpenAI / Anthropic / Gemini
+```
 
-4. **Start the backend server** (required for the web interface):
-   ```bash
-   python server.py
-   ```
-   This will start the server at http://localhost:8000
+## Getting Started
 
-5. **Start the frontend** (optional, for web interface):
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
-   This will start the frontend at http://localhost:3000
+### 1. Clone the repository
+```bash
+git clone https://github.com/gr8monk3ys/blog-AI.git
+cd blog-AI
+```
 
-6. **You're all set!** The tool is now ready to generate content at your command.
+### 2. Configure environment
+Create a `.env` file based on `.env.example`:
 
-## 🐳 Docker Setup
+```bash
+# Required - at least one LLM provider
+OPENAI_API_KEY=your_openai_api_key_here
 
-You can also run the application using Docker, which simplifies the setup process:
+# Optional - additional LLM providers
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
 
-1. **Build and start the containers**:
-   ```bash
-   docker-compose up -d
-   ```
+# Optional - model overrides
+OPENAI_MODEL=gpt-4
+ANTHROPIC_MODEL=claude-3-opus-20240229
+GEMINI_MODEL=gemini-1.5-flash-latest
 
-2. **Configure environment**:  
-   Before starting the containers, make sure to create a `.env` file based on `.env.example` with your API keys.
+# Optional - research features
+SERP_API_KEY=your_serp_api_key_here
+SEC_API_API_KEY=your_sec_api_key_here
 
-3. **Access the application**:
-   - Backend API: http://localhost:8000
-   - Frontend: http://localhost:3000
+# Server configuration
+DEV_MODE=false                    # Set true for local development without auth
+RATE_LIMIT_ENABLED=true
+RATE_LIMIT_GENERAL=60             # Requests per minute for general endpoints
+RATE_LIMIT_GENERATION=10          # Requests per minute for generation endpoints
+LOG_LEVEL=INFO
+```
 
-4. **Stop the containers**:
-   ```bash
-   docker-compose down
-   ```
+### 3. Install dependencies
 
-### Docker Commands
+Using Poetry (recommended):
+```bash
+poetry install
+```
 
-- **View logs**:
-  ```bash
-  docker-compose logs -f
-  ```
+Or using pip:
+```bash
+pip install -r requirements.txt
+```
 
-- **Rebuild the containers** (after making changes):
-  ```bash
-  docker-compose up -d --build
-  ```
+### 4. Start the backend server
+```bash
+python server.py
+```
+The API will be available at http://localhost:8000
 
-- **Run a command inside the container**:
-  ```bash
-  docker-compose exec blog-ai bash
-  ```
+### 5. Start the frontend (optional)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+The web interface will be available at http://localhost:3000
 
-## 💻 Usage
+## Docker Setup
+
+Run the entire application with Docker:
+
+```bash
+# Build and start containers
+docker-compose up -d
+
+# Rebuild after changes
+docker-compose up -d --build
+
+# View logs
+docker-compose logs -f
+
+# Stop containers
+docker-compose down
+```
+
+Access points:
+- Backend API: http://localhost:8000
+- Frontend: http://localhost:3000
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/generate-blog` | Generate a blog post |
+| POST | `/generate-book` | Generate a book |
+| GET | `/conversations/{id}` | Get conversation history |
+| WS | `/ws/conversation/{id}` | Real-time updates via WebSocket |
+
+## CLI Usage
 
 ### Generate a Blog Post
-
 ```bash
-python -m src.blog.make_blog "Your Blog Topic" --keywords "keyword1,keyword2" --research
+python -m src.blog.make_blog "Your Blog Topic" --keywords "keyword1,keyword2" --research --proofread --humanize
 ```
 
-This command creates a fully formatted blog post and saves it under the `content/blog/` directory.
-
-**Optional Parameters**:  
-- `--keywords`: Comma-separated list of keywords to include
-- `--research`: Enable web research for more accurate content
-- `--tone`: Set the tone of the content (default: "informative")
-- `--output`: Specify the output filename and format (default: markdown)
+Options:
+- `--keywords`: Comma-separated list of keywords
+- `--research`: Enable web research
+- `--tone`: Set content tone (default: "informative")
+- `--output`: Specify output filename
 - `--proofread`: Enable proofreading
-- `--humanize`: Make the content more human-like
+- `--humanize`: Make content more human-like
 
 ### Generate a Book
-
 ```bash
-python -m src.book.make_book "Your Book Topic" --chapters 5 --sections 3 --output "book_name.md"
+python -m src.book.make_book "Your Book Topic" --chapters 5 --sections 3 --research
 ```
 
-**Optional Parameters**:  
-- `--chapters`: Number of chapters to generate (default: 5)
-- `--sections`: Number of sections per chapter (default: 3)
-- `--keywords`: Comma-separated list of keywords to include
-- `--research`: Enable web research for more accurate content
-- `--tone`: Set the tone of the content (default: "informative")
-- `--output`: Specify the output filename and format
-- `--proofread`: Enable proofreading
-- `--humanize`: Make the content more human-like
+Options:
+- `--chapters`: Number of chapters (default: 5)
+- `--sections`: Sections per chapter (default: 3)
+- `--keywords`: Comma-separated keywords
+- `--research`: Enable web research
+- `--output`: Specify output filename
 
 ### Content Planning
-
 ```bash
 # Generate a content calendar
-python -m src.planning.content_calendar "Your Niche" --timeframe month --frequency 7
+python -m src.planning.content_calendar "Your Niche" --timeframe month
 
 # Analyze competitors
 python -m src.planning.competitor_analysis "Your Niche" --competitors "Competitor1,Competitor2"
@@ -175,48 +188,81 @@ python -m src.planning.competitor_analysis "Your Niche" --competitors "Competito
 python -m src.planning.topic_clusters "Your Niche" --clusters 3 --subtopics 5
 
 # Create content outlines
-python -m src.planning.content_outline "Your Topic" --keywords "keyword1,keyword2" --sections 5
+python -m src.planning.content_outline "Your Topic" --sections 5
 ```
 
-### Publishing Integrations
-
+### Publishing
 ```bash
 # Publish to WordPress
-python -m src.integrations.wordpress "Your Blog Post" --url "https://yourblog.com" --username "user" --password "pass"
+python -m src.integrations.wordpress "content.md" --url "https://yourblog.com" --username "user" --password "pass"
 
 # Publish to GitHub
-python -m src.integrations.github "Your Blog Post" --repo "username/repo" --token "github_token"
+python -m src.integrations.github "content.md" --repo "username/repo" --token "github_token"
 
 # Publish to Medium
-python -m src.integrations.medium "Your Blog Post" --token "medium_token" --tags "tag1,tag2"
+python -m src.integrations.medium "content.md" --token "medium_token" --tags "tag1,tag2"
 ```
 
-## 🧪 Testing
+## Testing
 
-Run the test suite to ensure everything is working correctly:
-
+### Backend
 ```bash
+# Run all tests
+python run_tests.py
+# or
 python -m unittest discover tests
+
+# Run a single test file
+python -m unittest tests.test_blog
+python -m unittest tests.test_book
 ```
 
-## 🔧 Troubleshooting
+### Frontend
+```bash
+cd frontend
 
-If you encounter any issues while setting up or using the Blog AI Generation Tool, please refer to the [Troubleshooting Guide](troubleshooting.md) for solutions to common problems.
+# Run tests
+npm run test
 
-## ⚙️ Dependencies
+# Run tests once
+npm run test:run
 
-- **openai**: OpenAI API client for text generation
-- **anthropic**: Anthropic API client for Claude models
-- **google-generativeai**: Google's Gemini API client
-- **requests**: HTTP requests for API interactions
-- **pydantic**: Data validation and settings management
-- **python-dotenv**: Environment variable management
-- **fastapi**: Backend API framework
-- **uvicorn**: ASGI server for FastAPI
-- **websockets**: WebSocket support for real-time communication
+# Run with coverage
+npm run test:coverage
+```
 
-## 📜 License
+### Linting and Formatting
+```bash
+# Backend
+black src/ tests/
+isort src/ tests/
+mypy src/
 
-This project is available under the [MIT License](LICENSE). Feel free to explore, fork, and contribute!
+# Frontend
+cd frontend && npm run lint
+```
 
-**Happy Writing!** 🎉 Turn your ideas into captivating blog posts or fully-fledged books with minimal hassle—just let the AI do the heavy lifting.
+## Dependencies
+
+**Backend:**
+- `openai` - OpenAI API client
+- `anthropic` - Anthropic API client
+- `google-generativeai` - Google Gemini API client
+- `fastapi` - Web framework
+- `uvicorn` - ASGI server
+- `pydantic` - Data validation
+- `python-dotenv` - Environment management
+
+**Frontend:**
+- `next` - React framework (v14)
+- `tailwindcss` - CSS framework
+- `framer-motion` - Animations
+- `@headlessui/react` - Accessible components
+
+## Troubleshooting
+
+See the [Troubleshooting Guide](troubleshooting.md) for solutions to common issues.
+
+## License
+
+This project is available under the [MIT License](LICENSE).
