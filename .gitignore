@@ -67,3 +67,6 @@ frontend/tsconfig.tsbuildinfo
 *.swp
 *.swo
 *~
+
+# Next.js build output
+frontend/.next/
