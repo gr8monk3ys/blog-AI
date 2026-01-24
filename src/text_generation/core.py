@@ -87,6 +87,12 @@ def generate_with_openai(
             presence_penalty=options.presence_penalty,
         )
 
+        # Validate response structure before accessing
+        if not response.choices:
+            raise TextGenerationError("OpenAI returned empty response (no choices)")
+        if not response.choices[0].message or not response.choices[0].message.content:
+            raise TextGenerationError("OpenAI returned empty message content")
+
         return response.choices[0].message.content
     except openai.AuthenticationError as e:
         raise TextGenerationError(f"OpenAI authentication failed: {e}") from e
@@ -133,6 +139,12 @@ def generate_with_anthropic(
             temperature=options.temperature,
             messages=[{"role": "user", "content": prompt}],
         )
+
+        # Validate response structure before accessing
+        if not response.content:
+            raise TextGenerationError("Anthropic returned empty response (no content)")
+        if not hasattr(response.content[0], "text") or not response.content[0].text:
+            raise TextGenerationError("Anthropic returned empty text content")
 
         return response.content[0].text
     except anthropic.AuthenticationError as e:
@@ -184,6 +196,10 @@ def generate_with_gemini(
         model = genai.GenerativeModel(config.model, generation_config=generation_config)
 
         response = model.generate_content(prompt)
+
+        # Validate response structure before accessing
+        if not response.text:
+            raise TextGenerationError("Gemini returned empty response text")
 
         return response.text
     except google_exceptions.Unauthenticated as e:

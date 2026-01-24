@@ -15,10 +15,15 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.middleware import HTTPSRedirectMiddleware, RateLimitMiddleware
 from app.routes import (
+    analytics_router,
     blog_router,
     book_router,
+    bulk_router,
     conversations_router,
+    export_router,
     health_router,
+    tools_router,
+    usage_router,
     websocket_router,
 )
 
@@ -73,18 +78,28 @@ if RATE_LIMIT_ENABLED:
 app.include_router(health_router)
 
 # Main API routes (at root level for backward compatibility)
+app.include_router(analytics_router)
 app.include_router(conversations_router)
 app.include_router(blog_router)
 app.include_router(book_router)
+app.include_router(bulk_router)
+app.include_router(export_router)
+app.include_router(tools_router)
+app.include_router(usage_router)
 app.include_router(websocket_router)
 
 # Create versioned API router
 api_v1_router = APIRouter(prefix="/api/v1", tags=["v1"])
 
 # Add versioned routes
+api_v1_router.include_router(analytics_router)
 api_v1_router.include_router(conversations_router)
 api_v1_router.include_router(blog_router)
 api_v1_router.include_router(book_router)
+api_v1_router.include_router(bulk_router)
+api_v1_router.include_router(export_router)
+api_v1_router.include_router(tools_router)
+api_v1_router.include_router(usage_router)
 
 # Include versioned router
 app.include_router(api_v1_router)
