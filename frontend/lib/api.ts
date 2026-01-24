@@ -49,6 +49,50 @@ export const API_ENDPOINTS = {
   conversation: (id: string) => `${API_V1_BASE_URL}/conversations/${id}`,
   // WebSocket remains at root level (version negotiation via protocol)
   websocket: (conversationId: string) => `${WS_BASE_URL}/ws/conversation/${conversationId}`,
+  // Tools API endpoints
+  tools: {
+    list: `${API_V1_BASE_URL}/tools`,
+    categories: `${API_V1_BASE_URL}/tools/categories`,
+    stats: `${API_V1_BASE_URL}/tools/stats`,
+    get: (toolId: string) => `${API_V1_BASE_URL}/tools/${toolId}`,
+    execute: (toolId: string) => `${API_V1_BASE_URL}/tools/${toolId}/execute`,
+    validate: (toolId: string) => `${API_V1_BASE_URL}/tools/${toolId}/validate`,
+    byCategory: (category: string) => `${API_V1_BASE_URL}/tools/category/${category}`,
+  },
+  // Bulk generation endpoints
+  bulk: {
+    generate: `${API_V1_BASE_URL}/bulk/generate`,
+    status: (jobId: string) => `${API_V1_BASE_URL}/bulk/status/${jobId}`,
+    results: (jobId: string) => `${API_V1_BASE_URL}/bulk/results/${jobId}`,
+    cancel: (jobId: string) => `${API_V1_BASE_URL}/bulk/cancel/${jobId}`,
+  },
+  // Usage tracking endpoints
+  usage: {
+    stats: `${API_V1_BASE_URL}/usage/stats`,
+    check: `${API_V1_BASE_URL}/usage/check`,
+    tiers: `${API_V1_BASE_URL}/usage/tiers`,
+    tier: (tierName: string) => `${API_V1_BASE_URL}/usage/tier/${tierName}`,
+    upgrade: `${API_V1_BASE_URL}/usage/upgrade`,
+    features: `${API_V1_BASE_URL}/usage/features`,
+  },
+  // Templates API endpoints
+  templates: {
+    list: '/api/templates',
+    get: (id: string) => `/api/templates/${id}`,
+    create: '/api/templates',
+    update: (id: string) => `/api/templates/${id}`,
+    delete: (id: string) => `/api/templates/${id}`,
+    use: (id: string) => `/api/templates/${id}/use`,
+  },
+  // Brand Profiles API endpoints
+  brandProfiles: {
+    list: '/api/brand-profiles',
+    get: (id: string) => `/api/brand-profiles/${id}`,
+    create: '/api/brand-profiles',
+    update: (id: string) => `/api/brand-profiles/${id}`,
+    delete: (id: string) => `/api/brand-profiles/${id}`,
+    setDefault: (id: string) => `/api/brand-profiles/${id}/default`,
+  },
 } as const;
 
 // Default headers for API requests
