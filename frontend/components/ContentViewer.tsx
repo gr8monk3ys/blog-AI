@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Popover } from '@headlessui/react';
 import BookViewer from './BookViewer';
 import BookEditor from './BookEditor';
+import ExportMenu, { ExportContent, ExportFormat } from './ExportMenu';
 import { Book, Chapter } from '../types/book';
 import { ContentGenerationResponse, BlogSection, BookContent } from '../types/content';
 
@@ -33,6 +34,107 @@ export default function ContentViewer({ content }: ContentViewerProps) {
   };
 
   const [bookData, setBookData] = useState<Book | null>(getBookData());
+  const [exportToast, setExportToast] = useState<{
+    show: boolean;
+    message: string;
+    type: 'success' | 'error';
+  }>({ show: false, message: '', type: 'success' });
+
+  // Convert blog content to markdown for export
+  const convertBlogToMarkdown = (): string => {
+    if (content.type !== 'blog') return '';
+    const blog = content.content;
+    let markdown = `# ${blog.title}\n\n`;
+    if (blog.description) {
+      markdown += `> ${blog.description}\n\n`;
+    }
+    for (const section of blog.sections) {
+      markdown += `## ${section.title}\n\n`;
+      for (const subtopic of section.subtopics) {
+        markdown += `### ${subtopic.title}\n\n`;
+        markdown += `${subtopic.content}\n\n`;
+      }
+    }
+    return markdown;
+  };
+
+  // Convert book content to markdown for export
+  const convertBookToMarkdown = (): string => {
+    if (content.type !== 'book') return '';
+    const book = content.content as BookContent;
+    let markdown = `# ${book.title}\n\n`;
+    if (book.description) {
+      markdown += `> ${book.description}\n\n`;
+    }
+    for (const chapter of book.chapters) {
+      markdown += `## Chapter ${chapter.number}: ${chapter.title}\n\n`;
+      for (const topic of chapter.topics) {
+        markdown += `### ${topic.title}\n\n`;
+        markdown += `${topic.content}\n\n`;
+      }
+    }
+    return markdown;
+  };
+
+  // Get export content based on content type
+  const getExportContent = (): ExportContent => {
+    if (content.type === 'blog') {
+      return {
+        title: content.content.title,
+        content: convertBlogToMarkdown(),
+        type: 'blog',
+        metadata: {
+          date: content.content.date,
+          description: content.content.description,
+          tags: content.content.tags,
+        },
+      };
+    } else {
+      const book = content.content as BookContent;
+      return {
+        title: book.title,
+        content: convertBookToMarkdown(),
+        type: 'book',
+        metadata: {
+          date: book.date,
+          description: book.description,
+          tags: book.tags,
+        },
+      };
+    }
+  };
+
+  // Handle export completion with toast notification
+  const handleExportComplete = (format: ExportFormat, success: boolean) => {
+    const formatNames: Record<ExportFormat, string> = {
+      markdown: 'Markdown',
+      html: 'HTML',
+      text: 'Plain Text',
+      pdf: 'PDF',
+      clipboard: 'Clipboard',
+      wordpress: 'WordPress',
+      medium: 'Medium',
+    };
+
+    if (success) {
+      const action = ['clipboard', 'wordpress', 'medium'].includes(format)
+        ? 'copied'
+        : 'downloaded';
+      setExportToast({
+        show: true,
+        message: `${formatNames[format]} ${action} successfully`,
+        type: 'success',
+      });
+    } else {
+      setExportToast({
+        show: true,
+        message: `Failed to export as ${formatNames[format]}`,
+        type: 'error',
+      });
+    }
+
+    setTimeout(() => setExportToast({ show: false, message: '', type: 'success' }), 3000);
+  };
 
   const handleSectionEdit = async (sectionId: string) => {
     try {
@@ -69,8 +171,30 @@ export default function ContentViewer({ content }: ContentViewerProps) {
 
   if (content.type === 'blog') {
     return (
-      <div className="mt-8 prose prose-lg max-w-none">
-        <h1>{content.content.title}</h1>
+      <div className="mt-8">
+        {/* Toast notification */}
+        {exportToast.show && (
+          <div
+            className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg ${
+              exportToast.type === 'success'
+                ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                : 'bg-red-50 border border-red-200 text-red-800'
+            }`}
+          >
+            <span className="text-sm font-medium">{exportToast.message}</span>
+          </div>
+        )}
+
+        {/* Header with export button */}
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">{content.content.title}</h1>
+          <ExportMenu
+            content={getExportContent()}
+            onExportComplete={handleExportComplete}
+          />
+        </div>
+
+        <div className="prose prose-lg max-w-none">
         {content.content.sections.map((section: BlogSection, index: number) => (
           <Popover key={`section-${index}`} className="relative">
             <div
@@ -112,6 +236,7 @@ export default function ContentViewer({ content }: ContentViewerProps) {
             </div>
           </Popover>
         ))}
+        </div>
       </div>
     );
   }
@@ -131,7 +256,24 @@ export default function ContentViewer({ content }: ContentViewerProps) {
 
     return (
       <div className="mt-8">
-        <div className="flex justify-end mb-4">
+        {/* Toast notification */}
+        {exportToast.show && (
+          <div
+            className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg ${
+              exportToast.type === 'success'
+                ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                : 'bg-red-50 border border-red-200 text-red-800'
+            }`}
+          >
+            <span className="text-sm font-medium">{exportToast.message}</span>
+          </div>
+        )}
+
+        <div className="flex justify-end gap-3 mb-4">
+          <ExportMenu
+            content={getExportContent()}
+            onExportComplete={handleExportComplete}
+          />
           <button
             onClick={() => setIsEditingBook(true)}
             className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"

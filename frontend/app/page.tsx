@@ -1,12 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { v4 as uuidv4 } from 'uuid';
 import { Tab } from '@headlessui/react';
+import {
+  SparklesIcon,
+  WrenchScrewdriverIcon,
+  DocumentDuplicateIcon,
+  CurrencyDollarIcon,
+} from '@heroicons/react/24/outline';
 import ContentGenerator from '../components/ContentGenerator';
 import BookGenerator from '../components/BookGenerator';
 import ConversationHistory from '../components/ConversationHistory';
 import ContentViewer from '../components/ContentViewer';
+import UsageIndicator from '../components/UsageIndicator';
 import { ContentGenerationResponse } from '../types/content';
 
 function classNames(...classes: string[]) {
@@ -21,12 +29,53 @@ export default function Home() {
   return (
     <main className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Left sidebar - Conversation History */}
-      <div className="w-1/4 bg-white border-r border-gray-200 shadow-sm p-6">
-        <ConversationHistory conversationId={conversationId} />
+      <div className="w-1/4 bg-white border-r border-gray-200 shadow-sm p-6 flex flex-col">
+        <div className="flex-1">
+          <ConversationHistory conversationId={conversationId} />
+        </div>
+
+        {/* Navigation Links */}
+        <div className="mt-6 pt-6 border-t border-gray-200 space-y-2">
+          <Link
+            href="/tools"
+            className="flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+          >
+            <WrenchScrewdriverIcon className="w-5 h-5" />
+            AI Tools
+          </Link>
+          <Link
+            href="/bulk"
+            className="flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+          >
+            <DocumentDuplicateIcon className="w-5 h-5" />
+            Bulk Generation
+          </Link>
+          <Link
+            href="/pricing"
+            className="flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+          >
+            <CurrencyDollarIcon className="w-5 h-5" />
+            Pricing
+          </Link>
+        </div>
+
+        {/* Usage Indicator */}
+        <div className="mt-4">
+          <UsageIndicator />
+        </div>
       </div>
 
       {/* Main content area */}
       <div className="flex-1 p-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <SparklesIcon className="w-6 h-6 text-indigo-600" />
+            <h1 className="text-xl font-bold text-gray-900">Blog AI</h1>
+          </div>
+          <UsageIndicator compact />
+        </div>
+
         <div className="max-w-4xl mx-auto">
           <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
             <Tab.Group>

@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import Link from 'next/link';
 import { Switch } from '@headlessui/react';
-import { PencilIcon, LightBulbIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, LightBulbIcon, DocumentTextIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { BlogGenerationOptions } from '../types/blog';
 import { BlogGenerationResponse, ContentGenerationResponse } from '../types/content';
 import { API_ENDPOINTS, getDefaultHeaders, checkServerConnection } from '../lib/api';
+import { useUsageCheck } from './UsageIndicator';
 
 interface ContentGeneratorProps {
   conversationId: string;
@@ -19,6 +21,9 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
   const [proofread, setProofread] = useState(true);
   const [humanize, setHumanize] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [limitReached, setLimitReached] = useState(false);
+
+  const { checkUsage } = useUsageCheck();
 
   // Mock blog post data for development or when server is not available
   const generateMockBlogPost = (): BlogGenerationResponse => {
@@ -103,8 +108,18 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setLimitReached(false);
 
     try {
+      // Check usage limit before generating
+      const hasUsage = await checkUsage();
+      if (!hasUsage) {
+        setLimitReached(true);
+        setError('You have reached your usage limit. Upgrade your plan to continue generating content.');
+        setLoading(false);
+        return;
+      }
+
       // Check if server is running
       const isServerConnected = await checkServerConnection();
       
@@ -278,16 +293,34 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-            <p className="font-medium">Error</p>
-            <p>{error}</p>
-            <button
-              type="button"
-              onClick={() => setError(null)}
-              className="mt-2 text-xs bg-red-100 hover:bg-red-200 px-2 py-1 rounded transition-colors"
-            >
-              Dismiss
-            </button>
+          <div className={`${limitReached ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200'} border text-sm px-4 py-3 rounded-lg`}>
+            <div className="flex items-start gap-3">
+              <ExclamationTriangleIcon className={`h-5 w-5 flex-shrink-0 ${limitReached ? 'text-amber-500' : 'text-red-500'}`} />
+              <div className="flex-1">
+                <p className={`font-medium ${limitReached ? 'text-amber-800' : 'text-red-700'}`}>
+                  {limitReached ? 'Usage Limit Reached' : 'Error'}
+                </p>
+                <p className={limitReached ? 'text-amber-700' : 'text-red-700'}>{error}</p>
+                {limitReached && (
+                  <Link
+                    href="/pricing"
+                    className="inline-flex items-center mt-2 text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                  >
+                    Upgrade your plan
+                    <span className="ml-1">&rarr;</span>
+                  </Link>
+                )}
+                {!limitReached && (
+                  <button
+                    type="button"
+                    onClick={() => setError(null)}
+                    className="mt-2 text-xs bg-red-100 hover:bg-red-200 px-2 py-1 rounded transition-colors"
+                  >
+                    Dismiss
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
