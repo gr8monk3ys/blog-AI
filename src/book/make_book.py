@@ -4,9 +4,12 @@ Book generation functionality.
 
 import argparse
 import json
+import logging
 import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 from ..blog_sections.conclusion_generator import generate_conclusion
 from ..blog_sections.introduction_generator import generate_introduction
@@ -26,6 +29,8 @@ from ..research.web_researcher import conduct_web_research
 from ..text_generation.core import (
     GenerationOptions,
     LLMProvider,
+    RateLimitError,
+    TextGenerationError,
     create_provider_from_env,
     generate_text,
 )
@@ -116,8 +121,18 @@ def generate_book(
         all_chapters = [introduction_chapter] + chapters + [conclusion_chapter]
 
         return Book(title=title, chapters=all_chapters, tags=keywords or [])
+    except TextGenerationError as e:
+        logger.error(f"Text generation error in book: {str(e)}")
+        raise BookGenerationError(f"Failed to generate text: {str(e)}") from e
+    except RateLimitError as e:
+        logger.warning(f"Rate limit exceeded in book generation: {str(e)}")
+        raise BookGenerationError(f"Rate limit exceeded: {str(e)}") from e
+    except ValueError as e:
+        logger.warning(f"Invalid input for book: {str(e)}")
+        raise BookGenerationError(f"Invalid input: {str(e)}") from e
     except Exception as e:
-        raise BookGenerationError(f"Error generating book: {str(e)}")
+        logger.error(f"Unexpected error generating book: {str(e)}", exc_info=True)
+        raise BookGenerationError(f"Unexpected error: {str(e)}") from e
 
 
 def generate_book_with_research(
@@ -205,8 +220,18 @@ def generate_book_with_research(
         all_chapters = [introduction_chapter] + chapters + [conclusion_chapter]
 
         return Book(title=title, chapters=all_chapters, tags=keywords or [])
+    except TextGenerationError as e:
+        logger.error(f"Text generation error in book with research: {str(e)}")
+        raise BookGenerationError(f"Failed to generate text: {str(e)}") from e
+    except RateLimitError as e:
+        logger.warning(f"Rate limit exceeded in book with research: {str(e)}")
+        raise BookGenerationError(f"Rate limit exceeded: {str(e)}") from e
+    except ValueError as e:
+        logger.warning(f"Invalid input for book with research: {str(e)}")
+        raise BookGenerationError(f"Invalid input: {str(e)}") from e
     except Exception as e:
-        raise BookGenerationError(f"Error generating book with research: {str(e)}")
+        logger.error(f"Unexpected error generating book with research: {str(e)}", exc_info=True)
+        raise BookGenerationError(f"Unexpected error: {str(e)}") from e
 
 
 def generate_chapter(
@@ -278,8 +303,11 @@ def generate_chapter(
                 topics.append(Topic(title=section.title, content=subtopic.content))
 
         return Chapter(number=1, title=title, topics=topics)  # Default chapter number
+    except TextGenerationError as e:
+        raise BookGenerationError(f"Failed to generate chapter '{title}': {str(e)}") from e
     except Exception as e:
-        raise BookGenerationError(f"Error generating chapter: {str(e)}")
+        logger.error(f"Unexpected error generating chapter: {str(e)}", exc_info=True)
+        raise BookGenerationError(f"Error generating chapter: {str(e)}") from e
 
 
 def generate_chapter_with_research(
@@ -355,8 +383,11 @@ def generate_chapter_with_research(
                 topics.append(Topic(title=section.title, content=subtopic.content))
 
         return Chapter(number=1, title=title, topics=topics)  # Default chapter number
+    except TextGenerationError as e:
+        raise BookGenerationError(f"Failed to generate chapter '{title}' with research: {str(e)}") from e
     except Exception as e:
-        raise BookGenerationError(f"Error generating chapter with research: {str(e)}")
+        logger.error(f"Unexpected error generating chapter with research: {str(e)}", exc_info=True)
+        raise BookGenerationError(f"Error generating chapter with research: {str(e)}") from e
 
 
 def generate_introduction_chapter(

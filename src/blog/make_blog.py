@@ -3,8 +3,11 @@ Blog post generation functionality.
 """
 
 import json
+import logging
 import os
 from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 from ..blog_sections.conclusion_generator import generate_conclusion
 from ..blog_sections.faq_generator import generate_faqs
@@ -20,6 +23,8 @@ from ..seo.meta_description import generate_meta_description
 from ..text_generation.core import (
     GenerationOptions,
     LLMProvider,
+    RateLimitError,
+    TextGenerationError,
     create_provider_from_env,
     generate_text,
 )
@@ -115,8 +120,18 @@ def generate_blog_post(
         return BlogPost(
             title=title, description=description, sections=sections, tags=keywords or []
         )
+    except TextGenerationError as e:
+        logger.error(f"Text generation error in blog post: {str(e)}")
+        raise BlogGenerationError(f"Failed to generate text: {str(e)}") from e
+    except RateLimitError as e:
+        logger.warning(f"Rate limit exceeded in blog post generation: {str(e)}")
+        raise BlogGenerationError(f"Rate limit exceeded: {str(e)}") from e
+    except ValueError as e:
+        logger.warning(f"Invalid input for blog post: {str(e)}")
+        raise BlogGenerationError(f"Invalid input: {str(e)}") from e
     except Exception as e:
-        raise BlogGenerationError(f"Error generating blog post: {str(e)}")
+        logger.error(f"Unexpected error generating blog post: {str(e)}", exc_info=True)
+        raise BlogGenerationError(f"Unexpected error: {str(e)}") from e
 
 
 def generate_blog_post_with_research(
@@ -210,8 +225,18 @@ def generate_blog_post_with_research(
         return BlogPost(
             title=title, description=description, sections=sections, tags=keywords or []
         )
+    except TextGenerationError as e:
+        logger.error(f"Text generation error in blog post with research: {str(e)}")
+        raise BlogGenerationError(f"Failed to generate text: {str(e)}") from e
+    except RateLimitError as e:
+        logger.warning(f"Rate limit exceeded in blog post with research: {str(e)}")
+        raise BlogGenerationError(f"Rate limit exceeded: {str(e)}") from e
+    except ValueError as e:
+        logger.warning(f"Invalid input for blog post with research: {str(e)}")
+        raise BlogGenerationError(f"Invalid input: {str(e)}") from e
     except Exception as e:
-        raise BlogGenerationError(f"Error generating blog post with research: {str(e)}")
+        logger.error(f"Unexpected error generating blog post with research: {str(e)}", exc_info=True)
+        raise BlogGenerationError(f"Unexpected error: {str(e)}") from e
 
 
 def generate_introduction_section(
@@ -257,8 +282,11 @@ def generate_introduction_section(
         section = Section(title="Introduction", subtopics=[subtopic])
 
         return section
+    except TextGenerationError as e:
+        raise BlogGenerationError(f"Failed to generate introduction: {str(e)}") from e
     except Exception as e:
-        raise BlogGenerationError(f"Error generating introduction section: {str(e)}")
+        logger.error(f"Unexpected error generating introduction section: {str(e)}", exc_info=True)
+        raise BlogGenerationError(f"Error generating introduction section: {str(e)}") from e
 
 
 def generate_introduction_section_with_research(
@@ -332,10 +360,11 @@ def generate_introduction_section_with_research(
         section = Section(title="Introduction", subtopics=[subtopic])
 
         return section
+    except TextGenerationError as e:
+        raise BlogGenerationError(f"Failed to generate introduction with research: {str(e)}") from e
     except Exception as e:
-        raise BlogGenerationError(
-            f"Error generating introduction section with research: {str(e)}"
-        )
+        logger.error(f"Unexpected error generating introduction section with research: {str(e)}", exc_info=True)
+        raise BlogGenerationError(f"Error generating introduction section with research: {str(e)}") from e
 
 
 def generate_section(
@@ -403,8 +432,11 @@ def generate_section(
         section = Section(title=section_title, subtopics=[subtopic])
 
         return section
+    except TextGenerationError as e:
+        raise BlogGenerationError(f"Failed to generate section '{section_title}': {str(e)}") from e
     except Exception as e:
-        raise BlogGenerationError(f"Error generating section: {str(e)}")
+        logger.error(f"Unexpected error generating section: {str(e)}", exc_info=True)
+        raise BlogGenerationError(f"Error generating section: {str(e)}") from e
 
 
 def generate_section_with_research(
@@ -478,8 +510,11 @@ def generate_section_with_research(
         section = Section(title=section_title, subtopics=[subtopic])
 
         return section
+    except TextGenerationError as e:
+        raise BlogGenerationError(f"Failed to generate section '{section_title}' with research: {str(e)}") from e
     except Exception as e:
-        raise BlogGenerationError(f"Error generating section with research: {str(e)}")
+        logger.error(f"Unexpected error generating section with research: {str(e)}", exc_info=True)
+        raise BlogGenerationError(f"Error generating section with research: {str(e)}") from e
 
 
 def generate_conclusion_section(
@@ -530,8 +565,11 @@ def generate_conclusion_section(
         section = Section(title="Conclusion", subtopics=[subtopic])
 
         return section
+    except TextGenerationError as e:
+        raise BlogGenerationError(f"Failed to generate conclusion: {str(e)}") from e
     except Exception as e:
-        raise BlogGenerationError(f"Error generating conclusion section: {str(e)}")
+        logger.error(f"Unexpected error generating conclusion section: {str(e)}", exc_info=True)
+        raise BlogGenerationError(f"Error generating conclusion section: {str(e)}") from e
 
 
 def generate_faq_section(
@@ -577,8 +615,11 @@ def generate_faq_section(
         section = Section(title="Frequently Asked Questions", subtopics=subtopics)
 
         return section
+    except TextGenerationError as e:
+        raise BlogGenerationError(f"Failed to generate FAQ section: {str(e)}") from e
     except Exception as e:
-        raise BlogGenerationError(f"Error generating FAQ section: {str(e)}")
+        logger.error(f"Unexpected error generating FAQ section: {str(e)}", exc_info=True)
+        raise BlogGenerationError(f"Error generating FAQ section: {str(e)}") from e
 
 
 def post_process_blog_post(
@@ -648,8 +689,11 @@ def post_process_blog_post(
             processed_blog_post.sections.append(processed_section)
 
         return processed_blog_post
+    except TextGenerationError as e:
+        raise BlogGenerationError(f"Failed during post-processing: {str(e)}") from e
     except Exception as e:
-        raise BlogGenerationError(f"Error post-processing blog post: {str(e)}")
+        logger.error(f"Unexpected error post-processing blog post: {str(e)}", exc_info=True)
+        raise BlogGenerationError(f"Error post-processing blog post: {str(e)}") from e
 
 
 def save_blog_post_to_markdown(blog_post: BlogPost, file_path: str) -> None:
@@ -695,8 +739,13 @@ def save_blog_post_to_markdown(blog_post: BlogPost, file_path: str) -> None:
         # Write to file
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(markdown)
+    except PermissionError as e:
+        raise BlogGenerationError(f"Permission denied writing to {file_path}: {str(e)}") from e
+    except OSError as e:
+        raise BlogGenerationError(f"File system error saving to {file_path}: {str(e)}") from e
     except Exception as e:
-        raise BlogGenerationError(f"Error saving blog post to Markdown: {str(e)}")
+        logger.error(f"Unexpected error saving blog post to Markdown: {str(e)}", exc_info=True)
+        raise BlogGenerationError(f"Error saving blog post to Markdown: {str(e)}") from e
 
 
 def save_blog_post_to_json(blog_post: BlogPost, file_path: str) -> None:
@@ -739,8 +788,15 @@ def save_blog_post_to_json(blog_post: BlogPost, file_path: str) -> None:
         # Write to file
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(blog_post_data, f, indent=2)
+    except PermissionError as e:
+        raise BlogGenerationError(f"Permission denied writing to {file_path}: {str(e)}") from e
+    except OSError as e:
+        raise BlogGenerationError(f"File system error saving to {file_path}: {str(e)}") from e
+    except TypeError as e:
+        raise BlogGenerationError(f"JSON serialization error: {str(e)}") from e
     except Exception as e:
-        raise BlogGenerationError(f"Error saving blog post to JSON: {str(e)}")
+        logger.error(f"Unexpected error saving blog post to JSON: {str(e)}", exc_info=True)
+        raise BlogGenerationError(f"Error saving blog post to JSON: {str(e)}") from e
 
 
 def load_blog_post_from_json(file_path: str) -> BlogPost:
@@ -788,5 +844,14 @@ def load_blog_post_from_json(file_path: str) -> BlogPost:
         )
 
         return blog_post
+    except FileNotFoundError as e:
+        raise BlogGenerationError(f"File not found: {file_path}") from e
+    except PermissionError as e:
+        raise BlogGenerationError(f"Permission denied reading {file_path}: {str(e)}") from e
+    except json.JSONDecodeError as e:
+        raise BlogGenerationError(f"Invalid JSON format in {file_path}: {str(e)}") from e
+    except KeyError as e:
+        raise BlogGenerationError(f"Missing required field in JSON: {str(e)}") from e
     except Exception as e:
-        raise BlogGenerationError(f"Error loading blog post from JSON: {str(e)}")
+        logger.error(f"Unexpected error loading blog post from JSON: {str(e)}", exc_info=True)
+        raise BlogGenerationError(f"Error loading blog post from JSON: {str(e)}") from e
