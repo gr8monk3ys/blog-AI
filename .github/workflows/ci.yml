@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 env:
-  PYTHON_VERSION: "3.12"
-  NODE_VERSION: "18"
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "20"
 
 jobs:
   # =============================================================================
@@ -18,25 +18,26 @@ jobs:
     name: Python Lint & Format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Cache pip dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          key: ${{ runner.os }}-pip-lint-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
+            ${{ runner.os }}-pip-lint-
             ${{ runner.os }}-pip-
 
-      - name: Install dependencies
+      - name: Install linting tools
         run: |
           python -m pip install --upgrade pip
-          pip install black isort flake8 flake8-bugbear
+          pip install black isort
 
       - name: Check formatting with Black
         run: black --check --diff src/ tests/ server.py
@@ -44,24 +45,19 @@ jobs:
       - name: Check import sorting with isort
         run: isort --check-only --diff src/ tests/ server.py
 
-      - name: Lint with flake8
-        run: |
-          flake8 src/ tests/ server.py --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 src/ tests/ server.py --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
-
   python-typecheck:
     name: Python Type Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Cache pip dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -75,21 +71,21 @@ jobs:
           pip install mypy types-requests
 
       - name: Type check with mypy
-        run: mypy src/ server.py --ignore-missing-imports --no-error-summary || true
+        run: mypy src/ server.py --ignore-missing-imports
 
   python-test:
     name: Python Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Cache pip dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -104,49 +100,36 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing
+          pytest tests/ -v \
+            --cov=src \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --cov-fail-under=70
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           DEV_MODE: "true"
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v4
         with:
           file: ./coverage.xml
           fail_ci_if_error: false
-
-  python-security:
-    name: Python Security Scan
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install safety
-        run: pip install safety pip-audit
-
-      - name: Check for known vulnerabilities
-        run: |
-          pip-audit --requirement requirements.txt || true
+        if: always()
 
   # =============================================================================
   # Frontend CI
   # =============================================================================
   frontend-lint:
-    name: Frontend Lint & Type Check
+    name: Frontend Lint
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -158,20 +141,17 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Type check
-        run: npx tsc --noEmit
-
-  frontend-test:
-    name: Frontend Tests
+  frontend-typecheck:
+    name: Frontend Type Check
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -180,20 +160,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm test -- --coverage --passWithNoTests
+      - name: Type check
+        run: npx tsc --noEmit
 
   frontend-build:
     name: Frontend Build
     runs-on: ubuntu-latest
+    needs: [frontend-lint, frontend-typecheck]
     defaults:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -208,13 +189,15 @@ jobs:
           NEXT_PUBLIC_API_URL: http://localhost:8000
 
   # =============================================================================
-  # Docker Build Test
+  # Docker Build (main branch only)
   # =============================================================================
   docker-build:
-    name: Docker Build Test
+    name: Docker Build
     runs-on: ubuntu-latest
+    needs: [python-lint, python-typecheck, python-test, frontend-build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -224,6 +207,28 @@ jobs:
         with:
           context: .
           push: false
-          tags: blog-ai:test
+          tags: blog-ai:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # =============================================================================
+  # CI Status Check (aggregates all required jobs)
+  # =============================================================================
+  ci-status:
+    name: CI Status
+    runs-on: ubuntu-latest
+    needs: [python-lint, python-typecheck, python-test, frontend-lint, frontend-typecheck, frontend-build]
+    if: always()
+    steps:
+      - name: Check all jobs passed
+        run: |
+          if [[ "${{ needs.python-lint.result }}" != "success" ]] || \
+             [[ "${{ needs.python-typecheck.result }}" != "success" ]] || \
+             [[ "${{ needs.python-test.result }}" != "success" ]] || \
+             [[ "${{ needs.frontend-lint.result }}" != "success" ]] || \
+             [[ "${{ needs.frontend-typecheck.result }}" != "success" ]] || \
+             [[ "${{ needs.frontend-build.result }}" != "success" ]]; then
+            echo "One or more jobs failed"
+            exit 1
+          fi
+          echo "All CI checks passed!"

@@ -1,0 +1,167 @@
+# =============================================================================
+# Production Dockerfile for Blog AI SaaS Application
+# Multi-stage build for minimal image size and security
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Stage 1: Backend Dependencies Builder
+# -----------------------------------------------------------------------------
+FROM python:3.12-slim AS backend-deps
+
+WORKDIR /build
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install pip and create virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy requirements and install production dependencies only
+COPY requirements.txt ./
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# -----------------------------------------------------------------------------
+# Stage 2: Frontend Builder
+# -----------------------------------------------------------------------------
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /build
+
+# Install dependencies first (better layer caching)
+COPY frontend/package.json frontend/package-lock.json* frontend/bun.lockb* ./
+
+# Use npm ci for reproducible builds (falls back to install if no lockfile)
+RUN npm ci --only=production 2>/dev/null || npm install --only=production
+
+# Copy all frontend source files
+COPY frontend/ ./
+
+# Set production environment for build optimization
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Build the Next.js application
+RUN npm run build
+
+# Remove dev dependencies after build
+RUN npm prune --production
+
+# -----------------------------------------------------------------------------
+# Stage 3: Production Runtime
+# -----------------------------------------------------------------------------
+FROM python:3.12-slim AS runtime
+
+# Build arguments for versioning
+ARG BUILD_DATE
+ARG GIT_SHA
+ARG VERSION=1.0.0
+
+# Labels for container metadata
+LABEL org.opencontainers.image.title="Blog AI" \
+      org.opencontainers.image.description="AI-powered content generation SaaS" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.revision="${GIT_SHA}" \
+      org.opencontainers.image.vendor="Blog AI" \
+      org.opencontainers.image.licenses="MIT"
+
+# Create non-root user for security
+RUN groupadd --system --gid 1001 blogai && \
+    useradd --system --uid 1001 --gid blogai --shell /bin/false blogai
+
+WORKDIR /app
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    nodejs \
+    npm \
+    tini \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Copy virtual environment from builder
+COPY --from=backend-deps /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy backend application code
+COPY --chown=blogai:blogai src/ ./src/
+COPY --chown=blogai:blogai app/ ./app/
+COPY --chown=blogai:blogai server.py ./
+
+# Copy frontend build artifacts
+COPY --from=frontend-builder --chown=blogai:blogai /build/.next ./frontend/.next
+COPY --from=frontend-builder --chown=blogai:blogai /build/public ./frontend/public
+COPY --from=frontend-builder --chown=blogai:blogai /build/node_modules ./frontend/node_modules
+COPY --from=frontend-builder --chown=blogai:blogai /build/package.json ./frontend/package.json
+COPY --from=frontend-builder --chown=blogai:blogai /build/next.config.mjs ./frontend/next.config.mjs
+
+# Create startup script with proper signal handling
+RUN cat > /app/entrypoint.sh << 'EOF'
+#!/bin/bash
+set -e
+
+# Trap SIGTERM and SIGINT for graceful shutdown
+_term() {
+    echo "Caught SIGTERM signal, shutting down gracefully..."
+    kill -TERM "$BACKEND_PID" 2>/dev/null
+    kill -TERM "$FRONTEND_PID" 2>/dev/null
+    wait "$BACKEND_PID" "$FRONTEND_PID"
+    exit 0
+}
+
+trap _term SIGTERM SIGINT
+
+# Start backend server
+echo "Starting backend server on port ${BACKEND_PORT:-8000}..."
+python -m uvicorn server:app \
+    --host 0.0.0.0 \
+    --port ${BACKEND_PORT:-8000} \
+    --workers ${UVICORN_WORKERS:-1} \
+    --loop uvloop \
+    --no-access-log &
+BACKEND_PID=$!
+
+# Start frontend server
+echo "Starting frontend server on port ${FRONTEND_PORT:-3000}..."
+cd /app/frontend
+NODE_ENV=production npm run start -- -p ${FRONTEND_PORT:-3000} &
+FRONTEND_PID=$!
+
+# Wait for both processes
+wait "$BACKEND_PID" "$FRONTEND_PID"
+EOF
+
+RUN chmod +x /app/entrypoint.sh
+
+# Set environment variables
+ENV PYTHONPATH=/app \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1 \
+    # Default ports
+    BACKEND_PORT=8000 \
+    FRONTEND_PORT=3000 \
+    # Default worker count (can be overridden)
+    UVICORN_WORKERS=1
+
+# Expose ports
+EXPOSE 8000 3000
+
+# Health check for both services
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:${BACKEND_PORT:-8000}/health || exit 1
+
+# Switch to non-root user
+USER blogai
+
+# Use tini as init system for proper signal handling
+ENTRYPOINT ["/usr/bin/tini", "--"]
+
+# Start the application
+CMD ["/app/entrypoint.sh"]

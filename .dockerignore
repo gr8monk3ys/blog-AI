@@ -1,20 +1,45 @@
+# =============================================================================
+# Docker Ignore File for Blog AI
+# Excludes files from Docker build context for faster builds and smaller images
+# =============================================================================
+
+# -----------------------------------------------------------------------------
 # Git
+# -----------------------------------------------------------------------------
 .git
 .gitignore
 .gitattributes
+.github
 
-# Docker
+# -----------------------------------------------------------------------------
+# Docker (prevent recursive inclusion)
+# -----------------------------------------------------------------------------
 Dockerfile
-docker-compose.yml
+Dockerfile.*
+docker-compose*.yml
 .dockerignore
 
+# -----------------------------------------------------------------------------
+# Environment and Secrets (CRITICAL - never include in images)
+# -----------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+secrets/
+credentials/
+*.secret
+
+# -----------------------------------------------------------------------------
 # Python
+# -----------------------------------------------------------------------------
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-env/
 build/
 develop-eggs/
 dist/
@@ -25,33 +50,179 @@ lib64/
 parts/
 sdist/
 var/
+wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
-# Virtual Environment
+# Virtual environments
 venv/
+.venv/
 ENV/
-.env
-.venv
 env/
+.env/
+env.bak/
+venv.bak/
 
-# Node.js
+# Testing and coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+
+# Profiling
+*.prof
+
+# -----------------------------------------------------------------------------
+# Node.js / Frontend
+# -----------------------------------------------------------------------------
 frontend/node_modules/
 frontend/.next/
 frontend/out/
 frontend/.cache/
-frontend/npm-debug.log
-frontend/yarn-debug.log
-frontend/yarn-error.log
+frontend/coverage/
+frontend/.turbo/
 
-# IDE
+# Package manager logs
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.pnpm-debug.log*
+frontend/bun-debug.log*
+
+# Next.js specific
+frontend/.next/cache/
+
+# Storybook
+frontend/storybook-static/
+
+# -----------------------------------------------------------------------------
+# IDE and Editors
+# -----------------------------------------------------------------------------
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.tmproj
+.tmproject
+.tm_properties
 
-# OS
+# JetBrains
+*.iml
+.idea/
+
+# -----------------------------------------------------------------------------
+# Operating System
+# -----------------------------------------------------------------------------
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+Desktop.ini
+
+# -----------------------------------------------------------------------------
+# Testing and Development
+# -----------------------------------------------------------------------------
+tests/
+test/
+*_test.py
+test_*.py
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+__tests__/
+__mocks__/
+
+# Fixtures and test data
+fixtures/
+test-data/
+test-results/
+
+# -----------------------------------------------------------------------------
+# Documentation (not needed in runtime)
+# -----------------------------------------------------------------------------
+docs/
+*.md
+!README.md
+LICENSE
+CHANGELOG*
+CONTRIBUTING*
+AUTHORS
+CODEOWNERS
+
+# -----------------------------------------------------------------------------
+# CI/CD Configuration
+# -----------------------------------------------------------------------------
+.circleci/
+.travis.yml
+.gitlab-ci.yml
+azure-pipelines.yml
+Jenkinsfile
+.github/workflows/
+bitbucket-pipelines.yml
+
+# -----------------------------------------------------------------------------
+# Miscellaneous
+# -----------------------------------------------------------------------------
+*.log
+*.logs
+logs/
+*.tmp
+*.temp
+tmp/
+temp/
+cache/
+
+# Build artifacts
+*.tar
+*.tar.gz
+*.zip
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Local development
+.local/
+local/
+*.local
+
+# Planning and architecture docs
+.planning/
+PRD.md
+TODO.md
+CLAUDE.md
+.claude/
+
+# Makefile (not needed in container)
+Makefile
+
+# Poetry lock (we use requirements.txt for production)
+poetry.lock
+pyproject.toml

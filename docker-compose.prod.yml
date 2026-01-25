@@ -1,0 +1,199 @@
+# =============================================================================
+# Production Docker Compose Configuration for Blog AI SaaS
+# =============================================================================
+#
+# Usage:
+#   docker-compose -f docker-compose.prod.yml up -d
+#   docker-compose -f docker-compose.prod.yml logs -f
+#   docker-compose -f docker-compose.prod.yml down
+#
+# With build:
+#   docker-compose -f docker-compose.prod.yml up -d --build
+#
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # Blog AI Application (Backend + Frontend)
+  # ---------------------------------------------------------------------------
+  blog-ai:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+      args:
+        BUILD_DATE: ${BUILD_DATE:-}
+        GIT_SHA: ${GIT_SHA:-}
+        VERSION: ${VERSION:-1.0.0}
+    image: blog-ai:${VERSION:-latest}
+    container_name: blog-ai-app
+    restart: unless-stopped
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+    # Port mappings
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"   # Backend API
+      - "${FRONTEND_PORT:-3000}:3000"  # Frontend
+
+    # Environment variables
+    environment:
+      # Application settings
+      - NODE_ENV=production
+      - PYTHONPATH=/app
+
+      # Server configuration
+      - BACKEND_PORT=8000
+      - FRONTEND_PORT=3000
+      - UVICORN_WORKERS=${UVICORN_WORKERS:-2}
+
+      # CORS and security
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-https://your-domain.com}
+      - HTTPS_REDIRECT_ENABLED=${HTTPS_REDIRECT_ENABLED:-true}
+      - RATE_LIMIT_ENABLED=${RATE_LIMIT_ENABLED:-true}
+      - RATE_LIMIT_GENERAL=${RATE_LIMIT_GENERAL:-60}
+      - RATE_LIMIT_GENERATION=${RATE_LIMIT_GENERATION:-10}
+
+      # Redis connection
+      - REDIS_URL=redis://redis:6379/0
+
+      # API Keys (from .env or secrets)
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - SERP_API_KEY=${SERP_API_KEY:-}
+
+      # Model configuration
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4-turbo-preview}
+      - ANTHROPIC_MODEL=${ANTHROPIC_MODEL:-claude-3-opus-20240229}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-pro}
+
+      # Stripe payments
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      - STRIPE_PRICE_ID_PRO=${STRIPE_PRICE_ID_PRO:-}
+      - STRIPE_PRICE_ID_ENTERPRISE=${STRIPE_PRICE_ID_ENTERPRISE:-}
+
+      # Supabase configuration
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
+
+      # Sentry error tracking
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - SENTRY_ENVIRONMENT=production
+      - SENTRY_TRACES_SAMPLE_RATE=${SENTRY_TRACES_SAMPLE_RATE:-0.1}
+      - SENTRY_PROFILES_SAMPLE_RATE=${SENTRY_PROFILES_SAMPLE_RATE:-0.1}
+      - SENTRY_RELEASE=${VERSION:-1.0.0}
+      - SERVER_NAME=blog-ai-prod
+      - NEXT_PUBLIC_SENTRY_DSN=${NEXT_PUBLIC_SENTRY_DSN:-}
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    # Dependencies
+    depends_on:
+      redis:
+        condition: service_healthy
+
+    # Networking
+    networks:
+      - blog-ai-network
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # ---------------------------------------------------------------------------
+  # Redis - Job Queue and Caching
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: blog-ai-redis
+    restart: unless-stopped
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+    # Expose port only internally (remove for external access)
+    expose:
+      - "6379"
+
+    # Optional: Expose for debugging (comment out in production)
+    # ports:
+    #   - "6379:6379"
+
+    # Redis configuration
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 200mb
+      --maxmemory-policy allkeys-lru
+      --save 60 1
+      --loglevel warning
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+    # Persistent storage
+    volumes:
+      - redis-data:/data
+
+    # Networking
+    networks:
+      - blog-ai-network
+
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  blog-ai-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  redis-data:
+    driver: local
