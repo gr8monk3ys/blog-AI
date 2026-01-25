@@ -1,16 +1,33 @@
 # Core dependencies
 # Versions aligned with pyproject.toml
-openai>=2.15.0
+openai>=1.40.0
 anthropic>=0.76.0
 google-generativeai>=0.3.1
 requests>=2.31.0
 pydantic>=2.5.2
+pydantic-settings>=2.1.0
 python-dotenv>=1.0.0
+
+# Image generation
+stability-sdk>=0.8.0
+Pillow>=10.0.0
 
 # Backend server
 fastapi>=0.109.2
 uvicorn>=0.27.0
 websockets>=12.0
+
+# Security
+bcrypt>=4.0.0
+
+# Redis for job storage
+redis>=5.0.0
+
+# Payment processing
+stripe>=7.0.0
+
+# Monitoring and error tracking
+sentry-sdk[fastapi]>=1.40.0
 
 # Optional development dependencies
 # pytest>=7.4.0

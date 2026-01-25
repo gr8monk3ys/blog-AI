@@ -10,15 +10,108 @@ Supports exporting content to:
 - Medium-compatible HTML
 """
 
+import html
 import logging
 import re
 from datetime import datetime
 from io import BytesIO
 from typing import Dict, List, Optional
+from urllib.parse import urlparse
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel, Field
+
+from ..auth import verify_api_key
+
+
+def sanitize_html_content(text: str) -> str:
+    """
+    Sanitize user-provided content for safe HTML embedding.
+
+    Escapes HTML special characters to prevent XSS attacks when
+    embedding user content in HTML templates.
+
+    Args:
+        text: User-provided text that may contain HTML/JS
+
+    Returns:
+        HTML-escaped text safe for embedding
+    """
+    return html.escape(text, quote=True)
+
+
+# URL scheme whitelist for safe link/image handling
+# Empty string allows relative URLs (e.g., /path/to/page or ../image.png)
+ALLOWED_URL_SCHEMES = frozenset({'http', 'https', 'mailto', ''})
+
+
+def _sanitize_url(url: str) -> str:
+    """
+    Sanitize URL to prevent XSS via dangerous schemes like javascript:.
+
+    Only allows http, https, mailto, and relative URLs.
+    All other schemes (javascript:, data:, vbscript:, etc.) are blocked.
+
+    Args:
+        url: The URL to sanitize
+
+    Returns:
+        The original URL if safe, or '#' if the scheme is dangerous
+    """
+    try:
+        # Strip whitespace and normalize
+        cleaned_url = url.strip()
+        parsed = urlparse(cleaned_url)
+        # Check if scheme is in whitelist (case-insensitive)
+        if parsed.scheme.lower() not in ALLOWED_URL_SCHEMES:
+            return '#'
+        return cleaned_url
+    except Exception:
+        # If URL parsing fails for any reason, return safe fallback
+        return '#'
+
+
+def _replace_markdown_link(match: re.Match) -> str:
+    """
+    Replace markdown link with sanitized HTML anchor tag.
+
+    Validates URL scheme before creating anchor to prevent XSS.
+
+    Args:
+        match: Regex match object with groups (link_text, url)
+
+    Returns:
+        HTML anchor tag with sanitized href
+    """
+    link_text = match.group(1)
+    url = _sanitize_url(match.group(2))
+    # Escape link text to prevent XSS via link text content
+    safe_text = sanitize_html_content(link_text)
+    # Escape URL for safe attribute embedding
+    safe_url = html.escape(url, quote=True)
+    return f'<a href="{safe_url}">{safe_text}</a>'
+
+
+def _replace_markdown_image(match: re.Match) -> str:
+    """
+    Replace markdown image with sanitized HTML img tag.
+
+    Validates URL scheme before creating image to prevent XSS.
+
+    Args:
+        match: Regex match object with groups (alt_text, src_url)
+
+    Returns:
+        HTML img tag with sanitized src
+    """
+    alt_text = match.group(1)
+    src_url = _sanitize_url(match.group(2))
+    # Escape alt text to prevent XSS via alt attribute
+    safe_alt = html.escape(alt_text, quote=True)
+    # Escape URL for safe attribute embedding
+    safe_src = html.escape(src_url, quote=True)
+    return f'<img src="{safe_src}" alt="{safe_alt}" />'
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +173,10 @@ def markdown_to_plain_text(content: str) -> str:
 
 
 def markdown_to_html(content: str, title: str, metadata: Optional[Dict] = None) -> str:
-    """Convert markdown content to styled HTML."""
+    """Convert markdown content to styled HTML with XSS protection."""
+    # Sanitize the title to prevent XSS
+    safe_title = sanitize_html_content(title)
+
     html_content = content
 
     # Convert headers
@@ -97,11 +193,11 @@ def markdown_to_html(content: str, title: str, metadata: Optional[Dict] = None) 
     html_content = re.sub(r"__([^_]+)__", r"<strong>\1</strong>", html_content)
     html_content = re.sub(r"_([^_]+)_", r"<em>\1</em>", html_content)
 
-    # Convert links
-    html_content = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'<a href="\2">\1</a>', html_content)
+    # Convert links (with URL sanitization to prevent XSS via javascript: scheme)
+    html_content = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", _replace_markdown_link, html_content)
 
-    # Convert images
-    html_content = re.sub(r"!\[([^\]]*)\]\(([^)]+)\)", r'<img src="\2" alt="\1" />', html_content)
+    # Convert images (with URL sanitization to prevent XSS via javascript: scheme)
+    html_content = re.sub(r"!\[([^\]]*)\]\(([^)]+)\)", _replace_markdown_image, html_content)
 
     # Convert code blocks
     def replace_code_block(match):
@@ -150,29 +246,32 @@ def markdown_to_html(content: str, title: str, metadata: Optional[Dict] = None) 
             processed_paragraphs.append(p)
     html_content = "\n".join(processed_paragraphs)
 
-    # Build metadata section
+    # Build metadata section (with XSS sanitization)
     meta_html = ""
     if metadata:
         meta_parts = []
         if metadata.get("date"):
-            meta_parts.append(f'<span class="date">{metadata["date"]}</span>')
+            safe_date = sanitize_html_content(str(metadata["date"]))
+            meta_parts.append(f'<span class="date">{safe_date}</span>')
         if metadata.get("description"):
-            meta_parts.append(f'<p class="description">{metadata["description"]}</p>')
+            safe_desc = sanitize_html_content(str(metadata["description"]))
+            meta_parts.append(f'<p class="description">{safe_desc}</p>')
         if metadata.get("tags"):
-            tags = ", ".join(metadata["tags"])
-            meta_parts.append(f'<p class="tags">Tags: {tags}</p>')
+            safe_tags = ", ".join(sanitize_html_content(str(t)) for t in metadata["tags"])
+            meta_parts.append(f'<p class="tags">Tags: {safe_tags}</p>')
         if metadata.get("toolName"):
-            meta_parts.append(f'<p class="tool">Generated with: {metadata["toolName"]}</p>')
+            safe_tool = sanitize_html_content(str(metadata["toolName"]))
+            meta_parts.append(f'<p class="tool">Generated with: {safe_tool}</p>')
         if meta_parts:
             meta_html = f'<div class="metadata">{"".join(meta_parts)}</div>'
 
-    # Build full HTML document
+    # Build full HTML document (using sanitized title)
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{title}</title>
+    <title>{safe_title}</title>
     <style>
         :root {{
             --primary-color: #4f46e5;
@@ -334,7 +433,7 @@ def markdown_to_html(content: str, title: str, metadata: Optional[Dict] = None) 
 <body>
     <article>
         <header>
-            <h1>{title}</h1>
+            <h1>{safe_title}</h1>
             {meta_html}
         </header>
         <main>
@@ -351,11 +450,14 @@ def markdown_to_html(content: str, title: str, metadata: Optional[Dict] = None) 
 
 
 def content_to_wordpress_blocks(content: str, title: str) -> str:
-    """Convert content to WordPress Gutenberg block format."""
+    """Convert content to WordPress Gutenberg block format with XSS protection."""
+    # Sanitize title for safe HTML embedding
+    safe_title = sanitize_html_content(title)
+
     blocks = []
 
     # Add title block
-    blocks.append(f'<!-- wp:heading {{"level":1}} -->\n<h1 class="wp-block-heading">{title}</h1>\n<!-- /wp:heading -->')
+    blocks.append(f'<!-- wp:heading {{"level":1}} -->\n<h1 class="wp-block-heading">{safe_title}</h1>\n<!-- /wp:heading -->')
 
     lines = content.split("\n")
     current_paragraph = []
@@ -423,8 +525,11 @@ def content_to_wordpress_blocks(content: str, title: str) -> str:
 
 
 def content_to_medium_html(content: str, title: str) -> str:
-    """Convert content to Medium-compatible HTML."""
-    html_parts = [f"<h1>{title}</h1>"]
+    """Convert content to Medium-compatible HTML with XSS protection."""
+    # Sanitize title for safe HTML embedding
+    safe_title = sanitize_html_content(title)
+
+    html_parts = [f"<h1>{safe_title}</h1>"]
 
     lines = content.split("\n")
     current_paragraph = []
@@ -548,7 +653,10 @@ def generate_pdf_content(content: str, title: str, metadata: Optional[Dict] = No
 
 
 @router.post("/markdown")
-async def export_markdown(request: ExportRequest):
+async def export_markdown(
+    request: ExportRequest,
+    user_id: str = Depends(verify_api_key),
+):
     """
     Export content as markdown file.
 
@@ -583,8 +691,14 @@ async def export_markdown(request: ExportRequest):
                 "Cache-Control": "no-cache",
             },
         )
+    except UnicodeEncodeError as e:
+        logger.error(f"Unicode encoding error in markdown export: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Content contains unsupported characters",
+        )
     except Exception as e:
-        logger.error(f"Error exporting markdown: {str(e)}", exc_info=True)
+        logger.error(f"Unexpected error exporting markdown: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to export markdown",
@@ -592,7 +706,10 @@ async def export_markdown(request: ExportRequest):
 
 
 @router.post("/html")
-async def export_html(request: ExportRequest):
+async def export_html(
+    request: ExportRequest,
+    user_id: str = Depends(verify_api_key),
+):
     """
     Export content as styled HTML file.
 
@@ -614,8 +731,14 @@ async def export_html(request: ExportRequest):
                 "Cache-Control": "no-cache",
             },
         )
+    except UnicodeEncodeError as e:
+        logger.error(f"Unicode encoding error in HTML export: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Content contains unsupported characters",
+        )
     except Exception as e:
-        logger.error(f"Error exporting HTML: {str(e)}", exc_info=True)
+        logger.error(f"Unexpected error exporting HTML: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to export HTML",
@@ -623,7 +746,10 @@ async def export_html(request: ExportRequest):
 
 
 @router.post("/text")
-async def export_text(request: ExportRequest):
+async def export_text(
+    request: ExportRequest,
+    user_id: str = Depends(verify_api_key),
+):
     """
     Export content as plain text file.
 
@@ -657,8 +783,14 @@ async def export_text(request: ExportRequest):
                 "Cache-Control": "no-cache",
             },
         )
+    except UnicodeEncodeError as e:
+        logger.error(f"Unicode encoding error in text export: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Content contains unsupported characters",
+        )
     except Exception as e:
-        logger.error(f"Error exporting text: {str(e)}", exc_info=True)
+        logger.error(f"Unexpected error exporting text: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to export text",
@@ -666,7 +798,10 @@ async def export_text(request: ExportRequest):
 
 
 @router.post("/pdf")
-async def export_pdf(request: ExportRequest):
+async def export_pdf(
+    request: ExportRequest,
+    user_id: str = Depends(verify_api_key),
+):
     """
     Export content as PDF file.
 
@@ -710,8 +845,20 @@ async def export_pdf(request: ExportRequest):
                     "X-PDF-Fallback": "true",
                 },
             )
+    except UnicodeEncodeError as e:
+        logger.error(f"Unicode encoding error in PDF export: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Content contains unsupported characters",
+        )
+    except MemoryError as e:
+        logger.error(f"Memory error generating PDF: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_507_INSUFFICIENT_STORAGE,
+            detail="Content too large to generate PDF",
+        )
     except Exception as e:
-        logger.error(f"Error exporting PDF: {str(e)}", exc_info=True)
+        logger.error(f"Unexpected error exporting PDF: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to export PDF",
@@ -719,7 +866,10 @@ async def export_pdf(request: ExportRequest):
 
 
 @router.post("/wordpress", response_model=PublishResponse)
-async def export_wordpress(request: ExportRequest):
+async def export_wordpress(
+    request: ExportRequest,
+    user_id: str = Depends(verify_api_key),
+):
     """
     Export content as WordPress Gutenberg block format.
 
@@ -735,8 +885,14 @@ async def export_wordpress(request: ExportRequest):
             content=wordpress_content,
             format="wordpress",
         )
+    except UnicodeEncodeError as e:
+        logger.error(f"Unicode encoding error in WordPress export: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Content contains unsupported characters",
+        )
     except Exception as e:
-        logger.error(f"Error exporting WordPress format: {str(e)}", exc_info=True)
+        logger.error(f"Unexpected error exporting WordPress format: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to export WordPress format",
@@ -744,7 +900,10 @@ async def export_wordpress(request: ExportRequest):
 
 
 @router.post("/medium", response_model=PublishResponse)
-async def export_medium(request: ExportRequest):
+async def export_medium(
+    request: ExportRequest,
+    user_id: str = Depends(verify_api_key),
+):
     """
     Export content as Medium-compatible HTML.
 
@@ -760,8 +919,14 @@ async def export_medium(request: ExportRequest):
             content=medium_content,
             format="medium",
         )
+    except UnicodeEncodeError as e:
+        logger.error(f"Unicode encoding error in Medium export: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Content contains unsupported characters",
+        )
     except Exception as e:
-        logger.error(f"Error exporting Medium format: {str(e)}", exc_info=True)
+        logger.error(f"Unexpected error exporting Medium format: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to export Medium format",
