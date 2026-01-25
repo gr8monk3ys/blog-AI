@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Disclosure } from '@headlessui/react';
 import { ChevronUpIcon } from '@heroicons/react/24/outline';
 import { Book, BookDownloadOptions } from '../types/book';
+import { useToast } from '../hooks/useToast';
+import { API_ENDPOINTS, getDefaultHeaders } from '../lib/api';
 
 interface BookViewerProps {
   book: Book;
@@ -9,15 +11,14 @@ interface BookViewerProps {
 }
 
 export default function BookViewer({ book, filePath }: BookViewerProps) {
+  const { showToast, ToastComponent } = useToast();
   const [downloadFormat, setDownloadFormat] = useState<'markdown' | 'json'>('markdown');
 
   const handleDownload = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/download-book`, {
+      const response = await fetch(API_ENDPOINTS.downloadBook, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getDefaultHeaders(),
         body: JSON.stringify({
           file_path: filePath,
           format: downloadFormat,
@@ -40,12 +41,18 @@ export default function BookViewer({ book, filePath }: BookViewerProps) {
       document.body.removeChild(a);
     } catch (error) {
       console.error('Error downloading book:', error);
-      alert('Failed to download book. Please try again.');
+      showToast({
+        message: 'Failed to download book. Please try again.',
+        variant: 'error',
+      });
     }
   };
 
   return (
     <div className="mt-8">
+      {/* Toast notifications */}
+      <ToastComponent />
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">{book.title}</h1>
         <div className="flex items-center space-x-2">

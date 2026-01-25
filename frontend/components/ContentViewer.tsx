@@ -5,6 +5,7 @@ import BookEditor from './BookEditor';
 import ExportMenu, { ExportContent, ExportFormat } from './ExportMenu';
 import { Book, Chapter } from '../types/book';
 import { ContentGenerationResponse, BlogSection, BookContent } from '../types/content';
+import { API_ENDPOINTS, getDefaultHeaders } from '../lib/api';
 
 interface ContentViewerProps {
   content: ContentGenerationResponse;
@@ -138,11 +139,9 @@ export default function ContentViewer({ content }: ContentViewerProps) {
 
   const handleSectionEdit = async (sectionId: string) => {
     try {
-      const response = await fetch('http://localhost:8000/edit-section', {
+      const response = await fetch(API_ENDPOINTS.editSection, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getDefaultHeaders(),
         body: JSON.stringify({
           file_path: content.file_path || '',
           section_id: sectionId,
@@ -160,7 +159,12 @@ export default function ContentViewer({ content }: ContentViewerProps) {
       }
     } catch (error) {
       console.error('Error updating section:', error);
-      alert('Failed to update section. Please try again.');
+      setExportToast({
+        show: true,
+        message: 'Failed to update section. Please try again.',
+        type: 'error',
+      });
+      setTimeout(() => setExportToast({ show: false, message: '', type: 'success' }), 3000);
     }
   };
 

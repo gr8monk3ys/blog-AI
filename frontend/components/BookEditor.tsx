@@ -3,6 +3,8 @@ import { Disclosure, Dialog, Transition } from '@headlessui/react';
 import { ChevronUpIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { Fragment } from 'react';
 import { Book, BookEditResponse } from '../types/book';
+import { useToast } from '../hooks/useToast';
+import { API_ENDPOINTS, getDefaultHeaders } from '../lib/api';
 
 interface BookEditorProps {
   book: Book;
@@ -11,6 +13,7 @@ interface BookEditorProps {
 }
 
 export default function BookEditor({ book, filePath, onSave }: BookEditorProps) {
+  const { showToast, ToastComponent } = useToast();
   const [editingBook, setEditingBook] = useState<Book>({ ...book });
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingTags, setIsEditingTags] = useState(false);
@@ -20,11 +23,9 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
 
   const handleSaveBook = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/save-book`, {
+      const response = await fetch(API_ENDPOINTS.saveBook, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getDefaultHeaders(),
         body: JSON.stringify({
           file_path: filePath,
           book: editingBook,
@@ -36,10 +37,16 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
       }
 
       onSave(editingBook);
-      alert('Book saved successfully!');
+      showToast({
+        message: 'Book saved successfully!',
+        variant: 'success',
+      });
     } catch (error) {
       console.error('Error saving book:', error);
-      alert('Failed to save book. Please try again.');
+      showToast({
+        message: 'Failed to save book. Please try again.',
+        variant: 'error',
+      });
     }
   };
 
@@ -78,6 +85,9 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
 
   return (
     <div className="mt-8">
+      {/* Toast notifications */}
+      <ToastComponent />
+
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center">
           {isEditingTitle ? (

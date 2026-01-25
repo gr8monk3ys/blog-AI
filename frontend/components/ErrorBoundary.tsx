@@ -1,33 +1,58 @@
 'use client'
 
+import * as Sentry from '@sentry/nextjs'
 import { Component, ReactNode } from 'react'
 
 interface Props {
   children: ReactNode
   fallback?: ReactNode
+  /** Component name for Sentry tagging */
+  componentName?: string
+  /** Additional context for error reporting */
+  context?: Record<string, unknown>
 }
 
 interface State {
   hasError: boolean
   error: Error | null
+  eventId: string | null
 }
 
 export default class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props)
-    this.state = { hasError: false, error: null }
+    this.state = { hasError: false, error: null, eventId: null }
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error }
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
+    // Log to console for development
     console.error('ErrorBoundary caught an error:', error, errorInfo)
+
+    // Report to Sentry with enhanced context
+    const eventId = Sentry.captureException(error, {
+      tags: {
+        errorBoundary: 'component',
+        componentName: this.props.componentName || 'unknown',
+      },
+      contexts: {
+        react: {
+          componentStack: errorInfo.componentStack,
+        },
+        custom: this.props.context || {},
+      },
+      // Filter out any PII that might be in error messages
+      fingerprint: ['{{ default }}', this.props.componentName || 'ErrorBoundary'],
+    })
+
+    this.setState({ eventId })
   }
 
   handleReset = (): void => {
-    this.setState({ hasError: false, error: null })
+    this.setState({ hasError: false, error: null, eventId: null })
   }
 
   render(): ReactNode {
@@ -45,6 +70,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -58,8 +84,14 @@ export default class ErrorBoundary extends Component<Props, State> {
               Something went wrong
             </h2>
             <p className="text-red-700 text-sm mb-4">
-              {this.state.error?.message || 'An unexpected error occurred'}
+              An unexpected error occurred. Our team has been notified.
             </p>
+            {/* Show event ID for support reference without exposing error details */}
+            {this.state.eventId && (
+              <p className="text-red-500 text-xs mb-4 font-mono">
+                Error ID: {this.state.eventId.substring(0, 8)}
+              </p>
+            )}
             <button
               onClick={this.handleReset}
               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"

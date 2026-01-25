@@ -59,12 +59,27 @@ export const API_ENDPOINTS = {
     validate: (toolId: string) => `${API_V1_BASE_URL}/tools/${toolId}/validate`,
     byCategory: (category: string) => `${API_V1_BASE_URL}/tools/category/${category}`,
   },
-  // Bulk generation endpoints
+  // Bulk generation endpoints (legacy)
   bulk: {
     generate: `${API_V1_BASE_URL}/bulk/generate`,
     status: (jobId: string) => `${API_V1_BASE_URL}/bulk/status/${jobId}`,
     results: (jobId: string) => `${API_V1_BASE_URL}/bulk/results/${jobId}`,
     cancel: (jobId: string) => `${API_V1_BASE_URL}/bulk/cancel/${jobId}`,
+  },
+  // Enhanced batch generation endpoints (Tier 1)
+  batch: {
+    // Job management
+    list: `${API_V1_BASE_URL}/batch/jobs`,
+    status: (jobId: string) => `${API_V1_BASE_URL}/batch/${jobId}`,
+    results: (jobId: string) => `${API_V1_BASE_URL}/batch/${jobId}/results`,
+    cancel: (jobId: string) => `${API_V1_BASE_URL}/batch/${jobId}/cancel`,
+    retry: (jobId: string) => `${API_V1_BASE_URL}/batch/${jobId}/retry`,
+    // CSV import/export
+    importCsv: `${API_V1_BASE_URL}/batch/import/csv`,
+    template: `${API_V1_BASE_URL}/batch/template/csv`,
+    export: (jobId: string, format: string) => `${API_V1_BASE_URL}/batch/export/${jobId}?format=${format}`,
+    // Cost estimation
+    estimate: `${API_V1_BASE_URL}/batch/estimate`,
   },
   // Usage tracking endpoints
   usage: {
@@ -93,6 +108,31 @@ export const API_ENDPOINTS = {
     delete: (id: string) => `/api/brand-profiles/${id}`,
     setDefault: (id: string) => `/api/brand-profiles/${id}/default`,
   },
+  // Content Remix API endpoints
+  remix: {
+    formats: `${API_V1_BASE_URL}/remix/formats`,
+    format: (formatId: string) => `${API_V1_BASE_URL}/remix/formats/${formatId}`,
+    analyze: `${API_V1_BASE_URL}/remix/analyze`,
+    preview: `${API_V1_BASE_URL}/remix/preview`,
+    transform: `${API_V1_BASE_URL}/remix/transform`,
+    transformFormat: (formatId: string) => `${API_V1_BASE_URL}/remix/transform/${formatId}`,
+    batch: `${API_V1_BASE_URL}/remix/batch`,
+  },
+  // Brand Voice Training API endpoints
+  brandVoice: {
+    analyze: `${API_V1_BASE_URL}/brand-voice/analyze`,
+    samples: `${API_V1_BASE_URL}/brand-voice/samples`,
+    samplesByProfile: (profileId: string) => `${API_V1_BASE_URL}/brand-voice/samples/${profileId}`,
+    deleteSample: (profileId: string, sampleId: string) => `${API_V1_BASE_URL}/brand-voice/samples/${profileId}/${sampleId}`,
+    train: `${API_V1_BASE_URL}/brand-voice/train`,
+    fingerprint: (profileId: string) => `${API_V1_BASE_URL}/brand-voice/fingerprint/${profileId}`,
+    score: `${API_V1_BASE_URL}/brand-voice/score`,
+    status: (profileId: string) => `${API_V1_BASE_URL}/brand-voice/status/${profileId}`,
+  },
+  // Content editing endpoints
+  editSection: `${API_BASE_URL}/edit-section`,
+  saveBook: `${API_BASE_URL}/save-book`,
+  downloadBook: `${API_BASE_URL}/download-book`,
 } as const;
 
 // Default headers for API requests
