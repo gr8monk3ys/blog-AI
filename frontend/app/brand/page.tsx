@@ -12,8 +12,11 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { BrandProfile, SAMPLE_BRAND_PROFILES } from '../../types/brand'
+import { useConfirmModal } from '../../hooks/useConfirmModal'
 
 export default function BrandPage() {
+  const { confirm, ConfirmModalComponent } = useConfirmModal()
+
   const [profiles, setProfiles] = useState<BrandProfile[]>(SAMPLE_BRAND_PROFILES)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -102,7 +105,15 @@ export default function BrandPage() {
   }
 
   const handleDeleteProfile = async (profile: BrandProfile) => {
-    if (!confirm(`Are you sure you want to delete "${profile.name}"?`)) {
+    const confirmed = await confirm({
+      title: 'Delete Brand Profile',
+      message: `Are you sure you want to delete "${profile.name}"? This action cannot be undone.`,
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      variant: 'danger',
+    })
+
+    if (!confirmed) {
       return
     }
 
@@ -150,6 +161,9 @@ export default function BrandPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Confirm Modal */}
+      <ConfirmModalComponent />
+
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

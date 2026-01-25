@@ -16,6 +16,9 @@ import {
   TrashIcon,
   PlusIcon,
   SparklesIcon,
+  ArrowPathIcon,
+  CurrencyDollarIcon,
+  ServerStackIcon,
 } from '@heroicons/react/24/outline'
 import {
   BulkGenerationItem,
@@ -24,6 +27,9 @@ import {
   BulkJobStartResponse,
   CSVRow,
   ParsedCSVData,
+  ProviderStrategy,
+  CostEstimate,
+  ExportFormat,
 } from '../../types/bulk'
 import UsageIndicator, { useUsageCheck } from '../../components/UsageIndicator'
 import { API_ENDPOINTS, getDefaultHeaders } from '../../lib/api'
@@ -35,6 +41,26 @@ const TONE_OPTIONS = [
   { value: 'friendly', label: 'Friendly' },
   { value: 'authoritative', label: 'Authoritative' },
   { value: 'technical', label: 'Technical' },
+]
+
+const PROVIDER_OPTIONS = [
+  { value: 'openai', label: 'OpenAI (GPT-4)', cost: '$$$' },
+  { value: 'anthropic', label: 'Anthropic (Claude)', cost: '$$' },
+  { value: 'gemini', label: 'Google (Gemini)', cost: '$' },
+]
+
+const STRATEGY_OPTIONS: { value: ProviderStrategy; label: string; description: string }[] = [
+  { value: 'single', label: 'Single Provider', description: 'Use one provider for all items' },
+  { value: 'round_robin', label: 'Round Robin', description: 'Rotate through all providers' },
+  { value: 'cost_optimized', label: 'Cost Optimized', description: 'Use cheapest provider available' },
+  { value: 'quality_optimized', label: 'Quality Optimized', description: 'Use highest quality provider' },
+]
+
+const EXPORT_OPTIONS: { value: ExportFormat; label: string; icon: string }[] = [
+  { value: 'json', label: 'JSON', icon: '{ }' },
+  { value: 'csv', label: 'CSV', icon: '📊' },
+  { value: 'markdown', label: 'Markdown', icon: '📝' },
+  { value: 'zip', label: 'ZIP (all files)', icon: '📦' },
 ]
 
 function parseCSV(csvText: string): ParsedCSVData {
@@ -95,6 +121,14 @@ export default function BulkGenerationPage() {
   const [humanize, setHumanize] = useState(true)
   const [parallelLimit, setParallelLimit] = useState(3)
 
+  // Tier 1 features: Provider and cost tracking
+  const [providerStrategy, setProviderStrategy] = useState<ProviderStrategy>('single')
+  const [preferredProvider, setPreferredProvider] = useState('openai')
+  const [costEstimate, setCostEstimate] = useState<CostEstimate | null>(null)
+  const [providersUsed, setProvidersUsed] = useState<Record<string, number>>({})
+  const [actualCost, setActualCost] = useState(0)
+  const [showExportMenu, setShowExportMenu] = useState(false)
+
   const [jobId, setJobId] = useState<string | null>(null)
   const [status, setStatus] = useState<BulkGenerationStatus | null>(null)
   const [results, setResults] = useState<BulkGenerationItemResult[]>([])
@@ -136,6 +170,99 @@ export default function BulkGenerationPage() {
       newItems[index] = { ...currentItem, tone: value }
     }
     setItems(newItems)
+  }
+
+  // Estimate cost when items change
+  const estimateCost = useCallback(async () => {
+    if (items.length === 0) {
+      setCostEstimate(null)
+      return
+    }
+
+    try {
+      const response = await fetch(
+        `${API_ENDPOINTS.batch.estimate}?provider_strategy=${providerStrategy}&preferred_provider=${preferredProvider}&research_enabled=${useResearch}`,
+        {
+          method: 'POST',
+          headers: getDefaultHeaders(),
+          body: JSON.stringify(items.map(item => ({
+            topic: item.topic,
+            keywords: item.keywords,
+            tone: item.tone || sharedTone,
+            content_type: 'blog',
+          }))),
+        }
+      )
+
+      if (response.ok) {
+        const estimate: CostEstimate = await response.json()
+        setCostEstimate(estimate)
+      }
+    } catch (err) {
+      console.error('Failed to estimate cost:', err)
+    }
+  }, [items, providerStrategy, preferredProvider, useResearch, sharedTone])
+
+  // Retry failed items
+  const retryFailed = async () => {
+    if (!jobId || !status?.can_cancel === false) return
+
+    const failedIndices = results
+      .filter(r => !r.success)
+      .map(r => r.index)
+
+    if (failedIndices.length === 0) {
+      setError('No failed items to retry')
+      return
+    }
+
+    try {
+      const response = await fetch(API_ENDPOINTS.batch.retry(jobId), {
+        method: 'POST',
+        headers: getDefaultHeaders(),
+        body: JSON.stringify({
+          item_indices: failedIndices,
+          change_provider: preferredProvider !== 'openai' ? preferredProvider : undefined,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to start retry')
+      }
+
+      const data = await response.json()
+      setJobId(data.retry_job_id)
+      setIsProcessing(true)
+      startPolling(data.retry_job_id)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to retry failed items')
+    }
+  }
+
+  // Export results in different formats
+  const exportResults = async (format: ExportFormat) => {
+    if (!jobId) return
+
+    try {
+      const response = await fetch(API_ENDPOINTS.batch.export(jobId, format), {
+        headers: getDefaultHeaders(),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to export results')
+      }
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `batch-${jobId.slice(0, 8)}.${format === 'markdown' ? 'md' : format}`
+      a.click()
+      URL.revokeObjectURL(url)
+      setShowExportMenu(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to export results')
+    }
   }
 
   // Handle CSV file upload
@@ -543,6 +670,56 @@ export default function BulkGenerationPage() {
               </h2>
 
               <div className="space-y-4">
+                {/* Provider Strategy */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <ServerStackIcon className="w-4 h-4 inline mr-1" />
+                    Provider Strategy
+                  </label>
+                  <select
+                    value={providerStrategy}
+                    onChange={(e) => {
+                      setProviderStrategy(e.target.value as ProviderStrategy)
+                      setCostEstimate(null)
+                    }}
+                    disabled={isProcessing}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+                  >
+                    {STRATEGY_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    {STRATEGY_OPTIONS.find(s => s.value === providerStrategy)?.description}
+                  </p>
+                </div>
+
+                {/* Preferred Provider */}
+                {providerStrategy === 'single' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Provider
+                    </label>
+                    <select
+                      value={preferredProvider}
+                      onChange={(e) => {
+                        setPreferredProvider(e.target.value)
+                        setCostEstimate(null)
+                      }}
+                      disabled={isProcessing}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+                    >
+                      {PROVIDER_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label} ({option.cost})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Default Tone
@@ -614,6 +791,47 @@ export default function BulkGenerationPage() {
               </div>
             </motion.div>
 
+            {/* Cost Estimate */}
+            {costEstimate && items.length > 0 && !isProcessing && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200 p-6"
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <CurrencyDollarIcon className="w-5 h-5 text-green-600" />
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Cost Estimate
+                  </h2>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Estimated Cost</span>
+                    <span className="text-lg font-bold text-green-700">
+                      ${costEstimate.estimated_cost_usd.toFixed(4)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <span>~{costEstimate.estimated_output_tokens.toLocaleString()} tokens</span>
+                    <span>{Math.round(costEstimate.confidence * 100)}% confidence</span>
+                  </div>
+                  {costEstimate.provider_recommendations.length > 1 && (
+                    <div className="mt-3 pt-3 border-t border-green-200">
+                      <p className="text-xs text-gray-500 mb-2">Provider comparison:</p>
+                      <div className="space-y-1">
+                        {costEstimate.provider_recommendations.slice(0, 3).map((rec) => (
+                          <div key={rec.provider} className="flex items-center justify-between text-xs">
+                            <span className="text-gray-600">{rec.display_name}</span>
+                            <span className="font-medium text-gray-900">${rec.estimated_cost.toFixed(4)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
             {/* Progress */}
             {status && isProcessing && (
               <motion.div
@@ -648,6 +866,30 @@ export default function BulkGenerationPage() {
                       </span>
                     )}
                   </div>
+                  {/* Provider usage */}
+                  {Object.keys(providersUsed).length > 0 && (
+                    <div className="pt-3 border-t border-gray-100">
+                      <p className="text-xs text-gray-500 mb-2">Providers used:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {Object.entries(providersUsed).map(([provider, count]) => (
+                          <span
+                            key={provider}
+                            className="inline-flex items-center px-2 py-1 bg-gray-100 rounded text-xs text-gray-700"
+                          >
+                            {provider}: {count}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {actualCost > 0 && (
+                    <div className="flex items-center justify-between text-sm pt-2">
+                      <span className="text-gray-600">Cost so far</span>
+                      <span className="font-medium text-green-600">
+                        ${actualCost.toFixed(4)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             )}
@@ -680,12 +922,43 @@ export default function BulkGenerationPage() {
                 )}
 
                 {results.length > 0 && (
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowExportMenu(!showExportMenu)}
+                      className="w-full flex items-center justify-center gap-2 py-3 px-4 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <ArrowDownTrayIcon className="w-5 h-5" />
+                      Export Results
+                    </button>
+                    {showExportMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden z-10"
+                      >
+                        {EXPORT_OPTIONS.map((option) => (
+                          <button
+                            key={option.value}
+                            onClick={() => exportResults(option.value)}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm hover:bg-gray-50 transition-colors"
+                          >
+                            <span className="text-lg">{option.icon}</span>
+                            <span>{option.label}</span>
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </div>
+                )}
+
+                {/* Retry failed button */}
+                {results.length > 0 && results.some(r => !r.success) && !isProcessing && (
                   <button
-                    onClick={downloadResults}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                    onClick={retryFailed}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 border border-orange-300 bg-orange-50 text-orange-700 font-medium rounded-lg hover:bg-orange-100 transition-colors"
                   >
-                    <ArrowDownTrayIcon className="w-5 h-5" />
-                    Download Results
+                    <ArrowPathIcon className="w-5 h-5" />
+                    Retry {results.filter(r => !r.success).length} Failed
                   </button>
                 )}
 

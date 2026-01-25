@@ -263,3 +263,138 @@ export function generateBrandVoiceContext(profile: BrandProfile): string {
 
   return parts.join('\n')
 }
+
+// ============================================================================
+// Voice Training Types (Enhanced Tier 1)
+// ============================================================================
+
+export type ContentType = 'text' | 'blog' | 'email' | 'social' | 'website' | 'article'
+
+export type TrainingStatus = 'untrained' | 'analyzing' | 'training' | 'trained' | 'failed'
+
+export interface VocabularyProfile {
+  common_words: string[]
+  unique_phrases: string[]
+  avg_word_length: number
+  vocabulary_richness: number
+  formality_indicators: string[]
+  casual_indicators: string[]
+}
+
+export interface SentencePatterns {
+  avg_sentence_length: number
+  sentence_length_variance: number
+  question_frequency: number
+  exclamation_frequency: number
+  complex_sentence_ratio: number
+  opening_patterns: string[]
+  transition_words: string[]
+}
+
+export interface ToneDistribution {
+  professional: number
+  friendly: number
+  casual: number
+  authoritative: number
+  empathetic: number
+  enthusiastic: number
+  confident: number
+  approachable: number
+  innovative: number
+  trustworthy: number
+  playful: number
+  serious: number
+}
+
+export interface StyleMetrics {
+  formality_score: number
+  complexity_score: number
+  engagement_score: number
+  personality_score: number
+  consistency_score: number
+}
+
+export interface SampleAnalysis {
+  vocabulary: VocabularyProfile
+  sentences: SentencePatterns
+  tone: ToneDistribution
+  style: StyleMetrics
+  key_characteristics: string[]
+  quality_score: number
+}
+
+export interface VoiceSample {
+  id: string
+  profile_id: string
+  title?: string
+  content: string
+  content_type: ContentType
+  word_count: number
+  source_url?: string
+  source_platform?: string
+  is_analyzed: boolean
+  analysis_result?: SampleAnalysis
+  quality_score: number
+  is_primary_example: boolean
+}
+
+export interface VoiceFingerprint {
+  id: string
+  profile_id: string
+  vocabulary_profile: VocabularyProfile
+  sentence_patterns: SentencePatterns
+  tone_distribution: ToneDistribution
+  style_metrics: StyleMetrics
+  voice_summary: string
+  sample_count: number
+  training_quality: number
+  last_trained_at?: string
+}
+
+export interface VoiceScore {
+  overall_score: number
+  tone_match: number
+  vocabulary_match: number
+  style_match: number
+  feedback: Record<string, unknown>
+  deviations: string[]
+  suggestions: string[]
+}
+
+export interface AnalyzeSampleRequest {
+  content: string
+  content_type: ContentType
+  provider?: string
+}
+
+export interface AddSampleRequest {
+  profile_id: string
+  content: string
+  content_type: ContentType
+  title?: string
+  source_url?: string
+  source_platform?: string
+  is_primary_example?: boolean
+}
+
+export interface TrainVoiceRequest {
+  profile_id: string
+  sample_ids?: string[]
+  provider?: string
+}
+
+export interface ScoreContentRequest {
+  profile_id: string
+  content: string
+  content_type: ContentType
+  provider?: string
+}
+
+export interface TrainingStatusResponse {
+  profile_id: string
+  status: TrainingStatus
+  sample_count: number
+  training_quality: number
+  has_fingerprint: boolean
+  voice_summary?: string
+}

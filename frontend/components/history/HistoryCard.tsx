@@ -19,6 +19,7 @@ import {
   CheckIcon,
 } from '@heroicons/react/24/outline'
 import FavoriteButton from './FavoriteButton'
+import { useConfirmModal } from '../../hooks/useConfirmModal'
 import type { GeneratedContentItem } from '../../types/history'
 import { TOOL_CATEGORIES, ToolCategory } from '../../types/tools'
 
@@ -134,6 +135,7 @@ export default function HistoryCard({
   onDelete,
   onFavoriteToggle,
 }: HistoryCardProps) {
+  const { confirm, ConfirmModalComponent } = useConfirmModal()
   const [copied, setCopied] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -153,7 +155,16 @@ export default function HistoryCard({
 
   const handleDelete = async () => {
     if (!onDelete || isDeleting) return
-    if (!confirm('Are you sure you want to delete this content?')) return
+
+    const confirmed = await confirm({
+      title: 'Delete Content',
+      message: 'Are you sure you want to delete this content? This action cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      variant: 'danger',
+    })
+
+    if (!confirmed) return
 
     setIsDeleting(true)
     try {
@@ -171,16 +182,20 @@ export default function HistoryCard({
   )
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3, delay: index * 0.05 }}
-      className={`group relative bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all duration-200 overflow-hidden ${
-        isDeleting ? 'opacity-50 pointer-events-none' : ''
-      }`}
-    >
-      {/* Favorite indicator stripe */}
+    <>
+      {/* Confirm Modal */}
+      <ConfirmModalComponent />
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3, delay: index * 0.05 }}
+        className={`group relative bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all duration-200 overflow-hidden ${
+          isDeleting ? 'opacity-50 pointer-events-none' : ''
+        }`}
+      >
+        {/* Favorite indicator stripe */}
       {item.is_favorite && (
         <div
           className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 to-amber-500"
@@ -271,5 +286,6 @@ export default function HistoryCard({
         </div>
       </div>
     </motion.div>
+    </>
   )
 }
