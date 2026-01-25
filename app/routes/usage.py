@@ -30,6 +30,7 @@ from src.usage.quota_service import (
 )
 
 from ..auth import verify_api_key
+from ..error_handlers import sanitize_error_message
 from ..models import (
     AllTiersResponse,
     TierInfoResponse,
@@ -103,7 +104,7 @@ async def check_user_limit(
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=UsageLimitErrorResponse(
-                error=str(e),
+                error=sanitize_error_message(str(e)),
                 tier=e.tier.value,
                 limit_type=e.limit_type,
                 daily_limit=stats.daily_limit,

@@ -9,10 +9,12 @@ import logging
 import re
 from typing import Any, Dict, List, Optional, Set
 
+import bleach
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from ..auth import verify_api_key
+from ..error_handlers import sanitize_error_message
 
 
 # =============================================================================
@@ -25,13 +27,11 @@ BLOCKED_HOSTNAMES: Set[str] = {
     "metadata.google.internal", "169.254.169.254",
 }
 
-DANGEROUS_HTML_PATTERNS = [
-    re.compile(r"<script[^>]*>.*?</script>", re.IGNORECASE | re.DOTALL),
-    re.compile(r"<style[^>]*>.*?</style>", re.IGNORECASE | re.DOTALL),
-    re.compile(r"<iframe[^>]*>.*?</iframe>", re.IGNORECASE | re.DOTALL),
-    re.compile(r"on\w+\s*=", re.IGNORECASE),
-    re.compile(r"javascript:", re.IGNORECASE),
-]
+# Allowed HTML tags for content sanitization (whitelist approach using bleach)
+ALLOWED_HTML_TAGS: Set[str] = {
+    "p", "br", "b", "i", "u", "strong", "em", "ul", "ol", "li",
+    "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "code", "pre",
+}
 
 from src.brand.analyzer import VoiceAnalyzer
 from src.brand.scorer import VoiceScorer
@@ -62,12 +62,12 @@ class AnalyzeSampleRequest(BaseModel):
     @field_validator("content")
     @classmethod
     def sanitize_content(cls, v):
-        """Sanitize content to remove dangerous HTML."""
+        """Sanitize content using bleach library for proper XSS protection."""
         if not v:
             raise ValueError("Content is required")
         v = str(v).strip()
-        for pattern in DANGEROUS_HTML_PATTERNS:
-            v = pattern.sub("", v)
+        # Use bleach for proper HTML sanitization (cannot be bypassed like regex)
+        v = bleach.clean(v, tags=ALLOWED_HTML_TAGS, strip=True, strip_comments=True)
         if len(v) < 50:
             raise ValueError("Content must be at least 50 characters after sanitization")
         return v
@@ -115,12 +115,12 @@ class AddSampleRequest(BaseModel):
     @field_validator("content")
     @classmethod
     def sanitize_content(cls, v):
-        """Sanitize content to remove dangerous HTML."""
+        """Sanitize content using bleach library for proper XSS protection."""
         if not v:
             raise ValueError("Content is required")
         v = str(v).strip()
-        for pattern in DANGEROUS_HTML_PATTERNS:
-            v = pattern.sub("", v)
+        # Use bleach for proper HTML sanitization (cannot be bypassed like regex)
+        v = bleach.clean(v, tags=ALLOWED_HTML_TAGS, strip=True, strip_comments=True)
         if len(v) < 50:
             raise ValueError("Content must be at least 50 characters after sanitization")
         return v
@@ -341,7 +341,7 @@ async def add_sample(
         logger.warning(f"Validation error adding sample: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid sample data: {str(e)}"
+            detail=f"Invalid sample data: {sanitize_error_message(str(e))}"
         )
     except ConnectionError as e:
         logger.error(f"Storage connection error adding sample: {e}")
@@ -507,7 +507,7 @@ async def train_voice(
         logger.warning(f"Invalid training data: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid training data: {str(e)}"
+            detail=f"Invalid training data: {sanitize_error_message(str(e))}"
         )
     except Exception as e:
         logger.error(f"Unexpected error training voice: {e}", exc_info=True)
@@ -611,7 +611,7 @@ async def score_content(
         logger.warning(f"Invalid content for scoring: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid content: {str(e)}"
+            detail=f"Invalid content: {sanitize_error_message(str(e))}"
         )
     except Exception as e:
         logger.error(f"Unexpected error scoring content: {e}", exc_info=True)

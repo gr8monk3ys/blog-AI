@@ -18,6 +18,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator
 
 from ..auth import verify_api_key
+from ..error_handlers import sanitize_error_message
 
 from src.scoring import score_content
 from src.tools import (
@@ -380,7 +381,7 @@ async def score_tool_content(
         logger.warning(f"Invalid content for scoring: {e}")
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid content: {str(e)}"
+            detail=f"Invalid content: {sanitize_error_message(str(e))}"
         )
     except Exception as e:
         logger.error(f"Unexpected content scoring error: {e}", exc_info=True)
@@ -490,7 +491,7 @@ async def score_content_generic(
         logger.warning(f"Invalid content for generic scoring: {e}")
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid content: {str(e)}"
+            detail=f"Invalid content: {sanitize_error_message(str(e))}"
         )
     except Exception as e:
         logger.error(f"Unexpected content scoring error: {e}", exc_info=True)

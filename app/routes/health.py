@@ -148,7 +148,7 @@ def get_sentry_status() -> Dict[str, Any]:
             "active": False,
             "environment": None,
             "dsn_set": False,
-            "error": str(e),
+            "error": str(e)[:100],  # Truncate for safety
         }
 
 

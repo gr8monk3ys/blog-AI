@@ -21,6 +21,7 @@ from src.types.remix import (
 )
 
 from ..auth import verify_api_key
+from ..error_handlers import sanitize_error_message
 from ..middleware import increment_usage_for_operation, require_quota
 
 
@@ -310,7 +311,7 @@ async def batch_transform(
             results.append({
                 "success": False,
                 "conversation_id": req.conversation_id,
-                "error": f"Invalid input: {str(e)}",
+                "error": f"Invalid input: {sanitize_error_message(str(e))}",
             })
         except Exception as e:
             results.append({

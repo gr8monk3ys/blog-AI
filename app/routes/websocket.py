@@ -12,6 +12,7 @@ from typing import Optional
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 
 from ..auth.api_key import api_key_store
+from ..error_handlers import sanitize_error_message
 from ..models import WebSocketMessage
 from ..storage import conversations
 from ..websocket import manager
@@ -118,7 +119,7 @@ async def websocket_endpoint(
                 continue
             except ValueError as e:
                 logger.warning(f"Invalid message format on WebSocket: {str(e)}")
-                await websocket.send_json({"type": "error", "detail": str(e)})
+                await websocket.send_json({"type": "error", "detail": sanitize_error_message(str(e))})
                 continue
 
             # Add timestamp if not present

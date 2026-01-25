@@ -27,6 +27,7 @@ from src.types.payments import (
 )
 
 from ..auth import verify_api_key
+from ..error_handlers import sanitize_error_message
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +89,7 @@ async def create_checkout_session(
         logger.error(f"Configuration error creating checkout session: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"error": str(e), "success": False},
+            detail={"error": sanitize_error_message(str(e)), "success": False},
         )
     except Exception as e:
         logger.error(f"Error creating checkout session: {e}")
@@ -164,7 +165,7 @@ async def stripe_webhook(
         logger.error(f"Webhook validation error: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"error": str(e), "success": False},
+            detail={"error": sanitize_error_message(str(e)), "success": False},
         )
     except Exception as e:
         logger.error(f"Error processing webhook: {e}")
@@ -239,7 +240,7 @@ async def create_portal_session(
         logger.error(f"Configuration error creating portal session: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"error": str(e), "success": False},
+            detail={"error": sanitize_error_message(str(e)), "success": False},
         )
     except Exception as e:
         logger.error(f"Error creating portal session: {e}")

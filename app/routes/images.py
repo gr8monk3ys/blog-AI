@@ -27,6 +27,7 @@ from src.types.images import (
 )
 
 from ..auth import verify_api_key
+from ..error_handlers import sanitize_error_message
 
 logger = logging.getLogger(__name__)
 
@@ -153,7 +154,7 @@ async def generate_image(
 
         raise HTTPException(
             status_code=status_code,
-            detail=str(e),
+            detail=sanitize_error_message(str(e)),
         )
     except Exception as e:
         logger.error(f"Unexpected error generating image: {e}", exc_info=True)
@@ -236,7 +237,7 @@ async def generate_blog_images(
 
         raise HTTPException(
             status_code=status_code,
-            detail=str(e),
+            detail=sanitize_error_message(str(e)),
         )
     except Exception as e:
         logger.error(f"Unexpected error generating blog images: {e}", exc_info=True)

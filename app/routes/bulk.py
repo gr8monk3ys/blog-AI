@@ -30,6 +30,7 @@ from src.usage import (
 )
 
 from ..auth import verify_api_key
+from ..error_handlers import sanitize_error_message
 from ..models import (
     BulkGenerationItemResult,
     BulkGenerationRequest,
@@ -69,7 +70,7 @@ async def _generate_single_item(
                 index=index,
                 success=False,
                 topic=topic,
-                error=str(e),
+                error=sanitize_error_message(str(e)),
                 execution_time_ms=int((time.time() - start_time) * 1000),
             )
 
@@ -156,7 +157,7 @@ async def _generate_single_item(
             index=index,
             success=False,
             topic=topic,
-            error=f"Usage limit exceeded: {str(e)}",
+            error=f"Usage limit exceeded: {sanitize_error_message(str(e))}",
             execution_time_ms=int((time.time() - start_time) * 1000),
         )
     except ValueError as e:
@@ -165,7 +166,7 @@ async def _generate_single_item(
             index=index,
             success=False,
             topic=topic,
-            error=f"Invalid input: {str(e)}",
+            error=f"Invalid input: {sanitize_error_message(str(e))}",
             execution_time_ms=int((time.time() - start_time) * 1000),
         )
     except Exception as e:
@@ -340,7 +341,7 @@ async def start_bulk_generation(
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail={
-                "error": str(e),
+                "error": sanitize_error_message(str(e)),
                 "tier": e.tier.value,
                 "limit_type": e.limit_type,
                 "upgrade_url": "/pricing",

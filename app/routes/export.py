@@ -143,22 +143,25 @@ def sanitize_filename(title: str) -> str:
 
 
 def markdown_to_plain_text(content: str) -> str:
-    """Convert markdown content to plain text."""
+    """Convert markdown content to plain text.
+
+    Uses non-greedy quantifiers to prevent ReDoS attacks.
+    """
     text = content
     # Remove headers
     text = re.sub(r"^#{1,6}\s+", "", text, flags=re.MULTILINE)
-    # Remove bold/italic
-    text = re.sub(r"\*\*([^*]+)\*\*", r"\1", text)
-    text = re.sub(r"\*([^*]+)\*", r"\1", text)
-    text = re.sub(r"__([^_]+)__", r"\1", text)
-    text = re.sub(r"_([^_]+)_", r"\1", text)
-    # Remove links but keep text
-    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
-    # Remove images
-    text = re.sub(r"!\[([^\]]*)\]\([^)]+\)", r"\1", text)
-    # Remove code blocks
-    text = re.sub(r"```[^`]*```", "", text, flags=re.DOTALL)
-    text = re.sub(r"`([^`]+)`", r"\1", text)
+    # Remove bold/italic - using non-greedy quantifiers to prevent ReDoS
+    text = re.sub(r"\*\*(.+?)\*\*", r"\1", text)
+    text = re.sub(r"\*(.+?)\*", r"\1", text)
+    text = re.sub(r"__(.+?)__", r"\1", text)
+    text = re.sub(r"_(.+?)_", r"\1", text)
+    # Remove links but keep text - using non-greedy quantifiers
+    text = re.sub(r"\[(.+?)\]\(.+?\)", r"\1", text)
+    # Remove images - using non-greedy quantifiers
+    text = re.sub(r"!\[(.*?)\]\(.+?\)", r"\1", text)
+    # Remove code blocks - using non-greedy quantifiers
+    text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
+    text = re.sub(r"`(.+?)`", r"\1", text)
     # Remove blockquotes
     text = re.sub(r"^>\s+", "", text, flags=re.MULTILINE)
     # Remove horizontal rules
@@ -187,27 +190,31 @@ def markdown_to_html(content: str, title: str, metadata: Optional[Dict] = None) 
     html_content = re.sub(r"^##\s+(.+)$", r"<h2>\1</h2>", html_content, flags=re.MULTILINE)
     html_content = re.sub(r"^#\s+(.+)$", r"<h1>\1</h1>", html_content, flags=re.MULTILINE)
 
-    # Convert bold and italic
-    html_content = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", html_content)
-    html_content = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", html_content)
-    html_content = re.sub(r"__([^_]+)__", r"<strong>\1</strong>", html_content)
-    html_content = re.sub(r"_([^_]+)_", r"<em>\1</em>", html_content)
+    # Convert bold and italic - using non-greedy quantifiers to prevent ReDoS
+    html_content = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", html_content)
+    html_content = re.sub(r"\*(.+?)\*", r"<em>\1</em>", html_content)
+    html_content = re.sub(r"__(.+?)__", r"<strong>\1</strong>", html_content)
+    html_content = re.sub(r"_(.+?)_", r"<em>\1</em>", html_content)
 
     # Convert links (with URL sanitization to prevent XSS via javascript: scheme)
-    html_content = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", _replace_markdown_link, html_content)
+    # Using non-greedy quantifiers to prevent ReDoS
+    html_content = re.sub(r"\[(.+?)\]\((.+?)\)", _replace_markdown_link, html_content)
 
     # Convert images (with URL sanitization to prevent XSS via javascript: scheme)
-    html_content = re.sub(r"!\[([^\]]*)\]\(([^)]+)\)", _replace_markdown_image, html_content)
+    # Using non-greedy quantifiers to prevent ReDoS
+    html_content = re.sub(r"!\[(.*?)\]\((.+?)\)", _replace_markdown_image, html_content)
 
-    # Convert code blocks
+    # Convert code blocks - using non-greedy quantifiers to prevent ReDoS
     def replace_code_block(match):
         lang = match.group(1) or ""
         code = match.group(2)
-        return f'<pre><code class="language-{lang}">{code}</code></pre>'
+        # Sanitize language identifier to prevent XSS
+        safe_lang = re.sub(r"[^a-zA-Z0-9_-]", "", lang)
+        return f'<pre><code class="language-{safe_lang}">{html.escape(code)}</code></pre>'
     html_content = re.sub(r"```(\w*)\n(.*?)```", replace_code_block, html_content, flags=re.DOTALL)
 
-    # Convert inline code
-    html_content = re.sub(r"`([^`]+)`", r"<code>\1</code>", html_content)
+    # Convert inline code - using non-greedy quantifier to prevent ReDoS
+    html_content = re.sub(r"`(.+?)`", r"<code>\1</code>", html_content)
 
     # Convert blockquotes
     html_content = re.sub(r"^>\s+(.+)$", r"<blockquote>\1</blockquote>", html_content, flags=re.MULTILINE)
@@ -543,8 +550,9 @@ def content_to_medium_html(content: str, title: str) -> str:
         if line.startswith("#"):
             if current_paragraph:
                 text = " ".join(current_paragraph)
-                text = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", text)
-                text = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", text)
+                # Using non-greedy quantifiers to prevent ReDoS
+                text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
+                text = re.sub(r"\*(.+?)\*", r"<em>\1</em>", text)
                 html_parts.append(f"<p>{text}</p>")
                 current_paragraph = []
 
@@ -556,8 +564,9 @@ def content_to_medium_html(content: str, title: str) -> str:
         elif re.match(r"^[\*\-\+]\s+", line):
             if current_paragraph:
                 text = " ".join(current_paragraph)
-                text = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", text)
-                text = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", text)
+                # Using non-greedy quantifiers to prevent ReDoS
+                text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
+                text = re.sub(r"\*(.+?)\*", r"<em>\1</em>", text)
                 html_parts.append(f"<p>{text}</p>")
                 current_paragraph = []
 
@@ -565,16 +574,18 @@ def content_to_medium_html(content: str, title: str) -> str:
                 in_list = True
                 list_items = []
             item_text = re.sub(r"^[\*\-\+]\s+", "", line)
-            item_text = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", item_text)
-            item_text = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", item_text)
+            # Using non-greedy quantifiers to prevent ReDoS
+            item_text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", item_text)
+            item_text = re.sub(r"\*(.+?)\*", r"<em>\1</em>", item_text)
             list_items.append(f"<li>{item_text}</li>")
 
         # Handle blockquotes
         elif line.startswith(">"):
             if current_paragraph:
                 text = " ".join(current_paragraph)
-                text = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", text)
-                text = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", text)
+                # Using non-greedy quantifiers to prevent ReDoS
+                text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
+                text = re.sub(r"\*(.+?)\*", r"<em>\1</em>", text)
                 html_parts.append(f"<p>{text}</p>")
                 current_paragraph = []
             if in_list:
@@ -592,8 +603,9 @@ def content_to_medium_html(content: str, title: str) -> str:
                 list_items = []
             elif current_paragraph:
                 text = " ".join(current_paragraph)
-                text = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", text)
-                text = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", text)
+                # Using non-greedy quantifiers to prevent ReDoS
+                text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
+                text = re.sub(r"\*(.+?)\*", r"<em>\1</em>", text)
                 html_parts.append(f"<p>{text}</p>")
                 current_paragraph = []
 
@@ -610,8 +622,9 @@ def content_to_medium_html(content: str, title: str) -> str:
         html_parts.append(f"<ul>{''.join(list_items)}</ul>")
     elif current_paragraph:
         text = " ".join(current_paragraph)
-        text = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", text)
-        text = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", text)
+        # Using non-greedy quantifiers to prevent ReDoS
+        text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
+        text = re.sub(r"\*(.+?)\*", r"<em>\1</em>", text)
         html_parts.append(f"<p>{text}</p>")
 
     return "\n".join(html_parts)

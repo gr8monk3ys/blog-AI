@@ -23,6 +23,7 @@ from src.text_generation.core import (
 )
 
 from ..auth import verify_api_key
+from ..error_handlers import sanitize_error_message
 from ..middleware import increment_usage_for_operation, require_quota
 from ..models import BookGenerationRequest
 from ..storage import conversations
@@ -221,7 +222,7 @@ async def generate_book_endpoint(
         return {"success": True, "type": "book", "content": book_data}
     except ValueError as e:
         logger.warning(f"Validation error in book generation: {str(e)}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=sanitize_error_message(str(e)))
     except RateLimitError as e:
         logger.warning(f"Rate limit exceeded in book generation: {str(e)}")
         raise HTTPException(

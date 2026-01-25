@@ -59,6 +59,7 @@ from src.usage.quota_service import (
 )
 
 from ..auth import verify_api_key
+from ..error_handlers import sanitize_error_message
 from ..middleware import require_pro_tier
 from ..storage import conversations
 from ..websocket import manager
@@ -125,7 +126,7 @@ async def _generate_single_item_enhanced(
                 item_id=item_id,
                 status=JobStatus.FAILED,
                 topic=item.topic,
-                error=str(e),
+                error=sanitize_error_message(str(e)),
                 execution_time_ms=int((time.time() - start_time) * 1000),
             )
 
@@ -228,7 +229,7 @@ async def _generate_single_item_enhanced(
             item_id=item_id,
             status=JobStatus.FAILED,
             topic=item.topic,
-            error=f"Usage limit exceeded: {str(e)}",
+            error=f"Usage limit exceeded: {sanitize_error_message(str(e))}",
             execution_time_ms=int((time.time() - start_time) * 1000),
         )
     except ValueError as e:
@@ -238,7 +239,7 @@ async def _generate_single_item_enhanced(
             item_id=item_id,
             status=JobStatus.FAILED,
             topic=item.topic,
-            error=f"Invalid input: {str(e)}",
+            error=f"Invalid input: {sanitize_error_message(str(e))}",
             execution_time_ms=int((time.time() - start_time) * 1000),
         )
     except Exception as e:
@@ -536,7 +537,7 @@ async def import_csv_batch(
         logger.warning(f"CSV parsing error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid CSV format: {str(e)}"
+            detail=f"Invalid CSV format: {sanitize_error_message(str(e))}"
         )
     except Exception as e:
         logger.error(f"Unexpected CSV import error: {str(e)}", exc_info=True)
