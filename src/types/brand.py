@@ -12,6 +12,8 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 from pydantic import BaseModel, Field, field_validator
 
+import bleach
+
 
 # =============================================================================
 # Security Constants
@@ -23,15 +25,11 @@ BLOCKED_HOSTNAMES: Set[str] = {
     "metadata.google.internal", "169.254.169.254", "metadata",
 }
 
-# Dangerous HTML patterns
-DANGEROUS_HTML_PATTERNS = [
-    re.compile(r"<script[^>]*>.*?</script>", re.IGNORECASE | re.DOTALL),
-    re.compile(r"<style[^>]*>.*?</style>", re.IGNORECASE | re.DOTALL),
-    re.compile(r"<iframe[^>]*>.*?</iframe>", re.IGNORECASE | re.DOTALL),
-    re.compile(r"on\w+\s*=", re.IGNORECASE),
-    re.compile(r"javascript:", re.IGNORECASE),
-    re.compile(r"data:", re.IGNORECASE),
-]
+# Allowed HTML tags for content sanitization (whitelist approach)
+ALLOWED_HTML_TAGS: Set[str] = {
+    "p", "br", "b", "i", "u", "strong", "em", "ul", "ol", "li",
+    "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "code", "pre",
+}
 
 
 class WritingStyle(str, Enum):
@@ -140,14 +138,13 @@ class VoiceSample(BaseModel):
     @field_validator("content")
     @classmethod
     def sanitize_content(cls, v):
-        """Sanitize content to remove dangerous HTML patterns."""
+        """Sanitize content using bleach library for proper XSS protection."""
         if not v:
             raise ValueError("Content is required")
         v = str(v).strip()
 
-        # Remove dangerous HTML patterns
-        for pattern in DANGEROUS_HTML_PATTERNS:
-            v = pattern.sub("", v)
+        # Use bleach for proper HTML sanitization (cannot be bypassed like regex)
+        v = bleach.clean(v, tags=ALLOWED_HTML_TAGS, strip=True, strip_comments=True)
 
         if len(v) < 10:
             raise ValueError("Content must be at least 10 characters")
@@ -290,14 +287,13 @@ class AddSampleRequest(BaseModel):
     @field_validator("content")
     @classmethod
     def sanitize_content(cls, v):
-        """Sanitize content to remove dangerous HTML patterns."""
+        """Sanitize content using bleach library for proper XSS protection."""
         if not v:
             raise ValueError("Content is required")
         v = str(v).strip()
 
-        # Remove dangerous HTML patterns
-        for pattern in DANGEROUS_HTML_PATTERNS:
-            v = pattern.sub("", v)
+        # Use bleach for proper HTML sanitization (cannot be bypassed like regex)
+        v = bleach.clean(v, tags=ALLOWED_HTML_TAGS, strip=True, strip_comments=True)
 
         if len(v) < 10:
             raise ValueError("Content must be at least 10 characters")

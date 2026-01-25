@@ -370,7 +370,8 @@ def score_engagement(text: str) -> EngagementScore:
     )
 
     # Count lists (bullet points and numbered lists)
-    list_count = len(re.findall(r'^[\s]*[-*+]|\d+[.)]', text, re.MULTILINE))
+    # Using bounded quantifier to prevent ReDoS with whitespace-heavy input
+    list_count = len(re.findall(r'^[ \t]{0,20}[-*+]|^\d+[.)]', text, re.MULTILINE))
 
     # Count storytelling elements
     storytelling_count = sum(

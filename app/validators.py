@@ -19,6 +19,8 @@ import socket
 from typing import List, Optional, Set, Tuple
 from urllib.parse import urlparse
 
+import bleach
+
 # =============================================================================
 # Constants
 # =============================================================================
@@ -59,25 +61,18 @@ PRIVATE_IP_RANGES = [
 CSV_FORMULA_CHARS: Set[str] = {"=", "+", "-", "@", "\t", "\r", "\n"}
 
 # Allowed HTML tags for brand voice samples (whitelist approach)
+# Used by bleach for proper HTML sanitization
 ALLOWED_HTML_TAGS: Set[str] = {
     "p", "br", "b", "i", "u", "strong", "em", "ul", "ol", "li",
     "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "code", "pre",
 }
 
-# Dangerous HTML patterns to strip
-DANGEROUS_HTML_PATTERNS = [
-    re.compile(r"<script[^>]*>.*?</script>", re.IGNORECASE | re.DOTALL),
-    re.compile(r"<style[^>]*>.*?</style>", re.IGNORECASE | re.DOTALL),
-    re.compile(r"<iframe[^>]*>.*?</iframe>", re.IGNORECASE | re.DOTALL),
-    re.compile(r"<object[^>]*>.*?</object>", re.IGNORECASE | re.DOTALL),
-    re.compile(r"<embed[^>]*>", re.IGNORECASE),
-    re.compile(r"<link[^>]*>", re.IGNORECASE),
-    re.compile(r"<meta[^>]*>", re.IGNORECASE),
-    re.compile(r"on\w+\s*=", re.IGNORECASE),  # Event handlers
-    re.compile(r"javascript:", re.IGNORECASE),
-    re.compile(r"data:", re.IGNORECASE),
-    re.compile(r"vbscript:", re.IGNORECASE),
-]
+# Allowed HTML attributes (whitelist for bleach)
+ALLOWED_HTML_ATTRIBUTES: dict = {
+    "*": ["class", "id"],  # Allow class and id on all elements
+    "a": ["href", "title", "rel"],
+    "img": ["src", "alt", "title"],
+}
 
 # Prompt injection patterns (additional to existing sanitization)
 PROMPT_INJECTION_PATTERNS = [
@@ -455,6 +450,9 @@ def sanitize_html_content(content: str, strip_all_tags: bool = False) -> str:
     """
     Sanitize HTML content for safe storage and display.
 
+    Uses the bleach library for proper HTML sanitization that cannot be
+    bypassed by crafted input (unlike regex-based approaches).
+
     Removes dangerous HTML elements (script, style, iframe, etc.) and
     event handlers while optionally preserving safe formatting tags.
 
@@ -468,27 +466,19 @@ def sanitize_html_content(content: str, strip_all_tags: bool = False) -> str:
     if not content:
         return content
 
-    # Remove dangerous patterns first
-    for pattern in DANGEROUS_HTML_PATTERNS:
-        content = pattern.sub("", content)
-
     if strip_all_tags:
-        # Remove all HTML tags
-        content = re.sub(r"<[^>]+>", "", content)
+        # Remove all HTML tags using bleach
+        content = bleach.clean(content, tags=[], strip=True)
     else:
-        # Remove tags not in allowlist
-        def replace_tag(match):
-            tag_content = match.group(1)
-            tag_name = tag_content.split()[0].lower().strip("/")
-            if tag_name in ALLOWED_HTML_TAGS:
-                return match.group(0)
-            return ""
-
-        content = re.sub(r"<([^>]+)>", replace_tag, content)
-
-    # Escape any remaining HTML entities that could be dangerous
-    # but preserve already-escaped entities
-    content = content.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        # Use bleach with whitelist of allowed tags
+        # This properly handles all edge cases that regex cannot
+        content = bleach.clean(
+            content,
+            tags=ALLOWED_HTML_TAGS,
+            attributes=ALLOWED_HTML_ATTRIBUTES,
+            strip=True,
+            strip_comments=True,
+        )
 
     return content.strip()
 
