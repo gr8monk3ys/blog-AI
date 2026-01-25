@@ -18,6 +18,9 @@ class ConversationStore:
 
     Conversations are stored as JSON files in a configurable directory.
     This is a stepping stone to Redis/database storage in production.
+
+    Ownership tracking: Each conversation has an associated owner_id that must
+    match the requesting user for access to be granted.
     """
 
     def __init__(self, storage_dir: Optional[str] = None):
@@ -34,7 +37,80 @@ class ConversationStore:
         )
         self.storage_dir.mkdir(parents=True, exist_ok=True)
         self._cache: Dict[str, List[Dict[str, Any]]] = {}  # In-memory cache
+        self._ownership: Dict[str, str] = {}  # conversation_id -> owner_user_id
+        self._load_ownership()
         logger.info(f"Conversation storage initialized at: {self.storage_dir}")
+
+    def _get_ownership_file(self) -> Path:
+        """Get the path to the ownership metadata file."""
+        return self.storage_dir / "_ownership.json"
+
+    def _load_ownership(self) -> None:
+        """Load ownership metadata from disk."""
+        ownership_file = self._get_ownership_file()
+        if ownership_file.exists():
+            try:
+                with open(ownership_file, "r") as f:
+                    self._ownership = json.load(f)
+                logger.info(f"Loaded ownership for {len(self._ownership)} conversations")
+            except (json.JSONDecodeError, IOError) as e:
+                logger.error(f"Error loading ownership metadata: {e}")
+                self._ownership = {}
+        else:
+            self._ownership = {}
+
+    def _save_ownership(self) -> None:
+        """Save ownership metadata to disk."""
+        ownership_file = self._get_ownership_file()
+        try:
+            with open(ownership_file, "w") as f:
+                json.dump(self._ownership, f, indent=2)
+        except IOError as e:
+            logger.error(f"Error saving ownership metadata: {e}")
+
+    def set_owner(self, conversation_id: str, user_id: str) -> None:
+        """
+        Set the owner of a conversation.
+
+        Args:
+            conversation_id: The conversation identifier.
+            user_id: The user ID who owns this conversation.
+        """
+        self._ownership[conversation_id] = user_id
+        self._save_ownership()
+
+    def get_owner(self, conversation_id: str) -> Optional[str]:
+        """
+        Get the owner of a conversation.
+
+        Args:
+            conversation_id: The conversation identifier.
+
+        Returns:
+            The owner's user ID, or None if no owner is set.
+        """
+        return self._ownership.get(conversation_id)
+
+    def verify_ownership(self, conversation_id: str, user_id: str) -> bool:
+        """
+        Verify that a user owns a conversation.
+
+        For backwards compatibility, conversations without an owner are accessible
+        to any authenticated user (legacy conversations).
+
+        Args:
+            conversation_id: The conversation identifier.
+            user_id: The user ID to verify.
+
+        Returns:
+            True if the user owns the conversation or no owner is set (legacy).
+        """
+        owner = self.get_owner(conversation_id)
+        if owner is None:
+            # Legacy conversation without ownership - allow access
+            # In production, consider migrating legacy data
+            return True
+        return owner == user_id
 
     def _get_file_path(self, conversation_id: str) -> Path:
         """
@@ -76,19 +152,33 @@ class ConversationStore:
 
         return self._cache[conversation_id]
 
-    def append(self, conversation_id: str, message: Dict[str, Any]) -> None:
+    def append(
+        self,
+        conversation_id: str,
+        message: Dict[str, Any],
+        user_id: Optional[str] = None,
+    ) -> None:
         """
         Append a message to a conversation and persist to disk.
+
+        If this is a new conversation and user_id is provided, sets ownership.
 
         Args:
             conversation_id: The conversation identifier.
             message: The message to append.
+            user_id: The user ID creating/appending to the conversation.
         """
+        is_new = conversation_id not in self._cache and not self._get_file_path(conversation_id).exists()
+
         if conversation_id not in self._cache:
             self.get(conversation_id)  # Load from disk if exists
 
         self._cache[conversation_id].append(message)
         self._save(conversation_id)
+
+        # Set ownership for new conversations
+        if is_new and user_id:
+            self.set_owner(conversation_id, user_id)
 
     def _save(self, conversation_id: str) -> None:
         """
