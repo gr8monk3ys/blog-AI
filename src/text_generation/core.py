@@ -2,6 +2,8 @@
 Core text generation functionality.
 """
 
+import asyncio
+import logging
 import os
 from typing import Optional
 
@@ -13,6 +15,13 @@ from ..types.providers import (
     OpenAIConfig,
     ProviderType,
 )
+from .rate_limiter import (
+    OperationType,
+    RateLimitExceededError,
+    get_rate_limiter,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class TextGenerationError(Exception):
@@ -21,8 +30,26 @@ class TextGenerationError(Exception):
     pass
 
 
+class RateLimitError(TextGenerationError):
+    """Exception raised when rate limit is exceeded."""
+
+    def __init__(
+        self,
+        message: str,
+        operation_type: Optional[OperationType] = None,
+        wait_time: Optional[float] = None,
+    ):
+        super().__init__(message)
+        self.operation_type = operation_type
+        self.wait_time = wait_time
+
+
 def generate_text(
-    prompt: str, provider: LLMProvider, options: Optional[GenerationOptions] = None
+    prompt: str,
+    provider: LLMProvider,
+    options: Optional[GenerationOptions] = None,
+    operation_type: Optional[OperationType] = None,
+    check_rate_limit: bool = True,
 ) -> str:
     """
     Generate text using the specified LLM provider.
@@ -31,14 +58,62 @@ def generate_text(
         prompt: The prompt to generate text from.
         provider: The LLM provider to use.
         options: Options for text generation.
+        operation_type: Type of operation for rate limiting (e.g., 'analysis', 'generation').
+        check_rate_limit: Whether to check rate limits before calling the provider.
 
     Returns:
         The generated text.
 
     Raises:
         TextGenerationError: If an error occurs during text generation.
+        RateLimitError: If rate limit is exceeded.
     """
     options = options or GenerationOptions()
+    op_type = operation_type or OperationType.DEFAULT
+
+    # Check rate limit if enabled
+    if check_rate_limit:
+        try:
+            # Run async rate limit check in sync context
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # If we're in an async context, create a task
+                future = asyncio.ensure_future(_check_rate_limit(op_type))
+                # We can't await here in sync function, so we check synchronously
+                rate_limiter = get_rate_limiter()
+                if not rate_limiter.check_limit(op_type):
+                    bucket = rate_limiter._buckets[op_type]
+                    wait_time = bucket.get_wait_time()
+                    limit = rate_limiter.get_limit(op_type)
+                    logger.warning(
+                        "Rate limit would be exceeded for %s: limit=%d/min, wait=%.2fs",
+                        op_type.value,
+                        limit,
+                        wait_time,
+                    )
+                    raise RateLimitError(
+                        f"Rate limit exceeded for {op_type.value}. "
+                        f"Limit: {limit}/min. Please wait {wait_time:.2f}s before retrying.",
+                        operation_type=op_type,
+                        wait_time=wait_time,
+                    )
+                # Manually consume a token for sync context
+                bucket = rate_limiter._buckets[op_type]
+                bucket._refill()
+                if bucket.tokens >= 1.0:
+                    bucket.tokens -= 1.0
+            else:
+                # Run the async check synchronously
+                loop.run_until_complete(_check_rate_limit(op_type))
+        except RuntimeError:
+            # No event loop running, create one
+            asyncio.run(_check_rate_limit(op_type))
+        except RateLimitExceededError as e:
+            raise RateLimitError(
+                str(e),
+                operation_type=e.operation_type,
+                wait_time=e.wait_time,
+            ) from e
 
     if provider.type == "openai":
         return generate_with_openai(prompt, provider.config, options)
@@ -48,6 +123,88 @@ def generate_text(
         return generate_with_gemini(prompt, provider.config, options)
     else:
         raise TextGenerationError(f"Unsupported provider: {provider.type}")
+
+
+async def _check_rate_limit(operation_type: OperationType) -> None:
+    """Async helper to check rate limit."""
+    rate_limiter = get_rate_limiter()
+    await rate_limiter.acquire(operation_type=operation_type, wait=False)
+
+
+async def generate_text_async(
+    prompt: str,
+    provider: LLMProvider,
+    options: Optional[GenerationOptions] = None,
+    operation_type: Optional[OperationType] = None,
+    check_rate_limit: bool = True,
+    wait_for_rate_limit: bool = True,
+) -> str:
+    """
+    Generate text using the specified LLM provider (async version).
+
+    This async version properly integrates with the rate limiter and can
+    wait for rate limits to clear before proceeding.
+
+    Args:
+        prompt: The prompt to generate text from.
+        provider: The LLM provider to use.
+        options: Options for text generation.
+        operation_type: Type of operation for rate limiting.
+        check_rate_limit: Whether to check rate limits before calling the provider.
+        wait_for_rate_limit: Whether to wait for rate limits to clear (if True)
+                            or raise immediately (if False).
+
+    Returns:
+        The generated text.
+
+    Raises:
+        TextGenerationError: If an error occurs during text generation.
+        RateLimitError: If rate limit is exceeded and wait_for_rate_limit is False.
+    """
+    options = options or GenerationOptions()
+    op_type = operation_type or OperationType.DEFAULT
+
+    # Check rate limit if enabled
+    if check_rate_limit:
+        try:
+            rate_limiter = get_rate_limiter()
+            await rate_limiter.acquire(
+                operation_type=op_type,
+                wait=wait_for_rate_limit,
+            )
+        except RateLimitExceededError as e:
+            raise RateLimitError(
+                str(e),
+                operation_type=e.operation_type,
+                wait_time=e.wait_time,
+            ) from e
+
+    # Run the synchronous generation in a thread pool
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(
+        None,
+        lambda: _generate_text_internal(prompt, provider, options),
+    )
+
+
+def _generate_text_internal(
+    prompt: str,
+    provider: LLMProvider,
+    options: GenerationOptions,
+) -> str:
+    """Internal text generation without rate limiting."""
+    if provider.type == "openai":
+        return generate_with_openai(prompt, provider.config, options)
+    elif provider.type == "anthropic":
+        return generate_with_anthropic(prompt, provider.config, options)
+    elif provider.type == "gemini":
+        return generate_with_gemini(prompt, provider.config, options)
+    else:
+        raise TextGenerationError(f"Unsupported provider: {provider.type}")
+
+
+# Default timeout for LLM API calls (in seconds)
+LLM_API_TIMEOUT = int(os.environ.get("LLM_API_TIMEOUT", "60"))
 
 
 def generate_with_openai(
@@ -69,15 +226,19 @@ def generate_with_openai(
     """
     try:
         import openai
+        from httpx import TimeoutException
     except ImportError:
         raise TextGenerationError(
             "OpenAI package not installed. Install it with 'pip install openai'."
         )
 
     try:
-        openai.api_key = config.api_key
+        client = openai.OpenAI(
+            api_key=config.api_key,
+            timeout=LLM_API_TIMEOUT,
+        )
 
-        response = openai.chat.completions.create(
+        response = client.chat.completions.create(
             model=config.model,
             messages=[{"role": "user", "content": prompt}],
             temperature=options.temperature,
@@ -104,6 +265,8 @@ def generate_with_openai(
         raise TextGenerationError(f"OpenAI API error (status {e.status_code}): {e}") from e
     except openai.OpenAIError as e:
         raise TextGenerationError(f"OpenAI error: {e}") from e
+    except TimeoutException as e:
+        raise TextGenerationError(f"OpenAI request timed out after {LLM_API_TIMEOUT}s: {e}") from e
 
 
 def generate_with_anthropic(
@@ -125,13 +288,17 @@ def generate_with_anthropic(
     """
     try:
         import anthropic
+        from httpx import TimeoutException
     except ImportError:
         raise TextGenerationError(
             "Anthropic package not installed. Install it with 'pip install anthropic'."
         )
 
     try:
-        client = anthropic.Anthropic(api_key=config.api_key)
+        client = anthropic.Anthropic(
+            api_key=config.api_key,
+            timeout=LLM_API_TIMEOUT,
+        )
 
         response = client.messages.create(
             model=config.model,
@@ -157,6 +324,8 @@ def generate_with_anthropic(
         raise TextGenerationError(f"Anthropic API error (status {e.status_code}): {e}") from e
     except anthropic.AnthropicError as e:
         raise TextGenerationError(f"Anthropic error: {e}") from e
+    except TimeoutException as e:
+        raise TextGenerationError(f"Anthropic request timed out after {LLM_API_TIMEOUT}s: {e}") from e
 
 
 def generate_with_gemini(
@@ -195,7 +364,11 @@ def generate_with_gemini(
 
         model = genai.GenerativeModel(config.model, generation_config=generation_config)
 
-        response = model.generate_content(prompt)
+        # Gemini uses request_options for timeout
+        response = model.generate_content(
+            prompt,
+            request_options={"timeout": LLM_API_TIMEOUT},
+        )
 
         # Validate response structure before accessing
         if not response.text:
@@ -215,6 +388,8 @@ def generate_with_gemini(
     except ValueError as e:
         # Gemini raises ValueError for content safety issues
         raise TextGenerationError(f"Gemini content generation failed: {e}") from e
+    except google_exceptions.DeadlineExceeded as e:
+        raise TextGenerationError(f"Gemini request timed out after {LLM_API_TIMEOUT}s: {e}") from e
 
 
 def create_provider_from_env(provider_type: ProviderType) -> LLMProvider:

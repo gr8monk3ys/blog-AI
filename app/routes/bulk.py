@@ -1,5 +1,8 @@
 """
 Bulk generation endpoints for processing multiple content items.
+
+This module uses Redis-backed job storage with in-memory fallback
+for horizontal scaling support.
 """
 
 import asyncio
@@ -7,6 +10,7 @@ import logging
 import time
 import uuid
 from datetime import datetime
+from functools import partial
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
@@ -16,6 +20,7 @@ from src.blog.make_blog import (
     generate_blog_post_with_research,
     post_process_blog_post,
 )
+from src.storage import get_bulk_job_store
 from src.text_generation.core import GenerationOptions, create_provider_from_env
 from src.usage import (
     UsageLimitExceeded,
@@ -38,22 +43,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/bulk", tags=["bulk"])
 
-# In-memory job storage (in production, use Redis or database)
-_jobs: Dict[str, BulkGenerationStatus] = {}
-_job_results: Dict[str, List[BulkGenerationItemResult]] = {}
-_cancel_flags: Dict[str, bool] = {}
-
-
-def _get_job(job_id: str) -> Optional[BulkGenerationStatus]:
-    """Get a job by ID."""
-    return _jobs.get(job_id)
-
-
-def _update_job(job_id: str, **kwargs) -> None:
-    """Update job status."""
-    if job_id in _jobs:
-        for key, value in kwargs.items():
-            setattr(_jobs[job_id], key, value)
+# Get the typed job store for bulk generation
+_job_store = get_bulk_job_store()
 
 
 async def _generate_single_item(
@@ -91,33 +82,42 @@ async def _generate_single_item(
             presence_penalty=0.0,
         )
 
-        # Generate blog post
+        # Generate blog post (run sync functions in thread pool to avoid blocking)
         if research:
-            blog_post = generate_blog_post_with_research(
-                title=topic,
-                keywords=keywords,
-                tone=tone,
-                provider_type="openai",
-                options=options,
+            blog_post = await asyncio.to_thread(
+                partial(
+                    generate_blog_post_with_research,
+                    title=topic,
+                    keywords=keywords,
+                    tone=tone,
+                    provider_type="openai",
+                    options=options,
+                )
             )
         else:
-            blog_post = generate_blog_post(
-                title=topic,
-                keywords=keywords,
-                tone=tone,
-                provider_type="openai",
-                options=options,
+            blog_post = await asyncio.to_thread(
+                partial(
+                    generate_blog_post,
+                    title=topic,
+                    keywords=keywords,
+                    tone=tone,
+                    provider_type="openai",
+                    options=options,
+                )
             )
 
-        # Post-process if needed
+        # Post-process if needed (run sync functions in thread pool)
         if proofread or humanize:
-            provider = create_provider_from_env("openai")
-            blog_post = post_process_blog_post(
-                blog_post=blog_post,
-                proofread=proofread,
-                humanize=humanize,
-                provider=provider,
-                options=options,
+            provider = await asyncio.to_thread(create_provider_from_env, "openai")
+            blog_post = await asyncio.to_thread(
+                partial(
+                    post_process_blog_post,
+                    blog_post=blog_post,
+                    proofread=proofread,
+                    humanize=humanize,
+                    provider=provider,
+                    options=options,
+                )
             )
 
         # Convert to serializable format
@@ -150,13 +150,31 @@ async def _generate_single_item(
             execution_time_ms=execution_time_ms,
         )
 
-    except Exception as e:
-        logger.error(f"Error generating item {index}: {str(e)}", exc_info=True)
+    except UsageLimitExceeded as e:
+        logger.warning(f"Usage limit exceeded for item {index}: {str(e)}")
         return BulkGenerationItemResult(
             index=index,
             success=False,
             topic=topic,
-            error=str(e),
+            error=f"Usage limit exceeded: {str(e)}",
+            execution_time_ms=int((time.time() - start_time) * 1000),
+        )
+    except ValueError as e:
+        logger.warning(f"Validation error for item {index}: {str(e)}")
+        return BulkGenerationItemResult(
+            index=index,
+            success=False,
+            topic=topic,
+            error=f"Invalid input: {str(e)}",
+            execution_time_ms=int((time.time() - start_time) * 1000),
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error generating item {index}: {str(e)}", exc_info=True)
+        return BulkGenerationItemResult(
+            index=index,
+            success=False,
+            topic=topic,
+            error="Generation failed unexpectedly",
             execution_time_ms=int((time.time() - start_time) * 1000),
         )
 
@@ -168,7 +186,7 @@ async def _process_bulk_generation(
 ) -> None:
     """Process bulk generation in background."""
     try:
-        _update_job(
+        await _job_store.update_job(
             job_id,
             status="processing",
             started_at=datetime.now().isoformat(),
@@ -180,7 +198,7 @@ async def _process_bulk_generation(
         async def process_with_semaphore(index: int, item) -> BulkGenerationItemResult:
             async with semaphore:
                 # Check for cancellation
-                if _cancel_flags.get(job_id, False):
+                if await _job_store.get_cancel_flag(job_id):
                     return BulkGenerationItemResult(
                         index=index,
                         success=False,
@@ -213,7 +231,7 @@ async def _process_bulk_generation(
             # Update job progress
             completed = len([r for r in results if r.success])
             failed = len([r for r in results if not r.success])
-            _update_job(
+            await _job_store.update_job(
                 job_id,
                 completed_items=completed,
                 failed_items=failed,
@@ -238,12 +256,12 @@ async def _process_bulk_generation(
 
         # Sort results by index
         results.sort(key=lambda r: r.index)
-        _job_results[job_id] = results
+        await _job_store.save_results(job_id, results)
 
         # Update final status
         completed = len([r for r in results if r.success])
         failed = len([r for r in results if not r.success])
-        _update_job(
+        await _job_store.update_job(
             job_id,
             status="completed",
             completed_items=completed,
@@ -267,9 +285,17 @@ async def _process_bulk_generation(
 
         logger.info(f"Bulk generation job {job_id} completed: {completed} success, {failed} failed")
 
+    except asyncio.CancelledError:
+        logger.info(f"Bulk generation job {job_id} was cancelled")
+        await _job_store.update_job(
+            job_id,
+            status="cancelled",
+            completed_at=datetime.now().isoformat(),
+            can_cancel=False,
+        )
     except Exception as e:
-        logger.error(f"Bulk generation job {job_id} failed: {str(e)}", exc_info=True)
-        _update_job(
+        logger.error(f"Unexpected bulk generation job {job_id} failure: {str(e)}", exc_info=True)
+        await _job_store.update_job(
             job_id,
             status="failed",
             completed_at=datetime.now().isoformat(),
@@ -321,9 +347,9 @@ async def start_bulk_generation(
             },
         )
 
-    # Create job
+    # Create job with ownership
     job_id = str(uuid.uuid4())
-    _jobs[job_id] = BulkGenerationStatus(
+    job_status = BulkGenerationStatus(
         job_id=job_id,
         status="pending",
         total_items=len(request.items),
@@ -332,15 +358,18 @@ async def start_bulk_generation(
         progress_percentage=0.0,
         can_cancel=True,
     )
-    _cancel_flags[job_id] = False
 
-    # Add conversation message
+    # Save job to Redis-backed storage with ownership
+    await _job_store.save_job(job_id, job_status, user_id)
+    await _job_store.set_cancel_flag(job_id, False)
+
+    # Add conversation message (with ownership)
     user_message = {
         "role": "user",
         "content": f"Started bulk generation of {len(request.items)} items",
         "timestamp": datetime.now().isoformat(),
     }
-    conversations.append(request.conversation_id, user_message)
+    conversations.append(request.conversation_id, user_message, user_id=user_id)
 
     # Start background processing
     background_tasks.add_task(
@@ -374,11 +403,11 @@ async def get_bulk_status(
     Returns:
         Current job status and progress.
     """
-    job = _get_job(job_id)
+    job = await _job_store.get_job_if_owned(job_id, user_id)
     if not job:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Job {job_id} not found",
+            detail=f"Job {job_id} not found or access denied",
         )
     return job
 
@@ -398,11 +427,11 @@ async def get_bulk_results(
     Returns:
         Complete results including all generated content.
     """
-    job = _get_job(job_id)
+    job = await _job_store.get_job_if_owned(job_id, user_id)
     if not job:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Job {job_id} not found",
+            detail=f"Job {job_id} not found or access denied",
         )
 
     if job.status not in ["completed", "failed", "cancelled"]:
@@ -411,7 +440,7 @@ async def get_bulk_results(
             detail=f"Job {job_id} is still processing. Current status: {job.status}",
         )
 
-    results = _job_results.get(job_id, [])
+    results = await _job_store.get_results(job_id)
 
     # Calculate total execution time
     total_time_ms = sum(r.execution_time_ms for r in results)
@@ -443,11 +472,11 @@ async def cancel_bulk_job(
     Returns:
         Cancellation status.
     """
-    job = _get_job(job_id)
+    job = await _job_store.get_job_if_owned(job_id, user_id)
     if not job:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Job {job_id} not found",
+            detail=f"Job {job_id} not found or access denied",
         )
 
     if not job.can_cancel:
@@ -456,9 +485,9 @@ async def cancel_bulk_job(
             detail=f"Job {job_id} cannot be cancelled (status: {job.status})",
         )
 
-    # Set cancel flag
-    _cancel_flags[job_id] = True
-    _update_job(job_id, status="cancelled", can_cancel=False)
+    # Set cancel flag and update status
+    await _job_store.set_cancel_flag(job_id, True)
+    await _job_store.update_job(job_id, status="cancelled", can_cancel=False)
 
     logger.info(f"Bulk generation job {job_id} cancelled by user {user_id}")
 
