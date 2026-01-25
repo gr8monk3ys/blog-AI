@@ -94,9 +94,9 @@ At least **one** LLM provider API key is **required** for the application to sta
 
 **Example:**
 ```bash
-OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-# ANTHROPIC_API_KEY=sk-ant-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-# GEMINI_API_KEY=AIzaSyxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+OPENAI_API_KEY=sk-proj-REPLACE_WITH_YOUR_OPENAI_KEY
+# ANTHROPIC_API_KEY=sk-ant-REPLACE_WITH_YOUR_ANTHROPIC_KEY
+# GEMINI_API_KEY=REPLACE_WITH_YOUR_GEMINI_KEY
 ```
 
 ---
@@ -260,11 +260,11 @@ Required for subscription billing features.
 
 **Example:**
 ```bash
-STRIPE_SECRET_KEY=sk_test_YOUR_STRIPE_SECRET_KEY_HERE
-STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-STRIPE_PRICE_ID_STARTER=price_xxxxxxxxxxxxxxxxxxxx
-STRIPE_PRICE_ID_PRO=price_xxxxxxxxxxxxxxxxxxxx
-STRIPE_PRICE_ID_BUSINESS=price_xxxxxxxxxxxxxxxxxxxx
+STRIPE_SECRET_KEY=sk_test_REPLACE_WITH_YOUR_STRIPE_KEY
+STRIPE_WEBHOOK_SECRET=whsec_REPLACE_WITH_YOUR_WEBHOOK_SECRET
+STRIPE_PRICE_ID_STARTER=price_REPLACE_WITH_STARTER_PRICE_ID
+STRIPE_PRICE_ID_PRO=price_REPLACE_WITH_PRO_PRICE_ID
+STRIPE_PRICE_ID_BUSINESS=price_REPLACE_WITH_BUSINESS_PRICE_ID
 ```
 
 ---
@@ -456,9 +456,9 @@ SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.xxxx
 
 **Example:**
 ```bash
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_xxxxxxxxxxxxxxxxxxxx
-STRIPE_SECRET_KEY=sk_test_YOUR_KEY_HERE
-STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxxxx
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_REPLACE_WITH_PUBLISHABLE_KEY
+STRIPE_SECRET_KEY=sk_test_REPLACE_WITH_SECRET_KEY
+STRIPE_WEBHOOK_SECRET=whsec_REPLACE_WITH_WEBHOOK_SECRET
 ```
 
 ---
@@ -660,7 +660,7 @@ OPENAI_API_KEY=sk-your-production-key
 SUPABASE_URL=https://production-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-key
 STRIPE_SECRET_KEY=sk_test_YOUR_KEY
-STRIPE_WEBHOOK_SECRET=whsec_xxx
+STRIPE_WEBHOOK_SECRET=whsec_REPLACE_WITH_PRODUCTION_SECRET
 ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
 HTTPS_REDIRECT_ENABLED=true
 SENTRY_DSN=https://xxx@sentry.io/xxx
