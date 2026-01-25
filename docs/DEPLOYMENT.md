@@ -36,7 +36,7 @@ Before deploying, ensure all required environment variables are configured.
 |----------|-------------|---------|
 | `SUPABASE_URL` | Supabase project URL | `https://xxx.supabase.co` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-side) | `eyJ...` |
-| `STRIPE_SECRET_KEY` | Stripe secret API key | `sk_live_...` |
+| `STRIPE_SECRET_KEY` | Stripe secret API key | `sk_test_...` |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret | `whsec_...` |
 | `STRIPE_PRICE_ID_STARTER` | Stripe price ID for Starter tier | `price_...` |
 | `STRIPE_PRICE_ID_PRO` | Stripe price ID for Pro tier | `price_...` |
