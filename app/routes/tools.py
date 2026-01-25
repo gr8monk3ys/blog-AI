@@ -13,9 +13,11 @@ This module provides endpoints for:
 import logging
 from typing import List, Literal, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator
+
+from ..auth import verify_api_key
 
 from src.scoring import score_content
 from src.tools import (
@@ -96,6 +98,7 @@ async def list_tools(
     include_beta: bool = Query(True, description="Include beta tools"),
     limit: Optional[int] = Query(None, ge=1, le=100, description="Max results"),
     offset: int = Query(0, ge=0, description="Offset for pagination"),
+    user_id: str = Depends(verify_api_key),
 ):
     """
     List all available tools with optional filtering.
@@ -139,7 +142,9 @@ async def list_tools(
 
 
 @router.get("/categories", response_model=List[CategoryInfo])
-async def list_categories():
+async def list_categories(
+    user_id: str = Depends(verify_api_key),
+):
     """
     List all tool categories with their metadata and tool counts.
     """
@@ -153,7 +158,9 @@ async def list_categories():
 
 
 @router.get("/stats")
-async def get_stats():
+async def get_stats(
+    user_id: str = Depends(verify_api_key),
+):
     """
     Get statistics about the tool registry.
     """
@@ -167,7 +174,10 @@ async def get_stats():
 
 
 @router.get("/{tool_id}", response_model=ToolDefinition)
-async def get_tool(tool_id: str):
+async def get_tool(
+    tool_id: str,
+    user_id: str = Depends(verify_api_key),
+):
     """
     Get detailed information about a specific tool.
 
@@ -194,7 +204,11 @@ async def get_tool(tool_id: str):
 
 
 @router.post("/{tool_id}/execute", response_model=ToolExecutionResult)
-async def execute_tool(tool_id: str, request: ToolExecuteRequest):
+async def execute_tool(
+    tool_id: str,
+    request: ToolExecuteRequest,
+    user_id: str = Depends(verify_api_key),
+):
     """
     Execute a tool with the provided inputs.
 
@@ -255,7 +269,10 @@ async def execute_tool(tool_id: str, request: ToolExecuteRequest):
 
 
 @router.get("/category/{category}", response_model=List[ToolMetadata])
-async def get_tools_by_category(category: str):
+async def get_tools_by_category(
+    category: str,
+    user_id: str = Depends(verify_api_key),
+):
     """
     Get all tools in a specific category.
     """
@@ -277,7 +294,11 @@ async def get_tools_by_category(category: str):
 
 
 @router.post("/{tool_id}/validate")
-async def validate_inputs(tool_id: str, inputs: dict):
+async def validate_inputs(
+    tool_id: str,
+    inputs: dict,
+    user_id: str = Depends(verify_api_key),
+):
     """
     Validate inputs for a tool without executing it.
 
@@ -315,7 +336,11 @@ class ContentScoreRequestBody(BaseModel):
 
 
 @router.post("/{tool_id}/score", response_model=ContentScoreResult)
-async def score_tool_content(tool_id: str, request: ContentScoreRequestBody):
+async def score_tool_content(
+    tool_id: str,
+    request: ContentScoreRequestBody,
+    user_id: str = Depends(verify_api_key),
+):
     """
     Score generated content for readability, SEO, and engagement.
 
@@ -351,11 +376,17 @@ async def score_tool_content(tool_id: str, request: ContentScoreRequestBody):
             content_type=content_type,
         )
         return result
+    except ValueError as e:
+        logger.warning(f"Invalid content for scoring: {e}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid content: {str(e)}"
+        )
     except Exception as e:
-        logger.error(f"Content scoring failed: {e}")
+        logger.error(f"Unexpected content scoring error: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Scoring failed: {str(e)}"
+            detail="Scoring failed. Please try again."
         )
 
 
@@ -384,7 +415,11 @@ class VariationExecuteRequest(BaseModel):
 
 
 @router.post("/{tool_id}/variations", response_model=VariationGenerationResult)
-async def generate_variations(tool_id: str, request: VariationExecuteRequest):
+async def generate_variations(
+    tool_id: str,
+    request: VariationExecuteRequest,
+    user_id: str = Depends(verify_api_key),
+):
     """
     Generate multiple content variations for A/B testing.
 
@@ -435,7 +470,10 @@ async def generate_variations(tool_id: str, request: VariationExecuteRequest):
 
 
 @router.post("/score", response_model=ContentScoreResult)
-async def score_content_generic(request: ContentScoreRequestBody):
+async def score_content_generic(
+    request: ContentScoreRequestBody,
+    user_id: str = Depends(verify_api_key),
+):
     """
     Score any content without associating with a specific tool.
 
@@ -448,9 +486,15 @@ async def score_content_generic(request: ContentScoreRequestBody):
             content_type="blog",
         )
         return result
+    except ValueError as e:
+        logger.warning(f"Invalid content for generic scoring: {e}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid content: {str(e)}"
+        )
     except Exception as e:
-        logger.error(f"Content scoring failed: {e}")
+        logger.error(f"Unexpected content scoring error: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Scoring failed: {str(e)}"
+            detail="Scoring failed. Please try again."
         )
