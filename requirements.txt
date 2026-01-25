@@ -13,12 +13,13 @@ stability-sdk>=0.8.0
 Pillow>=10.0.0
 
 # Backend server
-fastapi>=0.109.2
+fastapi>=0.115.0
 uvicorn>=0.27.0
 websockets>=12.0
 
 # Security
 bcrypt>=4.0.0
+bleach>=6.0.0
 
 # Redis for job storage
 redis>=5.0.0
@@ -31,6 +32,6 @@ sentry-sdk[fastapi]>=1.40.0
 
 # Optional development dependencies
 # pytest>=7.4.0
-# black>=23.7.0
+# black>=24.3.0
 # isort>=7.0.0
 # mypy>=1.5.1
