@@ -7,6 +7,12 @@ from typing import Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from src.types.usage import (
+    SubscriptionTier,
+    UsageStats as NewUsageStats,
+    get_all_tiers as get_all_tier_configs,
+    get_tier_config,
+)
 from src.usage import (
     TIER_CONFIGS,
     UsageLimitExceeded,
@@ -16,6 +22,11 @@ from src.usage import (
     get_tier_info,
     get_usage_stats,
     usage_limiter,
+)
+from src.usage.quota_service import (
+    QuotaExceeded,
+    get_quota_service,
+    get_usage_stats as get_quota_stats,
 )
 
 from ..auth import verify_api_key
@@ -233,3 +244,257 @@ async def get_user_features(
         "research_enabled": "research_mode" in config.features_enabled,
         "api_access_enabled": "api_access" in config.features_enabled,
     }
+
+
+# =============================================================================
+# New Quota-based Endpoints (using Supabase when available)
+# =============================================================================
+
+
+@router.get("/quota/stats")
+async def get_quota_usage_stats(
+    user_id: str = Depends(verify_api_key),
+) -> Dict:
+    """
+    Get current usage statistics using the new quota system.
+
+    Returns usage stats including:
+    - Current usage count for the billing period
+    - Monthly quota limit based on subscription tier
+    - Remaining generations
+    - Daily usage and limits
+    - Period start/end dates
+    - Percentage of quota used
+    """
+    logger.info(f"Quota stats requested by user: {user_id[:8]}...")
+
+    try:
+        stats = await get_quota_stats(user_id)
+
+        return {
+            "success": True,
+            "user_id": user_id[:8] + "...",
+            "tier": stats.tier.value,
+            "tier_name": get_tier_config(stats.tier).name,
+            "current_usage": stats.current_usage,
+            "quota_limit": stats.quota_limit,
+            "remaining": stats.remaining,
+            "daily_usage": stats.daily_usage,
+            "daily_limit": stats.daily_limit,
+            "daily_remaining": stats.daily_remaining,
+            "tokens_used": stats.tokens_used,
+            "percentage_used": stats.percentage_used,
+            "is_quota_exceeded": stats.is_quota_exceeded,
+            "period_start": stats.period_start.isoformat(),
+            "reset_date": stats.reset_date.isoformat(),
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting quota stats: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve usage statistics",
+        )
+
+
+@router.get("/quota/check")
+async def check_quota_available(
+    user_id: str = Depends(verify_api_key),
+) -> Dict:
+    """
+    Check if user has available quota for generation.
+
+    Returns:
+    - success: Whether the check succeeded
+    - has_quota: Whether user can generate more content
+    - remaining: Number of remaining generations
+    - tier: Current subscription tier
+    - reset_date: When quota resets
+
+    If quota is exceeded, returns 429 with upgrade information.
+    """
+    try:
+        quota_service = get_quota_service()
+        await quota_service.check_quota(user_id)
+
+        stats = await get_quota_stats(user_id)
+
+        return {
+            "success": True,
+            "has_quota": True,
+            "remaining": stats.remaining,
+            "daily_remaining": stats.daily_remaining,
+            "tier": stats.tier.value,
+            "quota_limit": stats.quota_limit,
+            "reset_date": stats.reset_date.isoformat(),
+        }
+
+    except QuotaExceeded as e:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={
+                "success": False,
+                "has_quota": False,
+                "error": e.message,
+                "error_code": "QUOTA_EXCEEDED",
+                "tier": e.tier.value,
+                "current_usage": e.current_usage,
+                "quota_limit": e.quota_limit,
+                "reset_date": e.reset_date.isoformat(),
+                "upgrade_url": "/pricing",
+            },
+        )
+
+
+@router.get("/quota/breakdown")
+async def get_usage_breakdown(
+    user_id: str = Depends(verify_api_key),
+) -> Dict:
+    """
+    Get detailed usage breakdown by operation type.
+
+    Returns counts for each type of generation:
+    - blog: Blog post generations
+    - book: Book generations
+    - batch: Batch job items
+    - remix: Content remix operations
+    - tool: Individual tool uses
+    - total: Total across all types
+    """
+    logger.info(f"Usage breakdown requested by user: {user_id[:8]}...")
+
+    try:
+        quota_service = get_quota_service()
+        breakdown = await quota_service.get_usage_breakdown(user_id)
+        stats = await get_quota_stats(user_id)
+
+        return {
+            "success": True,
+            "user_id": user_id[:8] + "...",
+            "tier": stats.tier.value,
+            "period_start": stats.period_start.isoformat(),
+            "period_end": stats.reset_date.isoformat(),
+            "breakdown": breakdown,
+            "quota_limit": stats.quota_limit,
+            "remaining": stats.remaining,
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting usage breakdown: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve usage breakdown",
+        )
+
+
+@router.get("/quota/tiers")
+async def get_subscription_tiers(
+    user_id: str = Depends(verify_api_key),
+) -> Dict:
+    """
+    Get all available subscription tiers with their limits.
+
+    Returns configuration for each tier:
+    - free: 5 generations/month
+    - starter: 50 generations/month
+    - pro: 200 generations/month
+    - business: 1000 generations/month
+
+    Includes features, pricing, and descriptions.
+    """
+    try:
+        stats = await get_quota_stats(user_id)
+
+        tiers = []
+        for tier_config in get_all_tier_configs():
+            tiers.append({
+                "tier": tier_config.tier.value,
+                "name": tier_config.name,
+                "monthly_limit": tier_config.monthly_limit,
+                "daily_limit": tier_config.daily_limit,
+                "features": tier_config.features,
+                "price_monthly": tier_config.price_monthly,
+                "price_yearly": tier_config.price_yearly,
+                "description": tier_config.description,
+                "is_current": tier_config.tier == stats.tier,
+            })
+
+        return {
+            "success": True,
+            "current_tier": stats.tier.value,
+            "tiers": tiers,
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting subscription tiers: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve subscription tiers",
+        )
+
+
+@router.post("/quota/upgrade")
+async def upgrade_subscription_tier(
+    request: UpgradeTierRequest,
+    user_id: str = Depends(verify_api_key),
+) -> Dict:
+    """
+    Upgrade user to a new subscription tier.
+
+    Note: In production, this would integrate with a payment system
+    (e.g., Stripe). For now, it directly updates the tier for testing.
+
+    Args:
+        request: The upgrade request with target tier.
+
+    Returns:
+        Success status and new tier information.
+    """
+    # Map the legacy tier names to new subscription tiers
+    tier_mapping = {
+        "free": SubscriptionTier.FREE,
+        "starter": SubscriptionTier.STARTER,
+        "pro": SubscriptionTier.PRO,
+        "business": SubscriptionTier.BUSINESS,
+        # Legacy mappings
+        "enterprise": SubscriptionTier.BUSINESS,
+    }
+
+    tier_str = request.tier.lower()
+    if tier_str not in tier_mapping:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid tier: {request.tier}. Must be one of: free, starter, pro, business",
+        )
+
+    new_tier = tier_mapping[tier_str]
+
+    try:
+        quota_service = get_quota_service()
+        current_stats = await get_quota_stats(user_id)
+        current_tier = current_stats.tier
+
+        # In production, verify payment before upgrading
+        await quota_service.set_user_tier(user_id, new_tier)
+
+        logger.info(f"User {user_id[:8]}... upgraded from {current_tier.value} to {new_tier.value}")
+
+        new_config = get_tier_config(new_tier)
+
+        return {
+            "success": True,
+            "previous_tier": current_tier.value,
+            "new_tier": new_tier.value,
+            "tier_name": new_config.name,
+            "monthly_limit": new_config.monthly_limit,
+            "daily_limit": new_config.daily_limit,
+            "features": new_config.features,
+            "message": f"Successfully upgraded to {new_config.name} tier",
+        }
+
+    except Exception as e:
+        logger.error(f"Error upgrading tier: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to upgrade subscription tier",
+        )
