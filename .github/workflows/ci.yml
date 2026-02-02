@@ -73,6 +73,37 @@ jobs:
       - name: Type check with mypy
         run: mypy src/ server.py --ignore-missing-imports
 
+  python-security:
+    name: Python Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-security-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-security-
+            ${{ runner.os }}-pip-
+
+      - name: Install security tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit pip-audit
+
+      - name: Run Bandit security linter
+        run: bandit -r src/ app/ -ll -ii -x tests/
+
+      - name: Run pip-audit for vulnerable dependencies
+        run: pip-audit -r requirements.txt --ignore-vuln PYSEC-2024-48
+
   python-test:
     name: Python Tests
     runs-on: ubuntu-latest
@@ -102,6 +133,7 @@ jobs:
         run: |
           pytest tests/ -v \
             --cov=src \
+            --cov=app \
             --cov-report=xml \
             --cov-report=term-missing \
             --cov-fail-under=70
@@ -140,6 +172,9 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Security audit
+        run: npm audit --audit-level=high
 
   frontend-typecheck:
     name: Frontend Type Check
@@ -188,13 +223,49 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: http://localhost:8000
 
+  frontend-e2e:
+    name: Frontend E2E Tests
+    runs-on: ubuntu-latest
+    needs: [frontend-build]
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8000
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 7
+
   # =============================================================================
   # Docker Build (main branch only)
   # =============================================================================
   docker-build:
     name: Docker Build
     runs-on: ubuntu-latest
-    needs: [python-lint, python-typecheck, python-test, frontend-build]
+    needs: [python-lint, python-typecheck, python-security, python-test, frontend-build]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v6
@@ -210,6 +281,16 @@ jobs:
           tags: blog-ai:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          load: true
+
+      - name: Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: blog-ai:${{ github.sha }}
+          format: 'table'
+          exit-code: '1'
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true
 
   # =============================================================================
   # CI Status Check (aggregates all required jobs)
@@ -217,17 +298,19 @@ jobs:
   ci-status:
     name: CI Status
     runs-on: ubuntu-latest
-    needs: [python-lint, python-typecheck, python-test, frontend-lint, frontend-typecheck, frontend-build]
+    needs: [python-lint, python-typecheck, python-security, python-test, frontend-lint, frontend-typecheck, frontend-build, frontend-e2e]
     if: always()
     steps:
       - name: Check all jobs passed
         run: |
           if [[ "${{ needs.python-lint.result }}" != "success" ]] || \
              [[ "${{ needs.python-typecheck.result }}" != "success" ]] || \
+             [[ "${{ needs.python-security.result }}" != "success" ]] || \
              [[ "${{ needs.python-test.result }}" != "success" ]] || \
              [[ "${{ needs.frontend-lint.result }}" != "success" ]] || \
              [[ "${{ needs.frontend-typecheck.result }}" != "success" ]] || \
-             [[ "${{ needs.frontend-build.result }}" != "success" ]]; then
+             [[ "${{ needs.frontend-build.result }}" != "success" ]] || \
+             [[ "${{ needs.frontend-e2e.result }}" != "success" ]]; then
             echo "One or more jobs failed"
             exit 1
           fi
