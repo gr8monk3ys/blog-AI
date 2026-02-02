@@ -69,11 +69,13 @@ from app.routes import (
     content_router,
     conversations_router,
     export_router,
+    extension_router,
     health_router,
     images_router,
     knowledge_router,
     organizations_router,
     payments_router,
+    performance_router,
     remix_router,
     streaming_router,
     tools_router,
@@ -392,10 +394,12 @@ app.include_router(blog_router)
 app.include_router(book_router)
 app.include_router(bulk_router)
 app.include_router(export_router)
+app.include_router(extension_router)
 app.include_router(images_router)
 app.include_router(knowledge_router)
 app.include_router(organizations_router)
 app.include_router(payments_router)
+app.include_router(performance_router)
 app.include_router(remix_router)
 app.include_router(streaming_router)
 app.include_router(tools_router)
@@ -418,10 +422,12 @@ api_v1_router.include_router(blog_router)
 api_v1_router.include_router(book_router)
 api_v1_router.include_router(bulk_router)
 api_v1_router.include_router(export_router)
+api_v1_router.include_router(extension_router)
 api_v1_router.include_router(images_router)
 api_v1_router.include_router(knowledge_router)
 api_v1_router.include_router(organizations_router)
 api_v1_router.include_router(payments_router)
+api_v1_router.include_router(performance_router)
 api_v1_router.include_router(remix_router)
 api_v1_router.include_router(streaming_router)
 api_v1_router.include_router(tools_router)

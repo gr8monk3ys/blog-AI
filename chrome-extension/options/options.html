@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog AI - Settings</title>
+  <style>
+    /* Reset and Variables */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --color-primary: #4F46E5;
+      --color-primary-hover: #4338CA;
+      --color-primary-light: #EEF2FF;
+      --color-success: #059669;
+      --color-warning: #D97706;
+      --color-error: #DC2626;
+      --color-surface: #FFFFFF;
+      --color-surface-elevated: #F9FAFB;
+      --color-text: #111827;
+      --color-text-secondary: #6B7280;
+      --color-text-muted: #9CA3AF;
+      --color-border: #E5E7EB;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --transition: 200ms ease;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-primary: #6366F1;
+        --color-primary-hover: #818CF8;
+        --color-primary-light: #312E81;
+        --color-surface: #1F2937;
+        --color-surface-elevated: #374151;
+        --color-text: #F9FAFB;
+        --color-text-secondary: #D1D5DB;
+        --color-text-muted: #9CA3AF;
+        --color-border: #4B5563;
+      }
+    }
+
+    html {
+      font-size: 16px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 1rem;
+      line-height: 1.5;
+      color: var(--color-text);
+      background-color: var(--color-surface-elevated);
+      min-height: 100vh;
+    }
+
+    /* Layout */
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .logo {
+      width: 48px;
+      height: 48px;
+    }
+
+    .header-text h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--color-text);
+    }
+
+    .header-text p {
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
+    }
+
+    /* Card */
+    .card {
+      background: var(--color-surface);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-text);
+      margin-bottom: 6px;
+    }
+
+    .form-group .help-text {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      margin-top: 4px;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="url"],
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 0.875rem;
+      color: var(--color-text);
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-light);
+    }
+
+    select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+    }
+
+    /* Input Group */
+    .input-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-group input {
+      flex: 1;
+    }
+
+    /* Toggle Switch */
+    .toggle-group {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .toggle-group:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .toggle-label {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .toggle-label .title {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-text);
+    }
+
+    .toggle-label .description {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      margin-top: 2px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--color-border);
+      transition: var(--transition);
+      border-radius: 24px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: var(--transition);
+      border-radius: 50%;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: var(--color-primary);
+    }
+
+    .toggle-switch input:focus + .toggle-slider {
+      box-shadow: 0 0 0 3px var(--color-primary-light);
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 20px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      color: white;
+      background-color: var(--color-primary);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background-color: var(--color-primary-hover);
+    }
+
+    .btn-secondary {
+      color: var(--color-text);
+      background-color: var(--color-surface-elevated);
+      border: 1px solid var(--color-border);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background-color: var(--color-border);
+    }
+
+    .btn-danger {
+      color: white;
+      background-color: var(--color-error);
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      opacity: 0.9;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.8125rem;
+    }
+
+    /* Button Group */
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    /* Status Messages */
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+      margin-bottom: 20px;
+    }
+
+    .status.success {
+      background-color: rgba(5, 150, 105, 0.1);
+      color: var(--color-success);
+    }
+
+    .status.error {
+      background-color: rgba(220, 38, 38, 0.1);
+      color: var(--color-error);
+    }
+
+    .status.hidden {
+      display: none;
+    }
+
+    /* Connection Status */
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: var(--color-surface-elevated);
+      border-radius: var(--radius-sm);
+      margin-bottom: 20px;
+    }
+
+    .connection-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--color-text-muted);
+    }
+
+    .connection-indicator.connected {
+      background: var(--color-success);
+    }
+
+    .connection-indicator.disconnected {
+      background: var(--color-error);
+    }
+
+    .connection-info {
+      flex: 1;
+    }
+
+    .connection-info .label {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .connection-info .value {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-text);
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding-top: 16px;
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+    }
+
+    .footer a {
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Focus visible */
+    :focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+
+    /* Danger Zone */
+    .danger-zone {
+      border: 1px solid var(--color-error);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      margin-top: 32px;
+    }
+
+    .danger-zone .card-title {
+      color: var(--color-error);
+      border-bottom-color: rgba(220, 38, 38, 0.2);
+    }
+
+    .danger-zone p {
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <img src="../icons/icon48.png" alt="" class="logo" aria-hidden="true">
+      <div class="header-text">
+        <h1>Blog AI Settings</h1>
+        <p>Configure your extension preferences</p>
+      </div>
+    </header>
+
+    <!-- Status Message -->
+    <div id="status-message" class="status hidden" role="alert" aria-live="polite">
+      <span id="status-text"></span>
+    </div>
+
+    <!-- Connection Section -->
+    <section class="card">
+      <h2 class="card-title">Connection</h2>
+
+      <div class="connection-status">
+        <div id="connection-indicator" class="connection-indicator"></div>
+        <div class="connection-info">
+          <div class="label">Status</div>
+          <div id="connection-value" class="value">Checking...</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="api-key">API Key</label>
+        <div class="input-group">
+          <input
+            type="password"
+            id="api-key"
+            placeholder="Enter your Blog AI API key"
+            autocomplete="off"
+          >
+          <button type="button" id="toggle-visibility" class="btn btn-secondary btn-sm" aria-label="Toggle visibility">
+            Show
+          </button>
+        </div>
+        <p class="help-text">
+          Get your API key from the <a href="https://blogai.com/dashboard" target="_blank" rel="noopener noreferrer">Blog AI Dashboard</a>
+        </p>
+      </div>
+
+      <button type="button" id="save-api-key" class="btn btn-primary">
+        Save API Key
+      </button>
+    </section>
+
+    <!-- Default Settings -->
+    <section class="card">
+      <h2 class="card-title">Default Generation Settings</h2>
+
+      <div class="form-group">
+        <label for="default-tone">Default Tone</label>
+        <select id="default-tone">
+          <option value="professional">Professional</option>
+          <option value="casual">Casual</option>
+          <option value="formal">Formal</option>
+          <option value="friendly">Friendly</option>
+          <option value="authoritative">Authoritative</option>
+          <option value="conversational">Conversational</option>
+        </select>
+        <p class="help-text">The default writing tone for generated content</p>
+      </div>
+
+      <div class="form-group">
+        <label for="default-length">Default Length</label>
+        <select id="default-length">
+          <option value="short">Short (~500 words)</option>
+          <option value="medium">Medium (~1000 words)</option>
+          <option value="long">Long (~2000 words)</option>
+        </select>
+        <p class="help-text">The default content length for generation</p>
+      </div>
+
+      <div class="toggle-group">
+        <div class="toggle-label">
+          <span class="title">Include Web Research</span>
+          <span class="description">Automatically research the topic before generating</span>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="include-research">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-group">
+        <div class="toggle-label">
+          <span class="title">Enable Proofreading</span>
+          <span class="description">Automatically proofread generated content</span>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="enable-proofreading" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </section>
+
+    <!-- Advanced Settings -->
+    <section class="card">
+      <h2 class="card-title">Advanced Settings</h2>
+
+      <div class="form-group">
+        <label for="api-endpoint">API Endpoint</label>
+        <input
+          type="url"
+          id="api-endpoint"
+          placeholder="https://api.blogai.com"
+          value="https://api.blogai.com"
+        >
+        <p class="help-text">Only change this if you're using a custom Blog AI server</p>
+      </div>
+
+      <div class="form-group">
+        <label for="theme">Theme</label>
+        <select id="theme">
+          <option value="system">System Default</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+        <p class="help-text">Choose your preferred color theme</p>
+      </div>
+    </section>
+
+    <!-- Save Button -->
+    <div class="btn-group">
+      <button type="button" id="save-settings" class="btn btn-primary">
+        Save Settings
+      </button>
+      <button type="button" id="reset-settings" class="btn btn-secondary">
+        Reset to Defaults
+      </button>
+    </div>
+
+    <!-- Danger Zone -->
+    <div class="danger-zone">
+      <h2 class="card-title">Danger Zone</h2>
+      <p>This will remove your API key and all stored data. This action cannot be undone.</p>
+      <button type="button" id="clear-data" class="btn btn-danger">
+        Clear All Data
+      </button>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>
+        Blog AI Extension v1.0.0 |
+        <a href="https://docs.blogai.com" target="_blank" rel="noopener noreferrer">Documentation</a> |
+        <a href="https://blogai.com/support" target="_blank" rel="noopener noreferrer">Support</a>
+      </p>
+    </footer>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

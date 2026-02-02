@@ -1,0 +1,55 @@
+{
+  "manifest_version": 3,
+  "name": "Blog AI - Content Generator",
+  "version": "1.0.0",
+  "description": "Generate high-quality blog content from any webpage using AI. Highlight text, right-click, and create content instantly.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "Blog AI"
+  },
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content/content.js"],
+      "css": ["content/content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": [
+    "activeTab",
+    "storage",
+    "contextMenus",
+    "notifications"
+  ],
+  "host_permissions": [
+    "http://localhost:8000/*",
+    "https://api.blogai.com/*"
+  ],
+  "options_page": "options/options.html",
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "minimum_chrome_version": "102"
+}
