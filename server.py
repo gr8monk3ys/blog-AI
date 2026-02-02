@@ -66,15 +66,20 @@ from app.routes import (
     book_router,
     brand_voice_router,
     bulk_router,
+    content_router,
     conversations_router,
     export_router,
     health_router,
     images_router,
     payments_router,
     remix_router,
+    streaming_router,
     tools_router,
     usage_router,
+    versions_router,
+    webhooks_router,
     websocket_router,
+    zapier_router,
 )
 
 # =============================================================================
@@ -234,6 +239,7 @@ The API supports versioning via URL path. Current version: `v1`
         {"name": "book", "description": "Book generation endpoints"},
         {"name": "Brand Voice Training", "description": "Train and apply custom brand voices"},
         {"name": "Content Remix", "description": "Transform content across formats"},
+        {"name": "content", "description": "Content quality and plagiarism detection"},
         {"name": "batch", "description": "Batch processing for bulk content generation"},
         {"name": "images", "description": "AI-powered image generation"},
         {"name": "export", "description": "Export content to various formats"},
@@ -377,6 +383,7 @@ app.include_router(health_router)
 app.include_router(analytics_router)
 app.include_router(batch_router)
 app.include_router(brand_voice_router)
+app.include_router(content_router)
 app.include_router(conversations_router)
 app.include_router(blog_router)
 app.include_router(book_router)
@@ -385,9 +392,13 @@ app.include_router(export_router)
 app.include_router(images_router)
 app.include_router(payments_router)
 app.include_router(remix_router)
+app.include_router(streaming_router)
 app.include_router(tools_router)
 app.include_router(usage_router)
+app.include_router(versions_router)
+app.include_router(webhooks_router)
 app.include_router(websocket_router)
+app.include_router(zapier_router)
 
 # Create versioned API router
 api_v1_router = APIRouter(prefix="/api/v1", tags=["v1"])
@@ -396,6 +407,7 @@ api_v1_router = APIRouter(prefix="/api/v1", tags=["v1"])
 api_v1_router.include_router(analytics_router)
 api_v1_router.include_router(batch_router)
 api_v1_router.include_router(brand_voice_router)
+api_v1_router.include_router(content_router)
 api_v1_router.include_router(conversations_router)
 api_v1_router.include_router(blog_router)
 api_v1_router.include_router(book_router)
@@ -404,8 +416,12 @@ api_v1_router.include_router(export_router)
 api_v1_router.include_router(images_router)
 api_v1_router.include_router(payments_router)
 api_v1_router.include_router(remix_router)
+api_v1_router.include_router(streaming_router)
 api_v1_router.include_router(tools_router)
 api_v1_router.include_router(usage_router)
+api_v1_router.include_router(versions_router)
+api_v1_router.include_router(webhooks_router)
+api_v1_router.include_router(zapier_router)
 
 # Include versioned router
 app.include_router(api_v1_router)
