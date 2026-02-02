@@ -11,6 +11,8 @@ from .conversations import router as conversations_router
 from .export import router as export_router
 from .health import router as health_router
 from .images import router as images_router
+from .knowledge import router as knowledge_router
+from .organizations import router as organizations_router
 from .payments import router as payments_router
 from .remix import router as remix_router
 from .streaming import router as streaming_router
@@ -33,6 +35,8 @@ __all__ = [
     "export_router",
     "health_router",
     "images_router",
+    "knowledge_router",
+    "organizations_router",
     "payments_router",
     "remix_router",
     "streaming_router",

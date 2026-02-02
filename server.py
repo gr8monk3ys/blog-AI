@@ -71,6 +71,8 @@ from app.routes import (
     export_router,
     health_router,
     images_router,
+    knowledge_router,
+    organizations_router,
     payments_router,
     remix_router,
     streaming_router,
@@ -240,6 +242,7 @@ The API supports versioning via URL path. Current version: `v1`
         {"name": "Brand Voice Training", "description": "Train and apply custom brand voices"},
         {"name": "Content Remix", "description": "Transform content across formats"},
         {"name": "content", "description": "Content quality and plagiarism detection"},
+        {"name": "Knowledge Base", "description": "Upload documents and search your knowledge base for RAG"},
         {"name": "batch", "description": "Batch processing for bulk content generation"},
         {"name": "images", "description": "AI-powered image generation"},
         {"name": "export", "description": "Export content to various formats"},
@@ -390,6 +393,8 @@ app.include_router(book_router)
 app.include_router(bulk_router)
 app.include_router(export_router)
 app.include_router(images_router)
+app.include_router(knowledge_router)
+app.include_router(organizations_router)
 app.include_router(payments_router)
 app.include_router(remix_router)
 app.include_router(streaming_router)
@@ -414,6 +419,8 @@ api_v1_router.include_router(book_router)
 api_v1_router.include_router(bulk_router)
 api_v1_router.include_router(export_router)
 api_v1_router.include_router(images_router)
+api_v1_router.include_router(knowledge_router)
+api_v1_router.include_router(organizations_router)
 api_v1_router.include_router(payments_router)
 api_v1_router.include_router(remix_router)
 api_v1_router.include_router(streaming_router)
