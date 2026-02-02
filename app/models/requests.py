@@ -30,6 +30,10 @@ class BlogGenerationRequest(BaseModel):
     research: bool = False
     proofread: bool = True
     humanize: bool = True
+    use_knowledge_base: bool = Field(
+        default=False,
+        description="Whether to search the knowledge base for relevant context"
+    )
     conversation_id: str = Field(..., min_length=1, max_length=100)
 
     @field_validator("topic")
@@ -82,6 +86,10 @@ class BookGenerationRequest(BaseModel):
     research: bool = False
     proofread: bool = True
     humanize: bool = True
+    use_knowledge_base: bool = Field(
+        default=False,
+        description="Whether to search the knowledge base for relevant context"
+    )
     conversation_id: str = Field(..., min_length=1, max_length=100)
 
     @field_validator("title")
