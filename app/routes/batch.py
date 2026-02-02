@@ -57,6 +57,7 @@ from src.usage.quota_service import (
     check_quota as async_check_quota,
     increment_usage as async_increment_usage,
 )
+from src.webhooks import webhook_service
 
 from ..auth import verify_api_key
 from ..error_handlers import sanitize_error_message
@@ -375,6 +376,19 @@ async def _process_enhanced_batch(
             },
             request.conversation_id,
         )
+
+        # Emit webhook event for batch completion (non-blocking)
+        try:
+            await webhook_service.emit_batch_completed(
+                user_id=user_id,
+                job_id=job_id,
+                total_items=len(request.items),
+                completed_items=completed,
+                failed_items=failed,
+                total_cost_usd=actual_cost,
+            )
+        except Exception as webhook_error:
+            logger.warning(f"Failed to emit batch webhook: {webhook_error}")
 
         logger.info(f"Batch job {job_id} completed: {completed} success, {failed} failed")
 
