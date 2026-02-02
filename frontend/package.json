@@ -42,12 +42,12 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/uuid": "^9.0.8",
-    "@vitejs/plugin-react": "^4.3.0",
-    "@vitest/coverage-v8": "^1.6.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^8",
     "eslint-config-next": "16.1.5",
     "jsdom": "^24.0.0",
     "typescript": "^5",
-    "vitest": "^1.6.0"
+    "vitest": "^4.0.18"
   }
 }
