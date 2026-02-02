@@ -56,10 +56,14 @@ export default function TimelineChart({
     const { points, padding, chartHeight } = chartData
     const bottomY = padding!.top + chartHeight!
 
+    const lastPoint = points[points.length - 1]
+    const firstPoint = points[0]
+    if (!lastPoint || !firstPoint) return ''
+
     return (
       points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x}% ${p.y}`).join(' ') +
-      ` L ${points[points.length - 1].x}% ${bottomY}` +
-      ` L ${points[0].x}% ${bottomY} Z`
+      ` L ${lastPoint.x}% ${bottomY}` +
+      ` L ${firstPoint.x}% ${bottomY} Z`
     )
   }, [chartData])
 
@@ -173,9 +177,9 @@ export default function TimelineChart({
                 ))
               ) : (
                 <>
-                  <span>{data[0].label}</span>
-                  <span>{data[Math.floor(data.length / 2)].label}</span>
-                  <span>{data[data.length - 1].label}</span>
+                  <span>{data[0]?.label}</span>
+                  <span>{data[Math.floor(data.length / 2)]?.label}</span>
+                  <span>{data[data.length - 1]?.label}</span>
                 </>
               )}
             </div>

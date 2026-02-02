@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import type { ToolUsageStat } from '../../types/analytics'
-import { CATEGORY_COLORS, CATEGORY_BG_COLORS } from '../../types/analytics'
+import { getCategoryColor, getCategoryBgColor } from '../../types/analytics'
 
 interface BarChartProps {
   data: ToolUsageStat[]
@@ -44,8 +44,8 @@ export default function BarChart({
         <div className="space-y-4">
           {displayData.map((item, index) => {
             const barWidth = (item.count / maxCount) * 100
-            const barColor = CATEGORY_COLORS[item.category] || '#6b7280'
-            const bgColor = CATEGORY_BG_COLORS[item.category] || '#f3f4f6'
+            const barColor = getCategoryColor(item.category)
+            const bgColor = getCategoryBgColor(item.category)
 
             return (
               <motion.div

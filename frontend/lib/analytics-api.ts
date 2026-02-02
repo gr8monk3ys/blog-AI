@@ -14,7 +14,7 @@ import type {
   CategoryBreakdown,
   TimeRangeOption,
 } from '../types/analytics'
-import { CATEGORY_COLORS } from '../types/analytics'
+import { getCategoryColor } from '../types/analytics'
 
 // API endpoint base
 const ANALYTICS_API_BASE = `${API_BASE_URL}/api/${API_VERSION}/analytics`
@@ -139,7 +139,7 @@ export async function getCategoryBreakdown(
       category: item.category,
       count: item.count,
       percentage: item.percentage,
-      color: CATEGORY_COLORS[item.category] || '#6b7280',
+      color: getCategoryColor(item.category),
     }))
   } catch {
     // Fall back to Supabase direct query
@@ -299,8 +299,8 @@ async function getTimelineFromSupabase(
     // Group by date
     const grouped: Record<string, number> = {}
     data.forEach((item) => {
-      const date = item.created_at.split('T')[0]
-      grouped[date] = (grouped[date] || 0) + 1
+      const date = item.created_at.split('T')[0] ?? item.created_at
+      grouped[date] = (grouped[date] ?? 0) + 1
     })
 
     return Object.entries(grouped).map(([date, count]) => ({
@@ -349,7 +349,7 @@ async function getCategoryBreakdownFromSupabase(
       category,
       count,
       percentage: total > 0 ? (count / total) * 100 : 0,
-      color: CATEGORY_COLORS[category] || '#6b7280',
+      color: getCategoryColor(category),
     }))
   } catch {
     return getMockCategoryBreakdown()
@@ -531,7 +531,8 @@ function getMockTimelineData(timeRange: TimeRangeOption): TimelineDataPoint[] {
 
   for (let i = days - 1; i >= 0; i--) {
     const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000)
-    const dateStr = date.toISOString().split('T')[0]
+    const isoString = date.toISOString()
+    const dateStr = isoString.split('T')[0] ?? isoString.slice(0, 10)
     // Generate realistic-looking data with some variation
     const baseCount = 30 + Math.floor(Math.random() * 20)
     const weekendFactor = date.getDay() === 0 || date.getDay() === 6 ? 0.6 : 1
@@ -549,19 +550,19 @@ function getMockTimelineData(timeRange: TimeRangeOption): TimelineDataPoint[] {
 
 function getMockCategoryBreakdown(): CategoryBreakdown[] {
   return [
-    { category: 'blog', count: 412, percentage: 33, color: CATEGORY_COLORS.blog },
-    { category: 'email', count: 268, percentage: 21.5, color: CATEGORY_COLORS.email },
+    { category: 'blog', count: 412, percentage: 33, color: getCategoryColor('blog') },
+    { category: 'email', count: 268, percentage: 21.5, color: getCategoryColor('email') },
     {
       category: 'social-media',
       count: 224,
       percentage: 18,
-      color: CATEGORY_COLORS['social-media'],
+      color: getCategoryColor('social-media'),
     },
-    { category: 'business', count: 156, percentage: 12.5, color: CATEGORY_COLORS.business },
-    { category: 'seo', count: 98, percentage: 7.9, color: CATEGORY_COLORS.seo },
-    { category: 'naming', count: 45, percentage: 3.6, color: CATEGORY_COLORS.naming },
-    { category: 'video', count: 32, percentage: 2.6, color: CATEGORY_COLORS.video },
-    { category: 'rewriting', count: 12, percentage: 0.9, color: CATEGORY_COLORS.rewriting },
+    { category: 'business', count: 156, percentage: 12.5, color: getCategoryColor('business') },
+    { category: 'seo', count: 98, percentage: 7.9, color: getCategoryColor('seo') },
+    { category: 'naming', count: 45, percentage: 3.6, color: getCategoryColor('naming') },
+    { category: 'video', count: 32, percentage: 2.6, color: getCategoryColor('video') },
+    { category: 'rewriting', count: 12, percentage: 0.9, color: getCategoryColor('rewriting') },
   ]
 }
 
