@@ -2,9 +2,10 @@
 Type definitions for content scoring system.
 
 This module defines the types used for evaluating generated content
-across readability, SEO, and engagement dimensions.
+across readability, SEO, engagement, and originality dimensions.
 """
 
+from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -18,6 +19,55 @@ class ScoreLevel(str, Enum):
     GOOD = "good"
     FAIR = "fair"
     POOR = "poor"
+
+
+class OriginalityScore(BaseModel):
+    """Originality/plagiarism analysis results."""
+
+    score: float = Field(
+        ...,
+        ge=0,
+        le=100,
+        description="Originality score (100 = fully original, 0 = fully plagiarized)"
+    )
+    level: ScoreLevel = Field(..., description="Score classification")
+    plagiarism_percentage: float = Field(
+        ...,
+        ge=0,
+        le=100,
+        description="Percentage of content detected as plagiarized"
+    )
+    sources_found: int = Field(
+        default=0,
+        ge=0,
+        description="Number of matching sources found"
+    )
+    top_source_url: Optional[str] = Field(
+        None,
+        description="URL of the highest-matching source"
+    )
+    top_source_similarity: float = Field(
+        default=0,
+        ge=0,
+        le=100,
+        description="Similarity percentage with top matching source"
+    )
+    provider_used: Optional[str] = Field(
+        None,
+        description="Plagiarism detection provider used"
+    )
+    check_id: Optional[str] = Field(
+        None,
+        description="Reference ID for the plagiarism check"
+    )
+    cached: bool = Field(
+        default=False,
+        description="Whether result was from cache"
+    )
+    suggestions: List[str] = Field(
+        default_factory=list,
+        description="Suggestions for improving originality"
+    )
 
 
 class ScoreMetric(BaseModel):
@@ -144,6 +194,10 @@ class ContentScoreResult(BaseModel):
     readability: ReadabilityScore = Field(..., description="Readability analysis")
     seo: SEOScore = Field(..., description="SEO analysis")
     engagement: EngagementScore = Field(..., description="Engagement analysis")
+    originality: Optional[OriginalityScore] = Field(
+        None,
+        description="Originality/plagiarism analysis (if checked)"
+    )
     summary: str = Field(default="", description="Brief summary of the analysis")
     top_improvements: List[str] = Field(
         default_factory=list,

@@ -62,7 +62,11 @@ def upload_file(
             if response.status_code == 200:
                 file_exists = True
                 file_sha = response.json()["sha"]
-        except Exception:
+        except requests.RequestException:
+            # File doesn't exist, which is fine - we'll create it
+            pass
+        except (KeyError, ValueError):
+            # Unexpected response format, treat as file doesn't exist
             pass
 
         # Create file data
@@ -96,8 +100,20 @@ def upload_file(
                 message=f"Failed to upload file: {response.text}",
                 data=None,
             )
+    except requests.Timeout as e:
+        raise GitHubIntegrationError(f"GitHub request timed out while uploading file: {str(e)}") from e
+    except requests.ConnectionError as e:
+        raise GitHubIntegrationError(f"Network error connecting to GitHub: {str(e)}") from e
+    except requests.HTTPError as e:
+        raise GitHubIntegrationError(f"GitHub HTTP error while uploading file: {str(e)}") from e
+    except requests.RequestException as e:
+        raise GitHubIntegrationError(f"GitHub request failed while uploading file: {str(e)}") from e
+    except KeyError as e:
+        raise GitHubIntegrationError(f"Unexpected GitHub response format, missing key: {str(e)}") from e
+    except (TypeError, ValueError) as e:
+        raise GitHubIntegrationError(f"Error processing GitHub response: {str(e)}") from e
     except Exception as e:
-        raise GitHubIntegrationError(f"Error uploading file: {str(e)}")
+        raise GitHubIntegrationError(f"Unexpected error uploading file: {str(e)}") from e
 
 
 def create_repository(
@@ -149,8 +165,20 @@ def create_repository(
             raise GitHubIntegrationError(
                 f"Failed to create repository: {response.text}"
             )
+    except requests.Timeout as e:
+        raise GitHubIntegrationError(f"GitHub request timed out while creating repository: {str(e)}") from e
+    except requests.ConnectionError as e:
+        raise GitHubIntegrationError(f"Network error connecting to GitHub: {str(e)}") from e
+    except requests.HTTPError as e:
+        raise GitHubIntegrationError(f"GitHub HTTP error while creating repository: {str(e)}") from e
+    except requests.RequestException as e:
+        raise GitHubIntegrationError(f"GitHub request failed while creating repository: {str(e)}") from e
+    except KeyError as e:
+        raise GitHubIntegrationError(f"Unexpected GitHub response format, missing key: {str(e)}") from e
+    except GitHubIntegrationError:
+        raise
     except Exception as e:
-        raise GitHubIntegrationError(f"Error creating repository: {str(e)}")
+        raise GitHubIntegrationError(f"Unexpected error creating repository: {str(e)}") from e
 
 
 def get_repositories(credentials: GitHubCredentials) -> List[GitHubRepository]:
@@ -191,8 +219,20 @@ def get_repositories(credentials: GitHubCredentials) -> List[GitHubRepository]:
             return repos
         else:
             raise GitHubIntegrationError(f"Failed to get repositories: {response.text}")
+    except requests.Timeout as e:
+        raise GitHubIntegrationError(f"GitHub request timed out while getting repositories: {str(e)}") from e
+    except requests.ConnectionError as e:
+        raise GitHubIntegrationError(f"Network error connecting to GitHub: {str(e)}") from e
+    except requests.HTTPError as e:
+        raise GitHubIntegrationError(f"GitHub HTTP error while getting repositories: {str(e)}") from e
+    except requests.RequestException as e:
+        raise GitHubIntegrationError(f"GitHub request failed while getting repositories: {str(e)}") from e
+    except KeyError as e:
+        raise GitHubIntegrationError(f"Unexpected GitHub response format, missing key: {str(e)}") from e
+    except GitHubIntegrationError:
+        raise
     except Exception as e:
-        raise GitHubIntegrationError(f"Error getting repositories: {str(e)}")
+        raise GitHubIntegrationError(f"Unexpected error getting repositories: {str(e)}") from e
 
 
 def get_repository(
@@ -232,8 +272,20 @@ def get_repository(
             )
         else:
             raise GitHubIntegrationError(f"Failed to get repository: {response.text}")
+    except requests.Timeout as e:
+        raise GitHubIntegrationError(f"GitHub request timed out while getting repository: {str(e)}") from e
+    except requests.ConnectionError as e:
+        raise GitHubIntegrationError(f"Network error connecting to GitHub: {str(e)}") from e
+    except requests.HTTPError as e:
+        raise GitHubIntegrationError(f"GitHub HTTP error while getting repository: {str(e)}") from e
+    except requests.RequestException as e:
+        raise GitHubIntegrationError(f"GitHub request failed while getting repository: {str(e)}") from e
+    except KeyError as e:
+        raise GitHubIntegrationError(f"Unexpected GitHub response format, missing key: {str(e)}") from e
+    except GitHubIntegrationError:
+        raise
     except Exception as e:
-        raise GitHubIntegrationError(f"Error getting repository: {str(e)}")
+        raise GitHubIntegrationError(f"Unexpected error getting repository: {str(e)}") from e
 
 
 def create_branch(
@@ -302,8 +354,18 @@ def create_branch(
                 message=f"Failed to create branch: {response.text}",
                 data=None,
             )
+    except requests.Timeout as e:
+        raise GitHubIntegrationError(f"GitHub request timed out while creating branch: {str(e)}") from e
+    except requests.ConnectionError as e:
+        raise GitHubIntegrationError(f"Network error connecting to GitHub: {str(e)}") from e
+    except requests.HTTPError as e:
+        raise GitHubIntegrationError(f"GitHub HTTP error while creating branch: {str(e)}") from e
+    except requests.RequestException as e:
+        raise GitHubIntegrationError(f"GitHub request failed while creating branch: {str(e)}") from e
+    except KeyError as e:
+        raise GitHubIntegrationError(f"Unexpected GitHub response format, missing key: {str(e)}") from e
     except Exception as e:
-        raise GitHubIntegrationError(f"Error creating branch: {str(e)}")
+        raise GitHubIntegrationError(f"Unexpected error creating branch: {str(e)}") from e
 
 
 def create_pull_request(
@@ -365,8 +427,18 @@ def create_pull_request(
                 message=f"Failed to create pull request: {response.text}",
                 data=None,
             )
+    except requests.Timeout as e:
+        raise GitHubIntegrationError(f"GitHub request timed out while creating pull request: {str(e)}") from e
+    except requests.ConnectionError as e:
+        raise GitHubIntegrationError(f"Network error connecting to GitHub: {str(e)}") from e
+    except requests.HTTPError as e:
+        raise GitHubIntegrationError(f"GitHub HTTP error while creating pull request: {str(e)}") from e
+    except requests.RequestException as e:
+        raise GitHubIntegrationError(f"GitHub request failed while creating pull request: {str(e)}") from e
+    except KeyError as e:
+        raise GitHubIntegrationError(f"Unexpected GitHub response format, missing key: {str(e)}") from e
     except Exception as e:
-        raise GitHubIntegrationError(f"Error creating pull request: {str(e)}")
+        raise GitHubIntegrationError(f"Unexpected error creating pull request: {str(e)}") from e
 
 
 def upload_blog_post(
@@ -421,5 +493,9 @@ def upload_blog_post(
 
         # Upload file
         return upload_file(credentials, repository, options)
+    except GitHubIntegrationError:
+        raise
+    except ValueError as e:
+        raise GitHubIntegrationError(f"Invalid blog post data: {str(e)}") from e
     except Exception as e:
-        raise GitHubIntegrationError(f"Error uploading blog post: {str(e)}")
+        raise GitHubIntegrationError(f"Unexpected error uploading blog post: {str(e)}") from e

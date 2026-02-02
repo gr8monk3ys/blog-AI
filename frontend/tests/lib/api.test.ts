@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   API_BASE_URL,
+  API_V1_BASE_URL,
   WS_BASE_URL,
   API_ENDPOINTS,
   getDefaultHeaders,
@@ -15,17 +16,17 @@ describe('API Configuration', () => {
     })
 
     it('should have correct generateBlog endpoint', () => {
-      expect(API_ENDPOINTS.generateBlog).toBe(`${API_BASE_URL}/generate-blog`)
+      expect(API_ENDPOINTS.generateBlog).toBe(`${API_V1_BASE_URL}/generate-blog`)
     })
 
     it('should have correct generateBook endpoint', () => {
-      expect(API_ENDPOINTS.generateBook).toBe(`${API_BASE_URL}/generate-book`)
+      expect(API_ENDPOINTS.generateBook).toBe(`${API_V1_BASE_URL}/generate-book`)
     })
 
     it('should generate correct conversation endpoint', () => {
       const conversationId = 'test-123'
       expect(API_ENDPOINTS.conversation(conversationId)).toBe(
-        `${API_BASE_URL}/conversations/${conversationId}`
+        `${API_V1_BASE_URL}/conversations/${conversationId}`
       )
     })
 

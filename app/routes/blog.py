@@ -4,10 +4,11 @@ Blog generation endpoints.
 
 import asyncio
 import logging
+import uuid
 from datetime import datetime
 from functools import partial
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 
 from src.blog.make_blog import (
     BlogGenerationError,
@@ -21,6 +22,7 @@ from src.text_generation.core import (
     TextGenerationError,
     create_provider_from_env,
 )
+from src.webhooks import webhook_service
 
 from ..auth import verify_api_key
 from ..error_handlers import sanitize_error_message
@@ -199,6 +201,33 @@ async def generate_blog(
             tokens_used=4000,  # Estimated tokens
             metadata={"topic": request.topic[:50], "research": request.research},
         )
+
+        # Calculate word count for webhook
+        word_count = sum(
+            len(subtopic.content.split())
+            for section in blog_post.sections
+            for subtopic in section.subtopics
+        )
+
+        # Emit webhook event for content generation (non-blocking)
+        content_id = str(uuid.uuid4())
+        try:
+            await webhook_service.emit_content_generated(
+                user_id=user_id,
+                content_type="blog",
+                title=blog_post.title,
+                content_id=content_id,
+                word_count=word_count,
+                metadata={
+                    "topic": request.topic[:100],
+                    "tone": request.tone,
+                    "research": request.research,
+                    "keywords": request.keywords[:5] if request.keywords else [],
+                },
+            )
+        except Exception as webhook_error:
+            # Don't fail the request if webhook emission fails
+            logger.warning(f"Failed to emit webhook: {webhook_error}")
 
         logger.info(f"Blog generated successfully: {blog_post.title}")
         return {"success": True, "type": "blog", "content": blog_post_data}

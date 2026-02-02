@@ -5,8 +5,11 @@ This module provides scoring algorithms for:
 - Readability (Flesch-Kincaid, sentence complexity)
 - SEO (keyword density, structure, length)
 - Engagement (hooks, CTAs, emotional words)
+- Originality (plagiarism detection via multiple providers)
 """
 
+import asyncio
+import logging
 import math
 import re
 from typing import Dict, List, Optional, Set
@@ -14,10 +17,13 @@ from typing import Dict, List, Optional, Set
 from ..types.scoring import (
     ContentScoreResult,
     EngagementScore,
+    OriginalityScore,
     ReadabilityScore,
     ScoreLevel,
     SEOScore,
 )
+
+logger = logging.getLogger(__name__)
 
 
 # Common emotional/power words for engagement scoring
@@ -343,6 +349,104 @@ def score_seo(text: str, keywords: Optional[List[str]] = None) -> SEOScore:
     )
 
 
+async def score_originality(
+    text: str,
+    skip_cache: bool = False,
+) -> Optional[OriginalityScore]:
+    """
+    Score content originality using plagiarism detection.
+
+    This function integrates with the plagiarism checker module to
+    provide originality scoring as part of content analysis.
+
+    Args:
+        text: Content to analyze.
+        skip_cache: Whether to skip cached results.
+
+    Returns:
+        OriginalityScore with plagiarism analysis, or None if check fails.
+    """
+    try:
+        from ..quality.plagiarism_checker import (
+            PlagiarismCheckError,
+            get_plagiarism_checker,
+        )
+        from ..types.plagiarism import PlagiarismCheckRequest
+
+        # Minimum text length for meaningful plagiarism check
+        if len(text.split()) < 50:
+            return OriginalityScore(
+                score=100.0,
+                level=ScoreLevel.EXCELLENT,
+                plagiarism_percentage=0.0,
+                sources_found=0,
+                suggestions=["Content too short for plagiarism check (minimum 50 words)."],
+            )
+
+        factory = get_plagiarism_checker()
+
+        # Check if any provider is available
+        available_providers = factory.get_available_providers()
+        if not available_providers:
+            logger.warning("No plagiarism checker configured, skipping originality check")
+            return None
+
+        # Build check request
+        request = PlagiarismCheckRequest(
+            content=text,
+            skip_cache=skip_cache,
+        )
+
+        # Perform check
+        result = await factory.check_with_fallback(request, skip_cache=skip_cache)
+
+        # Convert to originality score (inverted - high originality = low plagiarism)
+        originality_pct = result.original_percentage
+        level = _get_level(originality_pct)
+
+        # Generate suggestions based on results
+        suggestions = []
+        if result.overall_score > 30:
+            suggestions.append(
+                f"High plagiarism detected ({result.overall_score:.1f}%). "
+                "Rewrite content to improve originality."
+            )
+            if result.matching_sources:
+                top_source = result.matching_sources[0]
+                suggestions.append(
+                    f"Top match: {top_source.url} ({top_source.similarity_percentage:.1f}% similar)"
+                )
+        elif result.overall_score > 15:
+            suggestions.append(
+                "Moderate similarity detected. Consider paraphrasing matching sections."
+            )
+        elif result.overall_score > 5:
+            suggestions.append(
+                "Minor similarities found. Ensure proper attribution if citing sources."
+            )
+        else:
+            suggestions.append("Content appears highly original. Good work!")
+
+        return OriginalityScore(
+            score=originality_pct,
+            level=level,
+            plagiarism_percentage=result.overall_score,
+            sources_found=len(result.matching_sources),
+            top_source_url=result.matching_sources[0].url if result.matching_sources else None,
+            top_source_similarity=result.matching_sources[0].similarity_percentage if result.matching_sources else 0,
+            provider_used=result.provider.value,
+            check_id=result.check_id,
+            cached=result.cached,
+            suggestions=suggestions,
+        )
+
+    except Exception as e:
+        logger.error(f"Originality check failed: {e}")
+        # Return None to indicate check couldn't be performed
+        # This allows scoring to continue without originality component
+        return None
+
+
 def score_engagement(text: str) -> EngagementScore:
     """
     Score content for engagement potential.
@@ -467,6 +571,7 @@ def get_overall_score(
     readability: ReadabilityScore,
     seo: SEOScore,
     engagement: EngagementScore,
+    originality: Optional[OriginalityScore] = None,
     weights: Optional[Dict[str, float]] = None,
 ) -> float:
     """
@@ -476,23 +581,36 @@ def get_overall_score(
         readability: Readability score result.
         seo: SEO score result.
         engagement: Engagement score result.
+        originality: Optional originality score result.
         weights: Optional custom weights (must sum to 1.0).
 
     Returns:
         Weighted overall score (0-100).
     """
     if weights is None:
-        weights = {
-            "readability": 0.30,
-            "seo": 0.40,
-            "engagement": 0.30,
-        }
+        if originality:
+            # Include originality in weighting
+            weights = {
+                "readability": 0.25,
+                "seo": 0.30,
+                "engagement": 0.25,
+                "originality": 0.20,
+            }
+        else:
+            weights = {
+                "readability": 0.30,
+                "seo": 0.40,
+                "engagement": 0.30,
+            }
 
     overall = (
-        readability.score * weights.get("readability", 0.33) +
-        seo.score * weights.get("seo", 0.34) +
-        engagement.score * weights.get("engagement", 0.33)
+        readability.score * weights.get("readability", 0.30) +
+        seo.score * weights.get("seo", 0.35) +
+        engagement.score * weights.get("engagement", 0.30)
     )
+
+    if originality and "originality" in weights:
+        overall += originality.score * weights.get("originality", 0.0)
 
     return round(overall, 1)
 
@@ -501,14 +619,16 @@ def score_content(
     text: str,
     keywords: Optional[List[str]] = None,
     content_type: str = "blog",
+    originality: Optional[OriginalityScore] = None,
 ) -> ContentScoreResult:
     """
-    Comprehensive content scoring.
+    Comprehensive content scoring (synchronous version).
 
     Args:
         text: Content to analyze.
         keywords: Target keywords for SEO analysis.
         content_type: Type of content (affects weight distribution).
+        originality: Optional pre-computed originality score.
 
     Returns:
         ContentScoreResult with all metrics and suggestions.
@@ -518,16 +638,24 @@ def score_content(
     seo = score_seo(text, keywords)
     engagement = score_engagement(text)
 
-    # Adjust weights based on content type
-    weights = {
-        "blog": {"readability": 0.30, "seo": 0.40, "engagement": 0.30},
-        "email": {"readability": 0.35, "seo": 0.15, "engagement": 0.50},
-        "social": {"readability": 0.25, "seo": 0.20, "engagement": 0.55},
-        "business": {"readability": 0.40, "seo": 0.30, "engagement": 0.30},
-    }.get(content_type, {"readability": 0.33, "seo": 0.34, "engagement": 0.33})
+    # Adjust weights based on content type and whether originality is included
+    if originality:
+        weights = {
+            "blog": {"readability": 0.25, "seo": 0.30, "engagement": 0.25, "originality": 0.20},
+            "email": {"readability": 0.30, "seo": 0.10, "engagement": 0.40, "originality": 0.20},
+            "social": {"readability": 0.20, "seo": 0.15, "engagement": 0.45, "originality": 0.20},
+            "business": {"readability": 0.30, "seo": 0.25, "engagement": 0.25, "originality": 0.20},
+        }.get(content_type, {"readability": 0.25, "seo": 0.30, "engagement": 0.25, "originality": 0.20})
+    else:
+        weights = {
+            "blog": {"readability": 0.30, "seo": 0.40, "engagement": 0.30},
+            "email": {"readability": 0.35, "seo": 0.15, "engagement": 0.50},
+            "social": {"readability": 0.25, "seo": 0.20, "engagement": 0.55},
+            "business": {"readability": 0.40, "seo": 0.30, "engagement": 0.30},
+        }.get(content_type, {"readability": 0.33, "seo": 0.34, "engagement": 0.33})
 
     # Calculate overall score
-    overall = get_overall_score(readability, seo, engagement, weights)
+    overall = get_overall_score(readability, seo, engagement, originality, weights)
     overall_level = _get_level(overall)
 
     # Compile top improvements (prioritize lowest scoring areas)
@@ -539,11 +667,21 @@ def score_content(
         (seo.score, "SEO", seo.suggestions),
         (engagement.score, "Engagement", engagement.suggestions),
     ]
+
+    # Include originality if available
+    if originality:
+        dimension_scores.append(
+            (originality.score, "Originality", originality.suggestions)
+        )
+
     dimension_scores.sort(key=lambda x: x[0])
 
     for _, dimension, suggestions in dimension_scores:
         for suggestion in suggestions[:2]:
-            if not suggestion.startswith(("Good", "Readability is good", "SEO structure looks", "Engagement is strong")):
+            if not suggestion.startswith((
+                "Good", "Readability is good", "SEO structure looks",
+                "Engagement is strong", "Content appears highly original"
+            )):
                 all_suggestions.append(f"[{dimension}] {suggestion}")
 
     top_improvements = all_suggestions[:3]
@@ -558,14 +696,52 @@ def score_content(
     else:
         summary = "Content requires significant improvement across multiple areas."
 
+    # Add originality warning if needed
+    if originality and originality.plagiarism_percentage > 30:
+        summary += " Warning: High plagiarism detected - content may need significant rewriting."
+
     return ContentScoreResult(
         overall_score=overall,
         overall_level=overall_level,
         readability=readability,
         seo=seo,
         engagement=engagement,
+        originality=originality,
         summary=summary,
         top_improvements=top_improvements,
+    )
+
+
+async def score_content_async(
+    text: str,
+    keywords: Optional[List[str]] = None,
+    content_type: str = "blog",
+    check_originality: bool = False,
+    skip_originality_cache: bool = False,
+) -> ContentScoreResult:
+    """
+    Comprehensive content scoring with optional originality check (async version).
+
+    Args:
+        text: Content to analyze.
+        keywords: Target keywords for SEO analysis.
+        content_type: Type of content (affects weight distribution).
+        check_originality: Whether to include plagiarism checking.
+        skip_originality_cache: Skip cache for originality check.
+
+    Returns:
+        ContentScoreResult with all metrics and suggestions.
+    """
+    originality = None
+
+    if check_originality:
+        originality = await score_originality(text, skip_cache=skip_originality_cache)
+
+    return score_content(
+        text=text,
+        keywords=keywords,
+        content_type=content_type,
+        originality=originality,
     )
 
 
@@ -573,7 +749,7 @@ class ContentScorer:
     """
     Content scorer class for analyzing generated content.
 
-    Provides methods for scoring readability, SEO, and engagement,
+    Provides methods for scoring readability, SEO, engagement, and originality,
     with configurable weights and content type handling.
     """
 
@@ -581,6 +757,7 @@ class ContentScorer:
         self,
         default_keywords: Optional[List[str]] = None,
         default_content_type: str = "blog",
+        check_originality_by_default: bool = False,
     ):
         """
         Initialize the content scorer.
@@ -588,23 +765,27 @@ class ContentScorer:
         Args:
             default_keywords: Default keywords for SEO analysis.
             default_content_type: Default content type for weight calculation.
+            check_originality_by_default: Whether to include plagiarism check by default.
         """
         self.default_keywords = default_keywords or []
         self.default_content_type = default_content_type
+        self.check_originality_by_default = check_originality_by_default
 
     def score(
         self,
         text: str,
         keywords: Optional[List[str]] = None,
         content_type: Optional[str] = None,
+        originality: Optional[OriginalityScore] = None,
     ) -> ContentScoreResult:
         """
-        Score content comprehensively.
+        Score content comprehensively (synchronous, without originality check).
 
         Args:
             text: Content to analyze.
             keywords: Keywords for SEO (uses defaults if not provided).
             content_type: Content type (uses default if not provided).
+            originality: Optional pre-computed originality score.
 
         Returns:
             Complete content score result.
@@ -613,6 +794,43 @@ class ContentScorer:
             text=text,
             keywords=keywords or self.default_keywords,
             content_type=content_type or self.default_content_type,
+            originality=originality,
+        )
+
+    async def score_async(
+        self,
+        text: str,
+        keywords: Optional[List[str]] = None,
+        content_type: Optional[str] = None,
+        check_originality: Optional[bool] = None,
+        skip_originality_cache: bool = False,
+    ) -> ContentScoreResult:
+        """
+        Score content comprehensively with optional originality check.
+
+        Args:
+            text: Content to analyze.
+            keywords: Keywords for SEO (uses defaults if not provided).
+            content_type: Content type (uses default if not provided).
+            check_originality: Whether to include plagiarism check
+                             (uses instance default if not specified).
+            skip_originality_cache: Skip cache for originality check.
+
+        Returns:
+            Complete content score result with optional originality analysis.
+        """
+        should_check_originality = (
+            check_originality
+            if check_originality is not None
+            else self.check_originality_by_default
+        )
+
+        return await score_content_async(
+            text=text,
+            keywords=keywords or self.default_keywords,
+            content_type=content_type or self.default_content_type,
+            check_originality=should_check_originality,
+            skip_originality_cache=skip_originality_cache,
         )
 
     def score_readability(self, text: str) -> ReadabilityScore:
@@ -630,3 +848,20 @@ class ContentScorer:
     def score_engagement(self, text: str) -> EngagementScore:
         """Score only engagement."""
         return score_engagement(text)
+
+    async def score_originality(
+        self,
+        text: str,
+        skip_cache: bool = False,
+    ) -> Optional[OriginalityScore]:
+        """
+        Score only originality/plagiarism.
+
+        Args:
+            text: Content to analyze.
+            skip_cache: Whether to skip cached results.
+
+        Returns:
+            Originality score, or None if check fails.
+        """
+        return await score_originality(text, skip_cache=skip_cache)

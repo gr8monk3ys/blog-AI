@@ -64,8 +64,23 @@ export const TIME_RANGE_OPTIONS: Record<TimeRangeOption, AnalyticsTimeRange> = {
   },
 }
 
+// Known category types
+export type CategoryKey =
+  | 'blog'
+  | 'email'
+  | 'social-media'
+  | 'business'
+  | 'naming'
+  | 'video'
+  | 'seo'
+  | 'rewriting'
+
+// Default color for unknown categories
+const DEFAULT_COLOR = '#6b7280' // gray-500
+const DEFAULT_BG_COLOR = '#f3f4f6' // gray-100
+
 // Category colors matching the design system
-export const CATEGORY_COLORS: Record<string, string> = {
+export const CATEGORY_COLORS: Record<CategoryKey, string> = {
   blog: '#4f46e5', // indigo-600
   email: '#059669', // emerald-600
   'social-media': '#db2777', // pink-600
@@ -76,7 +91,7 @@ export const CATEGORY_COLORS: Record<string, string> = {
   rewriting: '#7c3aed', // violet-600
 }
 
-export const CATEGORY_BG_COLORS: Record<string, string> = {
+export const CATEGORY_BG_COLORS: Record<CategoryKey, string> = {
   blog: '#e0e7ff', // indigo-100
   email: '#d1fae5', // emerald-100
   'social-media': '#fce7f3', // pink-100
@@ -85,4 +100,13 @@ export const CATEGORY_BG_COLORS: Record<string, string> = {
   video: '#fee2e2', // red-100
   seo: '#cffafe', // cyan-100
   rewriting: '#ede9fe', // violet-100
+}
+
+// Helper to safely get category color with fallback
+export function getCategoryColor(category: string): string {
+  return (CATEGORY_COLORS as Record<string, string>)[category] || DEFAULT_COLOR
+}
+
+export function getCategoryBgColor(category: string): string {
+  return (CATEGORY_BG_COLORS as Record<string, string>)[category] || DEFAULT_BG_COLOR
 }

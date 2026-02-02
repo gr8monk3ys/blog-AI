@@ -284,9 +284,13 @@ def generate_introduction_section(
         return section
     except TextGenerationError as e:
         raise BlogGenerationError(f"Failed to generate introduction: {str(e)}") from e
+    except ValueError as e:
+        raise BlogGenerationError(f"Invalid parameters for introduction generation: {str(e)}") from e
+    except AttributeError as e:
+        raise BlogGenerationError(f"Invalid data structure during introduction generation: {str(e)}") from e
     except Exception as e:
         logger.error(f"Unexpected error generating introduction section: {str(e)}", exc_info=True)
-        raise BlogGenerationError(f"Error generating introduction section: {str(e)}") from e
+        raise BlogGenerationError(f"Unexpected error generating introduction section: {str(e)}") from e
 
 
 def generate_introduction_section_with_research(
@@ -362,9 +366,13 @@ def generate_introduction_section_with_research(
         return section
     except TextGenerationError as e:
         raise BlogGenerationError(f"Failed to generate introduction with research: {str(e)}") from e
+    except ValueError as e:
+        raise BlogGenerationError(f"Invalid parameters for introduction with research: {str(e)}") from e
+    except AttributeError as e:
+        raise BlogGenerationError(f"Invalid data structure during introduction with research: {str(e)}") from e
     except Exception as e:
         logger.error(f"Unexpected error generating introduction section with research: {str(e)}", exc_info=True)
-        raise BlogGenerationError(f"Error generating introduction section with research: {str(e)}") from e
+        raise BlogGenerationError(f"Unexpected error generating introduction section with research: {str(e)}") from e
 
 
 def generate_section(
@@ -434,9 +442,13 @@ def generate_section(
         return section
     except TextGenerationError as e:
         raise BlogGenerationError(f"Failed to generate section '{section_title}': {str(e)}") from e
+    except ValueError as e:
+        raise BlogGenerationError(f"Invalid parameters for section '{section_title}': {str(e)}") from e
+    except AttributeError as e:
+        raise BlogGenerationError(f"Invalid data structure during section generation: {str(e)}") from e
     except Exception as e:
         logger.error(f"Unexpected error generating section: {str(e)}", exc_info=True)
-        raise BlogGenerationError(f"Error generating section: {str(e)}") from e
+        raise BlogGenerationError(f"Unexpected error generating section: {str(e)}") from e
 
 
 def generate_section_with_research(
@@ -512,9 +524,13 @@ def generate_section_with_research(
         return section
     except TextGenerationError as e:
         raise BlogGenerationError(f"Failed to generate section '{section_title}' with research: {str(e)}") from e
+    except ValueError as e:
+        raise BlogGenerationError(f"Invalid parameters for section with research: {str(e)}") from e
+    except AttributeError as e:
+        raise BlogGenerationError(f"Invalid data structure during section with research: {str(e)}") from e
     except Exception as e:
         logger.error(f"Unexpected error generating section with research: {str(e)}", exc_info=True)
-        raise BlogGenerationError(f"Error generating section with research: {str(e)}") from e
+        raise BlogGenerationError(f"Unexpected error generating section with research: {str(e)}") from e
 
 
 def generate_conclusion_section(
@@ -567,9 +583,13 @@ def generate_conclusion_section(
         return section
     except TextGenerationError as e:
         raise BlogGenerationError(f"Failed to generate conclusion: {str(e)}") from e
+    except ValueError as e:
+        raise BlogGenerationError(f"Invalid parameters for conclusion generation: {str(e)}") from e
+    except AttributeError as e:
+        raise BlogGenerationError(f"Invalid data structure during conclusion generation: {str(e)}") from e
     except Exception as e:
         logger.error(f"Unexpected error generating conclusion section: {str(e)}", exc_info=True)
-        raise BlogGenerationError(f"Error generating conclusion section: {str(e)}") from e
+        raise BlogGenerationError(f"Unexpected error generating conclusion section: {str(e)}") from e
 
 
 def generate_faq_section(
@@ -617,9 +637,13 @@ def generate_faq_section(
         return section
     except TextGenerationError as e:
         raise BlogGenerationError(f"Failed to generate FAQ section: {str(e)}") from e
+    except ValueError as e:
+        raise BlogGenerationError(f"Invalid parameters for FAQ generation: {str(e)}") from e
+    except AttributeError as e:
+        raise BlogGenerationError(f"Invalid data structure during FAQ generation: {str(e)}") from e
     except Exception as e:
         logger.error(f"Unexpected error generating FAQ section: {str(e)}", exc_info=True)
-        raise BlogGenerationError(f"Error generating FAQ section: {str(e)}") from e
+        raise BlogGenerationError(f"Unexpected error generating FAQ section: {str(e)}") from e
 
 
 def post_process_blog_post(
@@ -691,9 +715,13 @@ def post_process_blog_post(
         return processed_blog_post
     except TextGenerationError as e:
         raise BlogGenerationError(f"Failed during post-processing: {str(e)}") from e
+    except ValueError as e:
+        raise BlogGenerationError(f"Invalid parameters during post-processing: {str(e)}") from e
+    except AttributeError as e:
+        raise BlogGenerationError(f"Invalid data structure during post-processing: {str(e)}") from e
     except Exception as e:
         logger.error(f"Unexpected error post-processing blog post: {str(e)}", exc_info=True)
-        raise BlogGenerationError(f"Error post-processing blog post: {str(e)}") from e
+        raise BlogGenerationError(f"Unexpected error post-processing blog post: {str(e)}") from e
 
 
 def save_blog_post_to_markdown(blog_post: BlogPost, file_path: str) -> None:

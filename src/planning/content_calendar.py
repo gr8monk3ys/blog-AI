@@ -8,8 +8,8 @@ import os
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
-from ..research.web_researcher import conduct_web_research
-from ..text_generation.core import GenerationOptions, LLMProvider, generate_text
+from ..research.web_researcher import ResearchError, conduct_web_research
+from ..text_generation.core import GenerationOptions, LLMProvider, TextGenerationError, generate_text
 from ..types.planning import (
     ContentCalendar,
     ContentItem,
@@ -109,8 +109,16 @@ def generate_content_calendar(
             items.append(item)
 
         return ContentCalendar(items=items, start_date=start_date, end_date=end_date)
+    except ContentCalendarError:
+        raise
+    except TextGenerationError as e:
+        raise ContentCalendarError(f"Failed to generate content calendar: {str(e)}") from e
+    except ValueError as e:
+        raise ContentCalendarError(f"Invalid parameters for content calendar: {str(e)}") from e
     except Exception as e:
-        raise ContentCalendarError(f"Error generating content calendar: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise ContentCalendarError(f"Unexpected error generating content calendar: {str(e)}") from e
 
 
 def generate_content_topics(
@@ -209,8 +217,14 @@ def generate_content_topics(
             )
 
         return topics[:num_topics]
+    except TextGenerationError as e:
+        raise ContentCalendarError(f"Failed to generate content topics: {str(e)}") from e
+    except ValueError as e:
+        raise ContentCalendarError(f"Invalid parameters for content topics: {str(e)}") from e
     except Exception as e:
-        raise ContentCalendarError(f"Error generating content topics: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise ContentCalendarError(f"Unexpected error generating content topics: {str(e)}") from e
 
 
 def generate_content_topics_with_research(
@@ -314,10 +328,16 @@ def generate_content_topics_with_research(
             )
 
         return topics[:num_topics]
+    except TextGenerationError as e:
+        raise ContentCalendarError(f"Failed to generate content topics with research: {str(e)}") from e
+    except ResearchError as e:
+        raise ContentCalendarError(f"Research failed during topic generation: {str(e)}") from e
+    except ValueError as e:
+        raise ContentCalendarError(f"Invalid parameters for content topics with research: {str(e)}") from e
     except Exception as e:
-        raise ContentCalendarError(
-            f"Error generating content topics with research: {str(e)}"
-        )
+        import traceback
+        traceback.print_exc()
+        raise ContentCalendarError(f"Unexpected error generating content topics with research: {str(e)}") from e
 
 
 def save_content_calendar_to_csv(calendar: ContentCalendar, file_path: str) -> None:
@@ -358,8 +378,16 @@ def save_content_calendar_to_csv(calendar: ContentCalendar, file_path: str) -> N
                         item.status,
                     ]
                 )
+    except PermissionError as e:
+        raise ContentCalendarError(f"Permission denied writing calendar to {file_path}: {str(e)}") from e
+    except OSError as e:
+        raise ContentCalendarError(f"File system error saving calendar: {str(e)}") from e
+    except (TypeError, AttributeError) as e:
+        raise ContentCalendarError(f"Invalid calendar data for CSV serialization: {str(e)}") from e
     except Exception as e:
-        raise ContentCalendarError(f"Error saving content calendar to CSV: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise ContentCalendarError(f"Unexpected error saving content calendar to CSV: {str(e)}") from e
 
 
 def save_content_calendar_to_json(calendar: ContentCalendar, file_path: str) -> None:
@@ -402,8 +430,16 @@ def save_content_calendar_to_json(calendar: ContentCalendar, file_path: str) -> 
         # Write calendar to JSON
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(calendar_data, f, indent=2)
+    except PermissionError as e:
+        raise ContentCalendarError(f"Permission denied writing calendar to {file_path}: {str(e)}") from e
+    except OSError as e:
+        raise ContentCalendarError(f"File system error saving calendar: {str(e)}") from e
+    except TypeError as e:
+        raise ContentCalendarError(f"JSON serialization error: {str(e)}") from e
     except Exception as e:
-        raise ContentCalendarError(f"Error saving content calendar to JSON: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise ContentCalendarError(f"Unexpected error saving content calendar to JSON: {str(e)}") from e
 
 
 def load_content_calendar_from_json(file_path: str) -> ContentCalendar:
@@ -449,7 +485,17 @@ def load_content_calendar_from_json(file_path: str) -> ContentCalendar:
             start_date=datetime.strptime(calendar_data["start_date"], "%Y-%m-%d"),
             end_date=datetime.strptime(calendar_data["end_date"], "%Y-%m-%d"),
         )
+    except FileNotFoundError as e:
+        raise ContentCalendarError(f"Calendar file not found: {file_path}") from e
+    except PermissionError as e:
+        raise ContentCalendarError(f"Permission denied reading calendar from {file_path}: {str(e)}") from e
+    except json.JSONDecodeError as e:
+        raise ContentCalendarError(f"Invalid JSON format in calendar file: {str(e)}") from e
+    except KeyError as e:
+        raise ContentCalendarError(f"Missing required field in calendar JSON: {str(e)}") from e
+    except ValueError as e:
+        raise ContentCalendarError(f"Invalid date format in calendar file: {str(e)}") from e
     except Exception as e:
-        raise ContentCalendarError(
-            f"Error loading content calendar from JSON: {str(e)}"
-        )
+        import traceback
+        traceback.print_exc()
+        raise ContentCalendarError(f"Unexpected error loading content calendar from JSON: {str(e)}") from e

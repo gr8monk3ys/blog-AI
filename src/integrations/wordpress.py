@@ -92,8 +92,20 @@ def upload_post(
                 message=f"Failed to upload post: {response.text}",
                 data=None,
             )
+    except requests.Timeout as e:
+        raise WordPressIntegrationError(f"WordPress request timed out while uploading post: {str(e)}") from e
+    except requests.ConnectionError as e:
+        raise WordPressIntegrationError(f"Network error connecting to WordPress: {str(e)}") from e
+    except requests.HTTPError as e:
+        raise WordPressIntegrationError(f"WordPress HTTP error while uploading post: {str(e)}") from e
+    except requests.RequestException as e:
+        raise WordPressIntegrationError(f"WordPress request failed while uploading post: {str(e)}") from e
+    except KeyError as e:
+        raise WordPressIntegrationError(f"Unexpected WordPress response format, missing key: {str(e)}") from e
+    except (TypeError, ValueError) as e:
+        raise WordPressIntegrationError(f"Error processing WordPress response: {str(e)}") from e
     except Exception as e:
-        raise WordPressIntegrationError(f"Error uploading post: {str(e)}")
+        raise WordPressIntegrationError(f"Unexpected error uploading post: {str(e)}") from e
 
 
 def get_categories(credentials: WordPressCredentials) -> List[WordPressCategory]:
@@ -140,8 +152,18 @@ def get_categories(credentials: WordPressCredentials) -> List[WordPressCategory]
             raise WordPressIntegrationError(
                 f"Failed to get categories: {response.text}"
             )
+    except requests.Timeout as e:
+        raise WordPressIntegrationError(f"WordPress request timed out while getting categories: {str(e)}") from e
+    except requests.ConnectionError as e:
+        raise WordPressIntegrationError(f"Network error connecting to WordPress: {str(e)}") from e
+    except requests.RequestException as e:
+        raise WordPressIntegrationError(f"WordPress request failed while getting categories: {str(e)}") from e
+    except KeyError as e:
+        raise WordPressIntegrationError(f"Unexpected WordPress response format, missing key: {str(e)}") from e
+    except WordPressIntegrationError:
+        raise
     except Exception as e:
-        raise WordPressIntegrationError(f"Error getting categories: {str(e)}")
+        raise WordPressIntegrationError(f"Unexpected error getting categories: {str(e)}") from e
 
 
 def get_tags(credentials: WordPressCredentials) -> List[WordPressTag]:
@@ -184,8 +206,18 @@ def get_tags(credentials: WordPressCredentials) -> List[WordPressTag]:
             return tags
         else:
             raise WordPressIntegrationError(f"Failed to get tags: {response.text}")
+    except requests.Timeout as e:
+        raise WordPressIntegrationError(f"WordPress request timed out while getting tags: {str(e)}") from e
+    except requests.ConnectionError as e:
+        raise WordPressIntegrationError(f"Network error connecting to WordPress: {str(e)}") from e
+    except requests.RequestException as e:
+        raise WordPressIntegrationError(f"WordPress request failed while getting tags: {str(e)}") from e
+    except KeyError as e:
+        raise WordPressIntegrationError(f"Unexpected WordPress response format, missing key: {str(e)}") from e
+    except WordPressIntegrationError:
+        raise
     except Exception as e:
-        raise WordPressIntegrationError(f"Error getting tags: {str(e)}")
+        raise WordPressIntegrationError(f"Unexpected error getting tags: {str(e)}") from e
 
 
 def create_category(
@@ -237,8 +269,18 @@ def create_category(
             raise WordPressIntegrationError(
                 f"Failed to create category: {response.text}"
             )
+    except requests.Timeout as e:
+        raise WordPressIntegrationError(f"WordPress request timed out while creating category: {str(e)}") from e
+    except requests.ConnectionError as e:
+        raise WordPressIntegrationError(f"Network error connecting to WordPress: {str(e)}") from e
+    except requests.RequestException as e:
+        raise WordPressIntegrationError(f"WordPress request failed while creating category: {str(e)}") from e
+    except KeyError as e:
+        raise WordPressIntegrationError(f"Unexpected WordPress response format, missing key: {str(e)}") from e
+    except WordPressIntegrationError:
+        raise
     except Exception as e:
-        raise WordPressIntegrationError(f"Error creating category: {str(e)}")
+        raise WordPressIntegrationError(f"Unexpected error creating category: {str(e)}") from e
 
 
 def create_tag(
@@ -284,8 +326,18 @@ def create_tag(
             )
         else:
             raise WordPressIntegrationError(f"Failed to create tag: {response.text}")
+    except requests.Timeout as e:
+        raise WordPressIntegrationError(f"WordPress request timed out while creating tag: {str(e)}") from e
+    except requests.ConnectionError as e:
+        raise WordPressIntegrationError(f"Network error connecting to WordPress: {str(e)}") from e
+    except requests.RequestException as e:
+        raise WordPressIntegrationError(f"WordPress request failed while creating tag: {str(e)}") from e
+    except KeyError as e:
+        raise WordPressIntegrationError(f"Unexpected WordPress response format, missing key: {str(e)}") from e
+    except WordPressIntegrationError:
+        raise
     except Exception as e:
-        raise WordPressIntegrationError(f"Error creating tag: {str(e)}")
+        raise WordPressIntegrationError(f"Unexpected error creating tag: {str(e)}") from e
 
 
 def upload_image(
@@ -339,8 +391,22 @@ def upload_image(
             )
         else:
             raise WordPressIntegrationError(f"Failed to upload image: {response.text}")
+    except FileNotFoundError as e:
+        raise WordPressIntegrationError(f"Image file not found: {str(e)}") from e
+    except PermissionError as e:
+        raise WordPressIntegrationError(f"Permission denied reading image file: {str(e)}") from e
+    except requests.Timeout as e:
+        raise WordPressIntegrationError(f"WordPress request timed out while uploading image: {str(e)}") from e
+    except requests.ConnectionError as e:
+        raise WordPressIntegrationError(f"Network error connecting to WordPress: {str(e)}") from e
+    except requests.RequestException as e:
+        raise WordPressIntegrationError(f"WordPress request failed while uploading image: {str(e)}") from e
+    except KeyError as e:
+        raise WordPressIntegrationError(f"Unexpected WordPress response format, missing key: {str(e)}") from e
+    except WordPressIntegrationError:
+        raise
     except Exception as e:
-        raise WordPressIntegrationError(f"Error uploading image: {str(e)}")
+        raise WordPressIntegrationError(f"Unexpected error uploading image: {str(e)}") from e
 
 
 def update_image_alt_text(
@@ -376,8 +442,16 @@ def update_image_alt_text(
             raise WordPressIntegrationError(
                 f"Failed to update image alt text: {response.text}"
             )
+    except requests.Timeout as e:
+        raise WordPressIntegrationError(f"WordPress request timed out while updating image alt text: {str(e)}") from e
+    except requests.ConnectionError as e:
+        raise WordPressIntegrationError(f"Network error connecting to WordPress: {str(e)}") from e
+    except requests.RequestException as e:
+        raise WordPressIntegrationError(f"WordPress request failed while updating image alt text: {str(e)}") from e
+    except WordPressIntegrationError:
+        raise
     except Exception as e:
-        raise WordPressIntegrationError(f"Error updating image alt text: {str(e)}")
+        raise WordPressIntegrationError(f"Unexpected error updating image alt text: {str(e)}") from e
 
 
 def get_or_create_category(
@@ -407,8 +481,10 @@ def get_or_create_category(
 
         # Create category
         return create_category(credentials, name)
+    except WordPressIntegrationError:
+        raise
     except Exception as e:
-        raise WordPressIntegrationError(f"Error getting or creating category: {str(e)}")
+        raise WordPressIntegrationError(f"Unexpected error getting or creating category: {str(e)}") from e
 
 
 def get_or_create_tag(credentials: WordPressCredentials, name: str) -> WordPressTag:
@@ -436,8 +512,10 @@ def get_or_create_tag(credentials: WordPressCredentials, name: str) -> WordPress
 
         # Create tag
         return create_tag(credentials, name)
+    except WordPressIntegrationError:
+        raise
     except Exception as e:
-        raise WordPressIntegrationError(f"Error getting or creating tag: {str(e)}")
+        raise WordPressIntegrationError(f"Unexpected error getting or creating tag: {str(e)}") from e
 
 
 def upload_blog_post(
@@ -504,7 +582,15 @@ def upload_blog_post(
 
         # Upload post
         return upload_post(credentials, post_options)
+    except WordPressIntegrationError as e:
+        return IntegrationResult(
+            success=False, message=str(e), data=None
+        )
+    except ValueError as e:
+        return IntegrationResult(
+            success=False, message=f"Invalid blog post data: {str(e)}", data=None
+        )
     except Exception as e:
         return IntegrationResult(
-            success=False, message=f"Error uploading blog post: {str(e)}", data=None
+            success=False, message=f"Unexpected error uploading blog post: {str(e)}", data=None
         )
