@@ -21,9 +21,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 # Add the project root to the path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-# Mock sentry_sdk before any imports that might need it
-mock_sentry = MagicMock()
-sys.modules["sentry_sdk"] = mock_sentry
+# Note: Do NOT mock sentry_sdk globally here as it pollutes other test files.
+# The auth module does not use sentry_sdk, so no mock is needed.
 
 
 def get_auth_module():
