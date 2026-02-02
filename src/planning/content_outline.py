@@ -6,8 +6,8 @@ import json
 import os
 from typing import Any, Dict, List, Optional
 
-from ..research.web_researcher import conduct_web_research
-from ..text_generation.core import GenerationOptions, LLMProvider, generate_text
+from ..research.web_researcher import ResearchError, conduct_web_research
+from ..text_generation.core import GenerationOptions, LLMProvider, TextGenerationError, generate_text
 from ..types.planning import ContentOutline, ContentTopic
 
 
@@ -101,8 +101,16 @@ def generate_content_outline(
                 sections.append(section)
 
         return ContentOutline(title=title, sections=sections, keywords=keywords or [])
+    except TextGenerationError as e:
+        raise ContentOutlineError(f"Failed to generate content outline: {str(e)}") from e
+    except ValueError as e:
+        raise ContentOutlineError(f"Invalid parameters for content outline: {str(e)}") from e
+    except AttributeError as e:
+        raise ContentOutlineError(f"Invalid data structure during outline generation: {str(e)}") from e
     except Exception as e:
-        raise ContentOutlineError(f"Error generating content outline: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise ContentOutlineError(f"Unexpected error generating content outline: {str(e)}") from e
 
 
 def generate_detailed_content_outline(
@@ -196,10 +204,16 @@ def generate_detailed_content_outline(
                 sections.append(section)
 
         return ContentOutline(title=title, sections=sections, keywords=keywords or [])
+    except TextGenerationError as e:
+        raise ContentOutlineError(f"Failed to generate detailed content outline: {str(e)}") from e
+    except ValueError as e:
+        raise ContentOutlineError(f"Invalid parameters for detailed content outline: {str(e)}") from e
+    except AttributeError as e:
+        raise ContentOutlineError(f"Invalid data structure during detailed outline generation: {str(e)}") from e
     except Exception as e:
-        raise ContentOutlineError(
-            f"Error generating detailed content outline: {str(e)}"
-        )
+        import traceback
+        traceback.print_exc()
+        raise ContentOutlineError(f"Unexpected error generating detailed content outline: {str(e)}") from e
 
 
 def generate_content_outline_with_research(
@@ -298,10 +312,16 @@ def generate_content_outline_with_research(
                 sections.append(section)
 
         return ContentOutline(title=title, sections=sections, keywords=keywords or [])
+    except TextGenerationError as e:
+        raise ContentOutlineError(f"Failed to generate content outline with research: {str(e)}") from e
+    except ResearchError as e:
+        raise ContentOutlineError(f"Research failed during outline generation: {str(e)}") from e
+    except ValueError as e:
+        raise ContentOutlineError(f"Invalid parameters for content outline with research: {str(e)}") from e
     except Exception as e:
-        raise ContentOutlineError(
-            f"Error generating content outline with research: {str(e)}"
-        )
+        import traceback
+        traceback.print_exc()
+        raise ContentOutlineError(f"Unexpected error generating content outline with research: {str(e)}") from e
 
 
 def generate_content_outline_from_topic(
@@ -385,10 +405,16 @@ def generate_content_outline_from_topic(
         return ContentOutline(
             title=topic.title, sections=sections, keywords=topic.keywords
         )
+    except TextGenerationError as e:
+        raise ContentOutlineError(f"Failed to generate content outline from topic: {str(e)}") from e
+    except ValueError as e:
+        raise ContentOutlineError(f"Invalid topic parameters: {str(e)}") from e
+    except AttributeError as e:
+        raise ContentOutlineError(f"Invalid topic data structure: {str(e)}") from e
     except Exception as e:
-        raise ContentOutlineError(
-            f"Error generating content outline from topic: {str(e)}"
-        )
+        import traceback
+        traceback.print_exc()
+        raise ContentOutlineError(f"Unexpected error generating content outline from topic: {str(e)}") from e
 
 
 def save_content_outline_to_json(outline: ContentOutline, file_path: str) -> None:
@@ -418,8 +444,16 @@ def save_content_outline_to_json(outline: ContentOutline, file_path: str) -> Non
         # Write outline to JSON
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(outline_data, f, indent=2)
+    except PermissionError as e:
+        raise ContentOutlineError(f"Permission denied writing outline to {file_path}: {str(e)}") from e
+    except OSError as e:
+        raise ContentOutlineError(f"File system error saving outline: {str(e)}") from e
+    except TypeError as e:
+        raise ContentOutlineError(f"JSON serialization error: {str(e)}") from e
     except Exception as e:
-        raise ContentOutlineError(f"Error saving content outline to JSON: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise ContentOutlineError(f"Unexpected error saving content outline to JSON: {str(e)}") from e
 
 
 def load_content_outline_from_json(file_path: str) -> ContentOutline:
@@ -446,5 +480,15 @@ def load_content_outline_from_json(file_path: str) -> ContentOutline:
             sections=outline_data["sections"],
             keywords=outline_data["keywords"],
         )
+    except FileNotFoundError as e:
+        raise ContentOutlineError(f"Outline file not found: {file_path}") from e
+    except PermissionError as e:
+        raise ContentOutlineError(f"Permission denied reading outline from {file_path}: {str(e)}") from e
+    except json.JSONDecodeError as e:
+        raise ContentOutlineError(f"Invalid JSON format in outline file: {str(e)}") from e
+    except KeyError as e:
+        raise ContentOutlineError(f"Missing required field in outline JSON: {str(e)}") from e
     except Exception as e:
-        raise ContentOutlineError(f"Error loading content outline from JSON: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise ContentOutlineError(f"Unexpected error loading content outline from JSON: {str(e)}") from e

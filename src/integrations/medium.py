@@ -87,8 +87,20 @@ def upload_post(
                 message=f"Failed to upload post: {response.text}",
                 data=None,
             )
+    except requests.Timeout as e:
+        raise MediumIntegrationError(f"Medium request timed out while uploading post: {str(e)}") from e
+    except requests.ConnectionError as e:
+        raise MediumIntegrationError(f"Network error connecting to Medium: {str(e)}") from e
+    except requests.HTTPError as e:
+        raise MediumIntegrationError(f"Medium HTTP error while uploading post: {str(e)}") from e
+    except requests.RequestException as e:
+        raise MediumIntegrationError(f"Medium request failed while uploading post: {str(e)}") from e
+    except KeyError as e:
+        raise MediumIntegrationError(f"Unexpected Medium response format, missing key: {str(e)}") from e
+    except (TypeError, ValueError) as e:
+        raise MediumIntegrationError(f"Error processing Medium response: {str(e)}") from e
     except Exception as e:
-        raise MediumIntegrationError(f"Error uploading post: {str(e)}")
+        raise MediumIntegrationError(f"Unexpected error uploading post: {str(e)}") from e
 
 
 def get_user_publications(credentials: MediumCredentials) -> List[Dict[str, Any]]:
@@ -130,8 +142,18 @@ def get_user_publications(credentials: MediumCredentials) -> List[Dict[str, Any]
             return response.json()["data"]
         else:
             raise MediumIntegrationError(f"Failed to get publications: {response.text}")
+    except requests.Timeout as e:
+        raise MediumIntegrationError(f"Medium request timed out while getting publications: {str(e)}") from e
+    except requests.ConnectionError as e:
+        raise MediumIntegrationError(f"Network error connecting to Medium: {str(e)}") from e
+    except requests.RequestException as e:
+        raise MediumIntegrationError(f"Medium request failed while getting publications: {str(e)}") from e
+    except KeyError as e:
+        raise MediumIntegrationError(f"Unexpected Medium response format, missing key: {str(e)}") from e
+    except MediumIntegrationError:
+        raise
     except Exception as e:
-        raise MediumIntegrationError(f"Error getting publications: {str(e)}")
+        raise MediumIntegrationError(f"Unexpected error getting publications: {str(e)}") from e
 
 
 def upload_post_to_publication(
@@ -205,8 +227,16 @@ def upload_post_to_publication(
                 message=f"Failed to upload post to publication: {response.text}",
                 data=None,
             )
+    except requests.Timeout as e:
+        raise MediumIntegrationError(f"Medium request timed out while uploading post to publication: {str(e)}") from e
+    except requests.ConnectionError as e:
+        raise MediumIntegrationError(f"Network error connecting to Medium: {str(e)}") from e
+    except requests.RequestException as e:
+        raise MediumIntegrationError(f"Medium request failed while uploading post to publication: {str(e)}") from e
+    except KeyError as e:
+        raise MediumIntegrationError(f"Unexpected Medium response format, missing key: {str(e)}") from e
     except Exception as e:
-        raise MediumIntegrationError(f"Error uploading post to publication: {str(e)}")
+        raise MediumIntegrationError(f"Unexpected error uploading post to publication: {str(e)}") from e
 
 
 def convert_markdown_to_medium(markdown_content: str) -> str:
@@ -237,10 +267,12 @@ def convert_markdown_to_medium(markdown_content: str) -> str:
         )
 
         return medium_content
+    except re.error as e:
+        raise MediumIntegrationError(f"Invalid regex pattern during Markdown conversion: {str(e)}") from e
+    except (TypeError, ValueError) as e:
+        raise MediumIntegrationError(f"Error processing Markdown content: {str(e)}") from e
     except Exception as e:
-        raise MediumIntegrationError(
-            f"Error converting Markdown to Medium format: {str(e)}"
-        )
+        raise MediumIntegrationError(f"Unexpected error converting Markdown to Medium format: {str(e)}") from e
 
 
 def upload_blog_post(
@@ -293,5 +325,9 @@ def upload_blog_post(
             return upload_post_to_publication(credentials, publication_id, options)
         else:
             return upload_post(credentials, options)
+    except MediumIntegrationError:
+        raise
+    except ValueError as e:
+        raise MediumIntegrationError(f"Invalid blog post data: {str(e)}") from e
     except Exception as e:
-        raise MediumIntegrationError(f"Error uploading blog post: {str(e)}")
+        raise MediumIntegrationError(f"Unexpected error uploading blog post: {str(e)}") from e

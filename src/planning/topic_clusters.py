@@ -6,8 +6,8 @@ import json
 import os
 from typing import Any, Dict, List, Optional
 
-from ..research.web_researcher import conduct_web_research
-from ..text_generation.core import GenerationOptions, LLMProvider, generate_text
+from ..research.web_researcher import ResearchError, conduct_web_research
+from ..text_generation.core import GenerationOptions, LLMProvider, TextGenerationError, generate_text
 from ..types.planning import ContentTopic, TopicCluster
 
 
@@ -127,8 +127,14 @@ def generate_topic_clusters(
             )
 
         return clusters
+    except TextGenerationError as e:
+        raise TopicClusterError(f"Failed to generate topic clusters: {str(e)}") from e
+    except ValueError as e:
+        raise TopicClusterError(f"Invalid parameters for topic clusters: {str(e)}") from e
     except Exception as e:
-        raise TopicClusterError(f"Error generating topic clusters: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise TopicClusterError(f"Unexpected error generating topic clusters: {str(e)}") from e
 
 
 def generate_topic_clusters_with_research(
@@ -246,10 +252,16 @@ def generate_topic_clusters_with_research(
             )
 
         return clusters
+    except TextGenerationError as e:
+        raise TopicClusterError(f"Failed to generate topic clusters with research: {str(e)}") from e
+    except ResearchError as e:
+        raise TopicClusterError(f"Research failed during topic cluster generation: {str(e)}") from e
+    except ValueError as e:
+        raise TopicClusterError(f"Invalid parameters for topic clusters with research: {str(e)}") from e
     except Exception as e:
-        raise TopicClusterError(
-            f"Error generating topic clusters with research: {str(e)}"
-        )
+        import traceback
+        traceback.print_exc()
+        raise TopicClusterError(f"Unexpected error generating topic clusters with research: {str(e)}") from e
 
 
 def generate_content_topics_from_cluster(
@@ -351,10 +363,14 @@ def generate_content_topics_from_cluster(
             )
 
         return topics
+    except TextGenerationError as e:
+        raise TopicClusterError(f"Failed to generate content topics from cluster: {str(e)}") from e
+    except AttributeError as e:
+        raise TopicClusterError(f"Invalid cluster data structure: {str(e)}") from e
     except Exception as e:
-        raise TopicClusterError(
-            f"Error generating content topics from cluster: {str(e)}"
-        )
+        import traceback
+        traceback.print_exc()
+        raise TopicClusterError(f"Unexpected error generating content topics from cluster: {str(e)}") from e
 
 
 def save_topic_clusters_to_json(clusters: List[TopicCluster], file_path: str) -> None:
@@ -389,8 +405,18 @@ def save_topic_clusters_to_json(clusters: List[TopicCluster], file_path: str) ->
         # Write clusters to JSON
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(clusters_data, f, indent=2)
+    except PermissionError as e:
+        raise TopicClusterError(f"Permission denied writing clusters to {file_path}: {str(e)}") from e
+    except OSError as e:
+        raise TopicClusterError(f"File system error saving clusters: {str(e)}") from e
+    except TypeError as e:
+        raise TopicClusterError(f"JSON serialization error: {str(e)}") from e
+    except AttributeError as e:
+        raise TopicClusterError(f"Invalid cluster data structure: {str(e)}") from e
     except Exception as e:
-        raise TopicClusterError(f"Error saving topic clusters to JSON: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise TopicClusterError(f"Unexpected error saving topic clusters to JSON: {str(e)}") from e
 
 
 def load_topic_clusters_from_json(file_path: str) -> List[TopicCluster]:
@@ -424,8 +450,18 @@ def load_topic_clusters_from_json(file_path: str) -> List[TopicCluster]:
             clusters.append(cluster)
 
         return clusters
+    except FileNotFoundError as e:
+        raise TopicClusterError(f"Clusters file not found: {file_path}") from e
+    except PermissionError as e:
+        raise TopicClusterError(f"Permission denied reading clusters from {file_path}: {str(e)}") from e
+    except json.JSONDecodeError as e:
+        raise TopicClusterError(f"Invalid JSON format in clusters file: {str(e)}") from e
+    except KeyError as e:
+        raise TopicClusterError(f"Missing required field in clusters JSON: {str(e)}") from e
     except Exception as e:
-        raise TopicClusterError(f"Error loading topic clusters from JSON: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise TopicClusterError(f"Unexpected error loading topic clusters from JSON: {str(e)}") from e
 
 
 def visualize_topic_cluster(
@@ -462,5 +498,11 @@ def visualize_topic_cluster(
             return mermaid
         else:
             raise TopicClusterError(f"Unsupported output format: {output_format}")
+    except TopicClusterError:
+        raise
+    except AttributeError as e:
+        raise TopicClusterError(f"Invalid cluster data structure for visualization: {str(e)}") from e
     except Exception as e:
-        raise TopicClusterError(f"Error visualizing topic cluster: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise TopicClusterError(f"Unexpected error visualizing topic cluster: {str(e)}") from e

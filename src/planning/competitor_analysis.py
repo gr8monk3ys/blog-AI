@@ -6,8 +6,8 @@ import json
 import os
 from typing import Any, Dict, List, Optional
 
-from ..research.web_researcher import conduct_web_research
-from ..text_generation.core import GenerationOptions, LLMProvider, generate_text
+from ..research.web_researcher import ResearchError, conduct_web_research
+from ..text_generation.core import GenerationOptions, LLMProvider, TextGenerationError, generate_text
 from ..types.planning import (
     Competitor,
     CompetitorAnalysisResult,
@@ -82,8 +82,18 @@ def analyze_competitors(
             content_gaps=content_gaps,
             recommendations=recommendations,
         )
+    except CompetitorAnalysisError:
+        raise
+    except TextGenerationError as e:
+        raise CompetitorAnalysisError(f"Failed to generate text during competitor analysis: {str(e)}") from e
+    except ResearchError as e:
+        raise CompetitorAnalysisError(f"Research failed during competitor analysis: {str(e)}") from e
+    except ValueError as e:
+        raise CompetitorAnalysisError(f"Invalid parameters for competitor analysis: {str(e)}") from e
     except Exception as e:
-        raise CompetitorAnalysisError(f"Error analyzing competitors: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise CompetitorAnalysisError(f"Unexpected error analyzing competitors: {str(e)}") from e
 
 
 def get_competitor_website(
@@ -129,8 +139,14 @@ def get_competitor_website(
             website = "https://" + website
 
         return website
+    except TextGenerationError as e:
+        raise CompetitorAnalysisError(f"Failed to generate text for competitor website: {str(e)}") from e
+    except ResearchError as e:
+        raise CompetitorAnalysisError(f"Research failed while getting competitor website: {str(e)}") from e
     except Exception as e:
-        raise CompetitorAnalysisError(f"Error getting competitor website: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise CompetitorAnalysisError(f"Unexpected error getting competitor website: {str(e)}") from e
 
 
 def get_competitor_content(
@@ -248,8 +264,14 @@ def get_competitor_content(
             )
 
         return content_objects
+    except TextGenerationError as e:
+        raise CompetitorAnalysisError(f"Failed to generate text for competitor content: {str(e)}") from e
+    except ResearchError as e:
+        raise CompetitorAnalysisError(f"Research failed while getting competitor content: {str(e)}") from e
     except Exception as e:
-        raise CompetitorAnalysisError(f"Error getting competitor content: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise CompetitorAnalysisError(f"Unexpected error getting competitor content: {str(e)}") from e
 
 
 def analyze_common_keywords(
@@ -297,8 +319,14 @@ def analyze_common_keywords(
         keywords = [k.strip() for k in keywords_text.split(",")]
 
         return keywords
+    except TextGenerationError as e:
+        raise CompetitorAnalysisError(f"Failed to generate text for keyword analysis: {str(e)}") from e
+    except AttributeError as e:
+        raise CompetitorAnalysisError(f"Invalid competitor data structure: {str(e)}") from e
     except Exception as e:
-        raise CompetitorAnalysisError(f"Error analyzing common keywords: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise CompetitorAnalysisError(f"Unexpected error analyzing common keywords: {str(e)}") from e
 
 
 def identify_content_gaps(
@@ -348,8 +376,14 @@ def identify_content_gaps(
         gaps = [g.strip() for g in gaps_text.split(",")]
 
         return gaps
+    except TextGenerationError as e:
+        raise CompetitorAnalysisError(f"Failed to generate text for content gap analysis: {str(e)}") from e
+    except AttributeError as e:
+        raise CompetitorAnalysisError(f"Invalid competitor data structure: {str(e)}") from e
     except Exception as e:
-        raise CompetitorAnalysisError(f"Error identifying content gaps: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise CompetitorAnalysisError(f"Unexpected error identifying content gaps: {str(e)}") from e
 
 
 def generate_recommendations(
@@ -413,8 +447,14 @@ def generate_recommendations(
             recommendations.append(line.strip())
 
         return recommendations
+    except TextGenerationError as e:
+        raise CompetitorAnalysisError(f"Failed to generate recommendations: {str(e)}") from e
+    except AttributeError as e:
+        raise CompetitorAnalysisError(f"Invalid data structure for recommendations: {str(e)}") from e
     except Exception as e:
-        raise CompetitorAnalysisError(f"Error generating recommendations: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise CompetitorAnalysisError(f"Unexpected error generating recommendations: {str(e)}") from e
 
 
 def save_competitor_analysis_to_json(
@@ -471,10 +511,18 @@ def save_competitor_analysis_to_json(
         # Write analysis to JSON
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(analysis_data, f, indent=2)
+    except PermissionError as e:
+        raise CompetitorAnalysisError(f"Permission denied writing analysis to {file_path}: {str(e)}") from e
+    except OSError as e:
+        raise CompetitorAnalysisError(f"File system error saving analysis: {str(e)}") from e
+    except TypeError as e:
+        raise CompetitorAnalysisError(f"JSON serialization error: {str(e)}") from e
+    except AttributeError as e:
+        raise CompetitorAnalysisError(f"Invalid analysis data structure: {str(e)}") from e
     except Exception as e:
-        raise CompetitorAnalysisError(
-            f"Error saving competitor analysis to JSON: {str(e)}"
-        )
+        import traceback
+        traceback.print_exc()
+        raise CompetitorAnalysisError(f"Unexpected error saving competitor analysis to JSON: {str(e)}") from e
 
 
 def load_competitor_analysis_from_json(file_path: str) -> CompetitorAnalysisResult:
@@ -525,7 +573,15 @@ def load_competitor_analysis_from_json(file_path: str) -> CompetitorAnalysisResu
             content_gaps=analysis_data["content_gaps"],
             recommendations=analysis_data["recommendations"],
         )
+    except FileNotFoundError as e:
+        raise CompetitorAnalysisError(f"Analysis file not found: {file_path}") from e
+    except PermissionError as e:
+        raise CompetitorAnalysisError(f"Permission denied reading analysis from {file_path}: {str(e)}") from e
+    except json.JSONDecodeError as e:
+        raise CompetitorAnalysisError(f"Invalid JSON format in analysis file: {str(e)}") from e
+    except KeyError as e:
+        raise CompetitorAnalysisError(f"Missing required field in analysis JSON: {str(e)}") from e
     except Exception as e:
-        raise CompetitorAnalysisError(
-            f"Error loading competitor analysis from JSON: {str(e)}"
-        )
+        import traceback
+        traceback.print_exc()
+        raise CompetitorAnalysisError(f"Unexpected error loading competitor analysis from JSON: {str(e)}") from e

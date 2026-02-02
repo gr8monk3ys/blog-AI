@@ -61,8 +61,14 @@ def conduct_web_research(
             metaphor=metaphor_results,
             trends=trends_results,
         )
+    except ResearchError:
+        # Re-raise ResearchError as-is
+        raise
     except Exception as e:
-        raise ResearchError(f"Error conducting web research: {str(e)}")
+        # Catch-all for unexpected errors, log full traceback
+        import traceback
+        traceback.print_exc()
+        raise ResearchError(f"Unexpected error conducting web research: {str(e)}") from e
 
 
 def google_serp_search(
@@ -141,8 +147,18 @@ def google_serp_search(
         raise ResearchError(
             "Requests package not installed. Install it with 'pip install requests'."
         )
-    except Exception as e:
-        raise ResearchError(f"Error searching with Google SERP: {str(e)}")
+    except requests.Timeout as e:
+        raise ResearchError(f"Google SERP request timed out: {str(e)}") from e
+    except requests.ConnectionError as e:
+        raise ResearchError(f"Network error connecting to Google SERP: {str(e)}") from e
+    except requests.HTTPError as e:
+        raise ResearchError(f"Google SERP HTTP error: {str(e)}") from e
+    except requests.RequestException as e:
+        raise ResearchError(f"Google SERP request failed: {str(e)}") from e
+    except KeyError as e:
+        raise ResearchError(f"Unexpected response format from Google SERP, missing key: {str(e)}") from e
+    except (TypeError, ValueError) as e:
+        raise ResearchError(f"Error parsing Google SERP response: {str(e)}") from e
 
 
 def tavily_ai_search(
@@ -210,8 +226,18 @@ def tavily_ai_search(
         raise ResearchError(
             "Requests package not installed. Install it with 'pip install requests'."
         )
-    except Exception as e:
-        raise ResearchError(f"Error searching with Tavily AI: {str(e)}")
+    except requests.Timeout as e:
+        raise ResearchError(f"Tavily AI request timed out: {str(e)}") from e
+    except requests.ConnectionError as e:
+        raise ResearchError(f"Network error connecting to Tavily AI: {str(e)}") from e
+    except requests.HTTPError as e:
+        raise ResearchError(f"Tavily AI HTTP error: {str(e)}") from e
+    except requests.RequestException as e:
+        raise ResearchError(f"Tavily AI request failed: {str(e)}") from e
+    except KeyError as e:
+        raise ResearchError(f"Unexpected response format from Tavily AI, missing key: {str(e)}") from e
+    except (TypeError, ValueError) as e:
+        raise ResearchError(f"Error parsing Tavily AI response: {str(e)}") from e
 
 
 def metaphor_ai_search(
@@ -282,8 +308,18 @@ def metaphor_ai_search(
         raise ResearchError(
             "Requests package not installed. Install it with 'pip install requests'."
         )
-    except Exception as e:
-        raise ResearchError(f"Error searching with Metaphor AI: {str(e)}")
+    except requests.Timeout as e:
+        raise ResearchError(f"Metaphor AI request timed out: {str(e)}") from e
+    except requests.ConnectionError as e:
+        raise ResearchError(f"Network error connecting to Metaphor AI: {str(e)}") from e
+    except requests.HTTPError as e:
+        raise ResearchError(f"Metaphor AI HTTP error: {str(e)}") from e
+    except requests.RequestException as e:
+        raise ResearchError(f"Metaphor AI request failed: {str(e)}") from e
+    except KeyError as e:
+        raise ResearchError(f"Unexpected response format from Metaphor AI, missing key: {str(e)}") from e
+    except (TypeError, ValueError) as e:
+        raise ResearchError(f"Error parsing Metaphor AI response: {str(e)}") from e
 
 
 def google_trends_analysis(
@@ -358,5 +394,13 @@ def google_trends_analysis(
         raise ResearchError(
             "Pytrends package not installed. Install it with 'pip install pytrends'."
         )
-    except Exception as e:
-        raise ResearchError(f"Error analyzing with Google Trends: {str(e)}")
+    except requests.Timeout as e:
+        raise ResearchError(f"Google Trends request timed out: {str(e)}") from e
+    except requests.ConnectionError as e:
+        raise ResearchError(f"Network error connecting to Google Trends: {str(e)}") from e
+    except requests.RequestException as e:
+        raise ResearchError(f"Google Trends request failed: {str(e)}") from e
+    except KeyError as e:
+        raise ResearchError(f"Unexpected response format from Google Trends, missing key: {str(e)}") from e
+    except (TypeError, ValueError, AttributeError) as e:
+        raise ResearchError(f"Error parsing Google Trends response: {str(e)}") from e

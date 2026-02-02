@@ -305,9 +305,13 @@ def generate_chapter(
         return Chapter(number=1, title=title, topics=topics)  # Default chapter number
     except TextGenerationError as e:
         raise BookGenerationError(f"Failed to generate chapter '{title}': {str(e)}") from e
+    except ValueError as e:
+        raise BookGenerationError(f"Invalid parameters for chapter '{title}': {str(e)}") from e
+    except AttributeError as e:
+        raise BookGenerationError(f"Invalid data structure during chapter generation: {str(e)}") from e
     except Exception as e:
         logger.error(f"Unexpected error generating chapter: {str(e)}", exc_info=True)
-        raise BookGenerationError(f"Error generating chapter: {str(e)}") from e
+        raise BookGenerationError(f"Unexpected error generating chapter: {str(e)}") from e
 
 
 def generate_chapter_with_research(
@@ -385,9 +389,13 @@ def generate_chapter_with_research(
         return Chapter(number=1, title=title, topics=topics)  # Default chapter number
     except TextGenerationError as e:
         raise BookGenerationError(f"Failed to generate chapter '{title}' with research: {str(e)}") from e
+    except ValueError as e:
+        raise BookGenerationError(f"Invalid parameters for chapter with research: {str(e)}") from e
+    except AttributeError as e:
+        raise BookGenerationError(f"Invalid data structure during chapter with research: {str(e)}") from e
     except Exception as e:
         logger.error(f"Unexpected error generating chapter with research: {str(e)}", exc_info=True)
-        raise BookGenerationError(f"Error generating chapter with research: {str(e)}") from e
+        raise BookGenerationError(f"Unexpected error generating chapter with research: {str(e)}") from e
 
 
 def generate_introduction_chapter(
@@ -463,8 +471,15 @@ def generate_introduction_chapter(
             title="Introduction",
             topics=topics,
         )
+    except TextGenerationError as e:
+        raise BookGenerationError(f"Failed to generate introduction chapter: {str(e)}") from e
+    except ValueError as e:
+        raise BookGenerationError(f"Invalid parameters for introduction chapter: {str(e)}") from e
+    except AttributeError as e:
+        raise BookGenerationError(f"Invalid data structure during introduction chapter generation: {str(e)}") from e
     except Exception as e:
-        raise BookGenerationError(f"Error generating introduction chapter: {str(e)}")
+        logger.error(f"Unexpected error generating introduction chapter: {str(e)}", exc_info=True)
+        raise BookGenerationError(f"Unexpected error generating introduction chapter: {str(e)}") from e
 
 
 def generate_introduction_chapter_with_research(
@@ -547,10 +562,15 @@ def generate_introduction_chapter_with_research(
             title="Introduction",
             topics=topics,
         )
+    except TextGenerationError as e:
+        raise BookGenerationError(f"Failed to generate introduction chapter with research: {str(e)}") from e
+    except ValueError as e:
+        raise BookGenerationError(f"Invalid parameters for introduction chapter with research: {str(e)}") from e
+    except AttributeError as e:
+        raise BookGenerationError(f"Invalid data structure during introduction chapter with research: {str(e)}") from e
     except Exception as e:
-        raise BookGenerationError(
-            f"Error generating introduction chapter with research: {str(e)}"
-        )
+        logger.error(f"Unexpected error generating introduction chapter with research: {str(e)}", exc_info=True)
+        raise BookGenerationError(f"Unexpected error generating introduction chapter with research: {str(e)}") from e
 
 
 def generate_conclusion_chapter(
@@ -627,8 +647,15 @@ def generate_conclusion_chapter(
             title="Conclusion",
             topics=topics,
         )
+    except TextGenerationError as e:
+        raise BookGenerationError(f"Failed to generate conclusion chapter: {str(e)}") from e
+    except ValueError as e:
+        raise BookGenerationError(f"Invalid parameters for conclusion chapter: {str(e)}") from e
+    except AttributeError as e:
+        raise BookGenerationError(f"Invalid data structure during conclusion chapter generation: {str(e)}") from e
     except Exception as e:
-        raise BookGenerationError(f"Error generating conclusion chapter: {str(e)}")
+        logger.error(f"Unexpected error generating conclusion chapter: {str(e)}", exc_info=True)
+        raise BookGenerationError(f"Unexpected error generating conclusion chapter: {str(e)}") from e
 
 
 def generate_introduction_section(
@@ -674,8 +701,15 @@ def generate_introduction_section(
         section = Section(title="Introduction", subtopics=[subtopic])
 
         return section
+    except TextGenerationError as e:
+        raise BookGenerationError(f"Failed to generate introduction section: {str(e)}") from e
+    except ValueError as e:
+        raise BookGenerationError(f"Invalid parameters for introduction section: {str(e)}") from e
+    except AttributeError as e:
+        raise BookGenerationError(f"Invalid data structure during introduction section generation: {str(e)}") from e
     except Exception as e:
-        raise BookGenerationError(f"Error generating introduction section: {str(e)}")
+        logger.error(f"Unexpected error generating introduction section: {str(e)}", exc_info=True)
+        raise BookGenerationError(f"Unexpected error generating introduction section: {str(e)}") from e
 
 
 def generate_introduction_section_with_research(
@@ -747,10 +781,15 @@ def generate_introduction_section_with_research(
         section = Section(title="Introduction", subtopics=[subtopic])
 
         return section
+    except TextGenerationError as e:
+        raise BookGenerationError(f"Failed to generate introduction section with research: {str(e)}") from e
+    except ValueError as e:
+        raise BookGenerationError(f"Invalid parameters for introduction section with research: {str(e)}") from e
+    except AttributeError as e:
+        raise BookGenerationError(f"Invalid data structure during introduction section with research: {str(e)}") from e
     except Exception as e:
-        raise BookGenerationError(
-            f"Error generating introduction section with research: {str(e)}"
-        )
+        logger.error(f"Unexpected error generating introduction section with research: {str(e)}", exc_info=True)
+        raise BookGenerationError(f"Unexpected error generating introduction section with research: {str(e)}") from e
 
 
 def generate_section(
@@ -818,8 +857,15 @@ def generate_section(
         section = Section(title=section_title, subtopics=[subtopic])
 
         return section
+    except TextGenerationError as e:
+        raise BookGenerationError(f"Failed to generate section: {str(e)}") from e
+    except ValueError as e:
+        raise BookGenerationError(f"Invalid parameters for section: {str(e)}") from e
+    except AttributeError as e:
+        raise BookGenerationError(f"Invalid data structure during section generation: {str(e)}") from e
     except Exception as e:
-        raise BookGenerationError(f"Error generating section: {str(e)}")
+        logger.error(f"Unexpected error generating section: {str(e)}", exc_info=True)
+        raise BookGenerationError(f"Unexpected error generating section: {str(e)}") from e
 
 
 def generate_section_with_research(
@@ -893,8 +939,15 @@ def generate_section_with_research(
         section = Section(title=section_title, subtopics=[subtopic])
 
         return section
+    except TextGenerationError as e:
+        raise BookGenerationError(f"Failed to generate section with research: {str(e)}") from e
+    except ValueError as e:
+        raise BookGenerationError(f"Invalid parameters for section with research: {str(e)}") from e
+    except AttributeError as e:
+        raise BookGenerationError(f"Invalid data structure during section with research: {str(e)}") from e
     except Exception as e:
-        raise BookGenerationError(f"Error generating section with research: {str(e)}")
+        logger.error(f"Unexpected error generating section with research: {str(e)}", exc_info=True)
+        raise BookGenerationError(f"Unexpected error generating section with research: {str(e)}") from e
 
 
 def generate_conclusion_section(
@@ -945,8 +998,15 @@ def generate_conclusion_section(
         section = Section(title="Conclusion", subtopics=[subtopic])
 
         return section
+    except TextGenerationError as e:
+        raise BookGenerationError(f"Failed to generate conclusion section: {str(e)}") from e
+    except ValueError as e:
+        raise BookGenerationError(f"Invalid parameters for conclusion section: {str(e)}") from e
+    except AttributeError as e:
+        raise BookGenerationError(f"Invalid data structure during conclusion section generation: {str(e)}") from e
     except Exception as e:
-        raise BookGenerationError(f"Error generating conclusion section: {str(e)}")
+        logger.error(f"Unexpected error generating conclusion section: {str(e)}", exc_info=True)
+        raise BookGenerationError(f"Unexpected error generating conclusion section: {str(e)}") from e
 
 
 def post_process_book(
@@ -1008,8 +1068,15 @@ def post_process_book(
             processed_book.chapters.append(processed_chapter)
 
         return processed_book
+    except TextGenerationError as e:
+        raise BookGenerationError(f"Failed during post-processing: {str(e)}") from e
+    except ValueError as e:
+        raise BookGenerationError(f"Invalid parameters during post-processing: {str(e)}") from e
+    except AttributeError as e:
+        raise BookGenerationError(f"Invalid data structure during post-processing: {str(e)}") from e
     except Exception as e:
-        raise BookGenerationError(f"Error post-processing book: {str(e)}")
+        logger.error(f"Unexpected error post-processing book: {str(e)}", exc_info=True)
+        raise BookGenerationError(f"Unexpected error post-processing book: {str(e)}") from e
 
 
 def save_book_to_markdown(book: Book, file_path: str) -> None:
@@ -1067,8 +1134,15 @@ def save_book_to_markdown(book: Book, file_path: str) -> None:
         # Write to file
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(markdown)
+    except PermissionError as e:
+        raise BookGenerationError(f"Permission denied writing book to Markdown: {str(e)}") from e
+    except OSError as e:
+        raise BookGenerationError(f"File system error saving book to Markdown: {str(e)}") from e
+    except TypeError as e:
+        raise BookGenerationError(f"Invalid data type during Markdown serialization: {str(e)}") from e
     except Exception as e:
-        raise BookGenerationError(f"Error saving book to Markdown: {str(e)}")
+        logger.error(f"Unexpected error saving book to Markdown: {str(e)}", exc_info=True)
+        raise BookGenerationError(f"Unexpected error saving book to Markdown: {str(e)}") from e
 
 
 def save_book_to_json(book: Book, file_path: str) -> None:
@@ -1115,8 +1189,15 @@ def save_book_to_json(book: Book, file_path: str) -> None:
         # Write to file
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(book_data, f, indent=2)
+    except PermissionError as e:
+        raise BookGenerationError(f"Permission denied writing book to JSON: {str(e)}") from e
+    except OSError as e:
+        raise BookGenerationError(f"File system error saving book to JSON: {str(e)}") from e
+    except TypeError as e:
+        raise BookGenerationError(f"JSON serialization error: {str(e)}") from e
     except Exception as e:
-        raise BookGenerationError(f"Error saving book to JSON: {str(e)}")
+        logger.error(f"Unexpected error saving book to JSON: {str(e)}", exc_info=True)
+        raise BookGenerationError(f"Unexpected error saving book to JSON: {str(e)}") from e
 
 
 def load_book_from_json(file_path: str) -> Book:
@@ -1188,8 +1269,17 @@ def load_book_from_json(file_path: str) -> Book:
         book = Book(**book_args)
 
         return book
+    except FileNotFoundError as e:
+        raise BookGenerationError(f"Book file not found: {file_path}") from e
+    except PermissionError as e:
+        raise BookGenerationError(f"Permission denied reading book from JSON: {str(e)}") from e
+    except json.JSONDecodeError as e:
+        raise BookGenerationError(f"Invalid JSON format in book file: {str(e)}") from e
+    except KeyError as e:
+        raise BookGenerationError(f"Missing required field in book JSON: {str(e)}") from e
     except Exception as e:
-        raise BookGenerationError(f"Error loading book from JSON: {str(e)}")
+        logger.error(f"Unexpected error loading book from JSON: {str(e)}", exc_info=True)
+        raise BookGenerationError(f"Unexpected error loading book from JSON: {str(e)}") from e
 
 
 def main():
