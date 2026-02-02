@@ -17,6 +17,23 @@ from .batch import (
     RetryRequest,
     estimate_batch_cost,
 )
+from .version import (
+    AutoVersionConfig,
+    ChangeType,
+    ContentVersion,
+    ContentVersionSummary,
+    CreateVersionRequest,
+    CreateVersionResponse,
+    DEFAULT_AUTO_VERSION_CONFIG,
+    RestoreVersionRequest,
+    RestoreVersionResponse,
+    VersionComparison,
+    VersionCompareResponse,
+    VersionDetailResponse,
+    VersionListResponse,
+    VersionStatistics,
+    VersionStatsResponse,
+)
 
 __all__ = [
     # Batch types
@@ -33,4 +50,20 @@ __all__ = [
     "ProviderStrategy",
     "RetryRequest",
     "estimate_batch_cost",
+    # Version types
+    "AutoVersionConfig",
+    "ChangeType",
+    "ContentVersion",
+    "ContentVersionSummary",
+    "CreateVersionRequest",
+    "CreateVersionResponse",
+    "DEFAULT_AUTO_VERSION_CONFIG",
+    "RestoreVersionRequest",
+    "RestoreVersionResponse",
+    "VersionComparison",
+    "VersionCompareResponse",
+    "VersionDetailResponse",
+    "VersionListResponse",
+    "VersionStatistics",
+    "VersionStatsResponse",
 ]
