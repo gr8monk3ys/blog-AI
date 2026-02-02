@@ -1,5 +1,5 @@
 """WebSocket components for the Blog AI application."""
 
-from .manager import ConnectionManager, manager
+from .manager import ConnectionInfo, ConnectionManager, manager
 
-__all__ = ["ConnectionManager", "manager"]
+__all__ = ["ConnectionInfo", "ConnectionManager", "manager"]
