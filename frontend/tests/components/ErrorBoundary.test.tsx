@@ -34,7 +34,8 @@ describe('ErrorBoundary', () => {
     )
 
     expect(screen.getByText('Something went wrong')).toBeInTheDocument()
-    expect(screen.getByText('Test error message')).toBeInTheDocument()
+    // Error messages are not displayed for security (prevent PII exposure)
+    expect(screen.getByText(/An unexpected error occurred/)).toBeInTheDocument()
   })
 
   it('should render custom fallback when provided', () => {
@@ -91,7 +92,7 @@ describe('ErrorBoundary', () => {
     )
 
     expect(screen.getByText('Something went wrong')).toBeInTheDocument()
-    expect(screen.getByText('An unexpected error occurred')).toBeInTheDocument()
+    expect(screen.getByText(/An unexpected error occurred/)).toBeInTheDocument()
   })
 
   it('should log error to console', () => {
