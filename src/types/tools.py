@@ -10,7 +10,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Literal, Optional, TypeVar, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ToolCategory(str, Enum):
@@ -74,8 +74,7 @@ class InputField(BaseModel):
     min_value: Optional[float] = Field(default=None, description="Minimum numeric value")
     max_value: Optional[float] = Field(default=None, description="Maximum numeric value")
 
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class InputSchema(BaseModel):
@@ -154,8 +153,7 @@ class OutputSchema(BaseModel):
     )
     description: str = Field(default="", description="Description of the output")
 
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class ToolMetadata(BaseModel):
@@ -175,8 +173,7 @@ class ToolMetadata(BaseModel):
     )
     popularity_score: int = Field(default=0, description="Usage-based popularity")
 
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class ToolDefinition(BaseModel):

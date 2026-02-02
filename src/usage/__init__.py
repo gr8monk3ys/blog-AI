@@ -6,6 +6,7 @@ enforcing tier-based limits, and managing usage statistics.
 """
 
 from .limiter import (
+    TIER_CONFIGS,
     UsageLimiter,
     UsageTier,
     UsageStats,
@@ -18,6 +19,7 @@ from .limiter import (
 )
 
 __all__ = [
+    "TIER_CONFIGS",
     "UsageLimiter",
     "UsageTier",
     "UsageStats",

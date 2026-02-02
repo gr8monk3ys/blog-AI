@@ -215,7 +215,7 @@ def get_mock_categories() -> list[CategoryBreakdown]:
 
 @router.get("/overview", response_model=OverviewResponse)
 async def get_overview(
-    range: str = Query("30d", regex="^(7d|30d|90d|all)$"),
+    range: str = Query("30d", pattern="^(7d|30d|90d|all)$"),
     user_id: str = Depends(verify_api_key),
 ):
     """
@@ -319,7 +319,7 @@ async def get_overview(
 
 @router.get("/tools", response_model=list[ToolUsageResponse])
 async def get_tool_usage(
-    range: str = Query("30d", regex="^(7d|30d|90d|all)$"),
+    range: str = Query("30d", pattern="^(7d|30d|90d|all)$"),
     limit: int = Query(10, ge=1, le=50),
     user_id: str = Depends(verify_api_key),
 ):
@@ -367,7 +367,7 @@ async def get_tool_usage(
 
 @router.get("/timeline", response_model=list[TimelineDataPoint])
 async def get_timeline(
-    range: str = Query("30d", regex="^(7d|30d|90d|all)$"),
+    range: str = Query("30d", pattern="^(7d|30d|90d|all)$"),
     user_id: str = Depends(verify_api_key),
 ):
     """
@@ -414,7 +414,7 @@ async def get_timeline(
 
 @router.get("/categories", response_model=list[CategoryBreakdown])
 async def get_category_breakdown(
-    range: str = Query("30d", regex="^(7d|30d|90d|all)$"),
+    range: str = Query("30d", pattern="^(7d|30d|90d|all)$"),
     user_id: str = Depends(verify_api_key),
 ):
     """

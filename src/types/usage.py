@@ -11,7 +11,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SubscriptionTier(str, Enum):
@@ -164,10 +164,7 @@ class UsageRecord(BaseModel):
         description="Additional metadata about the operation"
     )
 
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+    # Note: Pydantic v2 handles datetime serialization automatically
 
 
 class UsageStats(BaseModel):
@@ -230,10 +227,7 @@ class UsageStats(BaseModel):
         description="Whether the quota has been exceeded"
     )
 
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+    # Note: Pydantic v2 handles datetime serialization automatically
 
 
 class UserQuota(BaseModel):
@@ -272,10 +266,7 @@ class UserQuota(BaseModel):
         description="When the quota record was last updated"
     )
 
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+    # Note: Pydantic v2 handles datetime serialization automatically
 
 
 class QuotaExceededError(BaseModel):
@@ -315,10 +306,7 @@ class QuotaExceededError(BaseModel):
         description="URL to upgrade subscription"
     )
 
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+    # Note: Pydantic v2 handles datetime serialization automatically
 
 
 def get_tier_config(tier: SubscriptionTier) -> TierConfig:

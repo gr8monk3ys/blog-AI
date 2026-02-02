@@ -276,8 +276,11 @@ class ToolRegistry:
         if limit is not None:
             results = results[:limit]
 
-        # Get unique categories
-        categories = list(set(m.category.value for m in results))
+        # Get unique categories (handle both enum and string values)
+        categories = list(set(
+            m.category.value if hasattr(m.category, 'value') else m.category
+            for m in results
+        ))
 
         return ToolListResponse(
             tools=results,

@@ -14,7 +14,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 # =============================================================================
@@ -364,8 +364,8 @@ class EnhancedBatchRequest(BaseModel):
                 validated.append(tag)
         return validated[:10]
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "items": [
                     {"topic": "AI in Healthcare", "keywords": ["AI", "healthcare"]},
@@ -377,6 +377,7 @@ class EnhancedBatchRequest(BaseModel):
                 "conversation_id": "conv-123"
             }
         }
+    )
 
 
 class EnhancedBatchItemResult(BaseModel):
