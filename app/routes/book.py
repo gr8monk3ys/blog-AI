@@ -1,5 +1,9 @@
 """
 Book generation endpoints.
+
+Authorization:
+- Book generation requires content.create permission in the organization
+- Pass the organization ID via X-Organization-ID header for org-scoped access
 """
 
 import asyncio
@@ -15,6 +19,7 @@ from src.book.make_book import (
     generate_book_with_research,
     post_process_book,
 )
+from src.organizations import AuthorizationContext
 from src.text_generation.core import (
     GenerationOptions,
     RateLimitError,
@@ -23,6 +28,7 @@ from src.text_generation.core import (
 )
 
 from ..auth import verify_api_key
+from ..dependencies import require_content_creation
 from ..error_handlers import sanitize_error_message
 from ..middleware import increment_usage_for_operation, require_quota
 from ..models import BookGenerationRequest
@@ -50,6 +56,9 @@ The generated book includes:
 
 **Quota Usage**: Book generations count as multiple generations based on chapter count.
 Each chapter counts toward your monthly limit.
+
+**Authorization:** Requires content.create permission in the organization.
+Pass the organization ID via X-Organization-ID header.
     """,
     responses={
         201: {
@@ -83,25 +92,32 @@ Each chapter counts toward your monthly limit.
         },
         400: {"description": "Invalid request parameters"},
         401: {"description": "Missing or invalid API key"},
+        403: {"description": "Insufficient permissions"},
         429: {"description": "Rate limit or quota exceeded"},
         502: {"description": "AI provider error"},
     }
 )
 async def generate_book_endpoint(
-    request: BookGenerationRequest, user_id: str = Depends(require_quota)
+    request: BookGenerationRequest,
+    auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ):
     """
     Generate a book.
 
     Args:
         request: The book generation request parameters.
-        user_id: The authenticated user ID.
+        auth_ctx: The authorization context with user and org info.
 
     Returns:
         The generated book content.
     """
+    # Use organization_id for scoping if available, fallback to user_id
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    user_id = auth_ctx.user_id
+
     logger.info(
-        f"Book generation requested by user: {user_id}, "
+        f"Book generation requested by user: {user_id[:8]}... "
+        f"in org {auth_ctx.organization_id}, "
         f"title_length: {len(request.title)}, chapters: {request.num_chapters}"
     )
     try:

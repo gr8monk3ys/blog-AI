@@ -1,5 +1,9 @@
 """
 Blog generation endpoints.
+
+Authorization:
+- Blog generation requires content.create permission in the organization
+- Pass the organization ID via X-Organization-ID header for org-scoped access
 """
 
 import asyncio
@@ -16,6 +20,7 @@ from src.blog.make_blog import (
     generate_blog_post_with_research,
     post_process_blog_post,
 )
+from src.organizations import AuthorizationContext
 from src.text_generation.core import (
     GenerationOptions,
     RateLimitError,
@@ -25,6 +30,7 @@ from src.text_generation.core import (
 from src.webhooks import webhook_service
 
 from ..auth import verify_api_key
+from ..dependencies import require_content_creation
 from ..error_handlers import sanitize_error_message
 from ..middleware import increment_usage_for_operation, require_quota
 from ..models import BlogGenerationRequest
@@ -51,6 +57,9 @@ The generated blog includes:
 - Proofreading and humanization passes
 
 **Quota Usage**: Each blog generation counts as 1 generation toward your monthly limit.
+
+**Authorization:** Requires content.create permission in the organization.
+Pass the organization ID via X-Organization-ID header.
     """,
     responses={
         201: {
@@ -83,25 +92,32 @@ The generated blog includes:
         },
         400: {"description": "Invalid request parameters"},
         401: {"description": "Missing or invalid API key"},
+        403: {"description": "Insufficient permissions"},
         429: {"description": "Rate limit or quota exceeded"},
         502: {"description": "AI provider error"},
     }
 )
 async def generate_blog(
-    request: BlogGenerationRequest, user_id: str = Depends(require_quota)
+    request: BlogGenerationRequest,
+    auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ):
     """
     Generate a blog post.
 
     Args:
         request: The blog generation request parameters.
-        user_id: The authenticated user ID.
+        auth_ctx: The authorization context with user and org info.
 
     Returns:
         The generated blog post content.
     """
+    # Use organization_id for scoping if available, fallback to user_id
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    user_id = auth_ctx.user_id
+
     logger.info(
-        f"Blog generation requested by user: {user_id}, topic_length: {len(request.topic)}"
+        f"Blog generation requested by user: {user_id[:8]}... "
+        f"in org {auth_ctx.organization_id}, topic_length: {len(request.topic)}"
     )
     try:
         # Create generation options

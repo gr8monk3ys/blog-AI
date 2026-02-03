@@ -9,6 +9,11 @@ This module extends the existing bulk generation with:
 - Retry failed items
 
 Uses Redis-backed job storage with in-memory fallback for horizontal scaling.
+
+Authorization:
+- Batch operations require content.create permission in the organization
+- Export and status endpoints require content.view permission
+- Pass the organization ID via X-Organization-ID header for org-scoped access
 """
 
 import asyncio
@@ -30,6 +35,7 @@ from src.blog.make_blog import (
     generate_blog_post_with_research,
     post_process_blog_post,
 )
+from src.organizations import AuthorizationContext
 from src.storage import get_batch_job_store
 from src.text_generation.core import GenerationOptions, create_provider_from_env
 from src.types.batch import (
@@ -60,6 +66,10 @@ from src.usage.quota_service import (
 from src.webhooks import webhook_service
 
 from ..auth import verify_api_key
+from ..dependencies import (
+    require_content_access,
+    require_content_creation,
+)
 from ..error_handlers import sanitize_error_message
 from ..middleware import require_pro_tier
 from ..storage import conversations
@@ -425,7 +435,7 @@ async def import_csv_batch(
     parallel_limit: int = Query(default=3, ge=1, le=10),
     conversation_id: str = Query(...),
     background_tasks: BackgroundTasks = None,
-    user_id: str = Depends(require_pro_tier),
+    auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ) -> Dict:
     """
     Import topics from CSV and start batch generation.
@@ -506,6 +516,10 @@ async def import_csv_batch(
             research_enabled=research_enabled,
         )
 
+        # Use organization_id for scoping if available, fallback to user_id
+        scope_id = auth_ctx.organization_id or auth_ctx.user_id
+        user_id = auth_ctx.user_id
+
         # Create job with ownership
         job_id = str(uuid.uuid4())
         job_status = EnhancedBatchStatus(
@@ -517,8 +531,8 @@ async def import_csv_batch(
             estimated_cost_usd=cost_estimate.estimated_cost_usd,
         )
 
-        # Save job to Redis-backed storage with ownership
-        await _job_store.save_job(job_id, job_status, user_id)
+        # Save job to Redis-backed storage with ownership (use scope_id for multi-tenant isolation)
+        await _job_store.save_job(job_id, job_status, scope_id)
         await _job_store.set_cancel_flag(job_id, False)
 
         # Start processing
@@ -526,7 +540,7 @@ async def import_csv_batch(
             _process_enhanced_batch,
             job_id,
             request,
-            user_id,
+            scope_id,
         )
 
         return {
@@ -580,7 +594,7 @@ async def get_csv_template() -> Response:
 async def export_batch_results(
     job_id: str,
     format: ExportFormat = Query(default=ExportFormat.JSON),
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ) -> Response:
     """
     Export batch results in various formats.
@@ -590,8 +604,12 @@ async def export_batch_results(
     - csv: Tabular format with key fields
     - markdown: Human-readable markdown
     - zip: All content as individual files
+
+    **Authorization:** Requires content.view permission in the organization.
     """
-    job = await _job_store.get_job_if_owned(job_id, user_id)
+    # Use organization_id for scoping if available, fallback to user_id
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    job = await _job_store.get_job_if_owned(job_id, scope_id)
     if not job:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -796,7 +814,7 @@ async def estimate_cost(
     provider_strategy: ProviderStrategy = Query(default=ProviderStrategy.SINGLE),
     preferred_provider: str = Query(default="openai"),
     research_enabled: bool = Query(default=False),
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ) -> CostEstimate:
     """
     Estimate cost for a batch job before running it.
@@ -826,15 +844,20 @@ async def retry_failed_items(
     job_id: str,
     retry_request: RetryRequest,
     background_tasks: BackgroundTasks,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ) -> Dict:
     """
     Retry failed items in a batch job.
 
     Optionally specify item indices or retry all failed items.
     Can also change the provider for retry attempts.
+
+    **Authorization:** Requires content.create permission in the organization.
     """
-    job = await _job_store.get_job_if_owned(job_id, user_id)
+    # Use organization_id for scoping if available, fallback to user_id
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    user_id = auth_ctx.user_id
+    job = await _job_store.get_job_if_owned(job_id, scope_id)
     if not job:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -891,8 +914,8 @@ async def retry_failed_items(
         provider_strategy=original_request.provider_strategy,
     )
 
-    # Save job to Redis-backed storage with ownership
-    await _job_store.save_job(retry_job_id, retry_job_status, user_id)
+    # Save job to Redis-backed storage with ownership (use scope_id for multi-tenant isolation)
+    await _job_store.save_job(retry_job_id, retry_job_status, scope_id)
     await _job_store.set_cancel_flag(retry_job_id, False)
 
     # Start retry processing
@@ -900,7 +923,7 @@ async def retry_failed_items(
         _process_enhanced_batch,
         retry_job_id,
         original_request,
-        user_id,
+        scope_id,
     )
 
     return {
@@ -921,13 +944,18 @@ async def list_batch_jobs(
     status_filter: Optional[JobStatus] = Query(default=None, alias="status"),
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ) -> Dict:
-    """List batch jobs with optional status filter (only shows user's own jobs)."""
-    # Only show jobs owned by the current user (multi-tenant isolation)
+    """
+    List batch jobs with optional status filter (only shows user's/org's jobs).
+
+    **Authorization:** Requires content.view permission in the organization.
+    """
+    # Use organization_id for scoping if available, fallback to user_id (multi-tenant isolation)
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
     status_str = status_filter.value if status_filter else None
     jobs = await _job_store.list_jobs(
-        user_id=user_id,
+        user_id=scope_id,
         status=status_str,
         limit=limit,
         offset=offset,
@@ -935,7 +963,7 @@ async def list_batch_jobs(
 
     # Note: The job_store.list_jobs already returns paginated results
     # We need to get total count separately for proper pagination info
-    all_jobs = await _job_store.list_jobs(user_id=user_id, status=status_str, limit=1000, offset=0)
+    all_jobs = await _job_store.list_jobs(user_id=scope_id, status=status_str, limit=1000, offset=0)
     total = len(all_jobs)
 
     return {
@@ -950,10 +978,16 @@ async def list_batch_jobs(
 @router.get("/{job_id}")
 async def get_batch_status(
     job_id: str,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ) -> EnhancedBatchStatus:
-    """Get enhanced batch job status."""
-    job = await _job_store.get_job_if_owned(job_id, user_id)
+    """
+    Get enhanced batch job status.
+
+    **Authorization:** Requires content.view permission in the organization.
+    """
+    # Use organization_id for scoping if available, fallback to user_id
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    job = await _job_store.get_job_if_owned(job_id, scope_id)
     if not job:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -965,10 +999,16 @@ async def get_batch_status(
 @router.get("/{job_id}/results")
 async def get_batch_results(
     job_id: str,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ) -> Dict:
-    """Get batch results with full content."""
-    job = await _job_store.get_job_if_owned(job_id, user_id)
+    """
+    Get batch results with full content.
+
+    **Authorization:** Requires content.view permission in the organization.
+    """
+    # Use organization_id for scoping if available, fallback to user_id
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    job = await _job_store.get_job_if_owned(job_id, scope_id)
     if not job:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -999,10 +1039,16 @@ async def get_batch_results(
 @router.post("/{job_id}/cancel")
 async def cancel_batch_job(
     job_id: str,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ) -> Dict:
-    """Cancel a running batch job."""
-    job = await _job_store.get_job_if_owned(job_id, user_id)
+    """
+    Cancel a running batch job.
+
+    **Authorization:** Requires content.create permission in the organization.
+    """
+    # Use organization_id for scoping if available, fallback to user_id
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    job = await _job_store.get_job_if_owned(job_id, scope_id)
     if not job:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

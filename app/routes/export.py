@@ -8,6 +8,11 @@ Supports exporting content to:
 - PDF
 - WordPress block format
 - Medium-compatible HTML
+
+Authorization:
+- All export endpoints require content.view permission in the organization
+- Publishing exports (WordPress, Medium) require content.publish permission
+- Pass the organization ID via X-Organization-ID header for org-scoped access
 """
 
 import html
@@ -22,7 +27,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel, Field
 
+from src.organizations import AuthorizationContext
 from ..auth import verify_api_key
+from ..dependencies import require_content_access, require_content_publish
 
 
 def sanitize_html_content(text: str) -> str:
@@ -668,12 +675,14 @@ def generate_pdf_content(content: str, title: str, metadata: Optional[Dict] = No
 @router.post("/markdown")
 async def export_markdown(
     request: ExportRequest,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ):
     """
     Export content as markdown file.
 
     Returns a downloadable .md file with proper formatting.
+
+    **Authorization:** Requires content.view permission in the organization.
     """
     logger.info(f"Exporting markdown for: {request.title[:50]}")
 
@@ -721,12 +730,14 @@ async def export_markdown(
 @router.post("/html")
 async def export_html(
     request: ExportRequest,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ):
     """
     Export content as styled HTML file.
 
     Returns a downloadable .html file with embedded CSS styling.
+
+    **Authorization:** Requires content.view permission in the organization.
     """
     logger.info(f"Exporting HTML for: {request.title[:50]}")
 
@@ -761,12 +772,14 @@ async def export_html(
 @router.post("/text")
 async def export_text(
     request: ExportRequest,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ):
     """
     Export content as plain text file.
 
     Strips markdown formatting and returns a .txt file.
+
+    **Authorization:** Requires content.view permission in the organization.
     """
     logger.info(f"Exporting plain text for: {request.title[:50]}")
 
@@ -813,12 +826,14 @@ async def export_text(
 @router.post("/pdf")
 async def export_pdf(
     request: ExportRequest,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ):
     """
     Export content as PDF file.
 
     Generates a styled PDF document from the content.
+
+    **Authorization:** Requires content.view permission in the organization.
     """
     logger.info(f"Exporting PDF for: {request.title[:50]}")
 
@@ -881,12 +896,14 @@ async def export_pdf(
 @router.post("/wordpress", response_model=PublishResponse)
 async def export_wordpress(
     request: ExportRequest,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_publish),
 ):
     """
     Export content as WordPress Gutenberg block format.
 
     Returns content formatted for pasting into WordPress block editor.
+
+    **Authorization:** Requires content.publish permission in the organization.
     """
     logger.info(f"Exporting WordPress format for: {request.title[:50]}")
 
@@ -915,12 +932,14 @@ async def export_wordpress(
 @router.post("/medium", response_model=PublishResponse)
 async def export_medium(
     request: ExportRequest,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_publish),
 ):
     """
     Export content as Medium-compatible HTML.
 
     Returns HTML that can be pasted into Medium's editor.
+
+    **Authorization:** Requires content.publish permission in the organization.
     """
     logger.info(f"Exporting Medium format for: {request.title[:50]}")
 

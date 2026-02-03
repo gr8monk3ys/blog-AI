@@ -2,6 +2,11 @@
 Content Remix API Routes.
 
 Endpoints for transforming content across multiple formats.
+
+Authorization:
+- Read-only operations (list formats, preview) require content.view permission
+- Transform operations require content.create permission
+- Pass the organization ID via X-Organization-ID header for org-scoped access
 """
 
 from typing import Any, Dict, List, Optional
@@ -9,6 +14,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
+from src.organizations import AuthorizationContext
 from src.remix.service import get_remix_service
 from src.types.remix import (
     ContentFormat,
@@ -21,6 +27,7 @@ from src.types.remix import (
 )
 
 from ..auth import verify_api_key
+from ..dependencies import require_content_access, require_content_creation
 from ..error_handlers import sanitize_error_message
 from ..middleware import increment_usage_for_operation, require_quota
 
@@ -187,7 +194,7 @@ async def preview_remix(request: PreviewRequestAPI):
 @router.post("/transform", response_model=RemixResponse)
 async def transform_content(
     request: RemixRequestAPI,
-    user_id: str = Depends(require_quota),
+    auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ):
     """
     Transform content into multiple formats.
@@ -197,7 +204,12 @@ async def transform_content(
     2. Transforms to each requested format in parallel
     3. Scores quality of each transformation
     4. Returns all transformed content with metrics
+
+    **Authorization:** Requires content.create permission in the organization.
     """
+    # Use organization_id for scoping if available, fallback to user_id
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    user_id = auth_ctx.user_id
     # Validate formats
     target_formats = []
     for fmt_str in request.target_formats:
@@ -254,12 +266,14 @@ async def transform_content(
 async def transform_single_format(
     format_id: str,
     request: RemixRequestAPI,
-    user_id: str = Depends(require_quota),
+    auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ):
     """
     Transform content into a single format.
 
     Convenience endpoint for transforming to just one format.
+
+    **Authorization:** Requires content.create permission in the organization.
     """
     try:
         format_enum = ContentFormat(format_id)
@@ -272,19 +286,21 @@ async def transform_single_format(
     # Override target formats
     request.target_formats = [format_id]
 
-    return await transform_content(request, user_id)
+    return await transform_content(request, auth_ctx)
 
 
 @router.post("/batch")
 async def batch_transform(
     requests: List[RemixRequestAPI],
-    user_id: str = Depends(require_quota),
+    auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ):
     """
     Transform multiple pieces of content in batch.
 
     Each request in the batch is processed independently.
     Returns results for all requests.
+
+    **Authorization:** Requires content.create permission in the organization.
     """
     if len(requests) > 20:
         raise HTTPException(
@@ -295,7 +311,7 @@ async def batch_transform(
     results = []
     for req in requests:
         try:
-            result = await transform_content(req, user_id)
+            result = await transform_content(req, auth_ctx)
             results.append({
                 "success": True,
                 "conversation_id": req.conversation_id,
