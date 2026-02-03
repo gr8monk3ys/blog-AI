@@ -1,5 +1,9 @@
 # Project-related files
 
+# Coverage reports
+.coverage
+htmlcov/
+
 # Run logs
 backend/run_logs/*
 

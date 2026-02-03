@@ -1,4 +1,4 @@
-See the sd-template.md
+# System Design Document
 
 # Requirements
 
