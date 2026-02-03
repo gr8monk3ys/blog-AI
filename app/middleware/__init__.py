@@ -18,7 +18,6 @@ from .quota_check import (
     require_quota,
     require_starter_tier,
 )
-from .rate_limiter import RateLimitMiddleware
 from .rate_limit import (
     # Data models
     TierRateLimits,
@@ -31,9 +30,13 @@ from .rate_limit import (
     RateLimitBackend,
     InMemoryBackend,
     RedisBackend,
-    # Rate limiter
+    # Rate limiter class (tier-based)
     RateLimiter,
     get_rate_limiter,
+    # IP-based middleware
+    RateLimitMiddleware,
+    DEFAULT_MAX_TRACKED_IPS,
+    DEFAULT_CLEANUP_INTERVAL,
     # FastAPI dependencies
     rate_limit,
     rate_limit_soft,
@@ -65,9 +68,11 @@ __all__ = [
     "require_pro_tier",
     "require_quota",
     "require_starter_tier",
-    # Rate Limiting (middleware)
+    # Rate Limiting - IP-based middleware
     "RateLimitMiddleware",
-    # Rate Limiting (dependency-based)
+    "DEFAULT_MAX_TRACKED_IPS",
+    "DEFAULT_CLEANUP_INTERVAL",
+    # Rate Limiting - Tier-based dependency system
     "TierRateLimits",
     "TIER_RATE_LIMITS",
     "DEFAULT_RATE_LIMITS",
