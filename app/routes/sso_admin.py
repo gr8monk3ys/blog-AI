@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.auth import verify_api_key
 from app.dependencies import get_organization_context, require_permission
@@ -54,6 +54,14 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/sso/admin", tags=["sso-admin"])
 
+# =============================================================================
+# In-Memory Storage
+# =============================================================================
+# In production, replace with database storage (PostgreSQL, MongoDB, etc.)
+# This in-memory store is shared with sso.py via import
+
+_sso_configurations: Dict[str, SSOConfiguration] = {}
+
 
 # =============================================================================
 # Request/Response Models
@@ -64,10 +72,27 @@ class SAMLConfigureRequest(BaseModel):
     """Request to configure SAML SSO."""
 
     # IdP Configuration
-    idp_entity_id: str = Field(..., description="IdP Entity ID (issuer)")
-    idp_sso_url: str = Field(..., description="IdP Single Sign-On URL")
-    idp_slo_url: Optional[str] = Field(None, description="IdP Single Logout URL")
-    idp_certificate: str = Field(..., description="IdP X.509 certificate (PEM format)")
+    idp_entity_id: str = Field(
+        ...,
+        description="IdP Entity ID (issuer)",
+        min_length=1,
+        max_length=2048,
+    )
+    idp_sso_url: str = Field(
+        ...,
+        description="IdP Single Sign-On URL (must be HTTPS)",
+        pattern=r"^https://",
+    )
+    idp_slo_url: Optional[str] = Field(
+        None,
+        description="IdP Single Logout URL (must be HTTPS if provided)",
+        pattern=r"^https://",
+    )
+    idp_certificate: str = Field(
+        ...,
+        description="IdP X.509 certificate (PEM format)",
+        min_length=100,  # Minimum size for a valid PEM certificate
+    )
 
     # SP Configuration (optional, will use defaults if not provided)
     sp_entity_id: Optional[str] = Field(None, description="SP Entity ID (defaults to app URL)")
@@ -88,13 +113,45 @@ class SAMLConfigureRequest(BaseModel):
     default_role: str = Field(default="viewer", description="Default role for new users")
     group_role_mapping: Dict[str, str] = Field(default_factory=dict, description="Map IdP groups to roles")
 
+    @field_validator("idp_certificate")
+    @classmethod
+    def validate_certificate_format(cls, v: str) -> str:
+        """Validate the IdP certificate is in PEM format."""
+        v = v.strip()
+        if not v.startswith("-----BEGIN CERTIFICATE-----"):
+            raise ValueError("Certificate must be in PEM format (start with -----BEGIN CERTIFICATE-----)")
+        if not v.endswith("-----END CERTIFICATE-----"):
+            raise ValueError("Certificate must be in PEM format (end with -----END CERTIFICATE-----)")
+        return v
+
+    @field_validator("allowed_email_domains")
+    @classmethod
+    def validate_email_domains(cls, v: List[str]) -> List[str]:
+        """Normalize and validate email domains."""
+        normalized = []
+        for domain in v:
+            domain = domain.lower().strip()
+            if domain.startswith("@"):
+                domain = domain[1:]
+            if domain and "." in domain:  # Basic domain validation
+                normalized.append(domain)
+        return normalized
+
 
 class OIDCConfigureRequest(BaseModel):
     """Request to configure OIDC SSO."""
 
     # Provider Configuration
-    issuer: str = Field(..., description="OIDC Issuer URL")
-    discovery_url: Optional[str] = Field(None, description="OIDC Discovery URL")
+    issuer: str = Field(
+        ...,
+        description="OIDC Issuer URL (must be HTTPS)",
+        pattern=r"^https://",
+    )
+    discovery_url: Optional[str] = Field(
+        None,
+        description="OIDC Discovery URL (must be HTTPS if provided)",
+        pattern=r"^https://",
+    )
     authorization_endpoint: Optional[str] = Field(None, description="Authorization endpoint")
     token_endpoint: Optional[str] = Field(None, description="Token endpoint")
     userinfo_endpoint: Optional[str] = Field(None, description="UserInfo endpoint")
@@ -122,6 +179,36 @@ class OIDCConfigureRequest(BaseModel):
     group_role_mapping: Dict[str, str] = Field(default_factory=dict, description="Map IdP groups to roles")
     require_email_verified: bool = Field(default=True, description="Require verified email")
     use_pkce: bool = Field(default=True, description="Use PKCE for authorization code flow")
+
+    @field_validator("client_id")
+    @classmethod
+    def validate_client_id(cls, v: str) -> str:
+        """Validate client ID is not empty."""
+        v = v.strip()
+        if not v:
+            raise ValueError("Client ID cannot be empty")
+        return v
+
+    @field_validator("client_secret")
+    @classmethod
+    def validate_client_secret(cls, v: str) -> str:
+        """Validate client secret meets minimum security requirements."""
+        if len(v) < 16:
+            raise ValueError("Client secret must be at least 16 characters for security")
+        return v
+
+    @field_validator("allowed_email_domains")
+    @classmethod
+    def validate_email_domains(cls, v: List[str]) -> List[str]:
+        """Normalize and validate email domains."""
+        normalized = []
+        for domain in v:
+            domain = domain.lower().strip()
+            if domain.startswith("@"):
+                domain = domain[1:]
+            if domain and "." in domain:  # Basic domain validation
+                normalized.append(domain)
+        return normalized
 
 
 class AttributeMappingRequest(BaseModel):
@@ -193,20 +280,41 @@ def _get_sso_config(organization_id: str) -> Optional[SSOConfiguration]:
     """
     Get SSO configuration for an organization.
 
-    In production, this would fetch from the database.
+    This implementation uses an in-memory store. In production, this should
+    be replaced with a database fetch.
+
+    Security Note: SSO configurations contain sensitive data (certificates,
+    client secrets) and should be stored encrypted at rest in production.
+
+    Args:
+        organization_id: The organization ID to fetch configuration for
+
+    Returns:
+        The SSO configuration if found, None otherwise
     """
-    # TODO: Implement database fetch
-    return None
+    return _sso_configurations.get(organization_id)
 
 
 def _save_sso_config(config: SSOConfiguration) -> None:
     """
-    Save SSO configuration to database.
+    Save SSO configuration to storage.
 
-    In production, this would save to the database.
+    This implementation uses an in-memory store. In production, this should
+    be replaced with a database save operation.
+
+    Security Note: Before saving to a database, ensure:
+    - Client secrets are encrypted at rest
+    - Certificates are validated for format and expiration
+    - Audit log entry is created for the change
+
+    Args:
+        config: The SSO configuration to save
     """
-    # TODO: Implement database save
-    pass
+    _sso_configurations[config.organization_id] = config
+    logger.info(
+        f"Saved SSO configuration for org {config.organization_id}, "
+        f"provider: {config.provider_type.value}, enabled: {config.enabled}"
+    )
 
 
 # =============================================================================
@@ -557,16 +665,32 @@ async def delete_sso_config(
             detail={"error": "SSO not configured for this organization"},
         )
 
-    # TODO: Delete from database
-    # TODO: Terminate active SSO sessions
+    # Delete from storage
+    if organization_id in _sso_configurations:
+        del _sso_configurations[organization_id]
+
+    # Terminate active SSO sessions for this organization
+    from app.routes.sso import _sso_user_sessions
+
+    terminated_sessions = 0
+    session_ids_to_remove = []
+    for session_id, session in _sso_user_sessions.items():
+        if session.organization_id == organization_id:
+            session_ids_to_remove.append(session_id)
+            terminated_sessions += 1
+
+    for session_id in session_ids_to_remove:
+        del _sso_user_sessions[session_id]
 
     logger.info(
-        f"SSO configuration deleted for org {organization_id} by user {auth_ctx.user_id}"
+        f"SSO configuration deleted for org {organization_id} by user {auth_ctx.user_id}, "
+        f"terminated {terminated_sessions} active session(s)"
     )
 
     return {
         "success": True,
         "message": "SSO configuration deleted",
+        "terminated_sessions": terminated_sessions,
     }
 
 
@@ -921,7 +1045,7 @@ async def list_sso_sessions(
 
     return {
         "success": True,
-        "sessions": [s.dict() for s in sessions],
+        "sessions": [s.model_dump() for s in sessions],
         "total": total,
         "limit": limit,
         "offset": offset,

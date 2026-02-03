@@ -71,11 +71,15 @@ def _get_sso_config(organization_id: str) -> Optional[SSOConfiguration]:
     """
     Get SSO configuration for an organization.
 
-    In production, this would fetch from the database.
+    This implementation uses an in-memory store. In production, this should
+    be replaced with a database fetch (e.g., from PostgreSQL, MongoDB, etc.).
+
+    Security Note: SSO configurations contain sensitive data and should be
+    stored encrypted at rest in production.
     """
-    # TODO: Implement database fetch
-    # For now, return None to indicate no SSO configured
-    return None
+    # Import from sso_admin to share the same storage
+    from app.routes.sso_admin import _sso_configurations
+    return _sso_configurations.get(organization_id)
 
 
 def _save_auth_session(session_id: str, data: Dict[str, Any]) -> None:
