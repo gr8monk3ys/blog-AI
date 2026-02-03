@@ -77,6 +77,9 @@ from app.routes import (
     payments_router,
     performance_router,
     remix_router,
+    social_router,
+    sso_admin_router,
+    sso_router,
     streaming_router,
     tools_router,
     usage_router,
@@ -252,6 +255,9 @@ The API supports versioning via URL path. Current version: `v1`
         {"name": "usage", "description": "Usage tracking and quota management"},
         {"name": "payments", "description": "Subscription and billing management"},
         {"name": "conversations", "description": "Conversation history management"},
+        {"name": "social", "description": "Social media scheduling and publishing"},
+        {"name": "sso", "description": "Single Sign-On authentication (SAML/OIDC)"},
+        {"name": "sso-admin", "description": "SSO configuration and administration"},
         {"name": "debug", "description": "Debug and development endpoints"},
     ],
     contact={
@@ -408,6 +414,9 @@ app.include_router(versions_router)
 app.include_router(webhooks_router)
 app.include_router(websocket_router)
 app.include_router(zapier_router)
+app.include_router(social_router)
+app.include_router(sso_router)
+app.include_router(sso_admin_router)
 
 # Create versioned API router
 api_v1_router = APIRouter(prefix="/api/v1", tags=["v1"])
@@ -435,6 +444,9 @@ api_v1_router.include_router(usage_router)
 api_v1_router.include_router(versions_router)
 api_v1_router.include_router(webhooks_router)
 api_v1_router.include_router(zapier_router)
+api_v1_router.include_router(social_router)
+api_v1_router.include_router(sso_router)
+api_v1_router.include_router(sso_admin_router)
 
 # Include versioned router
 app.include_router(api_v1_router)

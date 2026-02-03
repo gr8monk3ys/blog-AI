@@ -18,6 +18,8 @@ from .payments import router as payments_router
 from .performance import router as performance_router
 from .remix import router as remix_router
 from .social import router as social_router
+from .sso import router as sso_router
+from .sso_admin import router as sso_admin_router
 from .streaming import router as streaming_router
 from .tools import router as tools_router
 from .usage import router as usage_router
@@ -45,6 +47,8 @@ __all__ = [
     "performance_router",
     "remix_router",
     "social_router",
+    "sso_router",
+    "sso_admin_router",
     "streaming_router",
     "tools_router",
     "usage_router",
