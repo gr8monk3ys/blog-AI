@@ -25,7 +25,7 @@ Pillow = "^10.0.0"
 
 # Security
 bcrypt = "^4.0.0"
-bleach = "^6.0.0"
+bleach = "^6.3.0"
 
 # Redis for job storage
 redis = "^5.0.0"
