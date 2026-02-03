@@ -22,7 +22,7 @@ from src.blog.make_blog import (
     generate_blog_post,
     post_process_blog_post,
 )
-from src.planning.content_outline import generate_outline
+from src.planning.content_outline import generate_content_outline
 from src.text_generation.core import (
     GenerationOptions,
     RateLimitError,
@@ -33,7 +33,8 @@ from src.text_generation.core import (
 
 from ..auth import api_key_store, verify_api_key
 from ..error_handlers import sanitize_error_message
-from ..middleware import get_usage_stats, increment_usage_for_operation, require_quota
+from ..middleware import increment_usage_for_operation, require_quota
+from src.usage.quota_service import get_usage_stats
 
 logger = logging.getLogger(__name__)
 
@@ -383,12 +384,13 @@ async def _generate_outline(request: ExtensionGenerateRequest, options: Generati
     # Determine number of sections based on target length
     num_sections = 3 if request.target_length < 1000 else 5 if request.target_length < 2000 else 7
 
+    provider = create_provider_from_env()
     outline = await asyncio.to_thread(
         partial(
-            generate_outline,
-            topic=request.topic[:200],
+            generate_content_outline,
+            title=request.topic[:200],
             num_sections=num_sections,
-            provider_type="openai",
+            provider=provider,
             options=options,
         )
     )
