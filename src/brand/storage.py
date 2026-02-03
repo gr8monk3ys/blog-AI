@@ -30,35 +30,86 @@ class BaseBrandVoiceStorage(ABC):
     """Abstract base class for brand voice storage implementations."""
 
     @abstractmethod
-    async def get_samples(self, profile_id: str) -> List[VoiceSample]:
-        """Get all voice samples for a profile."""
+    async def get_samples(
+        self, profile_id: str, organization_id: Optional[str] = None
+    ) -> List[VoiceSample]:
+        """
+        Get all voice samples for a profile.
+
+        Args:
+            profile_id: The profile to get samples for.
+            organization_id: SECURITY - If provided, validates that profile
+                           belongs to this organization.
+        """
         pass
 
     @abstractmethod
-    async def add_sample(self, sample: VoiceSample) -> str:
-        """Add a voice sample and return its ID."""
+    async def add_sample(
+        self, sample: VoiceSample, organization_id: Optional[str] = None
+    ) -> str:
+        """
+        Add a voice sample and return its ID.
+
+        Args:
+            sample: The sample to add.
+            organization_id: SECURITY - Organization that owns the profile.
+        """
         pass
 
     @abstractmethod
-    async def delete_sample(self, profile_id: str, sample_id: str) -> bool:
-        """Delete a voice sample. Returns True if deleted, False if not found."""
+    async def delete_sample(
+        self, profile_id: str, sample_id: str, organization_id: Optional[str] = None
+    ) -> bool:
+        """
+        Delete a voice sample. Returns True if deleted, False if not found.
+
+        Args:
+            profile_id: The profile the sample belongs to.
+            sample_id: The sample to delete.
+            organization_id: SECURITY - Validates ownership before deletion.
+        """
         pass
 
     @abstractmethod
-    async def get_fingerprint(self, profile_id: str) -> Optional[VoiceFingerprint]:
-        """Get the voice fingerprint for a profile."""
+    async def get_fingerprint(
+        self, profile_id: str, organization_id: Optional[str] = None
+    ) -> Optional[VoiceFingerprint]:
+        """
+        Get the voice fingerprint for a profile.
+
+        Args:
+            profile_id: The profile to get fingerprint for.
+            organization_id: SECURITY - Validates ownership.
+        """
         pass
 
     @abstractmethod
-    async def save_fingerprint(self, fingerprint: VoiceFingerprint) -> str:
-        """Save or update a voice fingerprint. Returns the fingerprint ID."""
+    async def save_fingerprint(
+        self, fingerprint: VoiceFingerprint, organization_id: Optional[str] = None
+    ) -> str:
+        """
+        Save or update a voice fingerprint. Returns the fingerprint ID.
+
+        Args:
+            fingerprint: The fingerprint to save.
+            organization_id: SECURITY - Organization that owns the profile.
+        """
         pass
 
     @abstractmethod
     async def update_sample_analysis(
-        self, sample_id: str, analysis: SampleAnalysis, quality_score: float
+        self, sample_id: str, analysis: SampleAnalysis, quality_score: float,
+        organization_id: Optional[str] = None
     ) -> bool:
-        """Update sample with analysis results."""
+        """
+        Update sample with analysis results.
+
+        Args:
+            sample_id: The sample to update.
+            analysis: Analysis results.
+            quality_score: Quality score.
+            organization_id: SECURITY - Validates ownership.
+        """
         pass
 
 
@@ -68,15 +119,54 @@ class InMemoryBrandVoiceStorage(BaseBrandVoiceStorage):
     def __init__(self) -> None:
         self._samples: Dict[str, List[VoiceSample]] = {}
         self._fingerprints: Dict[str, VoiceFingerprint] = {}
+        # SECURITY: Track organization ownership of profiles
+        self._profile_organizations: Dict[str, str] = {}
         self._sample_id_counter = 0
         logger.info("Initialized in-memory brand voice storage")
 
-    async def get_samples(self, profile_id: str) -> List[VoiceSample]:
-        """Get all voice samples for a profile."""
+    def _validate_ownership(
+        self, profile_id: str, organization_id: Optional[str]
+    ) -> bool:
+        """SECURITY: Validate that the profile belongs to the organization."""
+        if organization_id is None:
+            # No org context - allow for backward compatibility but log warning
+            logger.warning(
+                f"Profile {profile_id} accessed without organization context - "
+                "this should be fixed for proper data isolation"
+            )
+            return True
+        stored_org = self._profile_organizations.get(profile_id)
+        if stored_org is None:
+            # New profile - register organization ownership
+            return True
+        return stored_org == organization_id
+
+    async def get_samples(
+        self, profile_id: str, organization_id: Optional[str] = None
+    ) -> List[VoiceSample]:
+        """Get all voice samples for a profile with organization validation."""
+        # SECURITY: Validate organization ownership
+        if not self._validate_ownership(profile_id, organization_id):
+            logger.warning(
+                f"Unauthorized access attempt to profile {profile_id} "
+                f"by organization {organization_id}"
+            )
+            return []  # Return empty to prevent data leakage
         return self._samples.get(profile_id, [])
 
-    async def add_sample(self, sample: VoiceSample) -> str:
-        """Add a voice sample and return its ID."""
+    async def add_sample(
+        self, sample: VoiceSample, organization_id: Optional[str] = None
+    ) -> str:
+        """Add a voice sample and return its ID with organization tracking."""
+        # SECURITY: Register or validate organization ownership
+        if organization_id:
+            if sample.profile_id not in self._profile_organizations:
+                self._profile_organizations[sample.profile_id] = organization_id
+            elif not self._validate_ownership(sample.profile_id, organization_id):
+                raise PermissionError(
+                    f"Profile {sample.profile_id} belongs to a different organization"
+                )
+
         self._sample_id_counter += 1
         sample_id = f"sample-{self._sample_id_counter}"
 
@@ -103,8 +193,18 @@ class InMemoryBrandVoiceStorage(BaseBrandVoiceStorage):
         logger.debug(f"Added sample {sample_id} for profile {sample.profile_id}")
         return sample_id
 
-    async def delete_sample(self, profile_id: str, sample_id: str) -> bool:
-        """Delete a voice sample. Returns True if deleted, False if not found."""
+    async def delete_sample(
+        self, profile_id: str, sample_id: str, organization_id: Optional[str] = None
+    ) -> bool:
+        """Delete a voice sample with organization validation."""
+        # SECURITY: Validate organization ownership
+        if not self._validate_ownership(profile_id, organization_id):
+            logger.warning(
+                f"Unauthorized delete attempt for sample {sample_id} "
+                f"in profile {profile_id} by organization {organization_id}"
+            )
+            return False
+
         if profile_id not in self._samples:
             return False
 
@@ -117,12 +217,32 @@ class InMemoryBrandVoiceStorage(BaseBrandVoiceStorage):
             logger.debug(f"Deleted sample {sample_id} from profile {profile_id}")
         return deleted
 
-    async def get_fingerprint(self, profile_id: str) -> Optional[VoiceFingerprint]:
-        """Get the voice fingerprint for a profile."""
+    async def get_fingerprint(
+        self, profile_id: str, organization_id: Optional[str] = None
+    ) -> Optional[VoiceFingerprint]:
+        """Get the voice fingerprint for a profile with organization validation."""
+        # SECURITY: Validate organization ownership
+        if not self._validate_ownership(profile_id, organization_id):
+            logger.warning(
+                f"Unauthorized fingerprint access attempt for profile {profile_id} "
+                f"by organization {organization_id}"
+            )
+            return None
         return self._fingerprints.get(profile_id)
 
-    async def save_fingerprint(self, fingerprint: VoiceFingerprint) -> str:
-        """Save or update a voice fingerprint. Returns the fingerprint ID."""
+    async def save_fingerprint(
+        self, fingerprint: VoiceFingerprint, organization_id: Optional[str] = None
+    ) -> str:
+        """Save or update a voice fingerprint with organization tracking."""
+        # SECURITY: Register or validate organization ownership
+        if organization_id:
+            if fingerprint.profile_id not in self._profile_organizations:
+                self._profile_organizations[fingerprint.profile_id] = organization_id
+            elif not self._validate_ownership(fingerprint.profile_id, organization_id):
+                raise PermissionError(
+                    f"Profile {fingerprint.profile_id} belongs to a different organization"
+                )
+
         fingerprint_id = fingerprint.id or f"fp-{uuid.uuid4()}"
 
         updated_fingerprint = VoiceFingerprint(
@@ -143,10 +263,15 @@ class InMemoryBrandVoiceStorage(BaseBrandVoiceStorage):
         return fingerprint_id
 
     async def update_sample_analysis(
-        self, sample_id: str, analysis: SampleAnalysis, quality_score: float
+        self, sample_id: str, analysis: SampleAnalysis, quality_score: float,
+        organization_id: Optional[str] = None
     ) -> bool:
-        """Update sample with analysis results."""
-        for profile_samples in self._samples.values():
+        """Update sample with analysis results and organization validation."""
+        for profile_id, profile_samples in self._samples.items():
+            # SECURITY: Validate organization ownership
+            if organization_id and not self._validate_ownership(profile_id, organization_id):
+                continue
+
             for sample in profile_samples:
                 if sample.id == sample_id:
                     sample.is_analyzed = True
@@ -234,17 +359,25 @@ class SupabaseBrandVoiceStorage(BaseBrandVoiceStorage):
             last_trained_at=row.get("last_trained_at"),
         )
 
-    async def get_samples(self, profile_id: str) -> List[VoiceSample]:
-        """Get all voice samples for a profile."""
+    async def get_samples(
+        self, profile_id: str, organization_id: Optional[str] = None
+    ) -> List[VoiceSample]:
+        """Get all voice samples for a profile with organization validation."""
         try:
             client = self._get_client()
-            result = (
+
+            # SECURITY: Build query with organization filter if provided
+            query = (
                 client.table("voice_samples")
                 .select("*")
                 .eq("profile_id", profile_id)
-                .order("created_at", desc=False)
-                .execute()
             )
+
+            # SECURITY: Apply organization filter for data isolation
+            if organization_id:
+                query = query.eq("organization_id", organization_id)
+
+            result = query.order("created_at", desc=False).execute()
 
             if not result.data:
                 return []
@@ -255,8 +388,10 @@ class SupabaseBrandVoiceStorage(BaseBrandVoiceStorage):
             logger.error(f"Error fetching samples for profile {profile_id}: {e}")
             raise
 
-    async def add_sample(self, sample: VoiceSample) -> str:
-        """Add a voice sample and return its ID."""
+    async def add_sample(
+        self, sample: VoiceSample, organization_id: Optional[str] = None
+    ) -> str:
+        """Add a voice sample and return its ID with organization tracking."""
         try:
             client = self._get_client()
 
@@ -273,6 +408,10 @@ class SupabaseBrandVoiceStorage(BaseBrandVoiceStorage):
                 "quality_score": sample.quality_score,
                 "is_primary_example": sample.is_primary_example,
             }
+
+            # SECURITY: Include organization_id for data isolation
+            if organization_id:
+                data["organization_id"] = organization_id
 
             # Include analysis result if present
             if sample.analysis_result:
@@ -291,25 +430,35 @@ class SupabaseBrandVoiceStorage(BaseBrandVoiceStorage):
             logger.error(f"Error adding sample for profile {sample.profile_id}: {e}")
             raise
 
-    async def delete_sample(self, profile_id: str, sample_id: str) -> bool:
-        """Delete a voice sample. Returns True if deleted, False if not found."""
+    async def delete_sample(
+        self, profile_id: str, sample_id: str, organization_id: Optional[str] = None
+    ) -> bool:
+        """Delete a voice sample with organization validation."""
         try:
             client = self._get_client()
 
-            # First check if sample exists
-            existing = (
+            # SECURITY: Build query with organization filter
+            query = (
                 client.table("voice_samples")
                 .select("id")
                 .eq("id", sample_id)
                 .eq("profile_id", profile_id)
-                .execute()
             )
+
+            # SECURITY: Apply organization filter to prevent unauthorized deletion
+            if organization_id:
+                query = query.eq("organization_id", organization_id)
+
+            existing = query.execute()
 
             if not existing.data:
                 return False
 
-            # Delete the sample
-            client.table("voice_samples").delete().eq("id", sample_id).execute()
+            # SECURITY: Delete with organization filter to ensure ownership
+            delete_query = client.table("voice_samples").delete().eq("id", sample_id)
+            if organization_id:
+                delete_query = delete_query.eq("organization_id", organization_id)
+            delete_query.execute()
 
             logger.info(f"Deleted sample {sample_id} from profile {profile_id}")
             return True
@@ -318,18 +467,25 @@ class SupabaseBrandVoiceStorage(BaseBrandVoiceStorage):
             logger.error(f"Error deleting sample {sample_id}: {e}")
             raise
 
-    async def get_fingerprint(self, profile_id: str) -> Optional[VoiceFingerprint]:
-        """Get the voice fingerprint for a profile."""
+    async def get_fingerprint(
+        self, profile_id: str, organization_id: Optional[str] = None
+    ) -> Optional[VoiceFingerprint]:
+        """Get the voice fingerprint for a profile with organization validation."""
         try:
             client = self._get_client()
 
-            result = (
+            # SECURITY: Build query with organization filter
+            query = (
                 client.table("voice_fingerprints")
                 .select("*")
                 .eq("profile_id", profile_id)
-                .limit(1)
-                .execute()
             )
+
+            # SECURITY: Apply organization filter for data isolation
+            if organization_id:
+                query = query.eq("organization_id", organization_id)
+
+            result = query.limit(1).execute()
 
             if not result.data:
                 return None
@@ -340,8 +496,10 @@ class SupabaseBrandVoiceStorage(BaseBrandVoiceStorage):
             logger.error(f"Error fetching fingerprint for profile {profile_id}: {e}")
             raise
 
-    async def save_fingerprint(self, fingerprint: VoiceFingerprint) -> str:
-        """Save or update a voice fingerprint. Returns the fingerprint ID."""
+    async def save_fingerprint(
+        self, fingerprint: VoiceFingerprint, organization_id: Optional[str] = None
+    ) -> str:
+        """Save or update a voice fingerprint with organization tracking."""
         try:
             client = self._get_client()
 
@@ -358,21 +516,30 @@ class SupabaseBrandVoiceStorage(BaseBrandVoiceStorage):
                 "last_trained_at": datetime.utcnow().isoformat(),
             }
 
-            # Check if fingerprint already exists for this profile
-            existing = (
+            # SECURITY: Include organization_id for data isolation
+            if organization_id:
+                data["organization_id"] = organization_id
+
+            # SECURITY: Check if fingerprint already exists with organization filter
+            query = (
                 client.table("voice_fingerprints")
                 .select("id")
                 .eq("profile_id", fingerprint.profile_id)
-                .limit(1)
-                .execute()
             )
+            if organization_id:
+                query = query.eq("organization_id", organization_id)
+            existing = query.limit(1).execute()
 
             if existing.data:
                 # Update existing fingerprint
                 fingerprint_id = str(existing.data[0]["id"])
-                client.table("voice_fingerprints").update(data).eq(
+                update_query = client.table("voice_fingerprints").update(data).eq(
                     "id", fingerprint_id
-                ).execute()
+                )
+                # SECURITY: Ensure we only update our own fingerprints
+                if organization_id:
+                    update_query = update_query.eq("organization_id", organization_id)
+                update_query.execute()
                 logger.info(f"Updated fingerprint {fingerprint_id} for profile {fingerprint.profile_id}")
             else:
                 # Insert new fingerprint
@@ -389,9 +556,10 @@ class SupabaseBrandVoiceStorage(BaseBrandVoiceStorage):
             raise
 
     async def update_sample_analysis(
-        self, sample_id: str, analysis: SampleAnalysis, quality_score: float
+        self, sample_id: str, analysis: SampleAnalysis, quality_score: float,
+        organization_id: Optional[str] = None
     ) -> bool:
-        """Update sample with analysis results."""
+        """Update sample with analysis results and organization validation."""
         try:
             client = self._get_client()
 
@@ -401,12 +569,18 @@ class SupabaseBrandVoiceStorage(BaseBrandVoiceStorage):
                 "quality_score": quality_score,
             }
 
-            result = (
+            # SECURITY: Build update query with organization filter
+            query = (
                 client.table("voice_samples")
                 .update(data)
                 .eq("id", sample_id)
-                .execute()
             )
+
+            # SECURITY: Apply organization filter to prevent unauthorized updates
+            if organization_id:
+                query = query.eq("organization_id", organization_id)
+
+            result = query.execute()
 
             success = bool(result.data)
             if success:

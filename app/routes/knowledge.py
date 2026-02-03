@@ -6,6 +6,11 @@ Provides REST API endpoints for:
 - Document listing and deletion
 - Knowledge base search
 - Statistics and monitoring
+
+Authorization:
+- All endpoints require organization membership
+- Upload/delete operations require content.create permission
+- Read/search operations require content.view permission
 """
 
 import logging
@@ -17,6 +22,7 @@ from fastapi import (
     Depends,
     File,
     Form,
+    Header,
     HTTPException,
     Query,
     UploadFile,
@@ -26,9 +32,16 @@ from pydantic import BaseModel, Field
 
 from src.knowledge import KnowledgeService, KnowledgeBaseError
 from src.knowledge.knowledge_service import get_knowledge_service
+from src.organizations import AuthorizationContext
 from src.types.knowledge import DocumentType, SearchFilter
 
 from ..auth import verify_api_key
+from ..dependencies import (
+    require_knowledge_read,
+    require_knowledge_write,
+    require_org_scoped_api_key,
+    OrganizationAuthContext,
+)
 from ..error_handlers import sanitize_error_message
 from ..middleware import require_quota
 
@@ -164,11 +177,15 @@ chunked, embedded, and stored for later retrieval during content generation.
 
 **Processing:** Documents are processed asynchronously. Large documents
 may take several seconds to process.
+
+**Authorization:** Requires content.create permission in the organization.
+Pass the organization ID via X-Organization-ID header.
     """,
     responses={
         201: {"description": "Document uploaded and processed successfully"},
         400: {"description": "Invalid file type or content"},
         401: {"description": "Missing or invalid API key"},
+        403: {"description": "Insufficient permissions"},
         413: {"description": "File too large"},
         429: {"description": "Rate limit exceeded"},
         500: {"description": "Processing error"},
@@ -179,7 +196,7 @@ async def upload_document(
     title: Optional[str] = Form(
         None, description="Custom title for the document"
     ),
-    user_id: str = Depends(require_quota),
+    auth_ctx: AuthorizationContext = Depends(require_knowledge_write),
     service: KnowledgeService = Depends(get_service),
 ):
     """
@@ -219,15 +236,19 @@ async def upload_document(
 
     # Upload and process document
     try:
+        # Use organization_id for scoping if available, fallback to user_id
+        scope_id = auth_ctx.organization_id or auth_ctx.user_id
+
         response = await service.upload_document(
             content=content,
             filename=filename,
-            user_id=user_id,
+            user_id=scope_id,
             title=title,
         )
 
         logger.info(
-            f"Document uploaded: {response.document_id} by user {user_id}"
+            f"Document uploaded: {response.document_id} by user {auth_ctx.user_id} "
+            f"in org {auth_ctx.organization_id}"
         )
 
         return DocumentUploadResponse(
@@ -256,22 +277,31 @@ async def upload_document(
     "/documents",
     response_model=DocumentListResponse,
     summary="List documents",
-    description="List all documents in your knowledge base with pagination.",
+    description="""
+List all documents in your knowledge base with pagination.
+
+**Authorization:** Requires content.view permission in the organization.
+Pass the organization ID via X-Organization-ID header.
+    """,
     responses={
         200: {"description": "Documents retrieved successfully"},
         401: {"description": "Missing or invalid API key"},
+        403: {"description": "Insufficient permissions"},
     },
 )
 async def list_documents(
     limit: int = Query(default=50, ge=1, le=100, description="Maximum documents to return"),
     offset: int = Query(default=0, ge=0, description="Pagination offset"),
-    user_id: str = Depends(require_quota),
+    auth_ctx: AuthorizationContext = Depends(require_knowledge_read),
     service: KnowledgeService = Depends(get_service),
 ):
-    """List all documents in the user's knowledge base."""
+    """List all documents in the organization's knowledge base."""
     try:
+        # Use organization_id for scoping if available
+        scope_id = auth_ctx.organization_id or auth_ctx.user_id
+
         documents = await service.list_documents(
-            user_id=user_id,
+            user_id=scope_id,
             limit=limit,
             offset=offset,
         )
@@ -313,21 +343,27 @@ async def list_documents(
     "/documents/{document_id}",
     response_model=DocumentResponse,
     summary="Get document details",
-    description="Get details of a specific document.",
+    description="""
+Get details of a specific document.
+
+**Authorization:** Requires content.view permission in the organization.
+    """,
     responses={
         200: {"description": "Document details retrieved successfully"},
         401: {"description": "Missing or invalid API key"},
+        403: {"description": "Insufficient permissions"},
         404: {"description": "Document not found"},
     },
 )
 async def get_document(
     document_id: str,
-    user_id: str = Depends(require_quota),
+    auth_ctx: AuthorizationContext = Depends(require_knowledge_read),
     service: KnowledgeService = Depends(get_service),
 ):
     """Get details of a specific document."""
     try:
-        document = await service.get_document(document_id, user_id)
+        scope_id = auth_ctx.organization_id or auth_ctx.user_id
+        document = await service.get_document(document_id, scope_id)
 
         if not document:
             raise HTTPException(
@@ -362,22 +398,29 @@ async def get_document(
     "/documents/{document_id}",
     response_model=DeleteResponse,
     summary="Delete a document",
-    description="Delete a document and all its chunks from the knowledge base.",
+    description="""
+Delete a document and all its chunks from the knowledge base.
+
+**Authorization:** Requires content.create permission in the organization.
+    """,
     responses={
         200: {"description": "Document deleted successfully"},
         401: {"description": "Missing or invalid API key"},
+        403: {"description": "Insufficient permissions"},
         404: {"description": "Document not found"},
     },
 )
 async def delete_document(
     document_id: str,
-    user_id: str = Depends(require_quota),
+    auth_ctx: AuthorizationContext = Depends(require_knowledge_write),
     service: KnowledgeService = Depends(get_service),
 ):
     """Delete a document from the knowledge base."""
     try:
-        # Verify document exists and belongs to user
-        document = await service.get_document(document_id, user_id)
+        scope_id = auth_ctx.organization_id or auth_ctx.user_id
+
+        # Verify document exists and belongs to organization
+        document = await service.get_document(document_id, scope_id)
         if not document:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -385,9 +428,12 @@ async def delete_document(
             )
 
         # Delete document
-        await service.delete_document(document_id, user_id)
+        await service.delete_document(document_id, scope_id)
 
-        logger.info(f"Document deleted: {document_id} by user {user_id}")
+        logger.info(
+            f"Document deleted: {document_id} by user {auth_ctx.user_id} "
+            f"in org {auth_ctx.organization_id}"
+        )
 
         return DeleteResponse(
             success=True,
@@ -427,20 +473,25 @@ based on semantic similarity to your query.
 - Filter by specific document IDs
 - Filter by file type
 - Adjust minimum relevance score
+
+**Authorization:** Requires content.view permission in the organization.
     """,
     responses={
         200: {"description": "Search completed successfully"},
         400: {"description": "Invalid search parameters"},
         401: {"description": "Missing or invalid API key"},
+        403: {"description": "Insufficient permissions"},
     },
 )
 async def search_knowledge_base(
     request: SearchRequest,
-    user_id: str = Depends(require_quota),
+    auth_ctx: AuthorizationContext = Depends(require_knowledge_read),
     service: KnowledgeService = Depends(get_service),
 ):
     """Search the knowledge base for relevant content."""
     try:
+        scope_id = auth_ctx.organization_id or auth_ctx.user_id
+
         # Build filters
         filters = None
         if request.document_ids or request.file_types:
@@ -458,7 +509,7 @@ async def search_knowledge_base(
         # Execute search
         response = await service.search(
             query=request.query,
-            user_id=user_id,
+            user_id=scope_id,
             top_k=request.top_k,
             min_score=request.min_score,
             filters=filters,
@@ -505,19 +556,25 @@ async def search_knowledge_base(
     "/stats",
     response_model=StatsResponse,
     summary="Get knowledge base statistics",
-    description="Get statistics about your knowledge base usage.",
+    description="""
+Get statistics about your knowledge base usage.
+
+**Authorization:** Requires content.view permission in the organization.
+    """,
     responses={
         200: {"description": "Statistics retrieved successfully"},
         401: {"description": "Missing or invalid API key"},
+        403: {"description": "Insufficient permissions"},
     },
 )
 async def get_knowledge_base_stats(
-    user_id: str = Depends(require_quota),
+    auth_ctx: AuthorizationContext = Depends(require_knowledge_read),
     service: KnowledgeService = Depends(get_service),
 ):
-    """Get statistics about the user's knowledge base."""
+    """Get statistics about the organization's knowledge base."""
     try:
-        stats = await service.get_stats(user_id)
+        scope_id = auth_ctx.organization_id or auth_ctx.user_id
+        stats = await service.get_stats(scope_id)
 
         return StatsResponse(
             success=True,

@@ -3,6 +3,10 @@ Brand Voice Training API Routes.
 
 Endpoints for analyzing, training, and scoring brand voices.
 Includes security validation for all inputs.
+
+Authorization:
+- Read operations (get fingerprint, list samples) require brand.view permission
+- Write operations (add sample, train, delete) require brand.manage permission
 """
 
 import logging
@@ -10,10 +14,17 @@ import re
 from typing import Any, Dict, List, Optional, Set
 
 import bleach
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
+from src.organizations import AuthorizationContext
 from ..auth import verify_api_key
+from ..dependencies import (
+    require_brand_read,
+    require_brand_write,
+    require_org_scoped_api_key,
+    OrganizationAuthContext,
+)
 from ..error_handlers import sanitize_error_message
 
 
@@ -299,13 +310,15 @@ async def analyze_sample(
 @router.post("/samples")
 async def add_sample(
     request: AddSampleRequest,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_brand_write),
 ):
     """
     Add a voice sample to a brand profile.
 
     Samples are used to train the voice fingerprint. Adding more diverse
     samples improves training quality.
+
+    **Authorization:** Requires brand.manage permission in the organization.
     """
     try:
         content_type = ContentType(request.content_type)
@@ -360,10 +373,12 @@ async def add_sample(
 @router.get("/samples/{profile_id}")
 async def list_samples(
     profile_id: str,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_brand_read),
 ):
     """
     List all voice samples for a brand profile.
+
+    **Authorization:** Requires brand.view permission in the organization.
     """
     try:
         storage = get_brand_voice_storage()
@@ -403,10 +418,12 @@ async def list_samples(
 async def delete_sample(
     profile_id: str,
     sample_id: str,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_brand_write),
 ):
     """
     Delete a voice sample from a profile.
+
+    **Authorization:** Requires brand.manage permission in the organization.
     """
     try:
         storage = get_brand_voice_storage()
@@ -444,13 +461,15 @@ async def delete_sample(
 @router.post("/train", response_model=TrainVoiceResponse)
 async def train_voice(
     request: TrainVoiceRequest,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_brand_write),
 ):
     """
     Train a voice fingerprint from samples.
 
     Aggregates analysis from all samples into a unified voice fingerprint
     that can be used for content generation and scoring.
+
+    **Authorization:** Requires brand.manage permission in the organization.
     """
     try:
         storage = get_brand_voice_storage()
@@ -520,10 +539,12 @@ async def train_voice(
 @router.get("/fingerprint/{profile_id}")
 async def get_fingerprint(
     profile_id: str,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_brand_read),
 ):
     """
     Get the trained voice fingerprint for a profile.
+
+    **Authorization:** Requires brand.view permission in the organization.
     """
     try:
         storage = get_brand_voice_storage()
@@ -558,16 +579,19 @@ async def get_fingerprint(
 @router.post("/score", response_model=ScoreContentResponse)
 async def score_content(
     request: ScoreContentRequest,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_brand_read),
 ):
     """
     Score content against a trained brand voice.
 
     Returns consistency scores and suggestions for improvement.
+
+    **Authorization:** Requires brand.view permission in the organization.
     """
     try:
         storage = get_brand_voice_storage()
-        fingerprint = await storage.get_fingerprint(request.profile_id)
+        # SECURITY: Use organization-scoped profile access
+        fingerprint = await storage.get_fingerprint(request.profile_id, auth_ctx.organization_id)
 
         if not fingerprint:
             raise HTTPException(
@@ -624,15 +648,18 @@ async def score_content(
 @router.get("/status/{profile_id}")
 async def get_training_status(
     profile_id: str,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_brand_read),
 ):
     """
     Get the training status for a profile.
+
+    **Authorization:** Requires brand.view permission in the organization.
     """
     try:
         storage = get_brand_voice_storage()
-        samples = await storage.get_samples(profile_id)
-        fingerprint = await storage.get_fingerprint(profile_id)
+        # SECURITY: Use organization-scoped profile access
+        samples = await storage.get_samples(profile_id, auth_ctx.organization_id)
+        fingerprint = await storage.get_fingerprint(profile_id, auth_ctx.organization_id)
 
         if fingerprint:
             training_status = TrainingStatus.TRAINED
