@@ -3,6 +3,11 @@ Image generation endpoints.
 
 Provides API endpoints for AI-powered image generation,
 including featured images, social media images, and inline content images.
+
+Authorization:
+- All endpoints require organization membership
+- Image generation requires content.create permission
+- Viewing styles requires content.view permission
 """
 
 import logging
@@ -12,6 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from src.images import ImageGenerationError, ImageGenerator
+from src.organizations import AuthorizationContext
 from src.types.images import (
     AvailableStyles,
     BlogImageGenerationRequest,
@@ -27,6 +33,7 @@ from src.types.images import (
 )
 
 from ..auth import verify_api_key
+from ..dependencies import require_content_access, require_content_creation
 from ..error_handlers import sanitize_error_message
 
 logger = logging.getLogger(__name__)
@@ -76,6 +83,7 @@ class ErrorResponse(BaseModel):
     responses={
         400: {"model": ErrorResponse, "description": "Invalid request"},
         401: {"description": "Unauthorized"},
+        403: {"description": "Insufficient permissions"},
         429: {"model": ErrorResponse, "description": "Rate limit exceeded"},
         500: {"model": ErrorResponse, "description": "Generation failed"},
         502: {"model": ErrorResponse, "description": "Provider error"},
@@ -83,7 +91,7 @@ class ErrorResponse(BaseModel):
 )
 async def generate_image(
     request: ImageGenerationRequest,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ):
     """
     Generate an image from a prompt or content.
@@ -94,13 +102,15 @@ async def generate_image(
 
     Args:
         request: Image generation request parameters.
-        user_id: Authenticated user ID.
 
     Returns:
         Generated image result with URL and metadata.
+
+    Authorization: Requires content.create permission.
     """
     logger.info(
-        f"Image generation requested by user: {user_id}, "
+        f"Image generation requested by user: {auth_ctx.user_id}, "
+        f"org: {auth_ctx.organization_id}, "
         f"type: {request.image_type}, provider: {request.provider}"
     )
 
@@ -171,6 +181,7 @@ async def generate_image(
     responses={
         400: {"model": ErrorResponse, "description": "Invalid request"},
         401: {"description": "Unauthorized"},
+        403: {"description": "Insufficient permissions"},
         429: {"model": ErrorResponse, "description": "Rate limit exceeded"},
         500: {"model": ErrorResponse, "description": "Generation failed"},
         502: {"model": ErrorResponse, "description": "Provider error"},
@@ -178,7 +189,7 @@ async def generate_image(
 )
 async def generate_blog_images(
     request: BlogImageGenerationRequest,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ):
     """
     Generate all images for a blog post.
@@ -188,13 +199,15 @@ async def generate_blog_images(
 
     Args:
         request: Blog image generation request parameters.
-        user_id: Authenticated user ID.
 
     Returns:
         All generated images for the blog post.
+
+    Authorization: Requires content.create permission.
     """
     logger.info(
-        f"Blog image generation requested by user: {user_id}, "
+        f"Blog image generation requested by user: {auth_ctx.user_id}, "
+        f"org: {auth_ctx.organization_id}, "
         f"title_length: {len(request.title)}, "
         f"featured: {request.generate_featured}, "
         f"social: {request.generate_social}, "
@@ -252,10 +265,11 @@ async def generate_blog_images(
     response_model=AvailableStyles,
     responses={
         401: {"description": "Unauthorized"},
+        403: {"description": "Insufficient permissions"},
     },
 )
 async def get_available_styles(
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ):
     """
     Get available image styles and sizes.
@@ -263,13 +277,12 @@ async def get_available_styles(
     Returns information about supported styles, sizes, and providers
     for image generation.
 
-    Args:
-        user_id: Authenticated user ID.
-
     Returns:
         Available styles, sizes, and providers.
+
+    Authorization: Requires content.view permission.
     """
-    logger.debug(f"Styles request from user: {user_id}")
+    logger.debug(f"Styles request from user: {auth_ctx.user_id}, org: {auth_ctx.organization_id}")
 
     styles = [
         ImageStyleInfo(

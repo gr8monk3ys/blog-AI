@@ -1,5 +1,10 @@
 """
 Usage tracking and tier management endpoints.
+
+Authorization:
+- All endpoints require organization membership
+- Stats/view operations require content.view permission
+- Tier upgrade operations require admin privileges
 """
 
 import logging
@@ -7,6 +12,7 @@ from typing import Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from src.organizations import AuthorizationContext
 from src.types.usage import (
     SubscriptionTier,
     UsageStats as NewUsageStats,
@@ -30,6 +36,12 @@ from src.usage.quota_service import (
 )
 
 from ..auth import verify_api_key
+from ..dependencies import (
+    require_content_access,
+    require_admin,
+    require_org_scoped_api_key,
+    OrganizationAuthContext,
+)
 from ..error_handlers import sanitize_error_message
 from ..models import (
     AllTiersResponse,
@@ -67,30 +79,37 @@ def _stats_to_response(stats: UsageStats) -> UsageStatsResponse:
 
 @router.get("/stats")
 async def get_user_usage_stats(
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ) -> UsageStatsResponse:
     """
     Get usage statistics for the authenticated user.
 
     Returns current usage counts, limits, and remaining quota.
+
+    Authorization: Requires content.view permission.
     """
-    logger.info(f"Usage stats requested by user: {user_id}")
-    stats = get_usage_stats(user_id)
+    # Use organization_id for scoping if available, fallback to user_id
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    logger.info(f"Usage stats requested by user: {auth_ctx.user_id} in org: {auth_ctx.organization_id}")
+    stats = get_usage_stats(scope_id)
     return _stats_to_response(stats)
 
 
 @router.get("/check")
 async def check_user_limit(
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ) -> Dict:
     """
     Check if user has remaining usage quota.
 
     Returns remaining count or raises 429 if limit reached.
+
+    Authorization: Requires content.view permission.
     """
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
     try:
-        remaining = check_usage_limit(user_id)
-        stats = get_usage_stats(user_id)
+        remaining = check_usage_limit(scope_id)
+        stats = get_usage_stats(scope_id)
         return {
             "success": True,
             "can_generate": True,
@@ -100,7 +119,7 @@ async def check_user_limit(
             "monthly_remaining": stats.monthly_remaining,
         }
     except UsageLimitExceeded as e:
-        stats = get_usage_stats(user_id)
+        stats = get_usage_stats(scope_id)
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=UsageLimitErrorResponse(
@@ -117,13 +136,16 @@ async def check_user_limit(
 
 @router.get("/tiers")
 async def get_all_tiers(
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ) -> AllTiersResponse:
     """
     Get information about all available tiers.
 
     Returns configuration for each tier including limits and pricing.
+
+    Authorization: Requires content.view permission.
     """
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
     tiers = []
     for tier in UsageTier:
         config = get_tier_info(tier)
@@ -137,7 +159,7 @@ async def get_all_tiers(
             description=config.description,
         ))
 
-    current_tier = usage_limiter.get_user_tier(user_id)
+    current_tier = usage_limiter.get_user_tier(scope_id)
 
     return AllTiersResponse(
         tiers=tiers,
@@ -148,7 +170,7 @@ async def get_all_tiers(
 @router.get("/tier/{tier_name}")
 async def get_tier_details(
     tier_name: str,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ) -> TierInfoResponse:
     """
     Get detailed information about a specific tier.
@@ -158,6 +180,8 @@ async def get_tier_details(
 
     Returns:
         Tier configuration and features.
+
+    Authorization: Requires content.view permission.
     """
     try:
         tier = UsageTier(tier_name.lower())
@@ -182,7 +206,7 @@ async def get_tier_details(
 @router.post("/upgrade")
 async def upgrade_user_tier(
     request: UpgradeTierRequest,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_admin),
 ) -> Dict:
     """
     Upgrade user to a new tier.
@@ -195,7 +219,10 @@ async def upgrade_user_tier(
 
     Returns:
         Success status and new tier information.
+
+    Authorization: Requires admin privileges in the organization.
     """
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
     try:
         new_tier = UsageTier(request.tier.lower())
     except ValueError:
@@ -204,13 +231,13 @@ async def upgrade_user_tier(
             detail=f"Invalid tier: {request.tier}. Must be one of: free, pro, enterprise",
         )
 
-    current_tier = usage_limiter.get_user_tier(user_id)
+    current_tier = usage_limiter.get_user_tier(scope_id)
 
     # In production, verify payment before upgrading
     # For now, allow direct upgrade for testing
-    usage_limiter.set_user_tier(user_id, new_tier)
+    usage_limiter.set_user_tier(scope_id, new_tier)
 
-    logger.info(f"User {user_id} upgraded from {current_tier.value} to {new_tier.value}")
+    logger.info(f"User {auth_ctx.user_id} upgraded org {auth_ctx.organization_id} from {current_tier.value} to {new_tier.value}")
 
     config = get_tier_info(new_tier)
     return {
@@ -226,15 +253,18 @@ async def upgrade_user_tier(
 
 @router.get("/features")
 async def get_user_features(
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ) -> Dict:
     """
     Get the features available to the authenticated user based on their tier.
 
     Returns:
         List of enabled features and tier name.
+
+    Authorization: Requires content.view permission.
     """
-    tier = usage_limiter.get_user_tier(user_id)
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    tier = usage_limiter.get_user_tier(scope_id)
     config = get_tier_info(tier)
 
     return {
@@ -254,7 +284,7 @@ async def get_user_features(
 
 @router.get("/quota/stats")
 async def get_quota_usage_stats(
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ) -> Dict:
     """
     Get current usage statistics using the new quota system.
@@ -266,15 +296,19 @@ async def get_quota_usage_stats(
     - Daily usage and limits
     - Period start/end dates
     - Percentage of quota used
+
+    Authorization: Requires content.view permission.
     """
-    logger.info(f"Quota stats requested by user: {user_id[:8]}...")
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    logger.info(f"Quota stats requested by user: {auth_ctx.user_id[:8]}... in org: {auth_ctx.organization_id}")
 
     try:
-        stats = await get_quota_stats(user_id)
+        stats = await get_quota_stats(scope_id)
 
         return {
             "success": True,
-            "user_id": user_id[:8] + "...",
+            "user_id": auth_ctx.user_id[:8] + "...",
+            "organization_id": auth_ctx.organization_id,
             "tier": stats.tier.value,
             "tier_name": get_tier_config(stats.tier).name,
             "current_usage": stats.current_usage,
@@ -300,7 +334,7 @@ async def get_quota_usage_stats(
 
 @router.get("/quota/check")
 async def check_quota_available(
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ) -> Dict:
     """
     Check if user has available quota for generation.
@@ -313,12 +347,15 @@ async def check_quota_available(
     - reset_date: When quota resets
 
     If quota is exceeded, returns 429 with upgrade information.
+
+    Authorization: Requires content.view permission.
     """
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
     try:
         quota_service = get_quota_service()
-        await quota_service.check_quota(user_id)
+        await quota_service.check_quota(scope_id)
 
-        stats = await get_quota_stats(user_id)
+        stats = await get_quota_stats(scope_id)
 
         return {
             "success": True,
@@ -349,7 +386,7 @@ async def check_quota_available(
 
 @router.get("/quota/breakdown")
 async def get_usage_breakdown(
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ) -> Dict:
     """
     Get detailed usage breakdown by operation type.
@@ -361,17 +398,21 @@ async def get_usage_breakdown(
     - remix: Content remix operations
     - tool: Individual tool uses
     - total: Total across all types
+
+    Authorization: Requires content.view permission.
     """
-    logger.info(f"Usage breakdown requested by user: {user_id[:8]}...")
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    logger.info(f"Usage breakdown requested by user: {auth_ctx.user_id[:8]}... in org: {auth_ctx.organization_id}")
 
     try:
         quota_service = get_quota_service()
-        breakdown = await quota_service.get_usage_breakdown(user_id)
-        stats = await get_quota_stats(user_id)
+        breakdown = await quota_service.get_usage_breakdown(scope_id)
+        stats = await get_quota_stats(scope_id)
 
         return {
             "success": True,
-            "user_id": user_id[:8] + "...",
+            "user_id": auth_ctx.user_id[:8] + "...",
+            "organization_id": auth_ctx.organization_id,
             "tier": stats.tier.value,
             "period_start": stats.period_start.isoformat(),
             "period_end": stats.reset_date.isoformat(),
@@ -390,7 +431,7 @@ async def get_usage_breakdown(
 
 @router.get("/quota/tiers")
 async def get_subscription_tiers(
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ) -> Dict:
     """
     Get all available subscription tiers with their limits.
@@ -402,9 +443,12 @@ async def get_subscription_tiers(
     - business: 1000 generations/month
 
     Includes features, pricing, and descriptions.
+
+    Authorization: Requires content.view permission.
     """
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
     try:
-        stats = await get_quota_stats(user_id)
+        stats = await get_quota_stats(scope_id)
 
         tiers = []
         for tier_config in get_all_tier_configs():
@@ -437,7 +481,7 @@ async def get_subscription_tiers(
 @router.post("/quota/upgrade")
 async def upgrade_subscription_tier(
     request: UpgradeTierRequest,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_admin),
 ) -> Dict:
     """
     Upgrade user to a new subscription tier.
@@ -450,7 +494,10 @@ async def upgrade_subscription_tier(
 
     Returns:
         Success status and new tier information.
+
+    Authorization: Requires admin privileges in the organization.
     """
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
     # Map the legacy tier names to new subscription tiers
     tier_mapping = {
         "free": SubscriptionTier.FREE,
@@ -472,13 +519,13 @@ async def upgrade_subscription_tier(
 
     try:
         quota_service = get_quota_service()
-        current_stats = await get_quota_stats(user_id)
+        current_stats = await get_quota_stats(scope_id)
         current_tier = current_stats.tier
 
         # In production, verify payment before upgrading
-        await quota_service.set_user_tier(user_id, new_tier)
+        await quota_service.set_user_tier(scope_id, new_tier)
 
-        logger.info(f"User {user_id[:8]}... upgraded from {current_tier.value} to {new_tier.value}")
+        logger.info(f"User {auth_ctx.user_id[:8]}... upgraded org {auth_ctx.organization_id} from {current_tier.value} to {new_tier.value}")
 
         new_config = get_tier_config(new_tier)
 

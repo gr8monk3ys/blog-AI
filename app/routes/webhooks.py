@@ -6,6 +6,11 @@ This module provides Zapier-compatible REST Hook endpoints for:
 - Unsubscribing from webhooks
 - Listing subscriptions
 - Testing webhook delivery
+
+Authorization:
+- All endpoints require organization membership
+- Creating/managing webhooks requires content.create permission
+- Viewing webhooks requires content.view permission
 """
 
 import logging
@@ -14,6 +19,7 @@ from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from src.organizations import AuthorizationContext
 from src.types.webhooks import (
     DeliveryStatus,
     WebhookDelivery,
@@ -27,6 +33,7 @@ from src.types.webhooks import (
 from src.webhooks import webhook_service, webhook_storage
 
 from ..auth import verify_api_key
+from ..dependencies import require_content_access, require_content_creation
 from ..error_handlers import sanitize_error_message
 
 logger = logging.getLogger(__name__)
@@ -69,33 +76,39 @@ If you provide a `secret`, webhooks will include an `X-Webhook-Signature` header
 `t=timestamp,v1=signature`
 
 Verify by computing HMAC-SHA256 of `{timestamp}.{payload}` using your secret.
+
+**Authorization:** Requires content.create permission.
     """,
     responses={
         201: {"description": "Subscription created successfully"},
         400: {"description": "Invalid request parameters"},
         401: {"description": "Missing or invalid API key"},
+        403: {"description": "Insufficient permissions"},
         409: {"description": "Subscription already exists for this URL"},
     },
 )
 async def subscribe_webhook(
     request: WebhookSubscriptionCreate,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ) -> WebhookSubscription:
     """
     Subscribe to webhook events (Zapier REST Hook compatible).
 
     Args:
         request: Subscription creation request
-        user_id: Authenticated user ID
 
     Returns:
         Created WebhookSubscription
+
+    Authorization: Requires content.create permission.
     """
-    logger.info(f"Webhook subscription request from user: {user_id}")
+    # Use organization_id for scoping if available, fallback to user_id
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    logger.info(f"Webhook subscription request from user: {auth_ctx.user_id}, org: {auth_ctx.organization_id}")
 
     try:
         # Check for duplicate subscriptions to same URL for same events
-        existing_subs = await webhook_storage.list_user_subscriptions(user_id)
+        existing_subs = await webhook_storage.list_user_subscriptions(scope_id)
         for sub in existing_subs:
             if sub.target_url == request.target_url:
                 # Check if event types overlap
@@ -110,7 +123,7 @@ async def subscribe_webhook(
         # Create new subscription
         subscription = WebhookSubscription(
             id=str(uuid.uuid4()),
-            user_id=user_id,
+            user_id=scope_id,
             target_url=request.target_url,
             event_types=request.event_types,
             secret=request.secret,
@@ -126,7 +139,7 @@ async def subscribe_webhook(
                 detail="Failed to save subscription",
             )
 
-        logger.info(f"Created webhook subscription {subscription.id} for user {user_id}")
+        logger.info(f"Created webhook subscription {subscription.id} for user {auth_ctx.user_id} in org {auth_ctx.organization_id}")
         return subscription
 
     except HTTPException:
@@ -143,28 +156,35 @@ async def subscribe_webhook(
     "/{subscription_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Unsubscribe from webhook events",
-    description="Remove a webhook subscription. This is called by Zapier when a user disables a trigger.",
+    description="""
+Remove a webhook subscription. This is called by Zapier when a user disables a trigger.
+
+**Authorization:** Requires content.create permission.
+    """,
     responses={
         204: {"description": "Subscription deleted successfully"},
         401: {"description": "Missing or invalid API key"},
+        403: {"description": "Insufficient permissions"},
         404: {"description": "Subscription not found"},
     },
 )
 async def unsubscribe_webhook(
     subscription_id: str,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ) -> None:
     """
     Unsubscribe from webhook events (Zapier REST Hook compatible).
 
     Args:
         subscription_id: ID of subscription to delete
-        user_id: Authenticated user ID
+
+    Authorization: Requires content.create permission.
     """
-    logger.info(f"Webhook unsubscribe request: {subscription_id} from user {user_id}")
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    logger.info(f"Webhook unsubscribe request: {subscription_id} from user {auth_ctx.user_id}, org: {auth_ctx.organization_id}")
 
     # Verify ownership
-    subscription = await webhook_storage.get_subscription_if_owned(subscription_id, user_id)
+    subscription = await webhook_storage.get_subscription_if_owned(subscription_id, scope_id)
     if not subscription:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -186,36 +206,43 @@ async def unsubscribe_webhook(
     "",
     response_model=Dict,
     summary="List webhook subscriptions",
-    description="Get all webhook subscriptions for the authenticated user.",
+    description="""
+Get all webhook subscriptions for the authenticated user/organization.
+
+**Authorization:** Requires content.view permission.
+    """,
     responses={
         200: {"description": "List of subscriptions"},
         401: {"description": "Missing or invalid API key"},
+        403: {"description": "Insufficient permissions"},
     },
 )
 async def list_webhooks(
     limit: int = Query(default=50, ge=1, le=100, description="Maximum subscriptions to return"),
     offset: int = Query(default=0, ge=0, description="Number of subscriptions to skip"),
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ) -> Dict:
     """
-    List all webhook subscriptions for the user.
+    List all webhook subscriptions for the user/organization.
 
     Args:
         limit: Maximum number to return
         offset: Number to skip
-        user_id: Authenticated user ID
 
     Returns:
         Paginated list of subscriptions
+
+    Authorization: Requires content.view permission.
     """
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
     subscriptions = await webhook_storage.list_user_subscriptions(
-        user_id=user_id,
+        user_id=scope_id,
         limit=limit,
         offset=offset,
     )
 
     # Get total count
-    all_subs = await webhook_storage.list_user_subscriptions(user_id, limit=1000)
+    all_subs = await webhook_storage.list_user_subscriptions(scope_id, limit=1000)
     total = len(all_subs)
 
     return {
@@ -231,28 +258,35 @@ async def list_webhooks(
     "/{subscription_id}",
     response_model=WebhookSubscription,
     summary="Get webhook subscription details",
-    description="Get details of a specific webhook subscription including delivery statistics.",
+    description="""
+Get details of a specific webhook subscription including delivery statistics.
+
+**Authorization:** Requires content.view permission.
+    """,
     responses={
         200: {"description": "Subscription details"},
         401: {"description": "Missing or invalid API key"},
+        403: {"description": "Insufficient permissions"},
         404: {"description": "Subscription not found"},
     },
 )
 async def get_webhook(
     subscription_id: str,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ) -> WebhookSubscription:
     """
     Get a specific webhook subscription.
 
     Args:
         subscription_id: Subscription ID to retrieve
-        user_id: Authenticated user ID
 
     Returns:
         WebhookSubscription details
+
+    Authorization: Requires content.view permission.
     """
-    subscription = await webhook_storage.get_subscription_if_owned(subscription_id, user_id)
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    subscription = await webhook_storage.get_subscription_if_owned(subscription_id, scope_id)
     if not subscription:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -265,17 +299,22 @@ async def get_webhook(
     "/{subscription_id}",
     response_model=WebhookSubscription,
     summary="Update webhook subscription",
-    description="Update an existing webhook subscription.",
+    description="""
+Update an existing webhook subscription.
+
+**Authorization:** Requires content.create permission.
+    """,
     responses={
         200: {"description": "Subscription updated"},
         401: {"description": "Missing or invalid API key"},
+        403: {"description": "Insufficient permissions"},
         404: {"description": "Subscription not found"},
     },
 )
 async def update_webhook(
     subscription_id: str,
     request: WebhookSubscriptionUpdate,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ) -> WebhookSubscription:
     """
     Update a webhook subscription.
@@ -283,13 +322,15 @@ async def update_webhook(
     Args:
         subscription_id: Subscription ID to update
         request: Fields to update
-        user_id: Authenticated user ID
 
     Returns:
         Updated WebhookSubscription
+
+    Authorization: Requires content.create permission.
     """
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
     # Verify ownership
-    subscription = await webhook_storage.get_subscription_if_owned(subscription_id, user_id)
+    subscription = await webhook_storage.get_subscription_if_owned(subscription_id, scope_id)
     if not subscription:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -338,35 +379,40 @@ You can either:
 2. Provide a `target_url` to test a URL directly
 
 The test sends a sample payload and reports the response.
+
+**Authorization:** Requires content.create permission.
     """,
     responses={
         200: {"description": "Test completed (check success field)"},
         400: {"description": "Invalid request parameters"},
         401: {"description": "Missing or invalid API key"},
+        403: {"description": "Insufficient permissions"},
         404: {"description": "Subscription not found"},
     },
 )
 async def test_webhook(
     request: WebhookTestRequest,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ) -> WebhookTestResponse:
     """
     Test a webhook endpoint.
 
     Args:
         request: Test request with either subscription_id or target_url
-        user_id: Authenticated user ID
 
     Returns:
         WebhookTestResponse with results
+
+    Authorization: Requires content.create permission.
     """
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
     target_url: str
     secret: Optional[str] = None
 
     if request.subscription_id:
         # Test existing subscription
         subscription = await webhook_storage.get_subscription_if_owned(
-            request.subscription_id, user_id
+            request.subscription_id, scope_id
         )
         if not subscription:
             raise HTTPException(
@@ -475,28 +521,35 @@ async def list_event_types() -> Dict:
     "/{subscription_id}/activate",
     response_model=WebhookSubscription,
     summary="Activate a webhook subscription",
-    description="Re-activate a paused webhook subscription.",
+    description="""
+Re-activate a paused webhook subscription.
+
+**Authorization:** Requires content.create permission.
+    """,
     responses={
         200: {"description": "Subscription activated"},
         401: {"description": "Missing or invalid API key"},
+        403: {"description": "Insufficient permissions"},
         404: {"description": "Subscription not found"},
     },
 )
 async def activate_webhook(
     subscription_id: str,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ) -> WebhookSubscription:
     """
     Activate a webhook subscription.
 
     Args:
         subscription_id: Subscription to activate
-        user_id: Authenticated user ID
 
     Returns:
         Updated WebhookSubscription
+
+    Authorization: Requires content.create permission.
     """
-    subscription = await webhook_storage.get_subscription_if_owned(subscription_id, user_id)
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    subscription = await webhook_storage.get_subscription_if_owned(subscription_id, scope_id)
     if not subscription:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -511,28 +564,35 @@ async def activate_webhook(
     "/{subscription_id}/deactivate",
     response_model=WebhookSubscription,
     summary="Deactivate a webhook subscription",
-    description="Pause a webhook subscription without deleting it.",
+    description="""
+Pause a webhook subscription without deleting it.
+
+**Authorization:** Requires content.create permission.
+    """,
     responses={
         200: {"description": "Subscription deactivated"},
         401: {"description": "Missing or invalid API key"},
+        403: {"description": "Insufficient permissions"},
         404: {"description": "Subscription not found"},
     },
 )
 async def deactivate_webhook(
     subscription_id: str,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ) -> WebhookSubscription:
     """
     Deactivate a webhook subscription.
 
     Args:
         subscription_id: Subscription to deactivate
-        user_id: Authenticated user ID
 
     Returns:
         Updated WebhookSubscription
+
+    Authorization: Requires content.create permission.
     """
-    subscription = await webhook_storage.get_subscription_if_owned(subscription_id, user_id)
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    subscription = await webhook_storage.get_subscription_if_owned(subscription_id, scope_id)
     if not subscription:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

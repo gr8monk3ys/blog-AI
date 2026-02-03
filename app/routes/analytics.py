@@ -3,6 +3,10 @@ Analytics endpoints for Blog-AI dashboard.
 
 Provides aggregated statistics about content generation,
 tool usage, and activity timelines.
+
+Authorization:
+- All endpoints require organization membership
+- All operations require content.view permission for viewing analytics data
 """
 
 import logging
@@ -13,7 +17,10 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 
+from src.organizations import AuthorizationContext
+
 from ..auth import verify_api_key
+from ..dependencies import require_content_access
 
 logger = logging.getLogger(__name__)
 
@@ -216,15 +223,19 @@ def get_mock_categories() -> list[CategoryBreakdown]:
 @router.get("/overview", response_model=OverviewResponse)
 async def get_overview(
     range: str = Query("30d", pattern="^(7d|30d|90d|all)$"),
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ):
     """
     Get overview statistics.
 
     Returns aggregated statistics including total generations,
     tools used, active today, and popular tool.
+
+    Authorization: Requires content.view permission.
     """
-    logger.info(f"Analytics overview requested by user: {user_id}, range: {range}")
+    # Use organization_id for scoping if available, fallback to user_id
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    logger.info(f"Analytics overview requested by user: {auth_ctx.user_id}, org: {auth_ctx.organization_id}, range: {range}")
 
     supabase = get_supabase()
     if not supabase:
@@ -236,33 +247,41 @@ async def get_overview(
         end_iso = end.isoformat()
         today = datetime.utcnow().strftime("%Y-%m-%d")
 
-        # Get total generations in range
+        # Get total generations in range - SECURITY: Filter by scope_id (org or user)
         gen_result = (
             supabase.table("generated_content")
             .select("*", count="exact")
+            .eq("user_id", scope_id)
             .gte("created_at", start_iso)
             .lte("created_at", end_iso)
             .execute()
         )
         total_generations = gen_result.count or 0
 
-        # Get unique tools used
-        tools_result = supabase.table("tool_usage").select("tool_id").execute()
+        # Get unique tools used - SECURITY: Filter by scope_id
+        tools_result = (
+            supabase.table("tool_usage")
+            .select("tool_id")
+            .eq("user_id", scope_id)
+            .execute()
+        )
         total_tools_used = len(tools_result.data) if tools_result.data else 0
 
-        # Get today's activity
+        # Get today's activity - SECURITY: Filter by scope_id
         today_result = (
             supabase.table("generated_content")
             .select("*", count="exact")
+            .eq("user_id", scope_id)
             .gte("created_at", today)
             .execute()
         )
         active_today = today_result.count or 0
 
-        # Get average execution time
+        # Get average execution time - SECURITY: Filter by scope_id
         exec_result = (
             supabase.table("generated_content")
             .select("execution_time_ms")
+            .eq("user_id", scope_id)
             .gte("created_at", start_iso)
             .lte("created_at", end_iso)
             .execute()
@@ -270,10 +289,11 @@ async def get_overview(
         exec_times = [r["execution_time_ms"] for r in (exec_result.data or [])]
         avg_exec_time = sum(exec_times) / len(exec_times) if exec_times else 0
 
-        # Get most popular tool
+        # Get most popular tool - SECURITY: Filter by scope_id
         popular_result = (
             supabase.table("tool_usage")
             .select("tool_id, count")
+            .eq("user_id", scope_id)
             .order("count", desc=True)
             .limit(1)
             .execute()
@@ -284,7 +304,7 @@ async def get_overview(
             else None
         )
 
-        # Calculate change from previous period
+        # Calculate change from previous period - SECURITY: Filter by scope_id
         period_days = (end - start).days
         prev_start = start - timedelta(days=period_days)
         prev_end = start
@@ -292,6 +312,7 @@ async def get_overview(
         prev_result = (
             supabase.table("generated_content")
             .select("*", count="exact")
+            .eq("user_id", scope_id)
             .gte("created_at", prev_start.isoformat())
             .lte("created_at", prev_end.isoformat())
             .execute()
@@ -321,23 +342,28 @@ async def get_overview(
 async def get_tool_usage(
     range: str = Query("30d", pattern="^(7d|30d|90d|all)$"),
     limit: int = Query(10, ge=1, le=50),
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ):
     """
     Get tool usage statistics.
 
     Returns usage counts for each tool, sorted by popularity.
+
+    Authorization: Requires content.view permission.
     """
-    logger.info(f"Tool usage requested by user: {user_id}, range: {range}")
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    logger.info(f"Tool usage requested by user: {auth_ctx.user_id}, org: {auth_ctx.organization_id}, range: {range}")
 
     supabase = get_supabase()
     if not supabase:
         return get_mock_tool_usage()[:limit]
 
     try:
+        # SECURITY: Filter by scope_id for data isolation
         result = (
             supabase.table("tool_usage")
             .select("*")
+            .eq("user_id", scope_id)
             .order("count", desc=True)
             .limit(limit)
             .execute()
@@ -368,14 +394,17 @@ async def get_tool_usage(
 @router.get("/timeline", response_model=list[TimelineDataPoint])
 async def get_timeline(
     range: str = Query("30d", pattern="^(7d|30d|90d|all)$"),
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ):
     """
     Get generation timeline data.
 
     Returns daily generation counts over the specified time range.
+
+    Authorization: Requires content.view permission.
     """
-    logger.info(f"Timeline data requested by user: {user_id}, range: {range}")
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    logger.info(f"Timeline data requested by user: {auth_ctx.user_id}, org: {auth_ctx.organization_id}, range: {range}")
 
     supabase = get_supabase()
     if not supabase:
@@ -384,9 +413,11 @@ async def get_timeline(
     try:
         start, end = get_time_range_dates(range)
 
+        # SECURITY: Filter by scope_id for data isolation
         result = (
             supabase.table("generated_content")
             .select("created_at")
+            .eq("user_id", scope_id)
             .gte("created_at", start.isoformat())
             .lte("created_at", end.isoformat())
             .order("created_at")
@@ -415,14 +446,17 @@ async def get_timeline(
 @router.get("/categories", response_model=list[CategoryBreakdown])
 async def get_category_breakdown(
     range: str = Query("30d", pattern="^(7d|30d|90d|all)$"),
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ):
     """
     Get category breakdown statistics.
 
     Returns generation counts grouped by tool category.
+
+    Authorization: Requires content.view permission.
     """
-    logger.info(f"Category breakdown requested by user: {user_id}, range: {range}")
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    logger.info(f"Category breakdown requested by user: {auth_ctx.user_id}, org: {auth_ctx.organization_id}, range: {range}")
 
     supabase = get_supabase()
     if not supabase:
@@ -431,9 +465,11 @@ async def get_category_breakdown(
     try:
         start, end = get_time_range_dates(range)
 
+        # SECURITY: Filter by scope_id for data isolation
         result = (
             supabase.table("generated_content")
             .select("tool_id")
+            .eq("user_id", scope_id)
             .gte("created_at", start.isoformat())
             .lte("created_at", end.isoformat())
             .execute()

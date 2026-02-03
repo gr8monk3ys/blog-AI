@@ -3,6 +3,11 @@ Bulk generation endpoints for processing multiple content items.
 
 This module uses Redis-backed job storage with in-memory fallback
 for horizontal scaling support.
+
+Authorization:
+- All endpoints require organization membership
+- Creating bulk jobs requires content.create permission
+- Viewing job status/results requires content.view permission
 """
 
 import asyncio
@@ -20,6 +25,7 @@ from src.blog.make_blog import (
     generate_blog_post_with_research,
     post_process_blog_post,
 )
+from src.organizations import AuthorizationContext
 from src.storage import get_bulk_job_store
 from src.text_generation.core import GenerationOptions, create_provider_from_env
 from src.usage import (
@@ -30,6 +36,7 @@ from src.usage import (
 )
 
 from ..auth import verify_api_key
+from ..dependencies import require_content_access, require_content_creation
 from ..error_handlers import sanitize_error_message
 from ..models import (
     BulkGenerationItemResult,
@@ -308,7 +315,7 @@ async def _process_bulk_generation(
 async def start_bulk_generation(
     request: BulkGenerationRequest,
     background_tasks: BackgroundTasks,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ) -> Dict:
     """
     Start a bulk generation job.
@@ -319,22 +326,25 @@ async def start_bulk_generation(
     Args:
         request: Bulk generation request with items and settings.
         background_tasks: FastAPI background tasks.
-        user_id: The authenticated user ID.
 
     Returns:
         Job ID and initial status for tracking progress.
+
+    Authorization: Requires content.create permission.
     """
+    # Use organization_id for scoping if available, fallback to user_id
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
     logger.info(
-        f"Bulk generation requested by user: {user_id}, items: {len(request.items)}"
+        f"Bulk generation requested by user: {auth_ctx.user_id}, org: {auth_ctx.organization_id}, items: {len(request.items)}"
     )
 
     # Check if user has enough usage remaining
     try:
-        remaining = check_usage_limit(user_id)
+        remaining = check_usage_limit(scope_id)
         if remaining != -1 and remaining < len(request.items):
             # User doesn't have enough remaining, but allow partial processing
             logger.warning(
-                f"User {user_id} has {remaining} generations remaining, "
+                f"User {auth_ctx.user_id} (scope {scope_id}) has {remaining} generations remaining, "
                 f"but requested {len(request.items)}"
             )
     except UsageLimitExceeded as e:
@@ -361,7 +371,7 @@ async def start_bulk_generation(
     )
 
     # Save job to Redis-backed storage with ownership
-    await _job_store.save_job(job_id, job_status, user_id)
+    await _job_store.save_job(job_id, job_status, scope_id)
     await _job_store.set_cancel_flag(job_id, False)
 
     # Add conversation message (with ownership)
@@ -370,14 +380,14 @@ async def start_bulk_generation(
         "content": f"Started bulk generation of {len(request.items)} items",
         "timestamp": datetime.now().isoformat(),
     }
-    conversations.append(request.conversation_id, user_message, user_id=user_id)
+    conversations.append(request.conversation_id, user_message, user_id=scope_id)
 
     # Start background processing
     background_tasks.add_task(
         _process_bulk_generation,
         job_id,
         request,
-        user_id,
+        scope_id,
     )
 
     return {
@@ -392,19 +402,21 @@ async def start_bulk_generation(
 @router.get("/status/{job_id}")
 async def get_bulk_status(
     job_id: str,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ) -> BulkGenerationStatus:
     """
     Get the status of a bulk generation job.
 
     Args:
         job_id: The job identifier.
-        user_id: The authenticated user ID.
 
     Returns:
         Current job status and progress.
+
+    Authorization: Requires content.view permission.
     """
-    job = await _job_store.get_job_if_owned(job_id, user_id)
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    job = await _job_store.get_job_if_owned(job_id, scope_id)
     if not job:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -416,19 +428,21 @@ async def get_bulk_status(
 @router.get("/results/{job_id}")
 async def get_bulk_results(
     job_id: str,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
 ) -> BulkGenerationResponse:
     """
     Get the results of a completed bulk generation job.
 
     Args:
         job_id: The job identifier.
-        user_id: The authenticated user ID.
 
     Returns:
         Complete results including all generated content.
+
+    Authorization: Requires content.view permission.
     """
-    job = await _job_store.get_job_if_owned(job_id, user_id)
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    job = await _job_store.get_job_if_owned(job_id, scope_id)
     if not job:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -461,19 +475,21 @@ async def get_bulk_results(
 @router.post("/cancel/{job_id}")
 async def cancel_bulk_job(
     job_id: str,
-    user_id: str = Depends(verify_api_key),
+    auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ) -> Dict:
     """
     Cancel a running bulk generation job.
 
     Args:
         job_id: The job identifier.
-        user_id: The authenticated user ID.
 
     Returns:
         Cancellation status.
+
+    Authorization: Requires content.create permission.
     """
-    job = await _job_store.get_job_if_owned(job_id, user_id)
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    job = await _job_store.get_job_if_owned(job_id, scope_id)
     if not job:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -490,7 +506,7 @@ async def cancel_bulk_job(
     await _job_store.set_cancel_flag(job_id, True)
     await _job_store.update_job(job_id, status="cancelled", can_cancel=False)
 
-    logger.info(f"Bulk generation job {job_id} cancelled by user {user_id}")
+    logger.info(f"Bulk generation job {job_id} cancelled by user {auth_ctx.user_id} (scope {scope_id})")
 
     return {
         "success": True,
