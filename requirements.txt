@@ -1,6 +1,6 @@
 # Core dependencies
 # Versions aligned with pyproject.toml
-openai>=1.40.0
+openai>=2.15.0
 anthropic>=0.76.0
 google-generativeai>=0.3.1
 requests>=2.31.0
@@ -20,6 +20,13 @@ websockets>=12.0
 # Security
 bcrypt>=4.0.0
 bleach>=6.0.0
+
+# SSO (Single Sign-On) dependencies
+python3-saml>=1.16.0  # SAML 2.0 support
+authlib>=1.3.0  # OIDC/OAuth2 support
+httpx>=0.27.0  # Async HTTP client for OIDC
+PyJWT>=2.8.0  # JWT token validation
+cryptography>=42.0.0  # Certificate handling
 
 # Redis for job storage
 redis>=5.0.0
