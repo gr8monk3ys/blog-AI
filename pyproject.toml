@@ -24,7 +24,7 @@ stability-sdk = "^0.8.6"
 Pillow = "^10.0.0"
 
 # Security
-bcrypt = "^4.0.0"
+bcrypt = "^5.0.0"
 bleach = "^6.0.0"
 
 # Redis for job storage
