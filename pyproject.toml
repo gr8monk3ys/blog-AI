@@ -28,7 +28,7 @@ bcrypt = "^4.0.0"
 bleach = "^6.0.0"
 
 # Redis for job storage
-redis = "^5.0.0"
+redis = "^7.1.0"
 
 # Payment processing
 stripe = "^7.0.0"
