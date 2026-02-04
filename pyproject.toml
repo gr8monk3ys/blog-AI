@@ -31,7 +31,7 @@ bleach = "^6.0.0"
 redis = "^5.0.0"
 
 # Payment processing
-stripe = "^7.0.0"
+stripe = "^14.3.0"
 
 # Monitoring and error tracking
 sentry-sdk = { version = "^1.40.0", extras = ["fastapi"] }
