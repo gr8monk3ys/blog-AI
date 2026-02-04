@@ -34,7 +34,7 @@ redis = "^5.0.0"
 stripe = "^7.0.0"
 
 # Monitoring and error tracking
-sentry-sdk = { version = "^1.40.0", extras = ["fastapi"] }
+sentry-sdk = { version = "^2.51.0", extras = ["fastapi"] }
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
