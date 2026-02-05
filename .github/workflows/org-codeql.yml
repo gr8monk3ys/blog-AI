@@ -1,0 +1,19 @@
+name: org-codeql
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  codeql:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip duplicate CodeQL wrapper
+        run: |
+          echo "GitHub default CodeQL setup is enabled for this repository."
+          echo "Skipping duplicate advanced workflow to avoid SARIF processing conflicts."

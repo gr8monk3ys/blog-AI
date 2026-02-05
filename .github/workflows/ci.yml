@@ -1,0 +1,392 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: read-all
+
+env:
+  PYTHON_VERSION: "3.12"
+  BUN_VERSION: "1.3.10"
+  GITLEAKS_VERSION: "8.30.0"
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  backend-tests:
+    name: Backend Tests (FastAPI)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: apps/api/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest pytest-asyncio pytest-cov
+
+      - name: Run smoke suite (blocking)
+        run: |
+          pytest tests/test_feature_smoke.py tests/test_routes_health.py -q
+        env:
+          DEV_MODE: "true"
+          OPENAI_API_KEY: "test"
+
+      - name: Enforce critical-route integration coverage >= 85%
+        run: |
+          pytest \
+            tests/test_routes_blog.py \
+            tests/test_routes_book.py \
+            tests/test_routes_webhooks.py \
+            tests/test_routes_payments.py \
+            tests/test_routes_usage.py \
+            --cov=app.routes.blog \
+            --cov=app.routes.book \
+            --cov=app.routes.webhooks \
+            --cov=app.routes.payments \
+            --cov=app.routes.usage \
+            --cov-fail-under=85 \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            -q
+        env:
+          DEV_MODE: "true"
+          DEV_API_KEY: "test-key"
+          ENVIRONMENT: "development"
+          SENTRY_ENVIRONMENT: "development"
+          RATE_LIMIT_ENABLED: "false"
+          OPENAI_API_KEY: "test"
+
+      # Broader critical-route floor. These modules are not yet at 85%, so they
+      # have their own ratchet floor that only moves UP as tests are backfilled
+      # (see docs/REMEDIATION_PLAN.md P1.2/P1.3). This expands regression
+      # protection from 5 to 9 route modules. Do not lower --cov-fail-under.
+      - name: Enforce broader critical-route coverage floor (ratchet)
+        run: |
+          pytest \
+            tests/test_routes_organizations.py \
+            tests/test_routes_sso.py \
+            tests/test_routes_export.py \
+            tests/test_routes_research.py \
+            --cov=app.routes.organizations \
+            --cov=app.routes.sso \
+            --cov=app.routes.export \
+            --cov=app.routes.research \
+            --cov-fail-under=50 \
+            --cov-report=term-missing \
+            -q
+        env:
+          DEV_MODE: "true"
+          DEV_API_KEY: "test-key"
+          ENVIRONMENT: "development"
+          SENTRY_ENVIRONMENT: "development"
+          RATE_LIMIT_ENABLED: "false"
+          OPENAI_API_KEY: "test"
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: always()
+        with:
+          name: backend-coverage
+          path: apps/api/coverage.xml
+          retention-days: 14
+
+  backend-regression:
+    name: Backend Regression (blocking)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: apps/api/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest pytest-asyncio
+
+      - name: Run full backend tests
+        run: pytest -q
+        env:
+          DEV_MODE: "true"
+          OPENAI_API_KEY: "test"
+
+  frontend-checks:
+    name: Frontend Checks (Next.js)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Type check
+        run: bun run type-check
+
+      - name: Unit tests
+        run: bun run test:coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: always()
+        with:
+          name: frontend-coverage
+          path: apps/web/coverage/
+          retention-days: 14
+
+      - name: Build
+        run: bun run build
+
+  frontend-e2e:
+    name: Frontend E2E (Playwright)
+    runs-on: ubuntu-latest
+    needs: [frontend-checks]
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: bunx playwright install --with-deps chromium
+
+      - name: Run E2E tests with coverage gate
+        run: bun run test:e2e:coverage
+
+      - name: Upload E2E coverage report
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: always()
+        with:
+          name: frontend-e2e-coverage
+          path: apps/web/coverage/e2e/
+          retention-days: 14
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7
+
+  docker-build:
+    name: Docker Build (main only)
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-checks]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
+
+      - name: Build production image
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        with:
+          context: .
+          file: Dockerfile.prod
+          push: false
+          tags: blog-ai:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  secrets-scan:
+    name: Secrets Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 0
+
+      - name: Install gitleaks
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl --fail --silent --show-error --location \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${archive}" \
+            --output "${RUNNER_TEMP}/${archive}"
+          tar -xzf "${RUNNER_TEMP}/${archive}" -C "${RUNNER_TEMP}" gitleaks
+          chmod +x "${RUNNER_TEMP}/gitleaks"
+          echo "${RUNNER_TEMP}" >> "${GITHUB_PATH}"
+
+      - name: Determine gitleaks range
+        id: gitleaks-range
+        shell: bash
+        run: |
+          set -euo pipefail
+          event_name="${GITHUB_EVENT_NAME}"
+          range_mode="head"
+          log_opts="-1"
+
+          if [ "${event_name}" = "push" ]; then
+            base_ref="$(python3 -c 'import json, os; print(json.load(open(os.environ["GITHUB_EVENT_PATH"]))["before"])')"
+            head_ref="$(python3 -c 'import json, os; print(json.load(open(os.environ["GITHUB_EVENT_PATH"]))["after"])')"
+            if [ "${base_ref}" != "${head_ref}" ] && [ "${base_ref}" != "0000000000000000000000000000000000000000" ]; then
+              range_mode="range"
+              log_opts="--no-merges --first-parent ${base_ref}^..${head_ref}"
+            fi
+          elif [ "${event_name}" = "pull_request" ]; then
+            base_ref="$(python3 -c 'import json, os; print(json.load(open(os.environ["GITHUB_EVENT_PATH"]))["pull_request"]["base"]["sha"])')"
+            head_ref="$(python3 -c 'import json, os; print(json.load(open(os.environ["GITHUB_EVENT_PATH"]))["pull_request"]["head"]["sha"])')"
+            range_mode="range"
+            log_opts="--no-merges --first-parent ${base_ref}^..${head_ref}"
+          fi
+
+          echo "range_mode=${range_mode}" >> "${GITHUB_OUTPUT}"
+          {
+            echo "log_opts<<EOF"
+            echo "${log_opts}"
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Run gitleaks
+        shell: bash
+        env:
+          GITLEAKS_LOG_OPTS: ${{ steps.gitleaks-range.outputs.log_opts }}
+        run: |
+          set -euo pipefail
+          gitleaks git --no-banner --redact --exit-code 1 --log-opts="${GITLEAKS_LOG_OPTS}" .
+
+  schema-smoke:
+    name: Schema Smoke (fresh-install migration)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: blogai
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      # Apply the db/migrations set the way the runner (scripts/migrate_db.mjs)
+      # does — in sorted order — using psql. We use psql rather than the runner
+      # itself because the runner's @neondatabase/serverless driver talks to Neon
+      # over WebSocket and can't reach a plain Postgres service. This still
+      # validates the SQL and ordering, which is where the schema risk lives.
+      - name: Apply db/migrations to a fresh database
+        env:
+          PGPASSWORD: postgres
+        run: |
+          set -euo pipefail
+          for f in db/migrations/*.sql; do
+            echo "Applying ${f}"
+            psql -h localhost -U postgres -d blogai -v ON_ERROR_STOP=1 -q -f "${f}"
+          done
+
+      # Fail if the migrated schema is missing any table/column the backend code
+      # references. Prevents the schema from silently re-fragmenting.
+      - name: Assert code-referenced tables exist
+        env:
+          PGPASSWORD: postgres
+        run: |
+          set -euo pipefail
+          psql -h localhost -U postgres -d blogai -v ON_ERROR_STOP=1 -f scripts/schema_smoke.sql
+
+  backend-db-tests:
+    name: Backend DB Tests (Postgres)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: blogai
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: apps/api/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest pytest-asyncio
+
+      # Apply db/migrations so the asyncpg-backed services have their tables.
+      - name: Apply db/migrations
+        working-directory: .
+        env:
+          PGPASSWORD: postgres
+        run: |
+          set -euo pipefail
+          for f in db/migrations/*.sql; do
+            psql -h localhost -U postgres -d blogai -v ON_ERROR_STOP=1 -q -f "${f}"
+          done
+
+      # Run the DB-backed integration tests against the real Postgres. These
+      # skip in the no-DB backend-tests job; here they exercise the asyncpg
+      # service implementations end to end.
+      - name: Run DB-backed tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/blogai
+          DEV_MODE: "true"
+          OPENAI_API_KEY: "test"
+        run: |
+          pytest tests/test_version_service.py tests/test_knowledge_metadata.py tests/test_analytics_neon.py -q
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate security scan configuration
+        run: |
+          echo "Repository-level default CodeQL is enabled."
+          echo "Advanced CodeQL uploads in CI are skipped to avoid SARIF conflicts."
