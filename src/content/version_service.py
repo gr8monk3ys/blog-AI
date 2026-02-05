@@ -174,6 +174,42 @@ class BaseVersionService(ABC):
         """
         pass
 
+    @abstractmethod
+    async def is_content_in_organization(
+        self,
+        content_id: str,
+        organization_id: Optional[str],
+    ) -> bool:
+        """
+        Verify content belongs to the provided organization.
+
+        Args:
+            content_id: ID of the content.
+            organization_id: Organization ID to validate against.
+
+        Returns:
+            True if content belongs to organization, False otherwise.
+        """
+        pass
+
+    @abstractmethod
+    async def register_content_organization(
+        self,
+        content_id: str,
+        organization_id: Optional[str],
+    ) -> bool:
+        """
+        Register ownership for content when no persistent store exists.
+
+        Args:
+            content_id: ID of the content.
+            organization_id: Organization ID to associate.
+
+        Returns:
+            True if registered or already matches, False on conflict or failure.
+        """
+        pass
+
 
 def calculate_content_hash(content: str) -> str:
     """Calculate SHA-256 hash of content."""
@@ -229,6 +265,7 @@ class InMemoryVersionService(BaseVersionService):
         self._current_versions: Dict[str, int] = {}
         self._last_auto_version: Dict[str, datetime] = {}
         self._auto_version_counts: Dict[str, List[datetime]] = {}
+        self._content_organizations: Dict[str, str] = {}
         logger.info("Initialized in-memory version service")
 
     async def create_version(
@@ -484,6 +521,51 @@ class InMemoryVersionService(BaseVersionService):
         char_diff = abs(new_char_count - latest.character_count)
 
         return word_diff >= config.min_word_change or char_diff >= config.min_char_change
+
+    async def is_content_in_organization(
+        self,
+        content_id: str,
+        organization_id: Optional[str],
+    ) -> bool:
+        """
+        In-memory storage has no organization mapping.
+
+        We allow access in dev/test modes and rely on higher-level authorization.
+        """
+        if not organization_id:
+            logger.warning(
+                "Organization ID missing for content ownership check "
+                f"(content_id={content_id})."
+            )
+            return False
+
+        mapped_org = self._content_organizations.get(content_id)
+        if mapped_org is None:
+            return False
+
+        return mapped_org == organization_id
+
+    async def register_content_organization(
+        self,
+        content_id: str,
+        organization_id: Optional[str],
+    ) -> bool:
+        if not organization_id:
+            return False
+
+        existing = self._content_organizations.get(content_id)
+        if existing and existing != organization_id:
+            logger.warning(
+                "Content ownership conflict for in-memory store "
+                f"(content_id={content_id}, existing_org={existing}, requested_org={organization_id})."
+            )
+            return False
+
+        if existing == organization_id:
+            return True
+
+        self._content_organizations[content_id] = organization_id
+        return True
 
 
 class SupabaseVersionService(BaseVersionService):
@@ -831,6 +913,41 @@ class SupabaseVersionService(BaseVersionService):
         except Exception as e:
             logger.error(f"Error checking auto-version: {e}")
             return False
+
+    async def is_content_in_organization(
+        self,
+        content_id: str,
+        organization_id: Optional[str],
+    ) -> bool:
+        """Validate content ownership using generated_content table."""
+        if not organization_id:
+            return False
+
+        try:
+            client = self._get_client()
+            result = (
+                client.table("generated_content")
+                .select("organization_id")
+                .eq("id", content_id)
+                .limit(1)
+                .execute()
+            )
+            if not result.data:
+                return False
+
+            row = result.data[0]
+            return str(row.get("organization_id")) == str(organization_id)
+        except Exception as e:
+            logger.error(f"Error verifying content ownership: {e}")
+            return False
+
+    async def register_content_organization(
+        self,
+        content_id: str,
+        organization_id: Optional[str],
+    ) -> bool:
+        """Supabase is authoritative; no-op registration."""
+        return False
 
 
 class ContentVersionService:

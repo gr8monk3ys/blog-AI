@@ -70,7 +70,9 @@ def validate_version_number(version: int) -> int:
 
 
 async def validate_content_ownership(
-    content_id: str, auth_ctx: AuthorizationContext
+    content_id: str,
+    auth_ctx: AuthorizationContext,
+    allow_register: bool = False,
 ) -> None:
     """
     SECURITY: Validate that the content belongs to the user's organization.
@@ -78,10 +80,33 @@ async def validate_content_ownership(
     This function should verify content ownership before allowing version operations.
     In production, this would query the content table to verify organization_id.
     """
-    # TODO: Implement actual content ownership check against database
-    # For now, we rely on the authorization context being properly scoped
-    # The version service should be updated to filter by organization_id
-    pass
+    if not auth_ctx.organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Organization context is required for content access.",
+        )
+
+    service = get_version_service()
+    is_owned = await service.is_content_in_organization(
+        content_id=content_id,
+        organization_id=auth_ctx.organization_id,
+    )
+    if is_owned:
+        return
+
+    if allow_register:
+        registered = await service.register_content_organization(
+            content_id=content_id,
+            organization_id=auth_ctx.organization_id,
+        )
+        if registered:
+            return
+
+    # Avoid leaking whether the content exists outside the org
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Content not found.",
+    )
 
 
 @router.get(
@@ -228,7 +253,7 @@ async def create_version(
     """
     validate_content_id(content_id)
     # SECURITY: Validate content ownership before allowing modification
-    await validate_content_ownership(content_id, auth_ctx)
+    await validate_content_ownership(content_id, auth_ctx, allow_register=True)
     logger.info(f"Creating version for content {content_id} (user: {auth_ctx.user_id[:8]}...)")
 
     try:
@@ -487,7 +512,7 @@ async def auto_save_version(
     """
     validate_content_id(content_id)
     # SECURITY: Validate content ownership before allowing auto-save
-    await validate_content_ownership(content_id, auth_ctx)
+    await validate_content_ownership(content_id, auth_ctx, allow_register=True)
     logger.info(f"Auto-save check for content {content_id}")
 
     try:
