@@ -145,6 +145,9 @@ LLM_RATE_LIMIT_PER_MINUTE=30
 |----------|----------|---------|---------|
 | `ENVIRONMENT` | No | `development` | `development`, `staging`, `production` |
 | `DEV_MODE` | No | `false` | `true`, `false` |
+| `BOOK_SECTION_WORKERS` | No | `4` | Max concurrent workers for chapter section generation |
+| `RESEARCH_CACHE_TTL_SECONDS` | No | `3600` | Research cache TTL in seconds |
+| `RESEARCH_CACHE_MAX_ENTRIES` | No | `128` | Research cache max entries |
 
 **Security Warning:** Never set `DEV_MODE=true` in production. This may bypass API key authentication.
 
@@ -152,6 +155,9 @@ LLM_RATE_LIMIT_PER_MINUTE=30
 ```bash
 ENVIRONMENT=production
 DEV_MODE=false
+BOOK_SECTION_WORKERS=4
+RESEARCH_CACHE_TTL_SECONDS=3600
+RESEARCH_CACHE_MAX_ENTRIES=128
 ```
 
 ---

@@ -112,6 +112,8 @@ OPENAI_API_KEY=sk-...
 ENVIRONMENT=production
 DEV_MODE=false
 HTTPS_REDIRECT_ENABLED=true
+RESEARCH_CACHE_TTL_SECONDS=3600
+RESEARCH_CACHE_MAX_ENTRIES=128
 
 # Security
 ALLOWED_ORIGINS=https://yourdomain.com,https://api.yourdomain.com
@@ -465,6 +467,13 @@ echo ""
 FAILED=0
 
 check_endpoint "$API_URL/health" "Backend Health" || FAILED=1
+
+#### Graceful Shutdown
+
+The API registers a FastAPI lifespan handler to clean up shared resources on
+shutdown (cached LLM clients, research cache, and webhook HTTP clients). Ensure
+your process manager sends SIGTERM and allows a short shutdown grace period so
+cleanup can complete.
 check_endpoint "$API_URL/health/db" "Database Connection" || FAILED=1
 check_endpoint "$API_URL/docs" "API Documentation" || FAILED=1
 check_endpoint "$FRONTEND_URL" "Frontend Application" || FAILED=1
