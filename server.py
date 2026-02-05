@@ -8,6 +8,8 @@ from the app package.
 
 import logging
 import sys
+import os
+from contextlib import asynccontextmanager
 
 import sentry_sdk
 import uvicorn
@@ -28,6 +30,9 @@ from src.config_validator import (
     log_config_summary,
     validate_config,
 )
+from src.research.cache import clear_research_cache
+from src.text_generation.core import close_llm_clients
+from src.webhooks import webhook_service
 
 # =============================================================================
 # Configuration Validation
@@ -190,6 +195,23 @@ def is_sentry_initialized() -> bool:
 # Initialize FastAPI App
 # =============================================================================
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Handle startup/shutdown for shared resources."""
+    yield
+    try:
+        close_llm_clients()
+    except Exception as e:
+        logger.warning("Failed to close LLM clients: %s", e)
+    try:
+        clear_research_cache()
+    except Exception as e:
+        logger.warning("Failed to clear research cache: %s", e)
+    try:
+        await webhook_service.close()
+    except Exception as e:
+        logger.warning("Failed to close webhook service client: %s", e)
+
 app = FastAPI(
     title="Blog AI API",
     description="""
@@ -240,6 +262,7 @@ The API supports versioning via URL path. Current version: `v1`
 - Email: support@blogai.com
 """,
     version="1.0.0",
+    lifespan=lifespan,
     openapi_tags=[
         {"name": "health", "description": "Health checks and system status"},
         {"name": "blog", "description": "Blog post generation endpoints"},
@@ -498,4 +521,6 @@ async def get_config_status():
 
 
 if __name__ == "__main__":
-    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)
+    reload_enabled = os.environ.get("UVICORN_RELOAD", "false").lower() == "true"
+    port = int(os.environ.get("BACKEND_PORT", "8000"))
+    uvicorn.run("server:app", host="0.0.0.0", port=port, reload=reload_enabled)

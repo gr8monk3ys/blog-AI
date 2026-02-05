@@ -5,7 +5,7 @@ Core text generation functionality.
 import asyncio
 import logging
 import os
-from typing import Optional
+from typing import Dict, Optional, Tuple
 
 from ..types.providers import (
     AnthropicConfig,
@@ -206,6 +206,51 @@ def _generate_text_internal(
 # Default timeout for LLM API calls (in seconds)
 LLM_API_TIMEOUT = int(os.environ.get("LLM_API_TIMEOUT", "60"))
 
+_openai_clients: Dict[Tuple[str, int], "openai.OpenAI"] = {}
+_anthropic_clients: Dict[Tuple[str, int], "anthropic.Anthropic"] = {}
+
+
+def _get_openai_client(api_key: str, timeout: int):
+    key = (api_key, timeout)
+    client = _openai_clients.get(key)
+    if client is None:
+        import openai
+
+        client = openai.OpenAI(api_key=api_key, timeout=timeout)
+        _openai_clients[key] = client
+    return client
+
+
+def _get_anthropic_client(api_key: str, timeout: int):
+    key = (api_key, timeout)
+    client = _anthropic_clients.get(key)
+    if client is None:
+        import anthropic
+
+        client = anthropic.Anthropic(api_key=api_key, timeout=timeout)
+        _anthropic_clients[key] = client
+    return client
+
+
+def close_llm_clients() -> None:
+    """Close any cached LLM clients (used during shutdown)."""
+    for client in list(_openai_clients.values()):
+        try:
+            close = getattr(client, "close", None)
+            if callable(close):
+                close()
+        except Exception as e:
+            logger.warning("Failed to close OpenAI client: %s", e)
+    for client in list(_anthropic_clients.values()):
+        try:
+            close = getattr(client, "close", None)
+            if callable(close):
+                close()
+        except Exception as e:
+            logger.warning("Failed to close Anthropic client: %s", e)
+    _openai_clients.clear()
+    _anthropic_clients.clear()
+
 
 def generate_with_openai(
     prompt: str, config: OpenAIConfig, options: GenerationOptions
@@ -233,10 +278,7 @@ def generate_with_openai(
         )
 
     try:
-        client = openai.OpenAI(
-            api_key=config.api_key,
-            timeout=LLM_API_TIMEOUT,
-        )
+        client = _get_openai_client(config.api_key, LLM_API_TIMEOUT)
 
         response = client.chat.completions.create(
             model=config.model,
@@ -295,10 +337,7 @@ def generate_with_anthropic(
         )
 
     try:
-        client = anthropic.Anthropic(
-            api_key=config.api_key,
-            timeout=LLM_API_TIMEOUT,
-        )
+        client = _get_anthropic_client(config.api_key, LLM_API_TIMEOUT)
 
         response = client.messages.create(
             model=config.model,

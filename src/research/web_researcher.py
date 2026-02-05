@@ -3,6 +3,7 @@ Web research functionality.
 """
 
 import os
+import json
 from typing import Any, Dict, List, Optional
 
 from ..types.research import (
@@ -18,6 +19,7 @@ from ..types.research import (
     TavilySearchResult,
     TrendPoint,
 )
+from .cache import get_research_cache
 
 
 class ResearchError(Exception):
@@ -43,10 +45,16 @@ def conduct_web_research(
         ResearchError: If an error occurs during research.
     """
     options = options or SearchOptions()
+    cache = get_research_cache()
 
     try:
         # Convert keywords list to a string for searching
         search_query = " ".join(keywords)
+
+        cache_key = _build_cache_key(search_query, options)
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return cached
 
         # Conduct research using different sources
         google_results = google_serp_search(search_query, options)
@@ -55,12 +63,14 @@ def conduct_web_research(
         trends_results = google_trends_analysis(keywords, options)
 
         # Combine results
-        return ResearchResults(
+        results = ResearchResults(
             google=google_results,
             tavily=tavily_results,
             metaphor=metaphor_results,
             trends=trends_results,
         )
+        cache.set(cache_key, results)
+        return results
     except ResearchError:
         # Re-raise ResearchError as-is
         raise
@@ -69,6 +79,20 @@ def conduct_web_research(
         import traceback
         traceback.print_exc()
         raise ResearchError(f"Unexpected error conducting web research: {str(e)}") from e
+
+
+def _build_cache_key(query: str, options: SearchOptions) -> str:
+    """Build a stable cache key for research requests."""
+    payload = {
+        "query": query,
+        "location": options.location,
+        "language": options.language,
+        "num_results": options.num_results,
+        "time_range": options.time_range,
+        "include_domains": sorted(options.include_domains or []),
+        "similar_url": options.similar_url,
+    }
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"))
 
 
 def google_serp_search(
