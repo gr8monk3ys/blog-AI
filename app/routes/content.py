@@ -230,7 +230,7 @@ async def check_plagiarism(
                 detail="Plagiarism check failed. Please try again later."
             )
 
-    except Exception as e:
+    except (ValueError, KeyError, TypeError, RuntimeError) as e:
         logger.error(f"Unexpected error in plagiarism check: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -313,7 +313,7 @@ async def get_plagiarism_quota(
             )
         )
 
-    except Exception as e:
+    except (PlagiarismCheckError, ValueError, KeyError, TypeError, RuntimeError) as e:
         logger.error(f"Failed to get plagiarism quota: {e}", exc_info=True)
         return QuotaAPIResponse(
             success=False,

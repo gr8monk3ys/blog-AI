@@ -136,6 +136,24 @@ def handle_organization_error(e: Exception) -> HTTPException:
     )
 
 
+ORG_HANDLED_ERRORS = (
+    OrganizationExistsError,
+    MemberExistsError,
+    InviteExistsError,
+    MemberNotFoundError,
+    InviteNotFoundError,
+    OrganizationNotFoundError,
+    PermissionDeniedError,
+    MemberLimitExceededError,
+    QuotaExceededError,
+    OrganizationServiceError,
+    ValueError,
+    KeyError,
+    TypeError,
+    RuntimeError,
+)
+
+
 # =============================================================================
 # Organization CRUD Endpoints
 # =============================================================================
@@ -171,7 +189,7 @@ async def create_organization(
         logger.info(f"Organization created: {org.slug} by user {user_id[:8]}...")
         return OrganizationResponse(organization=org)
 
-    except Exception as e:
+    except ORG_HANDLED_ERRORS as e:
         raise handle_organization_error(e)
 
 
@@ -198,7 +216,7 @@ async def list_organizations(
             total=len(organizations),
         )
 
-    except Exception as e:
+    except ORG_HANDLED_ERRORS as e:
         raise handle_organization_error(e)
 
 
@@ -224,7 +242,7 @@ async def get_organization(
 
         return OrganizationResponse(organization=org)
 
-    except Exception as e:
+    except ORG_HANDLED_ERRORS as e:
         raise handle_organization_error(e)
 
 
@@ -260,7 +278,7 @@ async def update_organization(
         logger.info(f"Organization updated: {org.slug}")
         return OrganizationResponse(organization=org)
 
-    except Exception as e:
+    except ORG_HANDLED_ERRORS as e:
         raise handle_organization_error(e)
 
 
@@ -295,7 +313,7 @@ async def delete_organization(
         logger.info(f"Organization deleted: {auth_ctx.organization_id}")
         return {"success": True, "message": "Organization deleted"}
 
-    except Exception as e:
+    except ORG_HANDLED_ERRORS as e:
         raise handle_organization_error(e)
 
 
@@ -334,7 +352,7 @@ async def list_members(
             total=len(members),
         )
 
-    except Exception as e:
+    except ORG_HANDLED_ERRORS as e:
         raise handle_organization_error(e)
 
 
@@ -383,7 +401,7 @@ async def invite_member(
             "invite_url": f"/organizations/invites/{token}/accept",
         }
 
-    except Exception as e:
+    except ORG_HANDLED_ERRORS as e:
         raise handle_organization_error(e)
 
 
@@ -429,7 +447,7 @@ async def update_member_role(
         )
         return member
 
-    except Exception as e:
+    except ORG_HANDLED_ERRORS as e:
         raise handle_organization_error(e)
 
 
@@ -474,7 +492,7 @@ async def remove_member(
             "message": f"Member {'left' if is_self else 'removed from'} organization",
         }
 
-    except Exception as e:
+    except ORG_HANDLED_ERRORS as e:
         raise handle_organization_error(e)
 
 
@@ -515,7 +533,7 @@ async def list_invites(
             total=len(invites),
         )
 
-    except Exception as e:
+    except ORG_HANDLED_ERRORS as e:
         raise handle_organization_error(e)
 
 
@@ -551,7 +569,7 @@ async def revoke_invite(
         logger.info(f"Invite revoked: {invite_id}")
         return {"success": True, "message": "Invitation revoked"}
 
-    except Exception as e:
+    except ORG_HANDLED_ERRORS as e:
         raise handle_organization_error(e)
 
 
@@ -596,7 +614,7 @@ async def accept_invite(
             member_id=member.id,
         )
 
-    except Exception as e:
+    except ORG_HANDLED_ERRORS as e:
         raise handle_organization_error(e)
 
 
@@ -626,7 +644,7 @@ async def get_quota_status(
         status = await org_service.check_quota(auth_ctx.organization_id)
         return status
 
-    except Exception as e:
+    except ORG_HANDLED_ERRORS as e:
         raise handle_organization_error(e)
 
 
@@ -684,7 +702,7 @@ async def get_audit_logs(
             has_more=offset + len(logs) < total,
         )
 
-    except Exception as e:
+    except ORG_HANDLED_ERRORS as e:
         raise handle_organization_error(e)
 
 

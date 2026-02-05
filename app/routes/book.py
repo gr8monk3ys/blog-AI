@@ -20,6 +20,7 @@ from src.book.make_book import (
     post_process_book,
 )
 from src.organizations import AuthorizationContext
+from src.config import get_settings
 from src.text_generation.core import (
     GenerationOptions,
     RateLimitError,
@@ -121,6 +122,8 @@ async def generate_book_endpoint(
         f"title_length: {len(request.title)}, chapters: {request.num_chapters}"
     )
     try:
+        settings = get_settings()
+        provider_type = settings.llm.default_provider or "openai"
         # Create generation options
         options = GenerationOptions(
             temperature=0.7,
@@ -140,7 +143,7 @@ async def generate_book_endpoint(
                     sections_per_chapter=request.sections_per_chapter,
                     keywords=request.keywords,
                     tone=request.tone,
-                    provider_type="openai",
+                    provider_type=provider_type,
                     options=options,
                 )
             )
@@ -153,14 +156,14 @@ async def generate_book_endpoint(
                     sections_per_chapter=request.sections_per_chapter,
                     keywords=request.keywords,
                     tone=request.tone,
-                    provider_type="openai",
+                    provider_type=provider_type,
                     options=options,
                 )
             )
 
         # Post-process book (run sync functions in thread pool)
         if request.proofread or request.humanize:
-            provider = await asyncio.to_thread(create_provider_from_env, "openai")
+            provider = await asyncio.to_thread(create_provider_from_env, provider_type)
             book = await asyncio.to_thread(
                 partial(
                     post_process_book,
@@ -175,9 +178,9 @@ async def generate_book_endpoint(
         # Convert book to JSON-serializable format
         book_data = {
             "title": book.title,
-            "description": book.description,
-            "date": book.date,
-            "image": book.image,
+            "description": getattr(book, "description", None),
+            "date": getattr(book, "date", None),
+            "image": getattr(book, "image", None),
             "tags": book.tags,
             "chapters": [],
         }
@@ -257,7 +260,7 @@ async def generate_book_endpoint(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate book. Please try again later.",
         )
-    except Exception as e:
+    except (AttributeError, KeyError, TypeError) as e:
         logger.error(f"Unexpected error generating book: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

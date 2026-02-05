@@ -12,6 +12,7 @@ import uuid
 from datetime import datetime
 from functools import partial
 
+import httpx
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 
 from src.blog.make_blog import (
@@ -21,6 +22,7 @@ from src.blog.make_blog import (
     post_process_blog_post,
 )
 from src.organizations import AuthorizationContext
+from src.config import get_settings
 from src.text_generation.core import (
     GenerationOptions,
     RateLimitError,
@@ -120,6 +122,8 @@ async def generate_blog(
         f"in org {auth_ctx.organization_id}, topic_length: {len(request.topic)}"
     )
     try:
+        settings = get_settings()
+        provider_type = settings.llm.default_provider or "openai"
         # Create generation options
         options = GenerationOptions(
             temperature=0.7,
@@ -137,7 +141,7 @@ async def generate_blog(
                     title=request.topic,
                     keywords=request.keywords,
                     tone=request.tone,
-                    provider_type="openai",
+                    provider_type=provider_type,
                     options=options,
                 )
             )
@@ -148,14 +152,14 @@ async def generate_blog(
                     title=request.topic,
                     keywords=request.keywords,
                     tone=request.tone,
-                    provider_type="openai",
+                    provider_type=provider_type,
                     options=options,
                 )
             )
 
         # Post-process blog post (run sync functions in thread pool)
         if request.proofread or request.humanize:
-            provider = await asyncio.to_thread(create_provider_from_env, "openai")
+            provider = await asyncio.to_thread(create_provider_from_env, provider_type)
             blog_post = await asyncio.to_thread(
                 partial(
                     post_process_blog_post,
@@ -241,7 +245,7 @@ async def generate_blog(
                     "keywords": request.keywords[:5] if request.keywords else [],
                 },
             )
-        except Exception as webhook_error:
+        except (httpx.RequestError, httpx.TimeoutException) as webhook_error:
             # Don't fail the request if webhook emission fails
             logger.warning(f"Failed to emit webhook: {webhook_error}")
 
@@ -268,7 +272,7 @@ async def generate_blog(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate blog post. Please try again later.",
         )
-    except Exception as e:
+    except (AttributeError, KeyError, TypeError) as e:
         logger.error(f"Unexpected error generating blog: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

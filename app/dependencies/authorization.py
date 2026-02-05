@@ -235,7 +235,7 @@ async def require_org_scoped_api_key(
 
 
 async def require_content_creation(
-    auth_ctx: AuthorizationContext = Depends(get_organization_context),
+    auth_ctx: AuthorizationContext = Depends(get_optional_organization_context),
 ) -> AuthorizationContext:
     """
     Require permission to create content in the organization.
@@ -249,6 +249,9 @@ async def require_content_creation(
     Raises:
         HTTPException: If user lacks content.create permission.
     """
+    if not auth_ctx.organization_id:
+        return auth_ctx
+
     if not auth_ctx.has_permission(Permission.CONTENT_CREATE):
         log_authorization_failure(
             user_id=auth_ctx.user_id,
