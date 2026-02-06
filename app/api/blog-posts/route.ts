@@ -24,7 +24,7 @@ export async function GET(request: Request) {
   }
 
   const supabase = getSupabase() as any
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('blog_posts')
     .select('id, title, slug, excerpt, tags, status, published_at, updated_at, created_at')
     .order('published_at', { ascending: false, nullsFirst: false })
