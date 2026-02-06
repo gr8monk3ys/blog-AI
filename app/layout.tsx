@@ -1,9 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter, Source_Serif_4 } from 'next/font/google'
 import './globals.css'
-
-const inter = Inter({ subsets: ['latin'] })
-const sourceSerif = Source_Serif_4({ subsets: ['latin'], variable: '--font-serif' })
 
 export const metadata: Metadata = {
   title: 'Blog AI Generator',
@@ -17,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} ${sourceSerif.variable}`}>
+      <body className="font-sans">
         {children}
       </body>
     </html>

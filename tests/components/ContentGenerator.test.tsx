@@ -139,9 +139,10 @@ describe('ContentGenerator', () => {
       await vi.advanceTimersByTimeAsync(3500)
 
       expect(mockSetContent).toHaveBeenCalled()
-      const contentArg = mockSetContent.mock.calls[0][0]
-      expect(contentArg.success).toBe(true)
-      expect(contentArg.type).toBe('blog')
+      const contentArg = mockSetContent.mock.calls[0]?.[0]
+      expect(contentArg).toBeDefined()
+      expect(contentArg!.success).toBe(true)
+      expect(contentArg!.type).toBe('blog')
 
       vi.useRealTimers()
     })

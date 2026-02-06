@@ -133,7 +133,7 @@ const loadBlogPostsFromSupabase = async (): Promise<BlogPostMeta[]> => {
   if (!isSupabaseConfigured()) return []
 
   try {
-    const supabase = getSupabase()
+    const supabase = getSupabase() as any
     const { data, error } = await supabase
       .from('blog_posts')
       .select('title, slug, excerpt, tags, published_at, updated_at, created_at')
@@ -142,7 +142,7 @@ const loadBlogPostsFromSupabase = async (): Promise<BlogPostMeta[]> => {
 
     if (error || !data) return []
 
-    return data.map((post) => ({
+    return (data as any[]).map((post) => ({
       title: post.title,
       date: post.published_at || post.updated_at || post.created_at,
       excerpt: post.excerpt || '',
@@ -158,7 +158,7 @@ const loadBlogPostFromSupabase = async (slug: string): Promise<BlogPost | null> 
   if (!isSupabaseConfigured()) return null
 
   try {
-    const supabase = getSupabase()
+    const supabase = getSupabase() as any
     const { data, error } = await supabase
       .from('blog_posts')
       .select(

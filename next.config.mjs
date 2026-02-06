@@ -60,9 +60,6 @@ const nextConfig = {
   // Recommended: Strict mode for catching issues early
   reactStrictMode: true,
 
-  // Turbopack configuration (Next.js 16+ default bundler)
-  turbopack: {},
-
   // Remove X-Powered-By header for security
   poweredByHeader: false,
 

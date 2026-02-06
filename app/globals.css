@@ -14,8 +14,9 @@
 body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-end-rgb));
+  font-family: "SF Pro Text", "Inter", system-ui, -apple-system, sans-serif;
 }
 
 .font-serif {
-  font-family: var(--font-serif);
+  font-family: "Source Serif 4", "Iowan Old Style", "Times New Roman", serif;
 }

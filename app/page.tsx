@@ -43,7 +43,7 @@ const CATEGORY_ORDER: ToolCategory[] = [
   'rewriting',
 ]
 
-type IconType = (props: React.SVGProps<SVGSVGElement>) => JSX.Element
+type IconType = React.ComponentType<React.SVGProps<SVGSVGElement>>
 
 const CATEGORY_ICONS: Record<ToolCategory, IconType> = {
   blog: NewspaperIcon,
@@ -191,7 +191,7 @@ export default function Home() {
   }, [])
 
   const categoryCards = useMemo<CategoryCard[]>(() => {
-    const cards = toolCategories.map((category) => ({
+    const cards: CategoryCard[] = toolCategories.map((category) => ({
       id: category.id,
       name: category.name,
       count: category.count,
