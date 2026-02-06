@@ -1,7 +1,6 @@
 {
-  "rootDirectory": "frontend",
-  "buildCommand": "cd frontend && bun install && bun run build",
-  "installCommand": "cd frontend && bun install",
-  "outputDirectory": "frontend/.next",
+  "buildCommand": "bun install && bun run build",
+  "installCommand": "bun install",
+  "outputDirectory": ".next",
   "framework": "nextjs"
 }

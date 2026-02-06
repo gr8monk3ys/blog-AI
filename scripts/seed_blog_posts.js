@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 
-const BLOG_DIR = path.join(__dirname, '..', 'frontend', 'content', 'blog');
+const BLOG_DIR = path.join(__dirname, '..', 'content', 'blog');
 
 const parseFrontmatter = (raw) => {
   const boundary = '---';

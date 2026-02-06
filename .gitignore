@@ -11,9 +11,9 @@ backend/run_logs/*
 backend/backend/*
 
 # Env vars
-frontend/.env.local
+.env.local
 .env
-frontend/node_modules/
+node_modules/
 
 # Mac files
 .DS_Store
@@ -57,16 +57,19 @@ ENV/
 env/
 
 # Node.js
-frontend/.next/
-frontend/out/
-frontend/.cache/
-frontend/npm-debug.log
-frontend/yarn-debug.log
-frontend/yarn-error.log
-frontend/tsconfig.tsbuildinfo
+.next/
+out/
+.cache/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+tsconfig.tsbuildinfo
 
 # Supabase CLI temp
 supabase/.temp/
+
+# Legacy folder after frontend move
+frontend_legacy/
 
 # IDE
 .idea/

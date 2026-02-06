@@ -6,7 +6,7 @@ WORKDIR /app
 RUN pip install poetry
 
 # Copy Poetry configuration files
-COPY pyproject.toml poetry.lock* ./
+COPY backend/pyproject.toml backend/poetry.lock* ./
 
 # Configure Poetry to not create a virtual environment
 RUN poetry config virtualenvs.create false
@@ -15,8 +15,9 @@ RUN poetry config virtualenvs.create false
 RUN poetry install --only main --no-root
 
 # Copy backend code
-COPY src/ ./src/
-COPY server.py ./
+COPY backend/src/ ./src/
+COPY backend/app/ ./app/
+COPY backend/server.py ./
 COPY .env.example ./
 
 # Expose backend port
@@ -28,13 +29,17 @@ FROM node:18-alpine AS frontend-build
 WORKDIR /app
 
 # Copy frontend files
-COPY frontend/package.json frontend/bun.lockb ./
+COPY package.json bun.lockb ./
 
 # Install dependencies
 RUN npm install
 
 # Copy frontend source code
-COPY frontend/ ./
+COPY app/ ./app/
+COPY components/ ./components/
+COPY public/ ./public/
+COPY lib/ ./lib/
+COPY tailwind.config.js next.config.mjs tsconfig.json ./
 
 # Build frontend
 RUN npm run build
@@ -49,10 +54,10 @@ COPY --from=backend /app /app
 COPY --from=backend /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 
 # Copy built frontend from frontend-build stage
-COPY --from=frontend-build /app/.next /app/frontend/.next
-COPY --from=frontend-build /app/public /app/frontend/public
-COPY --from=frontend-build /app/node_modules /app/frontend/node_modules
-COPY --from=frontend-build /app/package.json /app/frontend/package.json
+COPY --from=frontend-build /app/.next /app/.next
+COPY --from=frontend-build /app/public /app/public
+COPY --from=frontend-build /app/node_modules /app/node_modules
+COPY --from=frontend-build /app/package.json /app/package.json
 
 # Install additional packages needed for the final image
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -64,8 +69,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN echo '#!/bin/bash\n\
 # Start the backend server in the background\n\
 python server.py & \n\
-# Change to the frontend directory and start the frontend server\n\
-cd frontend && npm run start\n\
+# Start the frontend server\n\
+npm run start\n\
 ' > /app/start.sh && chmod +x /app/start.sh
 
 # Expose ports

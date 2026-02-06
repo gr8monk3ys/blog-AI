@@ -20,7 +20,7 @@ RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy requirements and install production dependencies only
-COPY requirements.txt ./
+COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
@@ -32,13 +32,17 @@ FROM node:20-alpine AS frontend-builder
 WORKDIR /build
 
 # Install dependencies first (better layer caching)
-COPY frontend/package.json frontend/package-lock.json* frontend/bun.lockb* ./
+COPY package.json package-lock.json* bun.lockb* ./
 
 # Use npm ci for reproducible builds (falls back to install if no lockfile)
 RUN npm ci --only=production 2>/dev/null || npm install --only=production
 
 # Copy all frontend source files
-COPY frontend/ ./
+COPY app/ ./app/
+COPY components/ ./components/
+COPY public/ ./public/
+COPY lib/ ./lib/
+COPY tailwind.config.js next.config.mjs tsconfig.json ./
 
 # Set production environment for build optimization
 ENV NODE_ENV=production
@@ -89,16 +93,16 @@ COPY --from=backend-deps /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy backend application code
-COPY --chown=blogai:blogai src/ ./src/
-COPY --chown=blogai:blogai app/ ./app/
-COPY --chown=blogai:blogai server.py ./
+COPY --chown=blogai:blogai backend/src/ ./src/
+COPY --chown=blogai:blogai backend/app/ ./app/
+COPY --chown=blogai:blogai backend/server.py ./
 
 # Copy frontend build artifacts
-COPY --from=frontend-builder --chown=blogai:blogai /build/.next ./frontend/.next
-COPY --from=frontend-builder --chown=blogai:blogai /build/public ./frontend/public
-COPY --from=frontend-builder --chown=blogai:blogai /build/node_modules ./frontend/node_modules
-COPY --from=frontend-builder --chown=blogai:blogai /build/package.json ./frontend/package.json
-COPY --from=frontend-builder --chown=blogai:blogai /build/next.config.mjs ./frontend/next.config.mjs
+COPY --from=frontend-builder --chown=blogai:blogai /build/.next ./.next
+COPY --from=frontend-builder --chown=blogai:blogai /build/public ./public
+COPY --from=frontend-builder --chown=blogai:blogai /build/node_modules ./node_modules
+COPY --from=frontend-builder --chown=blogai:blogai /build/package.json ./package.json
+COPY --from=frontend-builder --chown=blogai:blogai /build/next.config.mjs ./next.config.mjs
 
 # Create startup script with proper signal handling
 RUN cat > /app/entrypoint.sh << 'EOF'
@@ -128,7 +132,7 @@ BACKEND_PID=$!
 
 # Start frontend server
 echo "Starting frontend server on port ${FRONTEND_PORT:-3000}..."
-cd /app/frontend
+cd /app
 NODE_ENV=production npm run start -- -p ${FRONTEND_PORT:-3000} &
 FRONTEND_PID=$!
 

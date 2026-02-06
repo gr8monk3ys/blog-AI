@@ -28,7 +28,7 @@ export default async function BlogIndexPage() {
       <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {posts.length === 0 ? (
           <div className="bg-white border border-neutral-200 rounded-xl p-6 text-sm text-neutral-600">
-            No posts yet. Add markdown files to `frontend/content/blog` to publish.
+            No posts yet. Add markdown files to `content/blog` to publish.
           </div>
         ) : (
           <div className="space-y-6">
