@@ -18,7 +18,8 @@ import {
 import ContentGenerator from '../components/ContentGenerator'
 import BookGenerator from '../components/BookGenerator'
 import ContentViewer from '../components/ContentViewer'
-import UsageIndicator from '../components/UsageIndicator'
+import SiteHeader from '../components/SiteHeader'
+import SiteFooter from '../components/SiteFooter'
 import { ContentGenerationResponse } from '../types/content'
 import {
   SAMPLE_TOOLS,
@@ -232,34 +233,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen">
-      {/* Top Nav */}
-      <header className="sticky top-0 z-20 bg-white/70 backdrop-blur border-b border-amber-100/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-3">
-              <SparklesIcon className="w-6 h-6 text-amber-600" />
-              <span className="text-lg font-semibold text-neutral-900">Blog AI</span>
-            </div>
-            <nav className="hidden md:flex items-center gap-6 text-sm text-neutral-700">
-              <Link href="/tools" className="hover:text-amber-700 transition-colors">Tools</Link>
-              <Link href="/tool-directory" className="hover:text-amber-700 transition-colors">Directory</Link>
-              <Link href="/templates" className="hover:text-amber-700 transition-colors">Templates</Link>
-              <Link href="/blog" className="hover:text-amber-700 transition-colors">Blog</Link>
-              <Link href="/pricing" className="hover:text-amber-700 transition-colors">Pricing</Link>
-              <Link href="/history" className="hover:text-amber-700 transition-colors">History</Link>
-            </nav>
-            <div className="flex items-center gap-3">
-              <UsageIndicator compact />
-              <Link
-                href="/tools"
-                className="hidden sm:inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors"
-              >
-                Browse Tools
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       {/* Hero */}
       <section className="relative overflow-hidden">
@@ -359,7 +333,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-semibold text-gray-900 font-serif">Browse Categories</h2>
-            <Link href="/tools" className="text-sm text-indigo-600 hover:text-indigo-700">View all tools</Link>
+            <Link href="/tools" className="text-sm text-amber-600 hover:text-amber-700">View all tools</Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {categoryCards.map((category) => (
@@ -548,25 +522,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-neutral-900 text-neutral-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-            <div>
-              <div className="text-white font-semibold">Blog AI</div>
-              <div className="text-xs text-neutral-400 mt-1">AI-powered tools for content scale. Updated Feb 2026.</div>
-            </div>
-            <div className="flex flex-wrap gap-4 text-sm">
-              <Link href="/tools" className="hover:text-white">Tools</Link>
-              <Link href="/tool-directory" className="hover:text-white">Directory</Link>
-              <Link href="/templates" className="hover:text-white">Templates</Link>
-              <Link href="/blog" className="hover:text-white">Blog</Link>
-              <Link href="/pricing" className="hover:text-white">Pricing</Link>
-              <Link href="/history" className="hover:text-white">History</Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   )
 }

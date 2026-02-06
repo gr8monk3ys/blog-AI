@@ -46,8 +46,8 @@ export default function StatCard({
         <>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-gray-500">{title}</h3>
-            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
-              <Icon className="w-5 h-5 text-indigo-600" aria-hidden="true" />
+            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+              <Icon className="w-5 h-5 text-amber-600" aria-hidden="true" />
             </div>
           </div>
 

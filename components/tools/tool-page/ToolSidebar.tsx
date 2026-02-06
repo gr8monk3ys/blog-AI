@@ -19,19 +19,19 @@ function TipsCard() {
       </h3>
       <ul className="space-y-2 text-sm text-gray-600">
         <li className="flex items-start gap-2">
-          <span className="text-indigo-600 mt-0.5">*</span>
+          <span className="text-amber-600 mt-0.5">*</span>
           Be specific about your topic or goal
         </li>
         <li className="flex items-start gap-2">
-          <span className="text-indigo-600 mt-0.5">*</span>
+          <span className="text-amber-600 mt-0.5">*</span>
           Include relevant keywords for SEO
         </li>
         <li className="flex items-start gap-2">
-          <span className="text-indigo-600 mt-0.5">*</span>
+          <span className="text-amber-600 mt-0.5">*</span>
           Choose a tone that matches your brand
         </li>
         <li className="flex items-start gap-2">
-          <span className="text-indigo-600 mt-0.5">*</span>
+          <span className="text-amber-600 mt-0.5">*</span>
           Enable research for factual content
         </li>
       </ul>
@@ -56,7 +56,7 @@ function RelatedToolsCard({ tools }: { tools: Tool[] }) {
         {tools.map((relatedTool) => (
           <li key={relatedTool.id}>
             <Link href={`/tools/${relatedTool.slug}`} className="block group">
-              <div className="text-sm font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">
+              <div className="text-sm font-medium text-gray-900 group-hover:text-amber-600 transition-colors">
                 {relatedTool.name}
               </div>
               <div className="text-xs text-gray-500 line-clamp-1">

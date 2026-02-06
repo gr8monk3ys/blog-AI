@@ -35,13 +35,13 @@ export default function BrandProfileCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
       className={`relative bg-white rounded-xl border shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden ${
-        profile.isDefault ? 'border-indigo-300 ring-2 ring-indigo-100' : 'border-gray-200'
+        profile.isDefault ? 'border-amber-300 ring-2 ring-amber-100' : 'border-gray-200'
       }`}
     >
       {/* Default badge */}
       {profile.isDefault && (
         <div className="absolute top-3 right-3">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 border border-indigo-200">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">
             <StarIconSolid className="w-3 h-3" />
             Default
           </span>
@@ -73,7 +73,7 @@ export default function BrandProfileCard({
         {/* Writing style */}
         <div className="mb-4">
           <p className="text-xs text-gray-500 mb-1">Writing Style</p>
-          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100 capitalize">
+          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-amber-50 text-amber-700 border border-amber-100 capitalize">
             {profile.writingStyle}
           </span>
         </div>
@@ -118,7 +118,7 @@ export default function BrandProfileCard({
               {profile.brandValues.slice(0, 3).map((value) => (
                 <span
                   key={value}
-                  className="inline-flex items-center px-2 py-0.5 rounded text-xs text-purple-600 bg-purple-50 border border-purple-100"
+                  className="inline-flex items-center px-2 py-0.5 rounded text-xs text-amber-600 bg-amber-50 border border-amber-100"
                 >
                   {value}
                 </span>
@@ -139,7 +139,7 @@ export default function BrandProfileCard({
           <button
             type="button"
             onClick={() => onSetDefault(profile)}
-            className="flex-1 inline-flex justify-center items-center gap-1.5 py-2 px-3 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            className="flex-1 inline-flex justify-center items-center gap-1.5 py-2 px-3 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
           >
             <StarIcon className="w-3.5 h-3.5" />
             Set Default
@@ -149,7 +149,7 @@ export default function BrandProfileCard({
           <button
             type="button"
             onClick={() => onEdit(profile)}
-            className="inline-flex justify-center items-center p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            className="inline-flex justify-center items-center p-2 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
             title="Edit profile"
           >
             <PencilSquareIcon className="w-4 h-4" />

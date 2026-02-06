@@ -45,11 +45,11 @@ export default function ToolCard({ tool, index = 0 }: ToolCardProps) {
         className="block group"
         aria-label={`Open ${tool.name} tool`}
       >
-        <div className="relative h-full bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all duration-200 overflow-hidden">
+        <div className="relative h-full bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-amber-200 transition-all duration-200 overflow-hidden">
           {/* Top badges row */}
           <div className="absolute top-3 right-3 flex items-center gap-2">
             {tool.isNew && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-amber-500 to-amber-500 text-white">
                 New
               </span>
             )}
@@ -83,7 +83,7 @@ export default function ToolCard({ tool, index = 0 }: ToolCardProps) {
             </div>
 
             {/* Title */}
-            <h3 className="text-base font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors mb-2 line-clamp-1">
+            <h3 className="text-base font-semibold text-gray-900 group-hover:text-amber-600 transition-colors mb-2 line-clamp-1">
               {tool.name}
             </h3>
 
@@ -95,7 +95,7 @@ export default function ToolCard({ tool, index = 0 }: ToolCardProps) {
 
           {/* Bottom action indicator */}
           <div className="px-5 pb-4">
-            <div className="flex items-center text-sm font-medium text-indigo-600 group-hover:text-indigo-700 transition-colors">
+            <div className="flex items-center text-sm font-medium text-amber-600 group-hover:text-amber-700 transition-colors">
               <span>Try it now</span>
               <svg
                 className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform"

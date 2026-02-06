@@ -90,6 +90,13 @@ export const API_ENDPOINTS = {
     upgrade: `${API_V1_BASE_URL}/usage/upgrade`,
     features: `${API_V1_BASE_URL}/usage/features`,
   },
+
+  // Payments / Stripe endpoints
+  payments: {
+    checkout: `${API_BASE_URL}/api/payments/create-checkout-session`,
+    portal: `${API_BASE_URL}/api/payments/create-portal-session`,
+    pricing: `${API_BASE_URL}/api/payments/pricing-tiers`,
+  },
   // Templates API endpoints
   templates: {
     list: '/api/templates',

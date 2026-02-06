@@ -176,7 +176,7 @@ export default function BrandProfileForm({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g., Tech Startup Voice"
-          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
           required
         />
       </div>
@@ -193,7 +193,7 @@ export default function BrandProfileForm({
           id="writing-style"
           value={writingStyle}
           onChange={(e) => setWritingStyle(e.target.value as WritingStyle)}
-          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
         >
           {WRITING_STYLES.map((style) => (
             <option key={style.value} value={style.value}>
@@ -216,7 +216,7 @@ export default function BrandProfileForm({
               onClick={() => handleToneToggle(keyword.value)}
               className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                 toneKeywords.includes(keyword.value)
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-amber-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -238,7 +238,7 @@ export default function BrandProfileForm({
           id="industry"
           value={industry || ''}
           onChange={(e) => setIndustry((e.target.value as Industry) || null)}
-          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
         >
           <option value="">Select an industry...</option>
           {INDUSTRIES.map((ind) => (
@@ -263,7 +263,7 @@ export default function BrandProfileForm({
           onChange={(e) => setTargetAudience(e.target.value)}
           placeholder="Describe your ideal reader or customer..."
           rows={2}
-          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
         />
       </div>
 
@@ -284,7 +284,7 @@ export default function BrandProfileForm({
           onChange={(e) => setExampleContent(e.target.value)}
           placeholder="Paste a paragraph that exemplifies your brand voice..."
           rows={4}
-          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
         />
       </div>
 
@@ -305,7 +305,7 @@ export default function BrandProfileForm({
               }
             }}
             placeholder="Add a word or phrase..."
-            className="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+            className="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
           />
           <button
             type="button"
@@ -353,7 +353,7 @@ export default function BrandProfileForm({
               }
             }}
             placeholder="Add a word to avoid..."
-            className="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+            className="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
           />
           <button
             type="button"
@@ -401,7 +401,7 @@ export default function BrandProfileForm({
               }
             }}
             placeholder="e.g., Innovation, Transparency..."
-            className="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+            className="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
           />
           <button
             type="button"
@@ -417,13 +417,13 @@ export default function BrandProfileForm({
           {brandValues.map((value) => (
             <span
               key={value}
-              className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-purple-50 text-purple-700 border border-purple-100"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-amber-50 text-amber-700 border border-amber-100"
             >
               {value}
               <button
                 type="button"
                 onClick={() => removeFromArray(value, setBrandValues)}
-                className="hover:text-purple-900"
+                className="hover:text-amber-900"
               >
                 <XMarkIcon className="w-3 h-3" />
               </button>
@@ -449,7 +449,7 @@ export default function BrandProfileForm({
               }
             }}
             placeholder="e.g., Future of work, Team collaboration..."
-            className="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+            className="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
           />
           <button
             type="button"
@@ -486,7 +486,7 @@ export default function BrandProfileForm({
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-colors"
           >
             Cancel
           </button>
@@ -494,7 +494,7 @@ export default function BrandProfileForm({
         <button
           type="submit"
           disabled={isLoading}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <SparklesIcon className="w-4 h-4" />
           {isLoading ? 'Saving...' : profile ? 'Update Profile' : 'Create Profile'}

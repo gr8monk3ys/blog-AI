@@ -117,7 +117,7 @@ export default function ToolGrid({
               <button
                 type="button"
                 onClick={() => setShowFreeOnly(!showFreeOnly)}
-                className={`flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                className={`flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 ${
                   showFreeOnly
                     ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
                     : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
@@ -181,7 +181,7 @@ export default function ToolGrid({
                 setSelectedCategory('all')
                 setShowFreeOnly(false)
               }}
-              className="mt-4 inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
+              className="mt-4 inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-colors"
             >
               Clear all filters
             </button>

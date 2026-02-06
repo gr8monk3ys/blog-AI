@@ -103,7 +103,7 @@ export default function ToolInputForm({
             value={inputText}
             onChange={(e) => onInputTextChange(e.target.value)}
             rows={4}
-            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
             placeholder={getInputPlaceholder(tool)}
             required
           />
@@ -121,7 +121,7 @@ export default function ToolInputForm({
             id="tone"
             value={tone}
             onChange={(e) => onToneChange(e.target.value)}
-            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
           >
             {TONE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -155,7 +155,7 @@ export default function ToolInputForm({
         <button
           type="submit"
           disabled={loading || !inputText.trim()}
-          className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? (
             <>

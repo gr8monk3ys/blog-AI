@@ -1,13 +1,16 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import SiteHeader from '../../../components/SiteHeader'
+import SiteFooter from '../../../components/SiteFooter'
 import { loadBlogPost } from '../../../lib/blog-index'
 
 interface BlogPostPageProps {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 export async function generateMetadata({ params }: BlogPostPageProps) {
-  const post = await loadBlogPost(params.slug)
+  const { slug } = await params
+  const post = await loadBlogPost(slug)
   if (!post) return {}
 
   return {
@@ -17,7 +20,8 @@ export async function generateMetadata({ params }: BlogPostPageProps) {
 }
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
-  const post = await loadBlogPost(params.slug)
+  const { slug } = await params
+  const post = await loadBlogPost(slug)
 
   if (!post) {
     notFound()
@@ -25,24 +29,22 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-neutral-50 via-white to-neutral-100">
+      <SiteHeader />
+
       <header className="border-b border-neutral-200 bg-white">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Link href="/blog" className="text-xs text-neutral-500 hover:text-indigo-700">
+          <Link href="/blog" className="text-xs text-neutral-500 hover:text-amber-700">
             Back to blog
           </Link>
           <h1 className="mt-3 text-3xl sm:text-4xl font-semibold text-neutral-900 font-serif">
             {post.title}
           </h1>
-          <div className="mt-2 text-xs text-neutral-500">
-            {formatDisplayDate(post.date)}
-          </div>
+          <div className="mt-2 text-xs text-neutral-500">{formatDisplayDate(post.date)}</div>
         </div>
       </header>
 
       <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="space-y-6 text-neutral-700">
-          {renderMarkdownBlocks(post.body)}
-        </div>
+        <div className="space-y-6 text-neutral-700">{renderMarkdownBlocks(post.body)}</div>
 
         {post.tags.length > 0 && (
           <div className="mt-8 flex flex-wrap gap-2">
@@ -57,6 +59,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           </div>
         )}
       </article>
+
+      <SiteFooter />
     </main>
   )
 }

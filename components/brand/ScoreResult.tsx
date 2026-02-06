@@ -57,7 +57,7 @@ function ScoreResultComponent({ score }: ScoreResultProps) {
           <ul className="text-sm text-gray-600 space-y-1">
             {score.suggestions.map((s, i) => (
               <li key={i} className="flex items-start gap-2">
-                <span className="text-purple-500">&bull;</span>
+                <span className="text-amber-500">&bull;</span>
                 {s}
               </li>
             ))}

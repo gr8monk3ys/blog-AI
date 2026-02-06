@@ -168,15 +168,15 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
   return (
     <div>
       <div className="flex items-center mb-6">
-        <DocumentTextIcon className="h-5 w-5 text-indigo-600 mr-2" />
+        <DocumentTextIcon className="h-5 w-5 text-amber-600 mr-2" />
         <h2 className="text-xl font-bold text-gray-800">Blog Post Generator</h2>
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-100">
+        <div className="bg-amber-50 rounded-lg p-4 border border-amber-100">
           <div className="flex items-center mb-2">
-            <PencilIcon className="h-4 w-4 text-indigo-600 mr-2" />
-            <label htmlFor="topic" className="block text-sm font-medium text-indigo-800">
+            <PencilIcon className="h-4 w-4 text-amber-600 mr-2" />
+            <label htmlFor="topic" className="block text-sm font-medium text-amber-800">
               What would you like to write about?
             </label>
           </div>
@@ -185,7 +185,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
             id="topic"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 bg-white"
             placeholder="Enter your topic..."
             required
           />
@@ -201,7 +201,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
               id="keywords"
               value={keywords}
               onChange={(e) => setKeywords(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
               placeholder="SEO, marketing, content..."
             />
           </div>
@@ -214,7 +214,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
               id="tone"
               value={tone}
               onChange={(e) => setTone(e.target.value as BlogGenerationOptions['tone'])}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
             >
               <option value="informative">Informative</option>
               <option value="conversational">Conversational</option>
@@ -228,7 +228,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
 
         <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
           <div className="flex items-center mb-3">
-            <LightBulbIcon className="h-4 w-4 text-indigo-600 mr-2" />
+            <LightBulbIcon className="h-4 w-4 text-amber-600 mr-2" />
             <h3 className="text-sm font-medium text-gray-700">Advanced Options</h3>
           </div>
           
@@ -239,8 +239,8 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
                 onChange={setUseResearch}
                 aria-label="Enable web research"
                 className={`${
-                  useResearch ? 'bg-indigo-600' : 'bg-gray-200'
-                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
+                  useResearch ? 'bg-amber-600' : 'bg-gray-200'
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
               >
                 <span
                   aria-hidden="true"
@@ -258,8 +258,8 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
                 onChange={setProofread}
                 aria-label="Enable proofreading"
                 className={`${
-                  proofread ? 'bg-indigo-600' : 'bg-gray-200'
-                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
+                  proofread ? 'bg-amber-600' : 'bg-gray-200'
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
               >
                 <span
                   aria-hidden="true"
@@ -277,8 +277,8 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
                 onChange={setHumanize}
                 aria-label="Enable content humanization"
                 className={`${
-                  humanize ? 'bg-indigo-600' : 'bg-gray-200'
-                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
+                  humanize ? 'bg-amber-600' : 'bg-gray-200'
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
               >
                 <span
                   aria-hidden="true"
@@ -304,7 +304,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
                 {limitReached && (
                   <Link
                     href="/pricing"
-                    className="inline-flex items-center mt-2 text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                    className="inline-flex items-center mt-2 text-sm font-medium text-amber-600 hover:text-amber-700"
                   >
                     Upgrade your plan
                     <span className="ml-1">&rarr;</span>
@@ -326,7 +326,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
 
         <button
           type="submit"
-          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all"
+          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all"
         >
           Generate Blog Post
         </button>

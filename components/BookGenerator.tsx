@@ -120,15 +120,15 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
   return (
     <div>
       <div className="flex items-center mb-6">
-        <BookOpenIcon className="h-5 w-5 text-indigo-600 mr-2" />
+        <BookOpenIcon className="h-5 w-5 text-amber-600 mr-2" />
         <h2 className="text-xl font-bold text-gray-800">Book Generator</h2>
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-100">
+        <div className="bg-amber-50 rounded-lg p-4 border border-amber-100">
           <div className="flex items-center mb-2">
-            <PencilIcon className="h-4 w-4 text-indigo-600 mr-2" />
-            <label htmlFor="title" className="block text-sm font-medium text-indigo-800">
+            <PencilIcon className="h-4 w-4 text-amber-600 mr-2" />
+            <label htmlFor="title" className="block text-sm font-medium text-amber-800">
               Book Title
             </label>
           </div>
@@ -137,7 +137,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
             id="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 bg-white"
             placeholder="Enter book title..."
             required
           />
@@ -145,7 +145,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
 
         <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
           <div className="flex items-center mb-3">
-            <AdjustmentsHorizontalIcon className="h-4 w-4 text-indigo-600 mr-2" />
+            <AdjustmentsHorizontalIcon className="h-4 w-4 text-amber-600 mr-2" />
             <h3 className="text-sm font-medium text-gray-700">Book Structure</h3>
           </div>
           
@@ -161,7 +161,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
                 onChange={(e) => setNumChapters(parseInt(e.target.value, 10))}
                 min={1}
                 max={20}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
               />
             </div>
             <div>
@@ -175,7 +175,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
                 onChange={(e) => setSectionsPerChapter(parseInt(e.target.value, 10))}
                 min={1}
                 max={10}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
               />
             </div>
           </div>
@@ -191,7 +191,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
               id="keywords"
               value={keywords}
               onChange={(e) => setKeywords(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
               placeholder="AI, technology, future..."
             />
           </div>
@@ -204,7 +204,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
               id="tone"
               value={tone}
               onChange={(e) => setTone(e.target.value as BookGenerationOptions['tone'])}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
             >
               <option value="informative">Informative</option>
               <option value="conversational">Conversational</option>
@@ -218,7 +218,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
 
         <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
           <div className="flex items-center mb-3">
-            <LightBulbIcon className="h-4 w-4 text-indigo-600 mr-2" />
+            <LightBulbIcon className="h-4 w-4 text-amber-600 mr-2" />
             <h3 className="text-sm font-medium text-gray-700">Advanced Options</h3>
           </div>
           
@@ -228,8 +228,8 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
                 checked={useResearch}
                 onChange={setUseResearch}
                 className={`${
-                  useResearch ? 'bg-indigo-600' : 'bg-gray-200'
-                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
+                  useResearch ? 'bg-amber-600' : 'bg-gray-200'
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
               >
                 <span
                   className={`${
@@ -245,8 +245,8 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
                 checked={proofread}
                 onChange={setProofread}
                 className={`${
-                  proofread ? 'bg-indigo-600' : 'bg-gray-200'
-                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
+                  proofread ? 'bg-amber-600' : 'bg-gray-200'
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
               >
                 <span
                   className={`${
@@ -262,8 +262,8 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
                 checked={humanize}
                 onChange={setHumanize}
                 className={`${
-                  humanize ? 'bg-indigo-600' : 'bg-gray-200'
-                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
+                  humanize ? 'bg-amber-600' : 'bg-gray-200'
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
               >
                 <span
                   className={`${
@@ -292,7 +292,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
 
         <button
           type="submit"
-          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all"
+          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all"
         >
           Generate Book
         </button>

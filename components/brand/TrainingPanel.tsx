@@ -45,15 +45,15 @@ function TrainingPanelComponent({
         <button
           onClick={onTrain}
           disabled={isTraining || sampleCount === 0}
-          className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-400 font-medium"
+          className="w-full py-3 bg-gradient-to-r from-amber-600 to-amber-600 text-white rounded-lg hover:from-amber-700 hover:to-amber-700 disabled:from-gray-400 disabled:to-gray-400 font-medium"
         >
           {isTraining ? 'Training...' : 'Train Voice'}
         </button>
 
         {fingerprint && (
-          <div className="mt-4 p-4 bg-purple-50 rounded-lg">
-            <h4 className="font-medium text-purple-900 mb-2">Voice Summary</h4>
-            <p className="text-sm text-purple-800">{fingerprint.voice_summary}</p>
+          <div className="mt-4 p-4 bg-amber-50 rounded-lg">
+            <h4 className="font-medium text-amber-900 mb-2">Voice Summary</h4>
+            <p className="text-sm text-amber-800">{fingerprint.voice_summary}</p>
             <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
               <div>
                 <span className="text-gray-500">Quality:</span>{' '}

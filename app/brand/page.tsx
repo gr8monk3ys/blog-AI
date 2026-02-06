@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
+import SiteHeader from '../../components/SiteHeader'
+import SiteFooter from '../../components/SiteFooter'
 import BrandProfileCard from '../../components/brand/BrandProfileCard'
 import BrandProfileForm, { BrandProfileFormData } from '../../components/brand/BrandProfileForm'
 import {
   SparklesIcon,
-  ArrowLeftIcon,
   PlusIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline'
@@ -164,43 +165,10 @@ export default function BrandPage() {
       {/* Confirm Modal */}
       <ConfirmModalComponent />
 
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <Link
-                href="/"
-                className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <ArrowLeftIcon className="w-4 h-4" aria-hidden="true" />
-                <span>Back to Generator</span>
-              </Link>
-            </div>
-            <div className="flex items-center gap-4">
-              <Link
-                href="/tools"
-                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Tools
-              </Link>
-              <Link
-                href="/templates"
-                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Templates
-              </Link>
-              <div className="flex items-center gap-2">
-                <SparklesIcon className="w-5 h-5 text-indigo-600" aria-hidden="true" />
-                <span className="font-semibold text-gray-900">Blog AI</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
+      <section className="bg-gradient-to-r from-amber-600 to-amber-600 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -214,7 +182,7 @@ export default function BrandPage() {
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
               Brand Voice Profiles
             </h1>
-            <p className="text-lg sm:text-xl text-purple-100 max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl text-amber-100 max-w-2xl mx-auto">
               Define your brand&apos;s unique voice and style. Create profiles that ensure
               consistent messaging across all your AI-generated content.
             </p>
@@ -256,7 +224,7 @@ export default function BrandPage() {
             <button
               type="button"
               onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
             >
               <PlusIcon className="w-4 h-4" />
               Create Profile
@@ -342,7 +310,7 @@ export default function BrandPage() {
               <button
                 type="button"
                 onClick={() => setShowForm(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors"
               >
                 <PlusIcon className="w-4 h-4" />
                 Create Your First Profile
@@ -384,8 +352,8 @@ export default function BrandPage() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center mb-4">
-                  <span className="text-lg font-bold text-indigo-600">1</span>
+                <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center mb-4">
+                  <span className="text-lg font-bold text-amber-600">1</span>
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">
                   Be Specific with Tone
@@ -396,8 +364,8 @@ export default function BrandPage() {
                 </p>
               </div>
               <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center mb-4">
-                  <span className="text-lg font-bold text-indigo-600">2</span>
+                <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center mb-4">
+                  <span className="text-lg font-bold text-amber-600">2</span>
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">
                   Provide Example Content
@@ -408,8 +376,8 @@ export default function BrandPage() {
                 </p>
               </div>
               <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center mb-4">
-                  <span className="text-lg font-bold text-indigo-600">3</span>
+                <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center mb-4">
+                  <span className="text-lg font-bold text-amber-600">3</span>
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">
                   Define Words to Avoid
@@ -424,14 +392,7 @@ export default function BrandPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-50 border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <p className="text-center text-sm text-gray-500">
-            Powered by AI - Blog AI Content Generator
-          </p>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   )
 }

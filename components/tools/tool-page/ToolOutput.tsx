@@ -171,7 +171,7 @@ export default function ToolOutput({
               <button
                 type="button"
                 onClick={onSaveTemplateClick}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-md hover:bg-indigo-100 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-md hover:bg-amber-100 transition-colors"
               >
                 <BookmarkIcon className="w-3.5 h-3.5" />
                 Save as Template
@@ -185,7 +185,7 @@ export default function ToolOutput({
                   </span>
                   <Link
                     href="/history"
-                    className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-700 transition-colors"
+                    className="inline-flex items-center gap-1 text-amber-600 hover:text-amber-700 transition-colors"
                   >
                     View history
                     <svg

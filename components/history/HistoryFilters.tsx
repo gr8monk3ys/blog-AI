@@ -126,7 +126,7 @@ export default function HistoryFilters({
             type="text"
             value={filters.search || ''}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="block w-full pl-11 pr-10 py-3 border border-gray-200 rounded-xl bg-white shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all"
+            className="block w-full pl-11 pr-10 py-3 border border-gray-200 rounded-xl bg-white shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm transition-all"
             placeholder="Search your content history..."
             aria-label="Search history"
           />
@@ -153,7 +153,7 @@ export default function HistoryFilters({
           <button
             type="button"
             onClick={handleFavoritesToggle}
-            className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+            className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 ${
               filters.favorites_only
                 ? 'bg-amber-100 text-amber-700 border border-amber-200'
                 : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
@@ -189,7 +189,7 @@ export default function HistoryFilters({
                 exit={{ opacity: 0, scale: 0.9 }}
                 type="button"
                 onClick={clearAllFilters}
-                className="inline-flex items-center gap-1.5 px-3 py-3 rounded-xl text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                className="inline-flex items-center gap-1.5 px-3 py-3 rounded-xl text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
                 aria-label="Clear all filters"
               >
                 <FunnelIcon className="w-4 h-4" aria-hidden="true" />
@@ -226,9 +226,9 @@ export default function HistoryFilters({
                 tabIndex={isSelected ? 0 : -1}
                 onClick={() => handleCategoryChange(category.id)}
                 onKeyDown={(e) => handleKeyDown(e, index)}
-                className={`relative flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                className={`relative flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 ${
                   isSelected
-                    ? 'bg-indigo-600 text-white shadow-sm'
+                    ? 'bg-amber-600 text-white shadow-sm'
                     : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
                 }`}
               >
@@ -238,7 +238,7 @@ export default function HistoryFilters({
                     <span
                       className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-xs ${
                         isSelected
-                          ? 'bg-indigo-500 text-indigo-100'
+                          ? 'bg-amber-500 text-amber-100'
                           : 'bg-gray-100 text-gray-500'
                       }`}
                     >
@@ -249,7 +249,7 @@ export default function HistoryFilters({
                 {isSelected && (
                   <motion.div
                     layoutId="historyFilterIndicator"
-                    className="absolute inset-0 bg-indigo-600 rounded-lg -z-10"
+                    className="absolute inset-0 bg-amber-600 rounded-lg -z-10"
                     transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
                   />
                 )}

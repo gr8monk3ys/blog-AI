@@ -77,9 +77,9 @@ export default function CategoryFilter({
               tabIndex={isSelected ? 0 : -1}
               onClick={() => onCategoryChange(category.id)}
               onKeyDown={(e) => handleKeyDown(e, index)}
-              className={`relative flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+              className={`relative flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 ${
                 isSelected
-                  ? 'bg-indigo-600 text-white shadow-sm'
+                  ? 'bg-amber-600 text-white shadow-sm'
                   : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
               }`}
             >
@@ -89,7 +89,7 @@ export default function CategoryFilter({
                   <span
                     className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-xs ${
                       isSelected
-                        ? 'bg-indigo-500 text-indigo-100'
+                        ? 'bg-amber-500 text-amber-100'
                         : 'bg-gray-100 text-gray-500'
                     }`}
                   >
@@ -100,7 +100,7 @@ export default function CategoryFilter({
               {isSelected && (
                 <motion.div
                   layoutId="categoryIndicator"
-                  className="absolute inset-0 bg-indigo-600 rounded-lg -z-10"
+                  className="absolute inset-0 bg-amber-600 rounded-lg -z-10"
                   transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
                 />
               )}

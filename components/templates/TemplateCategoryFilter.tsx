@@ -35,11 +35,11 @@ export default function TemplateCategoryFilter({
             whileTap={{ scale: 0.98 }}
             className={`
               inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium
-              transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
+              transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2
               ${
                 isSelected
                   ? category === 'all'
-                    ? 'bg-indigo-600 text-white'
+                    ? 'bg-amber-600 text-white'
                     : `${categoryInfo?.bgColor} ${categoryInfo?.color} border ${categoryInfo?.borderColor}`
                   : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
               }
@@ -53,7 +53,7 @@ export default function TemplateCategoryFilter({
                 ${
                   isSelected
                     ? category === 'all'
-                      ? 'bg-indigo-500 text-white'
+                      ? 'bg-amber-500 text-white'
                       : 'bg-white/50 text-current'
                     : 'bg-gray-100 text-gray-500'
                 }
