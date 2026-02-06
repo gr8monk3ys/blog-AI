@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 })
   }
 
-  const supabase = getSupabase()
+  const supabase = getSupabase() as any
   const { data, error } = await supabase
     .from('blog_posts')
     .select('id, title, slug, excerpt, tags, status, published_at, updated_at, created_at')
