@@ -217,6 +217,54 @@ export interface Database {
           is_default?: boolean
         }
       }
+      // Blog posts for CMS-backed publishing
+      blog_posts: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          title: string
+          slug: string
+          excerpt: string | null
+          body: string
+          tags: string[]
+          status: string
+          published_at: string | null
+          cover_image: string | null
+          seo_title: string | null
+          seo_description: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          title: string
+          slug: string
+          excerpt?: string | null
+          body: string
+          tags?: string[]
+          status?: string
+          published_at?: string | null
+          cover_image?: string | null
+          seo_title?: string | null
+          seo_description?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          title?: string
+          slug?: string
+          excerpt?: string | null
+          body?: string
+          tags?: string[]
+          status?: string
+          published_at?: string | null
+          cover_image?: string | null
+          seo_title?: string | null
+          seo_description?: string | null
+        }
+      }
     }
     Views: {
       [_ in never]: never
