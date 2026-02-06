@@ -554,7 +554,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div>
               <div className="text-white font-semibold">Blog AI</div>
-              <div className="text-xs text-neutral-400 mt-1">AI-powered tools for content scale.</div>
+              <div className="text-xs text-neutral-400 mt-1">AI-powered tools for content scale. Updated Feb 2026.</div>
             </div>
             <div className="flex flex-wrap gap-4 text-sm">
               <Link href="/tools" className="hover:text-white">Tools</Link>
