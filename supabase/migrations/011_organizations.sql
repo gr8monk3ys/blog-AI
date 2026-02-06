@@ -19,7 +19,7 @@
 --   - Secure invite token handling
 
 -- Enable required extensions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- =============================================================================
@@ -27,7 +27,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS organizations (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     -- Basic information
     name TEXT NOT NULL CHECK (char_length(name) >= 1 AND char_length(name) <= 100),
@@ -88,7 +88,7 @@ COMMENT ON COLUMN organizations.monthly_generation_limit IS 'Monthly content gen
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS organization_members (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     -- Foreign keys
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -132,7 +132,7 @@ COMMENT ON COLUMN organization_members.invite_accepted_at IS 'When the user acce
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS organization_invites (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     -- Foreign keys
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -184,7 +184,7 @@ COMMENT ON COLUMN organization_invites.role IS 'Role to assign when invite is ac
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS audit_logs (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     -- Context
     organization_id UUID REFERENCES organizations(id) ON DELETE SET NULL,
@@ -387,7 +387,7 @@ BEGIN
     VALUES (
         p_name, p_slug, p_description, p_plan_tier,
         v_plan_limits.monthly_generation_limit,
-        uuid_generate_v4(),  -- Placeholder, will update below
+        gen_random_uuid(),  -- Placeholder, will update below
         jsonb_build_object(
             'default_brand_profile_id', NULL,
             'content_approval_required', false,

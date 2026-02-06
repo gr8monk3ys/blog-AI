@@ -3,7 +3,7 @@
 
 -- Voice samples table for training
 CREATE TABLE IF NOT EXISTS voice_samples (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     profile_id UUID NOT NULL REFERENCES brand_profiles(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS voice_samples (
 
 -- Voice fingerprint table for style embeddings
 CREATE TABLE IF NOT EXISTS voice_fingerprints (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     profile_id UUID NOT NULL REFERENCES brand_profiles(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS voice_fingerprints (
 
 -- Voice consistency scores for generated content
 CREATE TABLE IF NOT EXISTS voice_scores (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     profile_id UUID NOT NULL REFERENCES brand_profiles(id) ON DELETE CASCADE,
     content_id TEXT NOT NULL, -- reference to generated content
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

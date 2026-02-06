@@ -3,7 +3,7 @@
 
 -- Create the tool_usage table
 CREATE TABLE IF NOT EXISTS tool_usage (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tool_id TEXT NOT NULL UNIQUE,
     count INTEGER NOT NULL DEFAULT 0,
     last_used_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

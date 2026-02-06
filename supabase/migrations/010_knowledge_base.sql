@@ -13,14 +13,14 @@
 --   - Support for various file types
 
 -- Enable UUID extension if not already enabled
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- =============================================================================
 -- Knowledge Base Documents Table
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS kb_documents (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id TEXT NOT NULL,
 
     -- Document information
@@ -86,7 +86,7 @@ COMMENT ON COLUMN kb_documents.source_hash IS 'SHA-256 hash for content deduplic
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS kb_chunks (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     document_id UUID NOT NULL REFERENCES kb_documents(id) ON DELETE CASCADE,
     user_id TEXT NOT NULL,
 

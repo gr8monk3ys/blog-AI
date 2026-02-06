@@ -18,7 +18,7 @@
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS sso_configurations (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     -- Organization reference
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -100,7 +100,7 @@ COMMENT ON COLUMN sso_configurations.group_role_mapping IS 'Maps IdP groups to o
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS sso_sessions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     -- References
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -163,7 +163,7 @@ COMMENT ON COLUMN sso_sessions.saml_session_index IS 'SAML SessionIndex for Sing
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS sso_attribute_mappings (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     -- Configuration reference
     sso_config_id UUID NOT NULL REFERENCES sso_configurations(id) ON DELETE CASCADE,
@@ -206,7 +206,7 @@ COMMENT ON COLUMN sso_attribute_mappings.transform_config IS 'Configuration for 
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS sso_used_assertions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     -- Organization reference
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,

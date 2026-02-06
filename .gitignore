@@ -65,6 +65,9 @@ frontend/yarn-debug.log
 frontend/yarn-error.log
 frontend/tsconfig.tsbuildinfo
 
+# Supabase CLI temp
+supabase/.temp/
+
 # IDE
 .idea/
 .vscode/

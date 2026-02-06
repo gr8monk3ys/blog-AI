@@ -17,14 +17,14 @@
 --   - business: 1000 generations/month
 
 -- Enable UUID extension if not already enabled
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- =============================================================================
 -- User Quotas Table
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS user_quotas (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id TEXT NOT NULL UNIQUE,
     tier TEXT NOT NULL DEFAULT 'free' CHECK (tier IN ('free', 'starter', 'pro', 'business')),
     period_start TIMESTAMPTZ NOT NULL DEFAULT date_trunc('month', NOW()),
@@ -51,7 +51,7 @@ COMMENT ON COLUMN user_quotas.period_end IS 'End of current billing period (when
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS usage_records (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id TEXT NOT NULL,
     operation_type TEXT NOT NULL CHECK (operation_type IN ('blog', 'book', 'batch', 'remix', 'tool', 'other')),
     tokens_used INTEGER NOT NULL DEFAULT 0,
@@ -66,9 +66,8 @@ CREATE INDEX IF NOT EXISTS idx_usage_records_user_time ON usage_records(user_id,
 -- Index for operation type analytics
 CREATE INDEX IF NOT EXISTS idx_usage_records_operation ON usage_records(operation_type, timestamp DESC);
 
--- Partial index for recent records (optimizes current period queries)
-CREATE INDEX IF NOT EXISTS idx_usage_records_recent ON usage_records(user_id, timestamp)
-    WHERE timestamp > NOW() - INTERVAL '2 months';
+-- Optional index for recent records (predicate removed for immutability)
+-- Existing idx_usage_records_user_time covers most queries.
 
 -- Comments
 COMMENT ON TABLE usage_records IS 'Records individual content generation usage events';

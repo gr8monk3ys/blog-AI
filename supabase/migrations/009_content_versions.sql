@@ -17,14 +17,14 @@
 --   auto_version_on_update: Automatically creates versions on significant changes
 
 -- Enable UUID extension if not already enabled
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- =============================================================================
 -- Content Versions Table
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS content_versions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     content_id UUID NOT NULL REFERENCES generated_content(id) ON DELETE CASCADE,
     version_number INTEGER NOT NULL,
 

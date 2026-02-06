@@ -17,7 +17,6 @@
 --   - embedding: Local embedding-based similarity
 
 -- Enable UUID extension if not already enabled
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- =============================================================================
@@ -25,7 +24,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS plagiarism_checks (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     -- User and content identification
     user_id TEXT NOT NULL,
@@ -80,7 +79,7 @@ CREATE INDEX IF NOT EXISTS idx_plagiarism_checks_content_hash
 -- Index for finding valid cached results
 CREATE INDEX IF NOT EXISTS idx_plagiarism_checks_cache
     ON plagiarism_checks(content_hash, status)
-    WHERE status = 'completed' AND cache_expires_at > NOW();
+    WHERE status = 'completed';
 
 -- Index for provider analytics
 CREATE INDEX IF NOT EXISTS idx_plagiarism_checks_provider
@@ -104,7 +103,7 @@ COMMENT ON COLUMN plagiarism_checks.api_credits_used IS 'Credits consumed from p
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS plagiarism_sources (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     -- Reference to parent check
     check_id UUID NOT NULL REFERENCES plagiarism_checks(id) ON DELETE CASCADE,

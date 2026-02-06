@@ -12,7 +12,7 @@
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS stripe_customers (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id TEXT NOT NULL UNIQUE,
     customer_id TEXT NOT NULL UNIQUE,
     email TEXT,
@@ -35,7 +35,7 @@ COMMENT ON COLUMN stripe_customers.customer_id IS 'Stripe customer ID (cus_xxx)'
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS stripe_subscriptions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     subscription_id TEXT NOT NULL UNIQUE,
     user_id TEXT NOT NULL,
     customer_id TEXT,
@@ -66,7 +66,7 @@ COMMENT ON COLUMN stripe_subscriptions.status IS 'Subscription status: active, t
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS payments (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id TEXT NOT NULL,
     subscription_id TEXT,
     invoice_id TEXT,
@@ -92,7 +92,7 @@ COMMENT ON COLUMN payments.amount_cents IS 'Payment amount in cents (e.g., 1900 
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS payment_failures (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id TEXT NOT NULL,
     subscription_id TEXT,
     invoice_id TEXT,
@@ -118,7 +118,7 @@ COMMENT ON TABLE payment_failures IS 'Tracks failed payment attempts for monitor
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id TEXT NOT NULL UNIQUE,
     email TEXT,
     name TEXT,

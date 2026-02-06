@@ -12,7 +12,7 @@
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS social_accounts (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id TEXT NOT NULL,
     platform TEXT NOT NULL CHECK (platform IN ('twitter', 'linkedin', 'facebook', 'instagram')),
     platform_user_id TEXT NOT NULL,
@@ -50,7 +50,7 @@ COMMENT ON COLUMN social_accounts.refresh_token IS 'OAuth refresh token for toke
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS scheduled_posts (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id TEXT NOT NULL,
     account_id UUID NOT NULL REFERENCES social_accounts(id) ON DELETE CASCADE,
     platform TEXT NOT NULL CHECK (platform IN ('twitter', 'linkedin', 'facebook', 'instagram')),
@@ -119,7 +119,7 @@ COMMENT ON COLUMN scheduled_posts.recurrence IS 'Recurrence pattern: none, daily
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS social_campaigns (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id TEXT NOT NULL,
     name TEXT NOT NULL,
     description TEXT,
@@ -173,7 +173,7 @@ COMMENT ON COLUMN social_campaigns.status IS 'Campaign status: draft, active, pa
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS post_analytics (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     post_id UUID NOT NULL REFERENCES scheduled_posts(id) ON DELETE CASCADE,
     platform TEXT NOT NULL,
     platform_post_id TEXT NOT NULL,
@@ -226,7 +226,7 @@ COMMENT ON COLUMN post_analytics.raw_data IS 'Raw analytics response from platfo
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS social_oauth_state (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id TEXT NOT NULL,
     platform TEXT NOT NULL,
     state_token TEXT NOT NULL UNIQUE,

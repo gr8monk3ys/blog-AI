@@ -20,14 +20,14 @@
 --   - Efficient indexes for time-series queries
 
 -- Enable required extensions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- =============================================================================
 -- Content Performance Table (Aggregated Metrics)
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS content_performance (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     -- Content identification
     content_id TEXT NOT NULL UNIQUE,
@@ -82,9 +82,7 @@ CREATE INDEX IF NOT EXISTS idx_content_perf_views ON content_performance(views D
 CREATE INDEX IF NOT EXISTS idx_content_perf_last_tracked ON content_performance(last_tracked_at DESC);
 CREATE INDEX IF NOT EXISTS idx_content_perf_published ON content_performance(published_at DESC);
 
--- Partial index for active content (tracked in last 30 days)
-CREATE INDEX IF NOT EXISTS idx_content_perf_active ON content_performance(organization_id, views DESC)
-    WHERE last_tracked_at > NOW() - INTERVAL '30 days';
+-- Optional index for active content (predicate removed for immutability)
 
 -- GIN index for JSONB metadata queries
 CREATE INDEX IF NOT EXISTS idx_content_perf_metadata ON content_performance USING GIN (metadata);
@@ -99,7 +97,7 @@ COMMENT ON COLUMN content_performance.shares_by_platform IS 'Share counts by pla
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS performance_events (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     -- Event identification
     content_id TEXT NOT NULL,
@@ -137,9 +135,7 @@ CREATE INDEX IF NOT EXISTS idx_perf_events_org_id ON performance_events(organiza
 CREATE INDEX IF NOT EXISTS idx_perf_events_timestamp ON performance_events(timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_perf_events_session ON performance_events(session_id) WHERE session_id IS NOT NULL;
 
--- Partial index for recent events (last 7 days) - frequently queried
-CREATE INDEX IF NOT EXISTS idx_perf_events_recent ON performance_events(content_id, event_type, timestamp DESC)
-    WHERE timestamp > NOW() - INTERVAL '7 days';
+-- Optional index for recent events (predicate removed for immutability)
 
 COMMENT ON TABLE performance_events IS 'Raw performance tracking events';
 COMMENT ON COLUMN performance_events.value IS 'Event value (1 for counts, seconds for time, 0-1 for scroll depth)';
@@ -150,7 +146,7 @@ COMMENT ON COLUMN performance_events.value IS 'Event value (1 for counts, second
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS performance_snapshots (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     -- Content identification
     content_id TEXT NOT NULL,
@@ -194,7 +190,7 @@ COMMENT ON TABLE performance_snapshots IS 'Daily snapshots of content performanc
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS seo_rankings (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     -- Ranking data
     keyword TEXT NOT NULL,
@@ -243,7 +239,7 @@ COMMENT ON COLUMN seo_rankings.change IS 'Position change (positive = improved, 
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS content_recommendations (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     -- Recommendation data
     recommendation_type TEXT NOT NULL CHECK (recommendation_type IN (
@@ -274,7 +270,7 @@ CREATE INDEX IF NOT EXISTS idx_recommendations_org ON content_recommendations(or
 CREATE INDEX IF NOT EXISTS idx_recommendations_user ON content_recommendations(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_recommendations_type ON content_recommendations(recommendation_type);
 CREATE INDEX IF NOT EXISTS idx_recommendations_active ON content_recommendations(organization_id, priority)
-    WHERE dismissed_at IS NULL AND actioned_at IS NULL AND (expires_at IS NULL OR expires_at > NOW());
+    WHERE dismissed_at IS NULL AND actioned_at IS NULL;
 
 COMMENT ON TABLE content_recommendations IS 'AI-generated content recommendations';
 
