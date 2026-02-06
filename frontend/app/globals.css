@@ -4,11 +4,18 @@
 
 :root {
   --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
+  --background-start-rgb: 245, 245, 242;
   --background-end-rgb: 255, 255, 255;
+  --surface-rgb: 255, 255, 255;
+  --muted-rgb: 113, 113, 122;
+  --accent-rgb: 67, 56, 202;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-end-rgb));
+}
+
+.font-serif {
+  font-family: var(--font-serif);
 }

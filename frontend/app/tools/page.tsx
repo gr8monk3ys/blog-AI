@@ -1,11 +1,24 @@
 'use client'
 
 import Link from 'next/link'
+import { useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import ToolGrid from '../../components/tools/ToolGrid'
 import { SparklesIcon, ArrowLeftIcon, ClockIcon } from '@heroicons/react/24/outline'
+import { TOOL_CATEGORIES, type ToolCategory } from '../../types/tools'
 
 export default function ToolsPage() {
+  const searchParams = useSearchParams()
+
+  const initialCategory = useMemo(() => {
+    const categoryParam = searchParams.get('category')
+    if (categoryParam && categoryParam in TOOL_CATEGORIES) {
+      return categoryParam as ToolCategory
+    }
+    return 'all'
+  }, [searchParams])
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header */}
@@ -22,6 +35,18 @@ export default function ToolsPage() {
               </Link>
             </div>
             <div className="flex items-center gap-4">
+              <Link
+                href="/tool-directory"
+                className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-indigo-600 transition-colors"
+              >
+                Directory
+              </Link>
+              <Link
+                href="/blog"
+                className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-indigo-600 transition-colors"
+              >
+                Blog
+              </Link>
               <Link
                 href="/history"
                 className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-indigo-600 transition-colors"
@@ -81,7 +106,7 @@ export default function ToolsPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <ToolGrid />
+          <ToolGrid initialCategory={initialCategory} />
         </motion.div>
       </section>
 
