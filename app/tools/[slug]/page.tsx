@@ -9,6 +9,7 @@ import type { ExportFormat } from '../../../components/ExportMenu'
 import type { ContentVariation } from '../../../components/tools/VariationCompare'
 import type { BrandProfile } from '../../../types/brand'
 import { historyApi } from '../../../lib/history-api'
+import { toolsApi } from '../../../lib/tools-api'
 import SaveTemplateModal from '../../../components/templates/SaveTemplateModal'
 
 // Import extracted components
@@ -99,6 +100,34 @@ export default function ToolPage() {
     loadFromHistory()
   }, [fromHistoryId])
 
+
+  const buildExecutionInputs = (keywordList: string[]) => ({
+    topic: inputText,
+    input: inputText,
+    tone,
+    keywords: keywordList.join(', '),
+    use_research: useResearch,
+    brand_voice_enabled: brandVoiceEnabled,
+  })
+
+  const executeTool = async (keywordList: string[]) => {
+    if (!tool) return null
+
+    try {
+      const result = await toolsApi.executeTool(tool.slug, {
+        inputs: buildExecutionInputs(keywordList),
+      })
+
+      if (result.success && result.output) {
+        return result.output
+      }
+    } catch (err) {
+      console.warn('Tool API execution failed, falling back to local preview.', err)
+    }
+
+    return null
+  }
+
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -113,6 +142,16 @@ export default function ToolPage() {
     const startTime = Date.now()
     const keywordList = parseKeywords(keywords)
 
+    if (!inputText.trim()) {
+      setLoading(false)
+      setExportToast({
+        show: true,
+        message: 'Please enter a topic before generating content.',
+        type: 'error',
+      })
+      return
+    }
+
     if (generateVariations) {
       await handleVariationGeneration(keywordList)
     } else {
@@ -122,18 +161,19 @@ export default function ToolPage() {
 
   // Generate multiple variations
   const handleVariationGeneration = async (keywordList: string[]) => {
-    await new Promise((resolve) => setTimeout(resolve, 3000))
-
-    const mockVariations: ContentVariation[] = []
+    const generated: ContentVariation[] = []
     const labels = ['A', 'B', 'C']
     const styles = ['standard', 'creative', 'concise']
     const temps = [0.7, 0.9, 0.5]
+    let usedFallback = false
 
     for (let i = 0; i < variationCount; i++) {
-      const content = generateMockOutput(tool, inputText, styles[i])
+      const backendOutput = await executeTool(keywordList)
+      const content = backendOutput || generateMockOutput(tool, inputText, styles[i])
+      if (!backendOutput) usedFallback = true
       const scores = generateMockScore(content, keywordList)
 
-      mockVariations.push({
+      generated.push({
         id: `var-${i}-${Date.now()}`,
         content,
         label: labels[i] || `V${i + 1}`,
@@ -143,22 +183,37 @@ export default function ToolPage() {
       })
     }
 
-    setVariations(mockVariations)
+    if (usedFallback) {
+      setExportToast({
+        show: true,
+        message: 'Backend unavailable. Showing local preview output for one or more variations.',
+        type: 'error',
+      })
+    }
+
+    setVariations(generated)
     setLoading(false)
   }
 
   // Generate single output
   const handleSingleGeneration = async (keywordList: string[], startTime: number) => {
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    const backendOutput = await executeTool(keywordList)
+    const finalOutput = backendOutput || generateMockOutput(tool, inputText)
 
-    const mockOutput = generateMockOutput(tool, inputText)
-    setOutput(mockOutput)
+    if (!backendOutput) {
+      setExportToast({
+        show: true,
+        message: 'Backend unavailable. Showing local preview output.',
+        type: 'error',
+      })
+    }
+
+    setOutput(finalOutput)
     setLoading(false)
 
     // Auto-score the content
     setScoringLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    const scores = generateMockScore(mockOutput, keywordList)
+    const scores = generateMockScore(finalOutput, keywordList)
     setContentScore(scores)
     setScoringLoading(false)
 
@@ -177,8 +232,8 @@ export default function ToolPage() {
             useResearch,
             keywords: keywordList,
           },
-          output: mockOutput,
-          provider: 'openai',
+          output: finalOutput,
+          provider: backendOutput ? 'openai' : 'mock',
           execution_time_ms: executionTime,
         })
         setSavedContentId(saved.id)

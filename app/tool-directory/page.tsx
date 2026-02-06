@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import SiteHeader from '../../components/SiteHeader'
+import SiteFooter from '../../components/SiteFooter'
 import {
   TOOL_CATEGORIES,
   SAMPLE_TOOLS,
@@ -53,6 +55,8 @@ export default async function ToolDirectoryPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-neutral-50 via-white to-neutral-100">
+      <SiteHeader />
+
       <header className="border-b border-neutral-200 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -72,7 +76,7 @@ export default async function ToolDirectoryPage() {
             <div className="flex flex-col gap-2">
               <Link
                 href="/tools"
-                className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors"
               >
                 Open Interactive Tools
               </Link>
@@ -118,7 +122,7 @@ export default async function ToolDirectoryPage() {
               <a
                 key={category}
                 href={`#${category}`}
-                className="px-3 py-1.5 rounded-full bg-neutral-100 text-xs text-neutral-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                className="px-3 py-1.5 rounded-full bg-neutral-100 text-xs text-neutral-700 hover:bg-amber-50 hover:text-amber-700 transition-colors"
               >
                 {TOOL_CATEGORIES[category].name}
               </a>
@@ -149,7 +153,7 @@ export default async function ToolDirectoryPage() {
                   </div>
                   <Link
                     href={`/tools/category/${category}`}
-                    className="text-xs text-indigo-600 hover:text-indigo-700"
+                    className="text-xs text-amber-600 hover:text-amber-700"
                   >
                     View tools
                   </Link>
@@ -176,7 +180,7 @@ export default async function ToolDirectoryPage() {
                               {tool.description}
                             </div>
                           </div>
-                          <span className="text-xs text-indigo-600">Open</span>
+                          <span className="text-xs text-amber-600">Open</span>
                         </Link>
                       </li>
                     ))}
@@ -202,7 +206,7 @@ export default async function ToolDirectoryPage() {
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
               href="/templates"
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg"
+              className="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg"
             >
               Explore templates
             </Link>
@@ -215,6 +219,8 @@ export default async function ToolDirectoryPage() {
           </div>
         </div>
       </section>
+
+      <SiteFooter />
     </main>
   )
 }

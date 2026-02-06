@@ -24,12 +24,12 @@ function ProfileSelectorComponent({
           value={profileId}
           onChange={(e) => onProfileIdChange(e.target.value)}
           placeholder="Enter profile ID (e.g., bp-1)"
-          className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500"
+          className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500"
         />
         <button
           onClick={onLoad}
           disabled={!profileId.trim() || isLoading}
-          className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-300"
+          className="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:bg-gray-300"
         >
           {isLoading ? 'Loading...' : 'Load'}
         </button>

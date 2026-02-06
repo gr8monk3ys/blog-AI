@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import SiteHeader from '../../components/SiteHeader'
+import SiteFooter from '../../components/SiteFooter'
 import { loadBlogPosts } from '../../lib/blog-index'
 
 export const metadata = {
@@ -11,11 +13,11 @@ export default async function BlogIndexPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-neutral-50 via-white to-neutral-100">
+      <SiteHeader />
+
       <header className="border-b border-neutral-200 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <p className="text-xs uppercase tracking-wide text-neutral-500">
-            Blog
-          </p>
+          <p className="text-xs uppercase tracking-wide text-neutral-500">Blog</p>
           <h1 className="text-3xl sm:text-4xl font-semibold text-neutral-900 font-serif">
             Content strategy and AI tooling
           </h1>
@@ -39,7 +41,7 @@ export default async function BlogIndexPage() {
               >
                 <div className="text-xs text-neutral-500">{formatDisplayDate(post.date)}</div>
                 <h2 className="mt-2 text-xl font-semibold text-neutral-900">
-                  <Link href={`/blog/${post.slug}`} className="hover:text-indigo-700">
+                  <Link href={`/blog/${post.slug}`} className="hover:text-amber-700">
                     {post.title}
                   </Link>
                 </h2>
@@ -59,6 +61,8 @@ export default async function BlogIndexPage() {
           </div>
         )}
       </section>
+
+      <SiteFooter />
     </main>
   )
 }

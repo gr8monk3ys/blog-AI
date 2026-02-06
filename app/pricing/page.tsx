@@ -3,16 +3,19 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import SiteHeader from '../../components/SiteHeader'
+import SiteFooter from '../../components/SiteFooter'
 import {
-  ArrowLeftIcon,
   CheckIcon,
   XMarkIcon,
   SparklesIcon,
   RocketLaunchIcon,
   BuildingOffice2Icon,
 } from '@heroicons/react/24/outline'
-import { UsageTier, TierInfo, AllTiersResponse, TIER_DISPLAY } from '../../types/usage'
+import { UsageTier, AllTiersResponse, TIER_DISPLAY } from '../../types/usage'
 import { API_ENDPOINTS, getDefaultHeaders } from '../../lib/api'
+
+type BillingCycle = 'monthly' | 'yearly'
 
 interface PricingTier {
   id: UsageTier
@@ -105,7 +108,7 @@ const PRICING_TIERS: PricingTier[] = [
 ]
 
 export default function PricingPage() {
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly')
   const [currentTier, setCurrentTier] = useState<UsageTier | null>(null)
   const [loading, setLoading] = useState(true)
   const [upgrading, setUpgrading] = useState<UsageTier | null>(null)
@@ -133,6 +136,23 @@ export default function PricingPage() {
     }
   }
 
+
+  const getStripePriceId = (tier: UsageTier, cycle: BillingCycle) => {
+    const mapping = {
+      pro: {
+        monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY,
+        yearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_YEARLY,
+      },
+      enterprise: {
+        monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ENTERPRISE_MONTHLY,
+        yearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ENTERPRISE_YEARLY,
+      },
+    } as const
+
+    if (tier === 'free') return null
+    return mapping[tier]?.[cycle] || null
+  }
+
   const handleUpgrade = async (tier: UsageTier) => {
     if (tier === currentTier) return
 
@@ -141,6 +161,30 @@ export default function PricingPage() {
     setSuccess(null)
 
     try {
+      const stripePriceId = getStripePriceId(tier, billingCycle)
+      if (stripePriceId && typeof window !== 'undefined') {
+        const checkoutResponse = await fetch(API_ENDPOINTS.payments.checkout, {
+          method: 'POST',
+          headers: getDefaultHeaders(),
+          body: JSON.stringify({
+            price_id: stripePriceId,
+            success_url: `${window.location.origin}/pricing?checkout=success`,
+            cancel_url: `${window.location.origin}/pricing?checkout=cancelled`,
+          }),
+        })
+
+        if (!checkoutResponse.ok) {
+          const checkoutData = await checkoutResponse.json().catch(() => ({}))
+          throw new Error(checkoutData.detail?.error || checkoutData.error || 'Failed to create checkout session')
+        }
+
+        const checkoutData = await checkoutResponse.json()
+        if (checkoutData.url) {
+          window.location.assign(checkoutData.url)
+          return
+        }
+      }
+
       const response = await fetch(API_ENDPOINTS.usage.upgrade, {
         method: 'POST',
         headers: getDefaultHeaders(),
@@ -152,7 +196,7 @@ export default function PricingPage() {
         throw new Error(data.detail || 'Failed to upgrade')
       }
 
-      const data = await response.json()
+      await response.json()
       setCurrentTier(tier)
       setSuccess(`Successfully upgraded to ${PRICING_TIERS.find((t) => t.id === tier)?.name}!`)
     } catch (err) {
@@ -167,7 +211,7 @@ export default function PricingPage() {
     if (upgrading === tier) return 'Processing...'
     if (tier === currentTier) return 'Current Plan'
     if (tier === 'free' && currentTier !== 'free') return 'Downgrade'
-    return tier === 'enterprise' ? 'Contact Sales' : 'Upgrade'
+    return tier === 'enterprise' ? 'Checkout' : 'Upgrade'
   }
 
   const getButtonStyle = (tier: UsageTier) => {
@@ -175,39 +219,20 @@ export default function PricingPage() {
       return 'bg-gray-100 text-gray-500 cursor-default'
     }
     if (tier === 'pro') {
-      return 'bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white'
+      return 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white'
     }
     if (tier === 'enterprise') {
-      return 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white'
+      return 'bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white'
     }
     return 'border border-gray-300 text-gray-700 hover:bg-gray-50'
   }
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <Link
-                href="/"
-                className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <ArrowLeftIcon className="w-4 h-4" />
-                <span>Back to Generator</span>
-              </Link>
-            </div>
-            <div className="flex items-center gap-2">
-              <SparklesIcon className="w-5 h-5 text-indigo-600" />
-              <span className="font-semibold text-gray-900">Blog AI</span>
-            </div>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-16">
+      <section className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -217,7 +242,7 @@ export default function PricingPage() {
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
               Simple, Transparent Pricing
             </h1>
-            <p className="text-lg sm:text-xl text-indigo-100 max-w-2xl mx-auto mb-8">
+            <p className="text-lg sm:text-xl text-amber-100 max-w-2xl mx-auto mb-8">
               Choose the plan that fits your content creation needs.
               Upgrade or downgrade anytime.
             </p>
@@ -228,7 +253,7 @@ export default function PricingPage() {
                 onClick={() => setBillingCycle('monthly')}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                   billingCycle === 'monthly'
-                    ? 'bg-white text-indigo-600'
+                    ? 'bg-white text-amber-600'
                     : 'text-white hover:bg-white/10'
                 }`}
               >
@@ -238,7 +263,7 @@ export default function PricingPage() {
                 onClick={() => setBillingCycle('yearly')}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                   billingCycle === 'yearly'
-                    ? 'bg-white text-indigo-600'
+                    ? 'bg-white text-amber-600'
                     : 'text-white hover:bg-white/10'
                 }`}
               >
@@ -290,7 +315,7 @@ export default function PricingPage() {
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className={`relative bg-white rounded-2xl shadow-lg border-2 ${
                   tier.popular
-                    ? 'border-indigo-500'
+                    ? 'border-amber-500'
                     : tier.id === currentTier
                     ? 'border-green-500'
                     : 'border-gray-200'
@@ -299,7 +324,7 @@ export default function PricingPage() {
                 {/* Popular badge */}
                 {tier.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-sm font-medium px-4 py-1 rounded-full">
+                    <span className="bg-gradient-to-r from-amber-500 to-amber-600 text-white text-sm font-medium px-4 py-1 rounded-full">
                       Most Popular
                     </span>
                   </div>
@@ -523,20 +548,22 @@ export default function PricingPage() {
       </section>
 
       {/* Footer CTA */}
-      <section className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-12">
+      <section className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl font-bold mb-4">Ready to create amazing content?</h2>
-          <p className="text-indigo-100 mb-6">
+          <p className="text-amber-100 mb-6">
             Start with our free plan and upgrade when you need more.
           </p>
           <Link
             href="/"
-            className="inline-flex items-center px-6 py-3 bg-white text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 transition-colors"
+            className="inline-flex items-center px-6 py-3 bg-white text-amber-600 font-medium rounded-lg hover:bg-amber-50 transition-colors"
           >
             Start Creating for Free
           </Link>
         </div>
       </section>
+
+      <SiteFooter />
     </main>
   )
 }

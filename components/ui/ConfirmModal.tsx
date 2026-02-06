@@ -48,10 +48,10 @@ const variantConfig: Record<
   },
   info: {
     icon: InformationCircleIcon,
-    iconBgColor: 'bg-indigo-100',
-    iconColor: 'text-indigo-600',
-    confirmButtonColor: 'bg-indigo-600',
-    confirmButtonHoverColor: 'hover:bg-indigo-700',
+    iconBgColor: 'bg-amber-100',
+    iconColor: 'text-amber-600',
+    confirmButtonColor: 'bg-amber-600',
+    confirmButtonHoverColor: 'hover:bg-amber-700',
   },
 }
 

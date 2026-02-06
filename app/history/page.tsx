@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import SiteHeader from '../../components/SiteHeader'
+import SiteFooter from '../../components/SiteFooter'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  ArrowLeftIcon,
   SparklesIcon,
   ClockIcon,
   StarIcon,
@@ -141,29 +142,10 @@ export default function HistoryPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <Link
-                href="/tools"
-                className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <ArrowLeftIcon className="w-4 h-4" aria-hidden="true" />
-                <span>Back to Tools</span>
-              </Link>
-            </div>
-            <div className="flex items-center gap-2">
-              <SparklesIcon className="w-5 h-5 text-indigo-600" aria-hidden="true" />
-              <span className="font-semibold text-gray-900">Blog AI</span>
-            </div>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white">
+      <section className="bg-gradient-to-r from-amber-600 to-amber-700 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -177,7 +159,7 @@ export default function HistoryPage() {
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
               Content History
             </h1>
-            <p className="text-lg sm:text-xl text-indigo-100 max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl text-amber-100 max-w-2xl mx-auto">
               View, reuse, and manage all your previously generated content in one
               place.
             </p>
@@ -187,20 +169,20 @@ export default function HistoryPage() {
               <div className="mt-8 flex flex-wrap justify-center gap-8">
                 <div className="text-center">
                   <div className="text-3xl font-bold">{stats.total}</div>
-                  <div className="text-sm text-indigo-200">Generations</div>
+                  <div className="text-sm text-amber-200">Generations</div>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold flex items-center justify-center gap-1">
                     <StarIcon className="w-6 h-6" aria-hidden="true" />
                     {stats.favorites}
                   </div>
-                  <div className="text-sm text-indigo-200">Favorites</div>
+                  <div className="text-sm text-amber-200">Favorites</div>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold">
                     {Object.keys(stats.byCategory).length}
                   </div>
-                  <div className="text-sm text-indigo-200">Categories Used</div>
+                  <div className="text-sm text-amber-200">Categories Used</div>
                 </div>
               </div>
             )}
@@ -227,7 +209,7 @@ export default function HistoryPage() {
             </p>
             <Link
               href="/tools"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
             >
               <DocumentTextIcon className="w-5 h-5" />
               Browse Tools
@@ -311,7 +293,7 @@ export default function HistoryPage() {
                 </p>
                 <Link
                   href="/tools"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
                 >
                   <SparklesIcon className="w-5 h-5" />
                   Start Creating
@@ -346,7 +328,7 @@ export default function HistoryPage() {
                       type="button"
                       onClick={handleLoadMore}
                       disabled={isLoadingMore}
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isLoadingMore ? (
                         <>
@@ -384,14 +366,7 @@ export default function HistoryPage() {
         )}
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-50 border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <p className="text-center text-sm text-gray-500">
-            Powered by AI &middot; Blog AI Content Generator
-          </p>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   )
 }

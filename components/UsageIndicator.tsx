@@ -176,7 +176,7 @@ function UsageDetails({ usage, showUpgradePrompt }: UsageDetailsProps) {
                   ? 'bg-red-500'
                   : isNearLimit
                   ? 'bg-amber-500'
-                  : 'bg-indigo-500'
+                  : 'bg-amber-500'
               }`}
             />
           </div>
@@ -205,7 +205,7 @@ function UsageDetails({ usage, showUpgradePrompt }: UsageDetailsProps) {
                   ? 'bg-red-500'
                   : usage.percentage_used_monthly >= 80
                   ? 'bg-amber-500'
-                  : 'bg-indigo-500'
+                  : 'bg-amber-500'
               }`}
             />
           </div>
@@ -241,7 +241,7 @@ function UsageDetails({ usage, showUpgradePrompt }: UsageDetailsProps) {
       {showUpgradePrompt && usage.tier !== 'enterprise' && (
         <Link
           href="/pricing"
-          className="flex items-center justify-center gap-2 w-full py-2 px-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white text-sm font-medium rounded-lg transition-all"
+          className="flex items-center justify-center gap-2 w-full py-2 px-4 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white text-sm font-medium rounded-lg transition-all"
         >
           <ArrowUpCircleIcon className="h-4 w-4" />
           {usage.tier === 'free' ? 'Upgrade to Pro' : 'Upgrade to Enterprise'}

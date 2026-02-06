@@ -61,8 +61,8 @@ export default function BrandVoiceSelector({
           checked={enabled}
           onChange={onEnabledChange}
           className={`${
-            enabled ? 'bg-indigo-600' : 'bg-gray-200'
-          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
+            enabled ? 'bg-amber-600' : 'bg-gray-200'
+          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
         >
           <span
             className={`${
@@ -71,13 +71,13 @@ export default function BrandVoiceSelector({
           />
         </Switch>
         <div className="flex items-center gap-1.5">
-          <SparklesIcon className="w-4 h-4 text-indigo-600" />
+          <SparklesIcon className="w-4 h-4 text-amber-600" />
           <span className="text-sm text-gray-700">Brand Voice</span>
         </div>
         {enabled && (
           <Listbox value={selectedProfile} onChange={onProfileChange}>
             <div className="relative">
-              <Listbox.Button className="relative w-40 cursor-pointer rounded-lg bg-white py-1.5 pl-3 pr-8 text-left border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+              <Listbox.Button className="relative w-40 cursor-pointer rounded-lg bg-white py-1.5 pl-3 pr-8 text-left border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm">
                 <span className="block truncate">
                   {selectedProfile?.name || 'Select...'}
                 </span>
@@ -98,7 +98,7 @@ export default function BrandVoiceSelector({
                       value={profile}
                       className={({ active }) =>
                         `relative cursor-pointer select-none py-2 pl-10 pr-4 ${
-                          active ? 'bg-indigo-50 text-indigo-900' : 'text-gray-900'
+                          active ? 'bg-amber-50 text-amber-900' : 'text-gray-900'
                         }`
                       }
                     >
@@ -108,7 +108,7 @@ export default function BrandVoiceSelector({
                             {profile.name}
                           </span>
                           {selected && (
-                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-indigo-600">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-amber-600">
                               <CheckIcon className="h-4 w-4" />
                             </span>
                           )}
@@ -129,15 +129,15 @@ export default function BrandVoiceSelector({
     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <SparklesIcon className="w-5 h-5 text-indigo-600" />
+          <SparklesIcon className="w-5 h-5 text-amber-600" />
           <h3 className="text-sm font-medium text-gray-900">Apply Brand Voice</h3>
         </div>
         <Switch
           checked={enabled}
           onChange={onEnabledChange}
           className={`${
-            enabled ? 'bg-indigo-600' : 'bg-gray-200'
-          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
+            enabled ? 'bg-amber-600' : 'bg-gray-200'
+          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
         >
           <span
             className={`${
@@ -154,7 +154,7 @@ export default function BrandVoiceSelector({
               <Listbox.Label className="block text-xs text-gray-500 mb-1">
                 Select Brand Profile
               </Listbox.Label>
-              <Listbox.Button className="relative w-full cursor-pointer rounded-lg bg-white py-2 pl-3 pr-10 text-left border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+              <Listbox.Button className="relative w-full cursor-pointer rounded-lg bg-white py-2 pl-3 pr-10 text-left border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm">
                 <span className="block truncate">
                   {selectedProfile?.name || 'Choose a profile...'}
                 </span>
@@ -174,7 +174,7 @@ export default function BrandVoiceSelector({
                   ) : profiles.length === 0 ? (
                     <div className="py-2 px-4 text-gray-500">
                       No profiles found.{' '}
-                      <a href="/brand" className="text-indigo-600 hover:underline">
+                      <a href="/brand" className="text-amber-600 hover:underline">
                         Create one
                       </a>
                     </div>
@@ -185,7 +185,7 @@ export default function BrandVoiceSelector({
                         value={profile}
                         className={({ active }) =>
                           `relative cursor-pointer select-none py-2 pl-10 pr-4 ${
-                            active ? 'bg-indigo-50 text-indigo-900' : 'text-gray-900'
+                            active ? 'bg-amber-50 text-amber-900' : 'text-gray-900'
                           }`
                         }
                       >
@@ -200,7 +200,7 @@ export default function BrandVoiceSelector({
                               </span>
                             </div>
                             {selected && (
-                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-indigo-600">
+                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-amber-600">
                                 <CheckIcon className="h-5 w-5" />
                               </span>
                             )}

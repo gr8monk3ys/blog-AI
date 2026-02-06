@@ -229,7 +229,7 @@ export default function ContentViewer({ content }: ContentViewerProps) {
                       />
                       <button
                         onClick={() => handleSectionEdit(`section-${index}`)}
-                        className="mt-2 w-full bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+                        className="mt-2 w-full bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700"
                       >
                         Update Section
                       </button>
@@ -280,7 +280,7 @@ export default function ContentViewer({ content }: ContentViewerProps) {
           />
           <button
             onClick={() => setIsEditingBook(true)}
-            className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+            className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700"
           >
             Edit Book
           </button>
@@ -299,7 +299,7 @@ export default function ContentViewer({ content }: ContentViewerProps) {
                 </p>
                 <button
                   onClick={() => window.open(`/api/download?path=${encodeURIComponent(filePath)}`)}
-                  className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+                  className="mt-4 bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700"
                 >
                   Download Book
                 </button>

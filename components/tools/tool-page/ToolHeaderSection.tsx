@@ -66,7 +66,7 @@ export default function ToolHeaderSection({
                   </span>
                 )}
                 {tool.isNew && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-amber-500 to-amber-500 text-white">
                     New
                   </span>
                 )}

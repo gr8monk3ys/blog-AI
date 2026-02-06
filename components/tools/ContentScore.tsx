@@ -240,7 +240,7 @@ function DetailSection({
               <ul className="space-y-1.5">
                 {suggestions.map((suggestion, idx) => (
                   <li key={idx} className="text-sm text-gray-600 flex items-start gap-2">
-                    <span className="text-indigo-500 mt-0.5">-</span>
+                    <span className="text-amber-500 mt-0.5">-</span>
                     <span>{suggestion}</span>
                   </li>
                 ))}
@@ -262,7 +262,7 @@ export default function ContentScore({
     return (
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600" />
           <span className="ml-3 text-sm text-gray-600">Analyzing content...</span>
         </div>
       </div>

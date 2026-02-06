@@ -198,9 +198,9 @@ export default function ConversationHistory({ conversationId }: ConversationHist
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-4 px-1">
-        <h2 className="text-xl font-bold text-indigo-800">Conversation</h2>
+        <h2 className="text-xl font-bold text-amber-800">Conversation</h2>
         {messages.length > 0 && (
-          <span className="text-xs text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">
+          <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
             {messages.length} messages
           </span>
         )}
@@ -210,9 +210,9 @@ export default function ConversationHistory({ conversationId }: ConversationHist
         {isLoading ? (
           <div className="flex justify-center items-center h-32">
             <div className="animate-pulse flex space-x-2">
-              <div className="h-2 w-2 bg-indigo-400 rounded-full"></div>
-              <div className="h-2 w-2 bg-indigo-500 rounded-full"></div>
-              <div className="h-2 w-2 bg-indigo-600 rounded-full"></div>
+              <div className="h-2 w-2 bg-amber-400 rounded-full"></div>
+              <div className="h-2 w-2 bg-amber-500 rounded-full"></div>
+              <div className="h-2 w-2 bg-amber-600 rounded-full"></div>
             </div>
           </div>
         ) : error ? (
@@ -244,12 +244,12 @@ export default function ConversationHistory({ conversationId }: ConversationHist
                 <div 
                   className={`max-w-[85%] ${
                     group.role === 'user' 
-                      ? 'bg-gradient-to-br from-indigo-500 to-indigo-600 text-white' 
+                      ? 'bg-gradient-to-br from-amber-500 to-amber-600 text-white'
                       : 'bg-white border border-gray-200 shadow-sm'
                   } rounded-2xl overflow-hidden`}
                 >
                   <div className="px-4 py-2 text-xs font-medium border-b border-opacity-10 flex justify-between items-center">
-                    <span className={group.role === 'user' ? 'text-indigo-100' : 'text-indigo-700'}>
+                    <span className={group.role === 'user' ? 'text-amber-100' : 'text-amber-700'}>
                       {group.role === 'user' ? 'You' : 'AI Assistant'}
                     </span>
                   </div>
@@ -262,7 +262,7 @@ export default function ConversationHistory({ conversationId }: ConversationHist
                         </div>
                         
                         {messageIndex === group.messages.length - 1 && (
-                          <div className={`text-xs ${group.role === 'user' ? 'text-indigo-200' : 'text-gray-500'}`}>
+                          <div className={`text-xs ${group.role === 'user' ? 'text-amber-200' : 'text-gray-500'}`}>
                             {formatTimestamp(message.timestamp)}
                           </div>
                         )}
@@ -283,9 +283,9 @@ export default function ConversationHistory({ conversationId }: ConversationHist
           >
             <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
               <div className="flex space-x-2">
-                <div className="h-2 w-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="h-2 w-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="h-2 w-2 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                <div className="h-2 w-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="h-2 w-2 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="h-2 w-2 bg-amber-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
               </div>
             </div>
           </motion.div>

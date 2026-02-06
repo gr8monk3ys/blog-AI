@@ -59,14 +59,14 @@ export default function BookViewer({ book, filePath }: BookViewerProps) {
           <select
             value={downloadFormat}
             onChange={(e) => setDownloadFormat(e.target.value as 'markdown' | 'json')}
-            className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            className="rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
           >
             <option value="markdown">Markdown</option>
             <option value="json">JSON</option>
           </select>
           <button
             onClick={handleDownload}
-            className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+            className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700"
           >
             Download
           </button>
@@ -95,12 +95,12 @@ export default function BookViewer({ book, filePath }: BookViewerProps) {
           <Disclosure key={chapter.number}>
             {({ open }) => (
               <>
-                <Disclosure.Button className="flex justify-between w-full px-4 py-2 text-lg font-medium text-left text-indigo-900 bg-indigo-100 rounded-lg hover:bg-indigo-200 focus:outline-none focus-visible:ring focus-visible:ring-indigo-500 focus-visible:ring-opacity-75">
+                <Disclosure.Button className="flex justify-between w-full px-4 py-2 text-lg font-medium text-left text-amber-900 bg-amber-100 rounded-lg hover:bg-amber-200 focus:outline-none focus-visible:ring focus-visible:ring-amber-500 focus-visible:ring-opacity-75">
                   <span>{chapter.title}</span>
                   <ChevronUpIcon
                     className={`${
                       open ? 'transform rotate-180' : ''
-                    } w-5 h-5 text-indigo-500`}
+                    } w-5 h-5 text-amber-500`}
                   />
                 </Disclosure.Button>
                 <Disclosure.Panel className="px-4 pt-4 pb-2 text-gray-500">

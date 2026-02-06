@@ -54,10 +54,10 @@ const variantConfig: Record<
   },
   info: {
     icon: InformationCircleIcon,
-    bgColor: 'bg-indigo-50',
-    borderColor: 'border-indigo-200',
-    textColor: 'text-indigo-800',
-    iconColor: 'text-indigo-500',
+    bgColor: 'bg-amber-50',
+    borderColor: 'border-amber-200',
+    textColor: 'text-amber-800',
+    iconColor: 'text-amber-500',
   },
 }
 

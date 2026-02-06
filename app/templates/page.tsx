@@ -2,53 +2,20 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import SiteHeader from '../../components/SiteHeader'
+import SiteFooter from '../../components/SiteFooter'
 import TemplateGrid from '../../components/templates/TemplateGrid'
 import {
-  SparklesIcon,
-  ArrowLeftIcon,
   BookmarkIcon,
 } from '@heroicons/react/24/outline'
 
 export default function TemplatesPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <Link
-                href="/"
-                className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <ArrowLeftIcon className="w-4 h-4" aria-hidden="true" />
-                <span>Back to Generator</span>
-              </Link>
-            </div>
-            <div className="flex items-center gap-4">
-              <Link
-                href="/tools"
-                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Tools
-              </Link>
-              <Link
-                href="/brand"
-                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Brand Voice
-              </Link>
-              <div className="flex items-center gap-2">
-                <SparklesIcon className="w-5 h-5 text-indigo-600" aria-hidden="true" />
-                <span className="font-semibold text-gray-900">Blog AI</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+      <section className="bg-gradient-to-r from-amber-600 to-amber-700 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -62,7 +29,7 @@ export default function TemplatesPage() {
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
               Templates Library
             </h1>
-            <p className="text-lg sm:text-xl text-indigo-100 max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl text-amber-100 max-w-2xl mx-auto">
               Start faster with pre-configured templates. Browse our collection of
               ready-to-use content templates or save your own presets.
             </p>
@@ -71,15 +38,15 @@ export default function TemplatesPage() {
             <div className="mt-8 flex flex-wrap justify-center gap-8">
               <div className="text-center">
                 <div className="text-3xl font-bold">50+</div>
-                <div className="text-sm text-indigo-200">Templates</div>
+                <div className="text-sm text-amber-200">Templates</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold">9</div>
-                <div className="text-sm text-indigo-200">Categories</div>
+                <div className="text-sm text-amber-200">Categories</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold">1-Click</div>
-                <div className="text-sm text-indigo-200">Setup</div>
+                <div className="text-sm text-amber-200">Setup</div>
               </div>
             </div>
           </motion.div>
@@ -116,13 +83,13 @@ export default function TemplatesPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/tools"
-                className="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-lg text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                className="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-lg text-sm font-medium text-white bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
               >
                 Browse Tools
               </Link>
               <Link
                 href="/brand"
-                className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
               >
                 Set Up Brand Voice
               </Link>
@@ -131,14 +98,7 @@ export default function TemplatesPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-50 border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <p className="text-center text-sm text-gray-500">
-            Powered by AI - Blog AI Content Generator
-          </p>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   )
 }

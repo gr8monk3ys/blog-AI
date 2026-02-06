@@ -4,8 +4,9 @@ import { useState, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { v4 as uuidv4 } from 'uuid'
 import { motion, AnimatePresence } from 'framer-motion'
+import SiteHeader from '../../components/SiteHeader'
+import SiteFooter from '../../components/SiteFooter'
 import {
-  ArrowLeftIcon,
   ArrowUpTrayIcon,
   DocumentTextIcon,
   PlayIcon,
@@ -15,7 +16,6 @@ import {
   ArrowDownTrayIcon,
   TrashIcon,
   PlusIcon,
-  SparklesIcon,
   ArrowPathIcon,
   CurrencyDollarIcon,
   ServerStackIcon,
@@ -458,32 +458,10 @@ export default function BulkGenerationPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <Link
-                href="/"
-                className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <ArrowLeftIcon className="w-4 h-4" />
-                <span>Back to Generator</span>
-              </Link>
-            </div>
-            <div className="flex items-center gap-4">
-              <UsageIndicator compact />
-              <div className="flex items-center gap-2">
-                <SparklesIcon className="w-5 h-5 text-indigo-600" />
-                <span className="font-semibold text-gray-900">Blog AI</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white">
+      <section className="bg-gradient-to-r from-amber-600 to-amber-700 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -493,7 +471,7 @@ export default function BulkGenerationPage() {
             <h1 className="text-2xl sm:text-3xl font-bold mb-2">
               Bulk Content Generation
             </h1>
-            <p className="text-indigo-100">
+            <p className="text-amber-100">
               Generate multiple blog posts at once. Upload a CSV or add topics manually.
             </p>
           </motion.div>
@@ -514,7 +492,7 @@ export default function BulkGenerationPage() {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Upload CSV
               </h2>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition-colors">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-amber-400 transition-colors">
                 <ArrowUpTrayIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                 <p className="text-sm text-gray-600 mb-2">
                   Drop a CSV file here, or click to browse
@@ -535,7 +513,7 @@ export default function BulkGenerationPage() {
                 </label>
                 <button
                   onClick={downloadTemplate}
-                  className="ml-2 text-sm text-indigo-600 hover:text-indigo-700"
+                  className="ml-2 text-sm text-amber-600 hover:text-amber-700"
                 >
                   Download template
                 </button>
@@ -556,7 +534,7 @@ export default function BulkGenerationPage() {
                 <button
                   onClick={addItem}
                   disabled={isProcessing}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700 disabled:opacity-50"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-amber-600 hover:text-amber-700 disabled:opacity-50"
                 >
                   <PlusIcon className="w-4 h-4" />
                   Add Topic
@@ -591,7 +569,7 @@ export default function BulkGenerationPage() {
                               onChange={(e) => updateItem(index, 'topic', e.target.value)}
                               placeholder="Enter topic..."
                               disabled={isProcessing}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100"
                             />
                             <div className="flex gap-3">
                               <input
@@ -600,13 +578,13 @@ export default function BulkGenerationPage() {
                                 onChange={(e) => updateItem(index, 'keywords', e.target.value)}
                                 placeholder="Keywords (comma separated)"
                                 disabled={isProcessing}
-                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100"
                               />
                               <select
                                 value={item.tone}
                                 onChange={(e) => updateItem(index, 'tone', e.target.value)}
                                 disabled={isProcessing}
-                                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+                                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100"
                               >
                                 {TONE_OPTIONS.map((option) => (
                                   <option key={option.value} value={option.value}>
@@ -683,7 +661,7 @@ export default function BulkGenerationPage() {
                       setCostEstimate(null)
                     }}
                     disabled={isProcessing}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100"
                   >
                     {STRATEGY_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -709,7 +687,7 @@ export default function BulkGenerationPage() {
                         setCostEstimate(null)
                       }}
                       disabled={isProcessing}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100"
                     >
                       {PROVIDER_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
@@ -728,7 +706,7 @@ export default function BulkGenerationPage() {
                     value={sharedTone}
                     onChange={(e) => setSharedTone(e.target.value)}
                     disabled={isProcessing}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100"
                   >
                     {TONE_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -746,7 +724,7 @@ export default function BulkGenerationPage() {
                     value={parallelLimit}
                     onChange={(e) => setParallelLimit(Number(e.target.value))}
                     disabled={isProcessing}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100"
                   >
                     {[1, 2, 3, 5, 10].map((n) => (
                       <option key={n} value={n}>
@@ -763,7 +741,7 @@ export default function BulkGenerationPage() {
                       checked={useResearch}
                       onChange={(e) => setUseResearch(e.target.checked)}
                       disabled={isProcessing}
-                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
                     />
                     <span className="text-sm text-gray-700">Use web research</span>
                   </label>
@@ -773,7 +751,7 @@ export default function BulkGenerationPage() {
                       checked={proofread}
                       onChange={(e) => setProofread(e.target.checked)}
                       disabled={isProcessing}
-                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
                     />
                     <span className="text-sm text-gray-700">Proofread content</span>
                   </label>
@@ -783,7 +761,7 @@ export default function BulkGenerationPage() {
                       checked={humanize}
                       onChange={(e) => setHumanize(e.target.checked)}
                       disabled={isProcessing}
-                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
                     />
                     <span className="text-sm text-gray-700">Humanize content</span>
                   </label>
@@ -853,7 +831,7 @@ export default function BulkGenerationPage() {
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${status.progress_percentage}%` }}
-                      className="bg-indigo-500 h-3 rounded-full"
+                      className="bg-amber-500 h-3 rounded-full"
                     />
                   </div>
                   <div className="flex items-center justify-between text-sm text-gray-600">
@@ -914,7 +892,7 @@ export default function BulkGenerationPage() {
                   <button
                     onClick={startGeneration}
                     disabled={items.length === 0}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <PlayIcon className="w-5 h-5" />
                     Generate {items.length} Post{items.length !== 1 ? 's' : ''}
@@ -1000,6 +978,8 @@ export default function BulkGenerationPage() {
           </div>
         </div>
       </div>
+
+      <SiteFooter />
     </main>
   )
 }

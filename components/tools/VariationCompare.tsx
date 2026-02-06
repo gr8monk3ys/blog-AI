@@ -101,7 +101,7 @@ function VariationCard({
       transition={{ duration: 0.3, delay: index * 0.1 }}
       className={`relative rounded-xl border-2 transition-all duration-200 ${
         isSelected
-          ? 'border-indigo-500 bg-indigo-50/50 shadow-md'
+          ? 'border-amber-500 bg-amber-50/50 shadow-md'
           : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
       }`}
     >
@@ -113,7 +113,7 @@ function VariationCard({
             <span
               className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${
                 isSelected
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-amber-600 text-white'
                   : 'bg-gray-100 text-gray-700'
               }`}
             >
@@ -209,8 +209,8 @@ function VariationCard({
           onClick={onSelect}
           className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
             isSelected
-              ? 'bg-indigo-600 text-white shadow-sm'
-              : 'bg-gray-100 text-gray-700 hover:bg-indigo-50 hover:text-indigo-700'
+              ? 'bg-amber-600 text-white shadow-sm'
+              : 'bg-gray-100 text-gray-700 hover:bg-amber-50 hover:text-amber-700'
           }`}
         >
           {isSelected ? (
@@ -229,7 +229,7 @@ function VariationCard({
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          className="absolute -top-2 -right-2 w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center shadow-md"
+          className="absolute -top-2 -right-2 w-6 h-6 bg-amber-600 rounded-full flex items-center justify-center shadow-md"
         >
           <CheckIcon className="w-4 h-4 text-white" />
         </motion.div>
@@ -243,7 +243,7 @@ function LoadingSkeleton() {
     <div className="space-y-4">
       <div className="flex items-center justify-center py-4">
         <div className="flex items-center gap-3">
-          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600" />
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-amber-600" />
           <span className="text-sm text-gray-600">Generating variations...</span>
         </div>
       </div>
@@ -311,7 +311,7 @@ export default function VariationCompare({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <BeakerIcon className="w-5 h-5 text-indigo-600" />
+          <BeakerIcon className="w-5 h-5 text-amber-600" />
           <h3 className="font-semibold text-gray-900">
             Compare Variations ({variations.length})
           </h3>
