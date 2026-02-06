@@ -3,20 +3,31 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 245, 245, 242;
+  --foreground-rgb: 23, 23, 23;
+  --background-start-rgb: 255, 248, 230;
   --background-end-rgb: 255, 255, 255;
   --surface-rgb: 255, 255, 255;
-  --muted-rgb: 113, 113, 122;
-  --accent-rgb: 67, 56, 202;
+  --muted-rgb: 110, 98, 77;
+  --accent-rgb: 217, 119, 6;
+  --glass-bg: 255, 255, 255, 0.55;
+  --glass-border: 255, 255, 255, 0.35;
+  --glass-shadow: 0 20px 60px rgba(217, 119, 6, 0.12);
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-end-rgb));
+  background: linear-gradient(120deg, rgb(var(--background-start-rgb)) 0%, rgb(var(--background-end-rgb)) 70%);
   font-family: "SF Pro Text", "Inter", system-ui, -apple-system, sans-serif;
 }
 
 .font-serif {
   font-family: "Source Serif 4", "Iowan Old Style", "Times New Roman", serif;
+}
+
+.glass-card {
+  background: rgba(var(--glass-bg));
+  border: 1px solid rgba(var(--glass-border));
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }

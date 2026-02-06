@@ -231,28 +231,28 @@ export default function Home() {
   const categoryCount = toolCategories.length
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-neutral-50 via-white to-neutral-100">
+    <main className="min-h-screen">
       {/* Top Nav */}
-      <header className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-neutral-200">
+      <header className="sticky top-0 z-20 bg-white/70 backdrop-blur border-b border-amber-100/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-3">
-              <SparklesIcon className="w-6 h-6 text-indigo-600" />
-              <span className="text-lg font-semibold text-gray-900">Blog AI</span>
+              <SparklesIcon className="w-6 h-6 text-amber-600" />
+              <span className="text-lg font-semibold text-neutral-900">Blog AI</span>
             </div>
-            <nav className="hidden md:flex items-center gap-6 text-sm text-gray-600">
-              <Link href="/tools" className="hover:text-indigo-600 transition-colors">Tools</Link>
-              <Link href="/tool-directory" className="hover:text-indigo-600 transition-colors">Directory</Link>
-              <Link href="/templates" className="hover:text-indigo-600 transition-colors">Templates</Link>
-              <Link href="/blog" className="hover:text-indigo-600 transition-colors">Blog</Link>
-              <Link href="/pricing" className="hover:text-indigo-600 transition-colors">Pricing</Link>
-              <Link href="/history" className="hover:text-indigo-600 transition-colors">History</Link>
+            <nav className="hidden md:flex items-center gap-6 text-sm text-neutral-700">
+              <Link href="/tools" className="hover:text-amber-700 transition-colors">Tools</Link>
+              <Link href="/tool-directory" className="hover:text-amber-700 transition-colors">Directory</Link>
+              <Link href="/templates" className="hover:text-amber-700 transition-colors">Templates</Link>
+              <Link href="/blog" className="hover:text-amber-700 transition-colors">Blog</Link>
+              <Link href="/pricing" className="hover:text-amber-700 transition-colors">Pricing</Link>
+              <Link href="/history" className="hover:text-amber-700 transition-colors">History</Link>
             </nav>
             <div className="flex items-center gap-3">
               <UsageIndicator compact />
               <Link
                 href="/tools"
-                className="hidden sm:inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                className="hidden sm:inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors"
               >
                 Browse Tools
               </Link>
@@ -266,7 +266,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
           <div className="grid grid-cols-1 lg:grid-cols-[1.1fr,0.9fr] gap-10 items-center">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-medium">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100/70 text-amber-800 text-xs font-medium">
                 <NewspaperIcon className="w-4 h-4" />
                 New: 100+ templates rolling out in 2026
               </div>
@@ -279,17 +279,17 @@ export default function Home() {
               </p>
               <div className="mt-6">
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="flex items-center gap-2 w-full sm:max-w-md bg-white border border-neutral-200 rounded-lg px-3 py-2 shadow-sm">
-                    <MagnifyingGlassIcon className="w-5 h-5 text-neutral-400" />
+                  <div className="flex items-center gap-2 w-full sm:max-w-md glass-card rounded-lg px-3 py-2">
+                    <MagnifyingGlassIcon className="w-5 h-5 text-amber-500" />
                     <input
                       type="text"
                       placeholder="Search tools, templates, or topics"
-                      className="w-full text-sm focus:outline-none"
+                      className="w-full text-sm bg-transparent focus:outline-none"
                     />
                   </div>
                   <Link
                     href="/tools"
-                    className="inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                    className="inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors"
                   >
                     Explore Library
                   </Link>
@@ -300,7 +300,7 @@ export default function Home() {
                     <Link
                       key={tag}
                       href="/tools"
-                      className="px-2.5 py-1 rounded-full bg-neutral-100 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                      className="px-2.5 py-1 rounded-full bg-amber-50/80 hover:bg-amber-100 hover:text-amber-800 transition-colors"
                     >
                       {tag}
                     </Link>
@@ -327,9 +327,9 @@ export default function Home() {
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-lg border border-neutral-200 p-6">
+            <div className="glass-card rounded-2xl p-6">
               <div className="flex items-center gap-2 mb-4">
-                <SparklesIcon className="w-5 h-5 text-indigo-600" />
+                <SparklesIcon className="w-5 h-5 text-amber-600" />
                 <p className="text-sm font-semibold text-gray-900">Quick Generator</p>
               </div>
               <p className="text-sm text-gray-600 mb-4">
@@ -338,13 +338,13 @@ export default function Home() {
               <div className="flex flex-col gap-2">
                 <Link
                   href="#generator"
-                  className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                  className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors"
                 >
                   Open Generator
                 </Link>
                 <Link
                   href="/tools"
-                  className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors"
+                  className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-amber-800 bg-amber-50/70 border border-amber-100 hover:bg-amber-100 rounded-lg transition-colors"
                 >
                   Browse all tools
                 </Link>
@@ -355,7 +355,7 @@ export default function Home() {
       </section>
 
       {/* Categories */}
-      <section className="bg-white border-y border-neutral-200">
+      <section className="bg-white/70 border-y border-amber-100/60 backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-semibold text-gray-900 font-serif">Browse Categories</h2>
@@ -366,17 +366,17 @@ export default function Home() {
               <Link
                 key={category.name}
                 href={category.href}
-                className="group bg-neutral-50 hover:bg-white border border-neutral-200 rounded-xl p-4 transition-all hover:shadow-md"
+                className="group glass-card rounded-xl p-4 transition-all hover:shadow-lg"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-indigo-50 text-indigo-700">
+                  <div className="p-2 rounded-lg bg-amber-100/70 text-amber-700">
                     <category.icon className="w-5 h-5" />
                   </div>
-                  <div className="text-sm font-medium text-gray-900 group-hover:text-indigo-700">
+                  <div className="text-sm font-medium text-gray-900 group-hover:text-amber-800">
                     {category.name}
                   </div>
                   {category.count !== undefined && (
-                    <div className="ml-auto text-xs text-gray-500">
+                    <div className="ml-auto text-xs text-amber-700">
                       {category.count}
                     </div>
                   )}
@@ -400,24 +400,24 @@ export default function Home() {
                 <Link
                   key={tool.title}
                   href={tool.href}
-                  className="flex items-center justify-between px-4 py-3 bg-white border border-neutral-200 rounded-lg hover:border-indigo-200 hover:shadow-sm transition-all"
+                  className="flex items-center justify-between px-4 py-3 glass-card rounded-lg hover:shadow-md transition-all"
                 >
                   <span className="text-sm text-gray-900">{tool.title}</span>
-                  <span className="text-xs text-indigo-600">Open</span>
+                  <span className="text-xs text-amber-700">Open</span>
                 </Link>
               ))}
             </div>
           </div>
-          <div className="bg-neutral-50 border border-neutral-200 rounded-2xl p-6">
+          <div className="glass-card rounded-2xl p-6">
             <div className="flex items-center gap-2 mb-4">
-              <NewspaperIcon className="w-5 h-5 text-indigo-600" />
+              <NewspaperIcon className="w-5 h-5 text-amber-600" />
               <h3 className="text-lg font-semibold text-gray-900">Latest from the Blog</h3>
             </div>
             <div className="space-y-4">
               {latestBlogs.map((post) => (
                 <Link key={post.title} href={post.href} className="block group">
                   <div className="text-xs text-gray-500">{post.date}</div>
-                  <div className="text-sm font-medium text-gray-900 group-hover:text-indigo-700">
+                  <div className="text-sm font-medium text-gray-900 group-hover:text-amber-800">
                     {post.title}
                   </div>
                   <div className="text-xs text-gray-600 mt-1">{post.excerpt}</div>
@@ -425,7 +425,7 @@ export default function Home() {
               ))}
             </div>
             <div className="mt-6">
-              <Link href="/blog" className="text-sm text-indigo-600 hover:text-indigo-700">
+              <Link href="/blog" className="text-sm text-amber-700 hover:text-amber-800">
                 View all posts
               </Link>
             </div>
@@ -434,7 +434,7 @@ export default function Home() {
       </section>
 
       {/* Generator */}
-      <section id="generator" className="bg-gradient-to-b from-white to-neutral-50 border-y border-neutral-200">
+      <section id="generator" className="bg-gradient-to-b from-white/90 to-amber-50/40 border-y border-amber-100/60">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-semibold text-gray-900 font-serif">Generate Content Fast</h2>
@@ -442,17 +442,17 @@ export default function Home() {
               Use structured prompts and templates to produce consistent, SEO-ready drafts.
             </p>
           </div>
-          <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-6">
+          <div className="glass-card rounded-2xl p-6">
             <Tab.Group>
-              <Tab.List className="flex space-x-1 rounded-xl bg-indigo-50 p-1 mb-6">
+              <Tab.List className="flex space-x-1 rounded-xl bg-amber-100/60 p-1 mb-6">
                 <Tab
                   className={({ selected }) =>
                     classNames(
                       'w-full rounded-lg py-3 text-sm font-medium leading-5 transition-all',
-                      'ring-white ring-opacity-60 ring-offset-2 ring-offset-indigo-400 focus:outline-none focus:ring-2',
+                      'ring-white ring-opacity-60 ring-offset-2 ring-offset-amber-300 focus:outline-none focus:ring-2',
                       selected
-                        ? 'bg-white shadow-sm text-indigo-700'
-                        : 'text-indigo-500 hover:bg-white/[0.12] hover:text-indigo-600'
+                        ? 'bg-white shadow-sm text-amber-800'
+                        : 'text-amber-700 hover:bg-white/[0.12] hover:text-amber-800'
                     )
                   }
                 >
@@ -462,10 +462,10 @@ export default function Home() {
                   className={({ selected }) =>
                     classNames(
                       'w-full rounded-lg py-3 text-sm font-medium leading-5 transition-all',
-                      'ring-white ring-opacity-60 ring-offset-2 ring-offset-indigo-400 focus:outline-none focus:ring-2',
+                      'ring-white ring-opacity-60 ring-offset-2 ring-offset-amber-300 focus:outline-none focus:ring-2',
                       selected
-                        ? 'bg-white shadow-sm text-indigo-700'
-                        : 'text-indigo-500 hover:bg-white/[0.12] hover:text-indigo-600'
+                        ? 'bg-white shadow-sm text-amber-800'
+                        : 'text-amber-700 hover:bg-white/[0.12] hover:text-amber-800'
                     )
                   }
                 >
@@ -492,11 +492,11 @@ export default function Home() {
           </div>
 
           {loading && (
-            <div className="mt-8 text-center bg-white rounded-xl shadow-sm p-10">
+            <div className="mt-8 text-center glass-card rounded-xl p-10">
               <div className="flex justify-center items-center space-x-2">
-                <div className="h-3 w-3 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="h-3 w-3 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="h-3 w-3 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                <div className="h-3 w-3 bg-amber-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="h-3 w-3 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="h-3 w-3 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
               </div>
               <p className="mt-6 text-gray-600 font-medium">Generating your content...</p>
               <p className="text-xs text-gray-500 mt-2">This may take a few moments</p>
@@ -504,7 +504,7 @@ export default function Home() {
           )}
 
           {content && !loading && (
-            <div className="bg-white rounded-xl shadow-sm p-6 mt-8">
+            <div className="glass-card rounded-xl p-6 mt-8">
               <ContentViewer content={content} />
             </div>
           )}
@@ -526,15 +526,15 @@ export default function Home() {
               pages you publish around a topic, the more search visibility you earn.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/tools" className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg">
+              <Link href="/tools" className="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg">
                 Explore all tools
               </Link>
-              <Link href="/templates" className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg">
+              <Link href="/templates" className="px-4 py-2 text-sm font-medium text-amber-800 bg-amber-50/70 border border-amber-100 hover:bg-amber-100 rounded-lg">
                 View templates
               </Link>
             </div>
           </div>
-          <div className="bg-white border border-neutral-200 rounded-2xl p-6">
+          <div className="glass-card rounded-2xl p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">FAQs</h3>
             <div className="space-y-4">
               {faqs.map((faq) => (
