@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getSupabase, isSupabaseConfigured, isNoRowsError } from '../../../../lib/supabase'
 
 const getAdminKey = () => process.env.BLOG_ADMIN_KEY
@@ -14,7 +14,11 @@ const isAuthorized = (request: Request) => {
   return headerKey === adminKey
 }
 
-export async function GET(request: Request, { params }: { params: { slug: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  const resolvedParams = await params
   if (!isAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -27,7 +31,7 @@ export async function GET(request: Request, { params }: { params: { slug: string
   const { data, error } = await supabase
     .from('blog_posts')
     .select('*')
-    .eq('slug', params.slug)
+    .eq('slug', resolvedParams.slug)
     .single()
 
   if (error) {
@@ -41,9 +45,10 @@ export async function GET(request: Request, { params }: { params: { slug: string
 }
 
 export async function DELETE(
-  request: Request,
-  { params }: { params: { slug: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string }> }
 ) {
+  const resolvedParams = await params
   if (!isAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -53,7 +58,7 @@ export async function DELETE(
   }
 
   const supabase = getSupabase()
-  const { error } = await supabase.from('blog_posts').delete().eq('slug', params.slug)
+  const { error } = await supabase.from('blog_posts').delete().eq('slug', resolvedParams.slug)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
