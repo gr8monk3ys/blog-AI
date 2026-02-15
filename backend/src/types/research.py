@@ -2,7 +2,17 @@
 Type definitions for research functionality.
 """
 
+import json
 from typing import Any, Dict, List, Literal, Optional
+
+
+def _truncate(value: Optional[str], max_len: int) -> Optional[str]:
+    if value is None:
+        return None
+    value = str(value)
+    if len(value) <= max_len:
+        return value
+    return value[: max(0, max_len - 3)] + "..."
 
 
 class SearchResult:
@@ -17,6 +27,16 @@ class SearchResult:
         self.url = url
         self.snippet = snippet
 
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "title": _truncate(self.title, 200) or "",
+            "url": _truncate(self.url, 500) or "",
+            "snippet": _truncate(self.snippet, 400) or "",
+        }
+
+    def __str__(self) -> str:
+        return json.dumps(self.to_dict(), ensure_ascii=True, sort_keys=True)
+
 
 class PeopleAlsoAsk:
     """A 'People Also Ask' question from a search engine."""
@@ -28,6 +48,15 @@ class PeopleAlsoAsk:
         self.question = question
         self.answer = answer
 
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "question": _truncate(self.question, 200) or "",
+            "answer": _truncate(self.answer, 400),
+        }
+
+    def __str__(self) -> str:
+        return json.dumps(self.to_dict(), ensure_ascii=True, sort_keys=True)
+
 
 class RelatedSearch:
     """A related search query from a search engine."""
@@ -36,6 +65,12 @@ class RelatedSearch:
 
     def __init__(self, query: str):
         self.query = query
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {"query": _truncate(self.query, 200) or ""}
+
+    def __str__(self) -> str:
+        return json.dumps(self.to_dict(), ensure_ascii=True, sort_keys=True)
 
 
 class GoogleSerpResult:
@@ -55,6 +90,16 @@ class GoogleSerpResult:
         self.people_also_ask = people_also_ask or []
         self.related_searches = related_searches or []
 
+    def to_dict(self, max_results: int = 8) -> Dict[str, Any]:
+        return {
+            "organic": [r.to_dict() for r in (self.organic or [])[:max_results]],
+            "people_also_ask": [q.to_dict() for q in (self.people_also_ask or [])[:max_results]],
+            "related_searches": [q.to_dict() for q in (self.related_searches or [])[:max_results]],
+        }
+
+    def __str__(self) -> str:
+        return json.dumps(self.to_dict(), ensure_ascii=True, sort_keys=True)
+
 
 class TavilyResult:
     """A result from Tavily AI search."""
@@ -67,6 +112,16 @@ class TavilyResult:
         self.title = title
         self.url = url
         self.content = content
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "title": _truncate(self.title, 200) or "",
+            "url": _truncate(self.url, 500) or "",
+            "content": _truncate(self.content, 600) or "",
+        }
+
+    def __str__(self) -> str:
+        return json.dumps(self.to_dict(), ensure_ascii=True, sort_keys=True)
 
 
 class TavilySearchResult:
@@ -86,6 +141,16 @@ class TavilySearchResult:
         self.answer = answer
         self.follow_up_questions = follow_up_questions or []
 
+    def to_dict(self, max_results: int = 8) -> Dict[str, Any]:
+        return {
+            "answer": _truncate(self.answer, 1200) or "",
+            "results": [r.to_dict() for r in (self.results or [])[:max_results]],
+            "follow_up_questions": [(_truncate(q, 200) or "") for q in (self.follow_up_questions or [])[:max_results]],
+        }
+
+    def __str__(self) -> str:
+        return json.dumps(self.to_dict(), ensure_ascii=True, sort_keys=True)
+
 
 class MetaphorResult:
     """A result from Metaphor AI search."""
@@ -99,6 +164,16 @@ class MetaphorResult:
         self.url = url
         self.text = text
 
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "title": _truncate(self.title, 200) or "",
+            "url": _truncate(self.url, 500) or "",
+            "text": _truncate(self.text, 600) or "",
+        }
+
+    def __str__(self) -> str:
+        return json.dumps(self.to_dict(), ensure_ascii=True, sort_keys=True)
+
 
 class TrendPoint:
     """A point in a Google Trends timeline."""
@@ -109,6 +184,12 @@ class TrendPoint:
     def __init__(self, date: str, value: float):
         self.date = date
         self.value = value
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {"date": _truncate(self.date, 50) or "", "value": self.value}
+
+    def __str__(self) -> str:
+        return json.dumps(self.to_dict(), ensure_ascii=True, sort_keys=True)
 
 
 class GoogleTrendsResult:
@@ -130,6 +211,17 @@ class GoogleTrendsResult:
         self.timeline = timeline
         self.related_topics = related_topics or []
         self.related_queries = related_queries or []
+
+    def to_dict(self, max_points: int = 16, max_items: int = 16) -> Dict[str, Any]:
+        return {
+            "keyword": _truncate(self.keyword, 200) or "",
+            "timeline": [p.to_dict() for p in (self.timeline or [])[:max_points]],
+            "related_topics": [(_truncate(t, 200) or "") for t in (self.related_topics or [])[:max_items]],
+            "related_queries": [(_truncate(q, 200) or "") for q in (self.related_queries or [])[:max_items]],
+        }
+
+    def __str__(self) -> str:
+        return json.dumps(self.to_dict(), ensure_ascii=True, sort_keys=True)
 
 
 SearchType = Literal["google", "tavily", "metaphor", "trends"]
@@ -181,3 +273,15 @@ class ResearchResults:
         self.tavily = tavily
         self.metaphor = metaphor
         self.trends = trends
+
+    def to_dict(self, max_results: int = 8) -> Dict[str, Any]:
+        return {
+            "google": self.google.to_dict(max_results=max_results) if self.google else None,
+            "tavily": self.tavily.to_dict(max_results=max_results) if self.tavily else None,
+            "metaphor": [r.to_dict() for r in (self.metaphor or [])[:max_results]] if self.metaphor else None,
+            "trends": self.trends.to_dict(max_points=max_results * 2, max_items=max_results * 2) if self.trends else None,
+        }
+
+    def __str__(self) -> str:
+        # Use JSON so prompts get structured context instead of a memory address.
+        return json.dumps(self.to_dict(), ensure_ascii=True, sort_keys=True)

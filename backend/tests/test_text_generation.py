@@ -78,6 +78,10 @@ def generation_options():
 def mock_openai_client():
     """Mock OpenAI client with successful response."""
     with patch("src.text_generation.core.openai") as mock_module:
+        # Ensure each test gets a fresh client instance (module caches clients by api_key).
+        from src.text_generation.core import close_llm_clients
+        close_llm_clients()
+
         mock_client = MagicMock()
         mock_response = MagicMock()
         mock_response.choices = [
@@ -92,6 +96,9 @@ def mock_openai_client():
 def mock_anthropic_client():
     """Mock Anthropic client with successful response."""
     with patch("src.text_generation.core.anthropic") as mock_module:
+        from src.text_generation.core import close_llm_clients
+        close_llm_clients()
+
         mock_client = MagicMock()
         mock_response = MagicMock()
         mock_response.content = [MagicMock(text="Generated Anthropic content")]

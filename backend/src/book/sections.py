@@ -19,6 +19,7 @@ def generate_introduction_section(
     subtopics: List[str],
     keywords: Optional[List[str]] = None,
     tone: str = "informative",
+    brand_voice: Optional[str] = None,
     provider: Optional[LLMProvider] = None,
     options: Optional[GenerationOptions] = None,
 ) -> Section:
@@ -31,6 +32,7 @@ def generate_introduction_section(
             outline="\n".join(subtopics),
             keywords=keywords,
             tone=tone,
+            brand_voice=brand_voice,
             provider=provider,
             options=options,
         )
@@ -60,6 +62,7 @@ def generate_introduction_section_with_research(
     research_results: Any,
     keywords: Optional[List[str]] = None,
     tone: str = "informative",
+    brand_voice: Optional[str] = None,
     provider: Optional[LLMProvider] = None,
     options: Optional[GenerationOptions] = None,
 ) -> Section:
@@ -76,6 +79,9 @@ def generate_introduction_section_with_research(
         if keywords:
             prompt += f"\n\nKeywords: {', '.join(keywords)}"
 
+        if brand_voice:
+            prompt += f"\n\nBRAND VOICE SUMMARY (follow strictly):\n{brand_voice}\n"
+
         prompt += f"""
         
         Based on the following research:
@@ -88,6 +94,8 @@ def generate_introduction_section_with_research(
         - Clearly state the purpose or thesis of the chapter.
         - Include at least one of the main keywords naturally.
         - Incorporate insights from the research.
+        - Add citations like [1] at the end of sentences that rely on a source.
+        - Only cite sources provided in the Sources list; do not invent citations.
         - Set the tone and expectations for the rest of the chapter.
         - Use a {tone} tone throughout.
         
@@ -125,6 +133,7 @@ def generate_section(
     section_title: str,
     keywords: Optional[List[str]] = None,
     tone: str = "informative",
+    brand_voice: Optional[str] = None,
     provider: Optional[LLMProvider] = None,
     options: Optional[GenerationOptions] = None,
 ) -> Section:
@@ -140,6 +149,9 @@ def generate_section(
 
         if keywords:
             prompt += f"\n\nKeywords to include: {', '.join(keywords)}"
+
+        if brand_voice:
+            prompt += f"\n\nBRAND VOICE SUMMARY (follow strictly):\n{brand_voice}\n"
 
         prompt += f"""
         
@@ -180,6 +192,7 @@ def generate_section_with_research(
     research_results: Any,
     keywords: Optional[List[str]] = None,
     tone: str = "informative",
+    brand_voice: Optional[str] = None,
     provider: Optional[LLMProvider] = None,
     options: Optional[GenerationOptions] = None,
 ) -> Section:
@@ -200,11 +213,16 @@ def generate_section_with_research(
         if keywords:
             prompt += f"\n\nKeywords to include: {', '.join(keywords)}"
 
+        if brand_voice:
+            prompt += f"\n\nBRAND VOICE SUMMARY (follow strictly):\n{brand_voice}\n"
+
         prompt += f"""
         
         Requirements:
         - The content should be 4-5 paragraphs.
         - Include relevant information, examples, and insights from the research.
+        - Add citations like [1] at the end of sentences that rely on a source.
+        - Only cite sources provided in the Sources list; do not invent citations.
         - Use a {tone} tone throughout.
         - Write in a clear, engaging style.
         """
@@ -249,6 +267,7 @@ def generate_conclusion_section(
     subtopics: List[str],
     keywords: Optional[List[str]] = None,
     tone: str = "informative",
+    brand_voice: Optional[str] = None,
     provider: Optional[LLMProvider] = None,
     options: Optional[GenerationOptions] = None,
 ) -> Section:
@@ -265,6 +284,7 @@ def generate_conclusion_section(
             content=content,
             keywords=keywords,
             tone=tone,
+            brand_voice=brand_voice,
             provider=provider,
             options=options,
         )
@@ -292,4 +312,3 @@ def generate_conclusion_section(
         raise BookGenerationError(
             f"Unexpected error generating conclusion section: {str(e)}"
         ) from e
-

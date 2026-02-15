@@ -4,6 +4,8 @@ import { BookOpenIcon, LightBulbIcon, PencilIcon, AdjustmentsHorizontalIcon } fr
 import { BookGenerationOptions } from '../types/book';
 import { BookGenerationResponse, ContentGenerationResponse } from '../types/content';
 import { API_ENDPOINTS, getDefaultHeaders, checkServerConnection } from '../lib/api';
+import BrandVoiceSelector from './brand/BrandVoiceSelector'
+import type { BrandProfile } from '../types/brand'
 
 interface BookGeneratorProps {
   conversationId: string;
@@ -20,6 +22,8 @@ export default function BookGenerator({ conversationId, setContent, setLoading }
   const [useResearch, setUseResearch] = useState(false);
   const [proofread, setProofread] = useState(true);
   const [humanize, setHumanize] = useState(true);
+  const [brandVoiceEnabled, setBrandVoiceEnabled] = useState(false)
+  const [selectedBrandProfile, setSelectedBrandProfile] = useState<BrandProfile | null>(null)
   const [error, setError] = useState<string | null>(null);
 
   // Mock book data for development or when server is not available
@@ -70,6 +74,12 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
     setError(null);
 
     try {
+      if (brandVoiceEnabled && !selectedBrandProfile) {
+        setError('Select a brand profile (or disable Brand Voice) to continue.')
+        setLoading(false)
+        return
+      }
+
       // Check if server is running
       const isServerConnected = await checkServerConnection();
       
@@ -85,7 +95,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
       // Server is running, make the real request
       const response = await fetch(API_ENDPOINTS.generateBook, {
         method: 'POST',
-        headers: getDefaultHeaders(),
+        headers: await getDefaultHeaders(),
         body: JSON.stringify({
           title,
           num_chapters: numChapters,
@@ -96,6 +106,9 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
           proofread,
           humanize,
           conversation_id: conversationId,
+          ...(brandVoiceEnabled && selectedBrandProfile?.id
+            ? { brand_profile_id: selectedBrandProfile.id }
+            : {}),
         }),
       });
 
@@ -273,6 +286,15 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
               </Switch>
               <span className="text-sm text-gray-700">Humanize content</span>
             </div>
+          </div>
+
+          <div className="mt-4">
+            <BrandVoiceSelector
+              enabled={brandVoiceEnabled}
+              onEnabledChange={setBrandVoiceEnabled}
+              selectedProfile={selectedBrandProfile}
+              onProfileChange={setSelectedBrandProfile}
+            />
           </div>
         </div>
 

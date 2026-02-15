@@ -42,16 +42,16 @@ function getStyleDescription(style: string): string {
   }
 }
 
-function getStyleIcon(style: string) {
+function renderStyleIcon(style: string, className: string) {
   switch (style) {
     case 'standard':
-      return DocumentTextIcon
+      return <DocumentTextIcon className={className} />
     case 'creative':
-      return SparklesIcon
+      return <SparklesIcon className={className} />
     case 'concise':
-      return BeakerIcon
+      return <BeakerIcon className={className} />
     default:
-      return DocumentTextIcon
+      return <DocumentTextIcon className={className} />
   }
 }
 
@@ -92,8 +92,6 @@ function VariationCard({
     }
   }
 
-  const StyleIcon = getStyleIcon(variation.prompt_style)
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -121,7 +119,7 @@ function VariationCard({
             </span>
             <div>
               <div className="flex items-center gap-2">
-                <StyleIcon className="w-4 h-4 text-gray-500" />
+                {renderStyleIcon(variation.prompt_style, 'w-4 h-4 text-gray-500')}
                 <span className="text-sm font-medium text-gray-900">
                   {getStyleDescription(variation.prompt_style)}
                 </span>

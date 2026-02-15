@@ -246,7 +246,7 @@ async def transform_content(
     # Get service with specified provider
     service = get_remix_service(request.provider)
 
-    result = await service.remix(remix_request)
+    result = await service.remix(remix_request, user_id=user_id)
 
     # Increment usage after successful transformation
     await increment_usage_for_operation(

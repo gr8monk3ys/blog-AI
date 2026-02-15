@@ -285,33 +285,41 @@ Return ONLY the JSON, no other text."""
 
         try:
             response = generate_text(prompt, self.provider, self.options)
+        except Exception as e:
+            # Brand voice analysis should degrade gracefully when LLM calls fail
+            # (e.g., missing keys, network issues, or mocked providers in tests).
+            logger.warning("LLM analysis failed: %s", e)
+            return {}
+
+        try:
             json_match = re.search(r'\{[\s\S]*\}', response)
-            if json_match:
-                data = json.loads(json_match.group())
+            if not json_match:
+                return {}
 
-                # Parse tone
-                tone_data = data.get("tone", {})
-                tone = ToneDistribution(**{
-                    k: float(v) for k, v in tone_data.items()
-                    if k in ToneDistribution.model_fields
-                })
+            data = json.loads(json_match.group())
 
-                # Parse style
-                style_data = data.get("style", {})
-                style = StyleMetrics(**{
-                    k: float(v) for k, v in style_data.items()
-                    if k in StyleMetrics.model_fields
-                })
+            # Parse tone
+            tone_data = data.get("tone", {})
+            tone = ToneDistribution(**{
+                k: float(v) for k, v in tone_data.items()
+                if k in ToneDistribution.model_fields
+            })
 
-                return {
-                    "tone": tone,
-                    "style": style,
-                    "key_characteristics": data.get("key_characteristics", []),
-                }
+            # Parse style
+            style_data = data.get("style", {})
+            style = StyleMetrics(**{
+                k: float(v) for k, v in style_data.items()
+                if k in StyleMetrics.model_fields
+            })
+
+            return {
+                "tone": tone,
+                "style": style,
+                "key_characteristics": data.get("key_characteristics", []),
+            }
         except (json.JSONDecodeError, ValueError) as e:
             logger.warning("LLM analysis parse error: %s", e)
-
-        return {}
+            return {}
 
     def _calculate_quality_score(
         self,

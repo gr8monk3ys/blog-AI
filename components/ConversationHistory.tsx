@@ -8,6 +8,30 @@ interface Message {
   timestamp: string;
 }
 
+// Mock data for development or when server is not available
+const MOCK_MESSAGES: Message[] = [
+  {
+    role: 'user',
+    content: 'Can you write a blog post about artificial intelligence?',
+    timestamp: new Date(Date.now() - 3600000).toISOString()
+  },
+  {
+    role: 'assistant',
+    content: 'I\'ll create a comprehensive blog post about AI for you. What specific aspects would you like me to focus on?',
+    timestamp: new Date(Date.now() - 3500000).toISOString()
+  },
+  {
+    role: 'user',
+    content: 'Focus on how AI is changing content creation and marketing.',
+    timestamp: new Date(Date.now() - 3400000).toISOString()
+  },
+  {
+    role: 'assistant',
+    content: 'I\'ve generated a blog post titled "How AI is Revolutionizing Content Creation and Marketing" with 5 sections covering the latest trends and applications.',
+    timestamp: new Date(Date.now() - 3300000).toISOString()
+  }
+];
+
 interface ConversationHistoryProps {
   conversationId: string;
 }
@@ -54,30 +78,6 @@ export default function ConversationHistory({ conversationId }: ConversationHist
       return [...groups, { role: message.role, messages: [message] }];
     }, [] as { role: string; messages: Message[] }[]);
   }, [messages]);
-
-  // Mock data for development or when server is not available
-  const mockMessages: Message[] = [
-    {
-      role: 'user',
-      content: 'Can you write a blog post about artificial intelligence?',
-      timestamp: new Date(Date.now() - 3600000).toISOString()
-    },
-    {
-      role: 'assistant',
-      content: 'I\'ll create a comprehensive blog post about AI for you. What specific aspects would you like me to focus on?',
-      timestamp: new Date(Date.now() - 3500000).toISOString()
-    },
-    {
-      role: 'user',
-      content: 'Focus on how AI is changing content creation and marketing.',
-      timestamp: new Date(Date.now() - 3400000).toISOString()
-    },
-    {
-      role: 'assistant',
-      content: 'I\'ve generated a blog post titled "How AI is Revolutionizing Content Creation and Marketing" with 5 sections covering the latest trends and applications.',
-      timestamp: new Date(Date.now() - 3300000).toISOString()
-    }
-  ];
 
   useEffect(() => {
     let isMounted = true;
@@ -140,16 +140,16 @@ export default function ConversationHistory({ conversationId }: ConversationHist
       const isConnected = await checkServerConnection();
       if (isMounted) setIsServerConnected(isConnected);
 
-      if (!isConnected) {
-        // Use mock data if server is not running
-        setTimeout(() => {
-          if (isMounted) {
-            setMessages(mockMessages);
-            setIsLoading(false);
-          }
-        }, 1000); // Simulate loading delay
-        return;
-      }
+	      if (!isConnected) {
+	        // Use mock data if server is not running
+	        setTimeout(() => {
+	          if (isMounted) {
+	            setMessages(MOCK_MESSAGES);
+	            setIsLoading(false);
+	          }
+	        }, 1000); // Simulate loading delay
+	        return;
+	      }
 
       // Server is running, setup WebSocket connection
       websocket = setupWebSocket(conversationId);
@@ -157,7 +157,7 @@ export default function ConversationHistory({ conversationId }: ConversationHist
       // Load conversation history
       try {
         const response = await fetch(API_ENDPOINTS.conversation(conversationId), {
-          headers: getDefaultHeaders(),
+          headers: await getDefaultHeaders(),
         });
 
         if (!response.ok) {
@@ -193,17 +193,29 @@ export default function ConversationHistory({ conversationId }: ConversationHist
   // Scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, scrollToBottom]);
 
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-4 px-1">
         <h2 className="text-xl font-bold text-amber-800">Conversation</h2>
-        {messages.length > 0 && (
-          <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
-            {messages.length} messages
+        <div className="flex items-center gap-2">
+          <span
+            className={`text-xs px-2 py-1 rounded-full border ${
+              isServerConnected
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : 'bg-amber-50 text-amber-700 border-amber-200'
+            }`}
+            title={isServerConnected ? 'Live connection' : 'Using mock data'}
+          >
+            {isServerConnected ? 'Live' : 'Offline'}
           </span>
-        )}
+          {messages.length > 0 && (
+            <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
+              {messages.length} messages
+            </span>
+          )}
+        </div>
       </div>
       
       <div className="flex-1 overflow-y-auto pr-2 space-y-4 mb-2">

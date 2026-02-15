@@ -4,7 +4,7 @@ Web research functionality.
 
 import os
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..types.research import (
     GoogleSerpResult,
@@ -28,6 +28,118 @@ class ResearchError(Exception):
     pass
 
 
+def extract_research_sources(
+    research_results: ResearchResults,
+    max_sources: int = 8,
+) -> List[Dict[str, Any]]:
+    """
+    Flatten multi-provider research results into a de-duplicated list of sources.
+
+    Returned items are safe to serialize and can be used both for:
+    - Prompt context ("cite sources like [1]")
+    - API responses (show users which sources informed the output)
+    """
+    sources: List[Tuple[str, Dict[str, Any]]] = []
+
+    def _add(provider: str, title: str, url: str, snippet: str = "") -> None:
+        url = (url or "").strip()
+        title = (title or "").strip()
+        if not url or not title:
+            return
+        key = f"{provider}:{url}"
+        sources.append(
+            (
+                key,
+                {
+                    "provider": provider,
+                    "title": title[:200],
+                    "url": url[:500],
+                    "snippet": (snippet or "")[:400],
+                },
+            )
+        )
+
+    # Google organic results
+    if research_results.google and getattr(research_results.google, "organic", None):
+        for r in (research_results.google.organic or [])[: max_sources * 2]:
+            _add("google", getattr(r, "title", ""), getattr(r, "url", ""), getattr(r, "snippet", ""))
+
+    # Tavily results
+    if research_results.tavily and getattr(research_results.tavily, "results", None):
+        for r in (research_results.tavily.results or [])[: max_sources * 2]:
+            _add("tavily", getattr(r, "title", ""), getattr(r, "url", ""), getattr(r, "content", ""))
+
+    # Metaphor results
+    if research_results.metaphor:
+        for r in (research_results.metaphor or [])[: max_sources * 2]:
+            _add("metaphor", getattr(r, "title", ""), getattr(r, "url", ""), getattr(r, "text", ""))
+
+    # De-duplicate by (provider,url) keeping first.
+    seen: set = set()
+    deduped: List[Dict[str, Any]] = []
+    for key, item in sources:
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(item)
+        if len(deduped) >= max_sources:
+            break
+
+    # Assign stable numeric IDs (1..N) for citations.
+    for i, item in enumerate(deduped, start=1):
+        item["id"] = i
+
+    return deduped
+
+
+def format_research_results_for_prompt(
+    research_results: ResearchResults,
+    max_sources: int = 8,
+    max_chars: int = 2200,
+) -> str:
+    """
+    Produce a compact, LLM-friendly research context with numbered sources.
+
+    The generation prompts can instruct the model to cite sources using [n].
+    """
+    sources = extract_research_sources(research_results, max_sources=max_sources)
+
+    lines: List[str] = []
+    lines.append("SOURCES (cite using [n]; do not invent citations):")
+    for s in sources:
+        snippet = (s.get("snippet") or "").strip().replace("\n", " ")
+        snippet = snippet[:280] + ("..." if len(snippet) > 280 else "")
+        lines.append(f"[{s['id']}] {s.get('title','').strip()} ({s.get('provider')})")
+        lines.append(f"URL: {s.get('url','').strip()}")
+        if snippet:
+            lines.append(f"Notes: {snippet}")
+
+    # Add provider "answers"/PAA when present (these are secondary, not primary citations).
+    if research_results.tavily and getattr(research_results.tavily, "answer", None):
+        answer = str(research_results.tavily.answer or "").strip().replace("\n", " ")
+        if answer:
+            lines.append("")
+            lines.append("TAVILY SUMMARY (use as guidance; still cite sources above):")
+            lines.append(answer[:800] + ("..." if len(answer) > 800 else ""))
+
+    if research_results.google and getattr(research_results.google, "people_also_ask", None):
+        paa = research_results.google.people_also_ask or []
+        if paa:
+            lines.append("")
+            lines.append("PEOPLE ALSO ASK:")
+            for q in paa[:6]:
+                q_text = str(getattr(q, "question", "") or "").strip()
+                a_text = str(getattr(q, "answer", "") or "").strip()
+                if not q_text:
+                    continue
+                lines.append(f"- {q_text}" + (f" | {a_text[:180]}{'...' if len(a_text) > 180 else ''}" if a_text else ""))
+
+    out = "\n".join(lines).strip()
+    if len(out) <= max_chars:
+        return out
+    return out[: max(0, max_chars - 3)] + "..."
+
+
 def conduct_web_research(
     keywords: List[str], options: Optional[SearchOptions] = None
 ) -> ResearchResults:
@@ -46,15 +158,17 @@ def conduct_web_research(
     """
     options = options or SearchOptions()
     cache = get_research_cache()
+    cache_enabled = os.environ.get("DEV_MODE", "false").lower() != "true"
 
     try:
         # Convert keywords list to a string for searching
         search_query = " ".join(keywords)
 
         cache_key = _build_cache_key(search_query, options)
-        cached = cache.get(cache_key)
-        if cached is not None:
-            return cached
+        if cache_enabled:
+            cached = cache.get(cache_key)
+            if cached is not None:
+                return cached
 
         # Conduct research using different sources
         google_results = google_serp_search(search_query, options)
@@ -69,7 +183,8 @@ def conduct_web_research(
             metaphor=metaphor_results,
             trends=trends_results,
         )
-        cache.set(cache_key, results)
+        if cache_enabled:
+            cache.set(cache_key, results)
         return results
     except ResearchError:
         # Re-raise ResearchError as-is

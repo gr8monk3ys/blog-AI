@@ -20,6 +20,7 @@ def generate_introduction(
     keywords: Optional[List[str]] = None,
     tone: str = "informative",
     target_audience: Optional[str] = None,
+    brand_voice: Optional[str] = None,
     provider: Optional[LLMProvider] = None,
     options: Optional[GenerationOptions] = None,
 ) -> Introduction:
@@ -57,6 +58,9 @@ def generate_introduction(
 
         if target_audience:
             prompt += f"\nTarget Audience: {target_audience}"
+
+        if brand_voice:
+            prompt += f"\n\nBRAND VOICE SUMMARY (follow strictly):\n{brand_voice}\n"
 
         prompt += f"""
         Tone: {tone}
@@ -150,6 +154,7 @@ def generate_introduction_with_research(
     keywords: Optional[List[str]] = None,
     tone: str = "informative",
     target_audience: Optional[str] = None,
+    brand_voice: Optional[str] = None,
     provider: Optional[LLMProvider] = None,
     options: Optional[GenerationOptions] = None,
 ) -> Introduction:
@@ -188,6 +193,9 @@ def generate_introduction_with_research(
 
         if target_audience:
             prompt += f"\nTarget Audience: {target_audience}"
+
+        if brand_voice:
+            prompt += f"\n\nBRAND VOICE SUMMARY (follow strictly):\n{brand_voice}\n"
 
         prompt += f"""
         Tone: {tone}

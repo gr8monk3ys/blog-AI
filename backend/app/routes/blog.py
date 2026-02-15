@@ -21,6 +21,7 @@ from src.blog.make_blog import (
     generate_blog_post_with_research,
     post_process_blog_post,
 )
+from src.brand.storage import get_brand_voice_storage
 from src.organizations import AuthorizationContext
 from src.config import get_settings
 from src.text_generation.core import (
@@ -122,6 +123,10 @@ async def generate_blog(
         f"in org {auth_ctx.organization_id}, topic_length: {len(request.topic)}"
     )
     try:
+        # Enforce quota before doing any expensive generation work.
+        # We call the dependency directly so we reuse the already-authenticated user_id.
+        await require_quota(user_id)
+
         settings = get_settings()
         provider_type = settings.llm.default_provider or "openai"
         # Create generation options
@@ -133,6 +138,16 @@ async def generate_blog(
             presence_penalty=0.0,
         )
 
+        brand_voice = None
+        if request.brand_profile_id:
+            try:
+                storage = get_brand_voice_storage()
+                fingerprint = await storage.get_fingerprint(user_id, request.brand_profile_id)
+                if fingerprint and fingerprint.voice_summary:
+                    brand_voice = fingerprint.voice_summary
+            except Exception as e:
+                logger.debug("Failed to load brand voice fingerprint: %s", e)
+
         # Generate blog post (run sync functions in thread pool to avoid blocking)
         if request.research:
             blog_post = await asyncio.to_thread(
@@ -141,6 +156,7 @@ async def generate_blog(
                     title=request.topic,
                     keywords=request.keywords,
                     tone=request.tone,
+                    brand_voice=brand_voice,
                     provider_type=provider_type,
                     options=options,
                 )
@@ -152,6 +168,7 @@ async def generate_blog(
                     title=request.topic,
                     keywords=request.keywords,
                     tone=request.tone,
+                    brand_voice=brand_voice,
                     provider_type=provider_type,
                     options=options,
                 )
@@ -180,6 +197,23 @@ async def generate_blog(
             "tags": blog_post.tags,
             "sections": [],
         }
+
+        sources = []
+        for s in getattr(blog_post, "sources", []) or []:
+            try:
+                sources.append(
+                    {
+                        "id": int(getattr(s, "id", 0) or 0),
+                        "title": str(getattr(s, "title", "") or ""),
+                        "url": str(getattr(s, "url", "") or ""),
+                        "snippet": str(getattr(s, "snippet", "") or ""),
+                        "provider": str(getattr(s, "provider", "") or ""),
+                    }
+                )
+            except Exception:
+                continue
+        if sources:
+            blog_post_data["sources"] = sources
 
         for section in blog_post.sections:
             section_data = {"title": section.title, "subtopics": []}
@@ -245,8 +279,8 @@ async def generate_blog(
                     "keywords": request.keywords[:5] if request.keywords else [],
                 },
             )
-        except (httpx.RequestError, httpx.TimeoutException) as webhook_error:
-            # Don't fail the request if webhook emission fails
+        except Exception as webhook_error:
+            # Best-effort: never fail the main request if webhook emission fails.
             logger.warning(f"Failed to emit webhook: {webhook_error}")
 
         logger.info(f"Blog generated successfully: {blog_post.title}")
@@ -272,8 +306,19 @@ async def generate_blog(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate blog post. Please try again later.",
         )
+    except HTTPException:
+        # Preserve explicit HTTP errors (e.g., quota/auth failures).
+        raise
     except (AttributeError, KeyError, TypeError) as e:
         logger.error(f"Unexpected error generating blog: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred. Please try again later.",
+        )
+    except Exception as e:
+        # Defensive catch-all: BaseHTTPMiddleware can surface exceptions as
+        # ExceptionGroups; normalize to a 500 response for clients/tests.
+        logger.error(f"Unhandled error generating blog: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred. Please try again later.",

@@ -12,8 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.organizations import AuthorizationContext
 
-from ..auth import verify_api_key
-from ..dependencies import require_content_access
+from ..dependencies.organization import get_optional_organization_context
 from ..storage import conversations
 
 router = APIRouter(tags=["conversations"])
@@ -22,7 +21,7 @@ router = APIRouter(tags=["conversations"])
 @router.get("/conversations/{conversation_id}")
 async def get_conversation(
     conversation_id: str,
-    auth_ctx: AuthorizationContext = Depends(require_content_access),
+    auth_ctx: AuthorizationContext = Depends(get_optional_organization_context),
 ):
     """
     Get conversation history by ID.
@@ -33,7 +32,10 @@ async def get_conversation(
     Returns:
         The conversation messages.
 
-    Authorization: Requires content.view permission.
+    Authorization:
+        Requires authentication (API key or Bearer token).
+        If X-Organization-ID is provided, scope will be organization-specific
+        only when the user is a member of that organization.
     """
     # Validate conversation_id format
     if not re.match(r"^[a-zA-Z0-9_-]+$", conversation_id):
@@ -42,8 +44,12 @@ async def get_conversation(
             detail="Invalid conversation ID format",
         )
 
-    # Use organization_id for scoping if available, fallback to user_id
-    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    # Scope to org only if the user is actually a member; otherwise fall back to user scope.
+    scope_id = (
+        auth_ctx.organization_id
+        if auth_ctx.organization_id and auth_ctx.is_org_member
+        else auth_ctx.user_id
+    )
 
     # Verify ownership (multi-tenant isolation)
     if not conversations.verify_ownership(conversation_id, scope_id):

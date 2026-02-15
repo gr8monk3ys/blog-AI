@@ -18,7 +18,11 @@ from ..planning.content_outline import (
 )
 from ..post_processing.humanizer import humanize_content
 from ..post_processing.proofreader import proofread_content
-from ..research.web_researcher import conduct_web_research
+from ..research.web_researcher import (
+    conduct_web_research,
+    extract_research_sources,
+    format_research_results_for_prompt,
+)
 from ..seo.meta_description import generate_meta_description
 from ..text_generation.core import (
     GenerationOptions,
@@ -28,7 +32,7 @@ from ..text_generation.core import (
     create_provider_from_env,
     generate_text,
 )
-from ..types.content import BlogPost, ContentType, Section, SubTopic
+from ..types.content import BlogPost, ContentType, Section, SubTopic, SourceCitation
 from ..types.providers import ProviderType
 
 
@@ -44,6 +48,7 @@ def generate_blog_post(
     num_sections: int = 5,
     include_faqs: bool = True,
     tone: str = "informative",
+    brand_voice: Optional[str] = None,
     provider_type: ProviderType = "openai",
     options: Optional[GenerationOptions] = None,
 ) -> BlogPost:
@@ -79,7 +84,7 @@ def generate_blog_post(
 
         # Generate introduction
         introduction_section = generate_introduction_section(
-            title, outline.sections, keywords, tone, provider, options
+            title, outline.sections, keywords, tone, brand_voice, provider, options
         )
         sections.append(introduction_section)
 
@@ -87,12 +92,12 @@ def generate_blog_post(
         for i, section_title in enumerate(
             outline.sections[1:-1]
         ):  # Skip introduction and conclusion
-            section = generate_section(section_title, keywords, tone, provider, options)
+            section = generate_section(section_title, keywords, tone, brand_voice, provider, options)
             sections.append(section)
 
         # Generate conclusion
         conclusion_section = generate_conclusion_section(
-            title, outline.sections, keywords, tone, provider, options
+            title, outline.sections, keywords, tone, brand_voice, provider, options
         )
         sections.append(conclusion_section)
 
@@ -108,7 +113,7 @@ def generate_blog_post(
 
             # Generate FAQs
             faq_section = generate_faq_section(
-                title, content, keywords, tone, provider, options
+                title, content, keywords, tone, brand_voice, provider, options
             )
             sections.append(faq_section)
 
@@ -140,6 +145,7 @@ def generate_blog_post_with_research(
     num_sections: int = 5,
     include_faqs: bool = True,
     tone: str = "informative",
+    brand_voice: Optional[str] = None,
     provider_type: ProviderType = "openai",
     options: Optional[GenerationOptions] = None,
 ) -> BlogPost:
@@ -171,6 +177,20 @@ def generate_blog_post_with_research(
             research_keywords.extend(keywords)
 
         research_results = conduct_web_research(research_keywords)
+        raw_sources = extract_research_sources(research_results, max_sources=8)
+        sources = [
+            SourceCitation(
+                id=int(s.get("id", 0) or 0),
+                title=str(s.get("title") or ""),
+                url=str(s.get("url") or ""),
+                snippet=str(s.get("snippet") or ""),
+                provider=str(s.get("provider") or ""),
+            )
+            for s in raw_sources
+        ]
+        research_context = format_research_results_for_prompt(
+            research_results, max_sources=8, max_chars=2200
+        )
 
         # Generate outline
         outline = generate_content_outline_with_research(
@@ -182,7 +202,14 @@ def generate_blog_post_with_research(
 
         # Generate introduction
         introduction_section = generate_introduction_section_with_research(
-            title, outline.sections, research_results, keywords, tone, provider, options
+            title,
+            outline.sections,
+            research_context,
+            keywords,
+            tone,
+            brand_voice,
+            provider,
+            options,
         )
         sections.append(introduction_section)
 
@@ -191,13 +218,19 @@ def generate_blog_post_with_research(
             outline.sections[1:-1]
         ):  # Skip introduction and conclusion
             section = generate_section_with_research(
-                section_title, research_results, keywords, tone, provider, options
+                section_title,
+                research_context,
+                keywords,
+                tone,
+                brand_voice,
+                provider,
+                options,
             )
             sections.append(section)
 
         # Generate conclusion
         conclusion_section = generate_conclusion_section(
-            title, outline.sections, keywords, tone, provider, options
+            title, outline.sections, keywords, tone, brand_voice, provider, options
         )
         sections.append(conclusion_section)
 
@@ -213,7 +246,7 @@ def generate_blog_post_with_research(
 
             # Generate FAQs
             faq_section = generate_faq_section(
-                title, content, keywords, tone, provider, options
+                title, content, keywords, tone, brand_voice, provider, options
             )
             sections.append(faq_section)
 
@@ -223,7 +256,11 @@ def generate_blog_post_with_research(
         ).content
 
         return BlogPost(
-            title=title, description=description, sections=sections, tags=keywords or []
+            title=title,
+            description=description,
+            sections=sections,
+            tags=keywords or [],
+            sources=sources,
         )
     except TextGenerationError as e:
         logger.error(f"Text generation error in blog post with research: {str(e)}")
@@ -244,6 +281,7 @@ def generate_introduction_section(
     outline_sections: List[str],
     keywords: Optional[List[str]] = None,
     tone: str = "informative",
+    brand_voice: Optional[str] = None,
     provider: Optional[LLMProvider] = None,
     options: Optional[GenerationOptions] = None,
 ) -> Section:
@@ -271,6 +309,7 @@ def generate_introduction_section(
             outline="\n".join(outline_sections),
             keywords=keywords,
             tone=tone,
+            brand_voice=brand_voice,
             provider=provider,
             options=options,
         )
@@ -296,9 +335,10 @@ def generate_introduction_section(
 def generate_introduction_section_with_research(
     title: str,
     outline_sections: List[str],
-    research_results: Any,
+    research_context: str,
     keywords: Optional[List[str]] = None,
     tone: str = "informative",
+    brand_voice: Optional[str] = None,
     provider: Optional[LLMProvider] = None,
     options: Optional[GenerationOptions] = None,
 ) -> Section:
@@ -331,20 +371,24 @@ def generate_introduction_section_with_research(
         if keywords:
             prompt += f"\nKeywords: {', '.join(keywords)}"
 
+        if brand_voice:
+            prompt += f"\n\nBRAND VOICE SUMMARY (follow strictly):\n{brand_voice}\n"
+
         prompt += f"""
         Outline:
         {", ".join(outline_sections)}
         
-        Based on the following research:
-        
-        {str(research_results)[:2000]}...
+        Research Context:
+        {research_context}
         
         Requirements:
         - The introduction should be 3-4 paragraphs.
         - Include a compelling hook in the first paragraph to grab the reader's attention.
         - Clearly state the purpose or thesis of the blog post.
         - Include at least one of the main keywords naturally.
-        - Incorporate insights from the research.
+        - Incorporate insights from the research context.
+        - Add citations like [1] at the end of sentences that rely on a source.
+        - Only cite sources provided in the Sources list; do not invent citations.
         - Set the tone and expectations for the rest of the blog post.
         - Use a {tone} tone throughout.
         
@@ -379,6 +423,7 @@ def generate_section(
     section_title: str,
     keywords: Optional[List[str]] = None,
     tone: str = "informative",
+    brand_voice: Optional[str] = None,
     provider: Optional[LLMProvider] = None,
     options: Optional[GenerationOptions] = None,
 ) -> Section:
@@ -408,6 +453,9 @@ def generate_section(
 
         if keywords:
             prompt += f"\n\nKeywords to include: {', '.join(keywords)}"
+
+        if brand_voice:
+            prompt += f"\n\nBRAND VOICE SUMMARY (follow strictly):\n{brand_voice}\n"
 
         prompt += f"""
         
@@ -453,9 +501,10 @@ def generate_section(
 
 def generate_section_with_research(
     section_title: str,
-    research_results: Any,
+    research_context: str,
     keywords: Optional[List[str]] = None,
     tone: str = "informative",
+    brand_voice: Optional[str] = None,
     provider: Optional[LLMProvider] = None,
     options: Optional[GenerationOptions] = None,
 ) -> Section:
@@ -483,19 +532,23 @@ def generate_section_with_research(
         
         {section_title}
         
-        Based on the following research:
-        
-        {str(research_results)[:2000]}...
+        Research Context:
+        {research_context}
         """
 
         if keywords:
             prompt += f"\n\nKeywords to include: {', '.join(keywords)}"
 
+        if brand_voice:
+            prompt += f"\n\nBRAND VOICE SUMMARY (follow strictly):\n{brand_voice}\n"
+
         prompt += f"""
         
         Requirements:
         - The content should be 3-4 paragraphs.
-        - Include relevant information, examples, and insights from the research.
+        - Include relevant information, examples, and insights from the research context.
+        - Add citations like [1] at the end of sentences that rely on a source.
+        - Only cite sources provided in the Sources list; do not invent citations.
         - Use a {tone} tone throughout.
         - Write in a clear, engaging style.
         """
@@ -538,6 +591,7 @@ def generate_conclusion_section(
     outline_sections: List[str],
     keywords: Optional[List[str]] = None,
     tone: str = "informative",
+    brand_voice: Optional[str] = None,
     provider: Optional[LLMProvider] = None,
     options: Optional[GenerationOptions] = None,
 ) -> Section:
@@ -570,6 +624,7 @@ def generate_conclusion_section(
             content=content,
             keywords=keywords,
             tone=tone,
+            brand_voice=brand_voice,
             provider=provider,
             options=options,
         )
@@ -597,6 +652,7 @@ def generate_faq_section(
     content: str,
     keywords: Optional[List[str]] = None,
     tone: str = "informative",
+    brand_voice: Optional[str] = None,
     provider: Optional[LLMProvider] = None,
     options: Optional[GenerationOptions] = None,
 ) -> Section:
@@ -620,7 +676,7 @@ def generate_faq_section(
     try:
         # Generate FAQs
         faq_result = generate_faqs(
-            content=content, count=5, provider=provider, options=options
+            content=content, count=5, brand_voice=brand_voice, provider=provider, options=options
         )
 
         # Create subtopics
@@ -693,7 +749,9 @@ def post_process_blog_post(
                     # Proofread content if requested
                     if proofread:
                         proofreading_result = proofread_content(
-                            subtopic.content, provider=provider, options=options
+                            subtopic.content,
+                            provider=provider,
+                            generation_options=options,
                         )
                         if proofreading_result.corrected_text:
                             processed_subtopic.content = (
@@ -705,7 +763,7 @@ def post_process_blog_post(
                         processed_subtopic.content = humanize_content(
                             processed_subtopic.content,
                             provider=provider,
-                            options=options,
+                            generation_options=options,
                         )
 
                 processed_section.subtopics.append(processed_subtopic)

@@ -3,7 +3,7 @@ import { Popover } from '@headlessui/react';
 import BookViewer from './BookViewer';
 import BookEditor from './BookEditor';
 import ExportMenu, { ExportContent, ExportFormat } from './ExportMenu';
-import { Book, Chapter } from '../types/book';
+import { Book } from '../types/book';
 import { ContentGenerationResponse, BlogSection, BookContent } from '../types/content';
 import { API_ENDPOINTS, getDefaultHeaders } from '../lib/api';
 
@@ -56,6 +56,13 @@ export default function ContentViewer({ content }: ContentViewerProps) {
         markdown += `${subtopic.content}\n\n`;
       }
     }
+    if (blog.sources?.length) {
+      markdown += `---\n\n## Sources\n\n`;
+      for (const s of blog.sources) {
+        markdown += `- [${s.id}] ${s.title} (${s.url})\n`;
+      }
+      markdown += `\n`;
+    }
     return markdown;
   };
 
@@ -73,6 +80,13 @@ export default function ContentViewer({ content }: ContentViewerProps) {
         markdown += `### ${topic.title}\n\n`;
         markdown += `${topic.content}\n\n`;
       }
+    }
+    if (book.sources?.length) {
+      markdown += `---\n\n## Sources\n\n`;
+      for (const s of book.sources) {
+        markdown += `- [${s.id}] ${s.title} (${s.url})\n`;
+      }
+      markdown += `\n`;
     }
     return markdown;
   };
@@ -141,7 +155,7 @@ export default function ContentViewer({ content }: ContentViewerProps) {
     try {
       const response = await fetch(API_ENDPOINTS.editSection, {
         method: 'POST',
-        headers: getDefaultHeaders(),
+        headers: await getDefaultHeaders(),
         body: JSON.stringify({
           file_path: content.file_path || '',
           section_id: sectionId,
@@ -174,6 +188,7 @@ export default function ContentViewer({ content }: ContentViewerProps) {
   };
 
   if (content.type === 'blog') {
+    const sources = content.content.sources || []
     return (
       <div className="mt-8">
         {/* Toast notification */}
@@ -198,8 +213,8 @@ export default function ContentViewer({ content }: ContentViewerProps) {
           />
         </div>
 
-        <div className="prose prose-lg max-w-none">
-        {content.content.sections.map((section: BlogSection, index: number) => (
+	        <div className="prose prose-lg max-w-none">
+	        {content.content.sections.map((section: BlogSection, index: number) => (
           <Popover key={`section-${index}`} className="relative">
             <div
               className="hover:bg-gray-50 p-2 rounded transition-colors cursor-pointer group"
@@ -239,14 +254,38 @@ export default function ContentViewer({ content }: ContentViewerProps) {
               )}
             </div>
           </Popover>
-        ))}
-        </div>
+	        ))}
+	        </div>
+
+        {sources.length > 0 && (
+          <div className="mt-10 border-t border-gray-200 pt-6">
+            <h2 className="text-lg font-semibold text-gray-900">Sources</h2>
+            <ul className="mt-3 space-y-2 text-sm">
+              {sources.map((s) => (
+                <li key={s.id} className="text-gray-700">
+                  <span className="font-medium">[{s.id}]</span>{' '}
+                  <a
+                    href={s.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-amber-700 hover:text-amber-800 underline"
+                  >
+                    {s.title}
+                  </a>
+                  {s.provider ? <span className="text-gray-400"> ({s.provider})</span> : null}
+                  {s.snippet ? <div className="text-gray-500 mt-1">{s.snippet}</div> : null}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     );
   }
 
   if (content.type === 'book') {
     const filePath = content.file_path || '';
+    const sources = (content.content as BookContent).sources || []
 
     if (isEditingBook && bookData) {
       return (
@@ -286,9 +325,9 @@ export default function ContentViewer({ content }: ContentViewerProps) {
           </button>
         </div>
 
-        {bookData ? (
-          <BookViewer book={bookData} filePath={filePath} />
-        ) : (
+	        {bookData ? (
+	          <BookViewer book={bookData} filePath={filePath} />
+	        ) : (
           <div>
             <h1 className="text-3xl font-bold">{content.content.title}</h1>
             {filePath && (
@@ -305,6 +344,29 @@ export default function ContentViewer({ content }: ContentViewerProps) {
                 </button>
               </>
             )}
+          </div>
+	        )}
+
+        {sources.length > 0 && (
+          <div className="mt-10 border-t border-gray-200 pt-6">
+            <h2 className="text-lg font-semibold text-gray-900">Sources</h2>
+            <ul className="mt-3 space-y-2 text-sm">
+              {sources.map((s) => (
+                <li key={s.id} className="text-gray-700">
+                  <span className="font-medium">[{s.id}]</span>{' '}
+                  <a
+                    href={s.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-amber-700 hover:text-amber-800 underline"
+                  >
+                    {s.title}
+                  </a>
+                  {s.provider ? <span className="text-gray-400"> ({s.provider})</span> : null}
+                  {s.snippet ? <div className="text-gray-500 mt-1">{s.snippet}</div> : null}
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </div>

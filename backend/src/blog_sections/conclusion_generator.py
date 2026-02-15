@@ -20,6 +20,7 @@ def generate_conclusion(
     keywords: Optional[List[str]] = None,
     tone: str = "informative",
     include_call_to_action: bool = True,
+    brand_voice: Optional[str] = None,
     provider: Optional[LLMProvider] = None,
     options: Optional[GenerationOptions] = None,
 ) -> Conclusion:
@@ -55,6 +56,9 @@ def generate_conclusion(
 
         if keywords:
             prompt += f"Keywords: {', '.join(keywords)}\n"
+
+        if brand_voice:
+            prompt += f"\nBRAND VOICE SUMMARY (follow strictly):\n{brand_voice}\n"
 
         prompt += f"""
         Tone: {tone}
@@ -161,6 +165,7 @@ def generate_conclusion_with_key_points(
     keywords: Optional[List[str]] = None,
     tone: str = "informative",
     include_call_to_action: bool = True,
+    brand_voice: Optional[str] = None,
     provider: Optional[LLMProvider] = None,
     options: Optional[GenerationOptions] = None,
 ) -> Conclusion:
@@ -197,6 +202,9 @@ def generate_conclusion_with_key_points(
 
         if keywords:
             prompt += f"\nKeywords: {', '.join(keywords)}"
+
+        if brand_voice:
+            prompt += f"\n\nBRAND VOICE SUMMARY (follow strictly):\n{brand_voice}\n"
 
         prompt += f"""
         

@@ -10,6 +10,7 @@ import type { ContentVariation } from '../../../components/tools/VariationCompar
 import type { BrandProfile } from '../../../types/brand'
 import { historyApi } from '../../../lib/history-api'
 import { toolsApi } from '../../../lib/tools-api'
+import { getDefaultHeaders } from '../../../lib/api'
 import SaveTemplateModal from '../../../components/templates/SaveTemplateModal'
 
 // Import extracted components
@@ -116,6 +117,7 @@ export default function ToolPage() {
     try {
       const result = await toolsApi.executeTool(tool.slug, {
         inputs: buildExecutionInputs(keywordList),
+        brand_profile_id: brandVoiceEnabled ? (selectedBrandProfile?.id || undefined) : undefined,
       })
 
       if (result.success && result.output) {
@@ -147,6 +149,16 @@ export default function ToolPage() {
       setExportToast({
         show: true,
         message: 'Please enter a topic before generating content.',
+        type: 'error',
+      })
+      return
+    }
+
+    if (brandVoiceEnabled && !selectedBrandProfile) {
+      setLoading(false)
+      setExportToast({
+        show: true,
+        message: 'Select a brand profile (or disable Brand Voice) to continue.',
         type: 'error',
       })
       return
@@ -231,6 +243,7 @@ export default function ToolPage() {
             tone,
             useResearch,
             keywords: keywordList,
+            brand_profile_id: brandVoiceEnabled ? selectedBrandProfile?.id : null,
           },
           output: finalOutput,
           provider: backendOutput ? 'openai' : 'mock',
@@ -302,7 +315,7 @@ export default function ToolPage() {
 
     const response = await fetch('/api/templates', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await getDefaultHeaders(),
       body: JSON.stringify({
         ...data,
         toolId: tool.slug,

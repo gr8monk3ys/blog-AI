@@ -23,6 +23,23 @@ from .rate_limiter import (
 
 logger = logging.getLogger(__name__)
 
+try:
+    import openai  # type: ignore
+except ImportError:  # pragma: no cover
+    openai = None  # type: ignore
+
+try:
+    import anthropic  # type: ignore
+except ImportError:  # pragma: no cover
+    anthropic = None  # type: ignore
+
+try:
+    import google.generativeai as genai  # type: ignore
+    from google.api_core import exceptions as google_exceptions  # type: ignore
+except ImportError:  # pragma: no cover
+    genai = None  # type: ignore
+    google_exceptions = None  # type: ignore
+
 
 class TextGenerationError(Exception):
     """Exception raised for errors in the text generation process."""
@@ -214,7 +231,10 @@ def _get_openai_client(api_key: str, timeout: int):
     key = (api_key, timeout)
     client = _openai_clients.get(key)
     if client is None:
-        import openai
+        if openai is None:
+            raise TextGenerationError(
+                "OpenAI package not installed. Install it with 'pip install openai'."
+            )
 
         client = openai.OpenAI(api_key=api_key, timeout=timeout)
         _openai_clients[key] = client
@@ -225,7 +245,10 @@ def _get_anthropic_client(api_key: str, timeout: int):
     key = (api_key, timeout)
     client = _anthropic_clients.get(key)
     if client is None:
-        import anthropic
+        if anthropic is None:
+            raise TextGenerationError(
+                "Anthropic package not installed. Install it with 'pip install anthropic'."
+            )
 
         client = anthropic.Anthropic(api_key=api_key, timeout=timeout)
         _anthropic_clients[key] = client
@@ -269,13 +292,12 @@ def generate_with_openai(
     Raises:
         TextGenerationError: If an error occurs during text generation.
     """
-    try:
-        import openai
-        from httpx import TimeoutException
-    except ImportError:
+    if openai is None:
         raise TextGenerationError(
             "OpenAI package not installed. Install it with 'pip install openai'."
         )
+
+    from httpx import TimeoutException
 
     try:
         client = _get_openai_client(config.api_key, LLM_API_TIMEOUT)
@@ -297,18 +319,32 @@ def generate_with_openai(
             raise TextGenerationError("OpenAI returned empty message content")
 
         return response.choices[0].message.content
-    except openai.AuthenticationError as e:
-        raise TextGenerationError(f"OpenAI authentication failed: {e}") from e
-    except openai.RateLimitError as e:
-        raise TextGenerationError(f"OpenAI rate limit exceeded: {e}") from e
-    except openai.APIConnectionError as e:
-        raise TextGenerationError(f"OpenAI connection error: {e}") from e
-    except openai.APIStatusError as e:
-        raise TextGenerationError(f"OpenAI API error (status {e.status_code}): {e}") from e
-    except openai.OpenAIError as e:
-        raise TextGenerationError(f"OpenAI error: {e}") from e
     except TimeoutException as e:
         raise TextGenerationError(f"OpenAI request timed out after {LLM_API_TIMEOUT}s: {e}") from e
+    except Exception as e:
+        def _is_openai_exc(attr: str) -> bool:
+            exc_cls = getattr(openai, attr, None)
+            return (
+                isinstance(exc_cls, type)
+                and issubclass(exc_cls, Exception)
+                and isinstance(e, exc_cls)
+            )
+
+        if _is_openai_exc("AuthenticationError"):
+            raise TextGenerationError(f"OpenAI authentication failed: {e}") from e
+        if _is_openai_exc("RateLimitError"):
+            raise TextGenerationError(f"OpenAI rate limit exceeded: {e}") from e
+        if _is_openai_exc("APIConnectionError"):
+            raise TextGenerationError(f"OpenAI connection error: {e}") from e
+
+        # v2 clients raise structured status errors.
+        if _is_openai_exc("APIStatusError"):
+            status_code = getattr(e, "status_code", "unknown")
+            raise TextGenerationError(f"OpenAI API error (status {status_code}): {e}") from e
+        if _is_openai_exc("OpenAIError"):
+            raise TextGenerationError(f"OpenAI error: {e}") from e
+
+        raise TextGenerationError(f"OpenAI error: {e}") from e
 
 
 def generate_with_anthropic(
@@ -328,13 +364,12 @@ def generate_with_anthropic(
     Raises:
         TextGenerationError: If an error occurs during text generation.
     """
-    try:
-        import anthropic
-        from httpx import TimeoutException
-    except ImportError:
+    if anthropic is None:
         raise TextGenerationError(
             "Anthropic package not installed. Install it with 'pip install anthropic'."
         )
+
+    from httpx import TimeoutException
 
     try:
         client = _get_anthropic_client(config.api_key, LLM_API_TIMEOUT)
@@ -353,18 +388,30 @@ def generate_with_anthropic(
             raise TextGenerationError("Anthropic returned empty text content")
 
         return response.content[0].text
-    except anthropic.AuthenticationError as e:
-        raise TextGenerationError(f"Anthropic authentication failed: {e}") from e
-    except anthropic.RateLimitError as e:
-        raise TextGenerationError(f"Anthropic rate limit exceeded: {e}") from e
-    except anthropic.APIConnectionError as e:
-        raise TextGenerationError(f"Anthropic connection error: {e}") from e
-    except anthropic.APIStatusError as e:
-        raise TextGenerationError(f"Anthropic API error (status {e.status_code}): {e}") from e
-    except anthropic.AnthropicError as e:
-        raise TextGenerationError(f"Anthropic error: {e}") from e
     except TimeoutException as e:
         raise TextGenerationError(f"Anthropic request timed out after {LLM_API_TIMEOUT}s: {e}") from e
+    except Exception as e:
+        def _is_anthropic_exc(attr: str) -> bool:
+            exc_cls = getattr(anthropic, attr, None)
+            return (
+                isinstance(exc_cls, type)
+                and issubclass(exc_cls, Exception)
+                and isinstance(e, exc_cls)
+            )
+
+        if _is_anthropic_exc("AuthenticationError"):
+            raise TextGenerationError(f"Anthropic authentication failed: {e}") from e
+        if _is_anthropic_exc("RateLimitError"):
+            raise TextGenerationError(f"Anthropic rate limit exceeded: {e}") from e
+        if _is_anthropic_exc("APIConnectionError"):
+            raise TextGenerationError(f"Anthropic connection error: {e}") from e
+        if _is_anthropic_exc("APIStatusError"):
+            status_code = getattr(e, "status_code", "unknown")
+            raise TextGenerationError(f"Anthropic API error (status {status_code}): {e}") from e
+        if _is_anthropic_exc("AnthropicError"):
+            raise TextGenerationError(f"Anthropic error: {e}") from e
+
+        raise TextGenerationError(f"Anthropic error: {e}") from e
 
 
 def generate_with_gemini(
@@ -384,10 +431,7 @@ def generate_with_gemini(
     Raises:
         TextGenerationError: If an error occurs during text generation.
     """
-    try:
-        import google.generativeai as genai
-        from google.api_core import exceptions as google_exceptions
-    except ImportError:
+    if genai is None:
         raise TextGenerationError(
             "Google Generative AI package not installed. Install it with 'pip install google-generativeai'."
         )
@@ -414,21 +458,28 @@ def generate_with_gemini(
             raise TextGenerationError("Gemini returned empty response text")
 
         return response.text
-    except google_exceptions.Unauthenticated as e:
-        raise TextGenerationError(f"Gemini authentication failed: {e}") from e
-    except google_exceptions.ResourceExhausted as e:
-        raise TextGenerationError(f"Gemini rate limit exceeded: {e}") from e
-    except google_exceptions.ServiceUnavailable as e:
-        raise TextGenerationError(f"Gemini service unavailable: {e}") from e
-    except google_exceptions.InvalidArgument as e:
-        raise TextGenerationError(f"Gemini invalid argument: {e}") from e
-    except google_exceptions.GoogleAPIError as e:
-        raise TextGenerationError(f"Gemini API error: {e}") from e
     except ValueError as e:
         # Gemini raises ValueError for content safety issues
         raise TextGenerationError(f"Gemini content generation failed: {e}") from e
-    except google_exceptions.DeadlineExceeded as e:
-        raise TextGenerationError(f"Gemini request timed out after {LLM_API_TIMEOUT}s: {e}") from e
+    except Exception as e:
+        if google_exceptions is not None:
+            # Map common Google API errors when available.
+            if isinstance(e, getattr(google_exceptions, "Unauthenticated", ())):
+                raise TextGenerationError(f"Gemini authentication failed: {e}") from e
+            if isinstance(e, getattr(google_exceptions, "ResourceExhausted", ())):
+                raise TextGenerationError(f"Gemini rate limit exceeded: {e}") from e
+            if isinstance(e, getattr(google_exceptions, "ServiceUnavailable", ())):
+                raise TextGenerationError(f"Gemini service unavailable: {e}") from e
+            if isinstance(e, getattr(google_exceptions, "InvalidArgument", ())):
+                raise TextGenerationError(f"Gemini invalid argument: {e}") from e
+            if isinstance(e, getattr(google_exceptions, "DeadlineExceeded", ())):
+                raise TextGenerationError(
+                    f"Gemini request timed out after {LLM_API_TIMEOUT}s: {e}"
+                ) from e
+            if isinstance(e, getattr(google_exceptions, "GoogleAPIError", ())):
+                raise TextGenerationError(f"Gemini API error: {e}") from e
+
+        raise TextGenerationError(f"Gemini API error: {e}") from e
 
 
 def create_provider_from_env(provider_type: ProviderType) -> LLMProvider:

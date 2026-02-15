@@ -9,7 +9,11 @@ from ..planning.topic_clusters import (
     generate_topic_clusters,
     generate_topic_clusters_with_research,
 )
-from ..research.web_researcher import conduct_web_research
+from ..research.web_researcher import (
+    conduct_web_research,
+    extract_research_sources,
+    format_research_results_for_prompt,
+)
 from ..text_generation.core import (
     GenerationOptions,
     LLMProvider,
@@ -17,7 +21,7 @@ from ..text_generation.core import (
     TextGenerationError,
     create_provider_from_env,
 )
-from ..types.content import Book
+from ..types.content import Book, SourceCitation
 from ..types.providers import ProviderType
 from .chapters import (
     generate_chapter,
@@ -37,6 +41,7 @@ def generate_book(
     sections_per_chapter: int = 3,
     keywords: Optional[List[str]] = None,
     tone: str = "informative",
+    brand_voice: Optional[str] = None,
     provider_type: ProviderType = "openai",
     options: Optional[GenerationOptions] = None,
     concurrent_sections: bool = True,
@@ -63,6 +68,7 @@ def generate_book(
                 subtopics=cluster.subtopics,
                 keywords=cluster.keywords,
                 tone=tone,
+                brand_voice=brand_voice,
                 provider=provider,
                 options=options,
                 concurrent_sections=concurrent_sections,
@@ -74,6 +80,7 @@ def generate_book(
             chapters=chapters,
             keywords=keywords,
             tone=tone,
+            brand_voice=brand_voice,
             provider=provider,
             options=options,
         )
@@ -83,6 +90,7 @@ def generate_book(
             chapters=chapters,
             keywords=keywords,
             tone=tone,
+            brand_voice=brand_voice,
             provider=provider,
             options=options,
         )
@@ -109,6 +117,7 @@ def generate_book_with_research(
     sections_per_chapter: int = 3,
     keywords: Optional[List[str]] = None,
     tone: str = "informative",
+    brand_voice: Optional[str] = None,
     provider_type: ProviderType = "openai",
     options: Optional[GenerationOptions] = None,
     concurrent_sections: bool = True,
@@ -130,6 +139,20 @@ def generate_book_with_research(
             research_keywords.extend(keywords)
 
         research_results = research_func(research_keywords)
+        raw_sources = extract_research_sources(research_results, max_sources=8)
+        sources = [
+            SourceCitation(
+                id=int(s.get("id", 0) or 0),
+                title=str(s.get("title") or ""),
+                url=str(s.get("url") or ""),
+                snippet=str(s.get("snippet") or ""),
+                provider=str(s.get("provider") or ""),
+            )
+            for s in raw_sources
+        ]
+        research_context = format_research_results_for_prompt(
+            research_results, max_sources=8, max_chars=2400
+        )
 
         clusters = topic_cluster_generator(
             title, num_chapters, sections_per_chapter, provider, options
@@ -140,9 +163,10 @@ def generate_book_with_research(
             chapter = chapter_generator(
                 title=cluster.main_topic,
                 subtopics=cluster.subtopics,
-                research_results=research_results,
+                research_results=research_context,
                 keywords=cluster.keywords,
                 tone=tone,
+                brand_voice=brand_voice,
                 provider=provider,
                 options=options,
                 concurrent_sections=concurrent_sections,
@@ -152,9 +176,10 @@ def generate_book_with_research(
         introduction_chapter = introduction_chapter_generator(
             title=title,
             chapters=chapters,
-            research_results=research_results,
+            research_results=research_context,
             keywords=keywords,
             tone=tone,
+            brand_voice=brand_voice,
             provider=provider,
             options=options,
         )
@@ -164,12 +189,13 @@ def generate_book_with_research(
             chapters=chapters,
             keywords=keywords,
             tone=tone,
+            brand_voice=brand_voice,
             provider=provider,
             options=options,
         )
 
         all_chapters = [introduction_chapter] + chapters + [conclusion_chapter]
-        return Book(title=title, chapters=all_chapters, tags=keywords or [])
+        return Book(title=title, chapters=all_chapters, tags=keywords or [], sources=sources)
     except TextGenerationError as e:
         logger.error("Text generation error in book with research: %s", str(e))
         raise BookGenerationError(f"Failed to generate text: {str(e)}") from e

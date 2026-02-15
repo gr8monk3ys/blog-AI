@@ -5,26 +5,18 @@ Endpoints for analyzing, training, and scoring brand voices.
 Includes security validation for all inputs.
 
 Authorization:
-- Read operations (get fingerprint, list samples) require brand.view permission
-- Write operations (add sample, train, delete) require brand.manage permission
+- All endpoints require an authenticated user (Clerk session JWT via `Authorization: Bearer ...`).
 """
 
 import logging
-import re
+import uuid
 from typing import Any, Dict, List, Optional, Set
 
 import bleach
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
-from src.organizations import AuthorizationContext
 from ..auth import verify_api_key
-from ..dependencies import (
-    require_brand_read,
-    require_brand_write,
-    require_org_scoped_api_key,
-    OrganizationAuthContext,
-)
 from ..error_handlers import sanitize_error_message
 
 
@@ -115,13 +107,14 @@ class AddSampleRequest(BaseModel):
     @field_validator("profile_id")
     @classmethod
     def validate_profile_id(cls, v):
-        """Validate profile ID format."""
+        """Validate profile ID format (UUID)."""
         if not v or not v.strip():
             raise ValueError("Profile ID is required")
         v = str(v).strip()
-        if not re.match(r"^[a-zA-Z0-9_-]{1,100}$", v):
-            raise ValueError("Invalid profile ID format")
-        return v
+        try:
+            return str(uuid.UUID(v))
+        except Exception as e:
+            raise ValueError("Invalid profile ID format") from e
 
     @field_validator("content")
     @classmethod
@@ -187,13 +180,14 @@ class TrainVoiceRequest(BaseModel):
     @field_validator("profile_id")
     @classmethod
     def validate_profile_id(cls, v):
-        """Validate profile ID format."""
+        """Validate profile ID format (UUID)."""
         if not v or not v.strip():
             raise ValueError("Profile ID is required")
         v = str(v).strip()
-        if not re.match(r"^[a-zA-Z0-9_-]{1,100}$", v):
-            raise ValueError("Invalid profile ID format")
-        return v
+        try:
+            return str(uuid.UUID(v))
+        except Exception as e:
+            raise ValueError("Invalid profile ID format") from e
 
     @field_validator("provider")
     @classmethod
@@ -209,15 +203,16 @@ class TrainVoiceRequest(BaseModel):
     @field_validator("sample_ids")
     @classmethod
     def validate_sample_ids(cls, v):
-        """Validate sample ID formats."""
+        """Validate sample ID formats (UUID)."""
         if v is None:
             return None
         validated = []
         for sid in v:
             sid = str(sid).strip()
-            if not re.match(r"^[a-zA-Z0-9_-]{1,100}$", sid):
-                raise ValueError(f"Invalid sample ID format: {sid[:20]}...")
-            validated.append(sid)
+            try:
+                validated.append(str(uuid.UUID(sid)))
+            except Exception as e:
+                raise ValueError(f"Invalid sample ID format: {sid[:20]}...") from e
         return validated[:100]
 
 
@@ -240,13 +235,14 @@ class ScoreContentRequest(BaseModel):
     @field_validator("profile_id")
     @classmethod
     def validate_profile_id(cls, v):
-        """Validate profile ID format."""
+        """Validate profile ID format (UUID)."""
         if not v or not v.strip():
             raise ValueError("Profile ID is required")
         v = str(v).strip()
-        if not re.match(r"^[a-zA-Z0-9_-]{1,100}$", v):
-            raise ValueError("Invalid profile ID format")
-        return v
+        try:
+            return str(uuid.UUID(v))
+        except Exception as e:
+            raise ValueError("Invalid profile ID format") from e
 
     @field_validator("content")
     @classmethod
@@ -310,7 +306,7 @@ async def analyze_sample(
 @router.post("/samples")
 async def add_sample(
     request: AddSampleRequest,
-    auth_ctx: AuthorizationContext = Depends(require_brand_write),
+    user_id: str = Depends(verify_api_key),
 ):
     """
     Add a voice sample to a brand profile.
@@ -318,7 +314,7 @@ async def add_sample(
     Samples are used to train the voice fingerprint. Adding more diverse
     samples improves training quality.
 
-    **Authorization:** Requires brand.manage permission in the organization.
+    **Authorization:** Authenticated user (Clerk).
     """
     try:
         content_type = ContentType(request.content_type)
@@ -341,8 +337,8 @@ async def add_sample(
 
     try:
         storage = get_brand_voice_storage()
-        sample_id = await storage.add_sample(sample)
-        samples = await storage.get_samples(request.profile_id)
+        sample_id = await storage.add_sample(user_id, sample)
+        samples = await storage.get_samples(user_id, request.profile_id)
 
         return {
             "success": True,
@@ -373,16 +369,16 @@ async def add_sample(
 @router.get("/samples/{profile_id}")
 async def list_samples(
     profile_id: str,
-    auth_ctx: AuthorizationContext = Depends(require_brand_read),
+    user_id: str = Depends(verify_api_key),
 ):
     """
     List all voice samples for a brand profile.
 
-    **Authorization:** Requires brand.view permission in the organization.
+    **Authorization:** Authenticated user (Clerk).
     """
     try:
         storage = get_brand_voice_storage()
-        samples = await storage.get_samples(profile_id)
+        samples = await storage.get_samples(user_id, profile_id)
 
         return {
             "profile_id": profile_id,
@@ -418,16 +414,16 @@ async def list_samples(
 async def delete_sample(
     profile_id: str,
     sample_id: str,
-    auth_ctx: AuthorizationContext = Depends(require_brand_write),
+    user_id: str = Depends(verify_api_key),
 ):
     """
     Delete a voice sample from a profile.
 
-    **Authorization:** Requires brand.manage permission in the organization.
+    **Authorization:** Authenticated user (Clerk).
     """
     try:
         storage = get_brand_voice_storage()
-        deleted = await storage.delete_sample(profile_id, sample_id)
+        deleted = await storage.delete_sample(user_id, profile_id, sample_id)
 
         if not deleted:
             raise HTTPException(
@@ -435,7 +431,7 @@ async def delete_sample(
                 detail="Sample not found"
             )
 
-        samples = await storage.get_samples(profile_id)
+        samples = await storage.get_samples(user_id, profile_id)
 
         return {
             "success": True,
@@ -461,7 +457,7 @@ async def delete_sample(
 @router.post("/train", response_model=TrainVoiceResponse)
 async def train_voice(
     request: TrainVoiceRequest,
-    auth_ctx: AuthorizationContext = Depends(require_brand_write),
+    user_id: str = Depends(verify_api_key),
 ):
     """
     Train a voice fingerprint from samples.
@@ -469,11 +465,11 @@ async def train_voice(
     Aggregates analysis from all samples into a unified voice fingerprint
     that can be used for content generation and scoring.
 
-    **Authorization:** Requires brand.manage permission in the organization.
+    **Authorization:** Authenticated user (Clerk).
     """
     try:
         storage = get_brand_voice_storage()
-        samples = await storage.get_samples(request.profile_id)
+        samples = await storage.get_samples(user_id, request.profile_id)
 
         if not samples:
             raise HTTPException(
@@ -494,14 +490,15 @@ async def train_voice(
         fingerprint = trainer.train(request.profile_id, samples)
 
         # Store fingerprint
-        await storage.save_fingerprint(fingerprint)
+        await storage.save_fingerprint(user_id, fingerprint)
 
         # Update sample analysis status for all samples in profile
-        all_samples = await storage.get_samples(request.profile_id)
+        all_samples = await storage.get_samples(user_id, request.profile_id)
         for sample in all_samples:
             if not sample.is_analyzed:
                 # Mark as analyzed (analysis was done during training)
                 await storage.update_sample_analysis(
+                    user_id,
                     sample.id,
                     sample.analysis_result or SampleAnalysis(),
                     sample.quality_score
@@ -539,16 +536,16 @@ async def train_voice(
 @router.get("/fingerprint/{profile_id}")
 async def get_fingerprint(
     profile_id: str,
-    auth_ctx: AuthorizationContext = Depends(require_brand_read),
+    user_id: str = Depends(verify_api_key),
 ):
     """
     Get the trained voice fingerprint for a profile.
 
-    **Authorization:** Requires brand.view permission in the organization.
+    **Authorization:** Authenticated user (Clerk).
     """
     try:
         storage = get_brand_voice_storage()
-        fingerprint = await storage.get_fingerprint(profile_id)
+        fingerprint = await storage.get_fingerprint(user_id, profile_id)
 
         if not fingerprint:
             raise HTTPException(
@@ -579,19 +576,18 @@ async def get_fingerprint(
 @router.post("/score", response_model=ScoreContentResponse)
 async def score_content(
     request: ScoreContentRequest,
-    auth_ctx: AuthorizationContext = Depends(require_brand_read),
+    user_id: str = Depends(verify_api_key),
 ):
     """
     Score content against a trained brand voice.
 
     Returns consistency scores and suggestions for improvement.
 
-    **Authorization:** Requires brand.view permission in the organization.
+    **Authorization:** Authenticated user (Clerk).
     """
     try:
         storage = get_brand_voice_storage()
-        # SECURITY: Use organization-scoped profile access
-        fingerprint = await storage.get_fingerprint(request.profile_id, auth_ctx.organization_id)
+        fingerprint = await storage.get_fingerprint(user_id, request.profile_id)
 
         if not fingerprint:
             raise HTTPException(
@@ -648,18 +644,17 @@ async def score_content(
 @router.get("/status/{profile_id}")
 async def get_training_status(
     profile_id: str,
-    auth_ctx: AuthorizationContext = Depends(require_brand_read),
+    user_id: str = Depends(verify_api_key),
 ):
     """
     Get the training status for a profile.
 
-    **Authorization:** Requires brand.view permission in the organization.
+    **Authorization:** Authenticated user (Clerk).
     """
     try:
         storage = get_brand_voice_storage()
-        # SECURITY: Use organization-scoped profile access
-        samples = await storage.get_samples(profile_id, auth_ctx.organization_id)
-        fingerprint = await storage.get_fingerprint(profile_id, auth_ctx.organization_id)
+        samples = await storage.get_samples(user_id, profile_id)
+        fingerprint = await storage.get_fingerprint(user_id, profile_id)
 
         if fingerprint:
             training_status = TrainingStatus.TRAINED

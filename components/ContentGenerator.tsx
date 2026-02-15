@@ -6,6 +6,8 @@ import { BlogGenerationOptions } from '../types/blog';
 import { BlogGenerationResponse, ContentGenerationResponse } from '../types/content';
 import { API_ENDPOINTS, getDefaultHeaders, checkServerConnection } from '../lib/api';
 import { useUsageCheck } from './UsageIndicator';
+import BrandVoiceSelector from './brand/BrandVoiceSelector'
+import type { BrandProfile } from '../types/brand'
 
 interface ContentGeneratorProps {
   conversationId: string;
@@ -20,6 +22,8 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
   const [useResearch, setUseResearch] = useState(false);
   const [proofread, setProofread] = useState(true);
   const [humanize, setHumanize] = useState(true);
+  const [brandVoiceEnabled, setBrandVoiceEnabled] = useState(false)
+  const [selectedBrandProfile, setSelectedBrandProfile] = useState<BrandProfile | null>(null)
   const [error, setError] = useState<string | null>(null);
   const [limitReached, setLimitReached] = useState(false);
 
@@ -111,6 +115,12 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
     setLimitReached(false);
 
     try {
+      if (brandVoiceEnabled && !selectedBrandProfile) {
+        setError('Select a brand profile (or disable Brand Voice) to continue.')
+        setLoading(false)
+        return
+      }
+
       // Check usage limit before generating
       const hasUsage = await checkUsage();
       if (!hasUsage) {
@@ -135,7 +145,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
       // Server is running, make the real request
       const response = await fetch(API_ENDPOINTS.generateBlog, {
         method: 'POST',
-        headers: getDefaultHeaders(),
+        headers: await getDefaultHeaders(),
         body: JSON.stringify({
           topic,
           keywords: keywords.split(',').map(k => k.trim()).filter(k => k),
@@ -144,6 +154,9 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
           proofread,
           humanize,
           conversation_id: conversationId,
+          ...(brandVoiceEnabled && selectedBrandProfile?.id
+            ? { brand_profile_id: selectedBrandProfile.id }
+            : {}),
         }),
       });
 
@@ -289,6 +302,15 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
               </Switch>
               <span className="text-sm text-gray-700" id="humanize-label">Humanize content</span>
             </div>
+          </div>
+
+          <div className="mt-4">
+            <BrandVoiceSelector
+              enabled={brandVoiceEnabled}
+              onEnabledChange={setBrandVoiceEnabled}
+              selectedProfile={selectedBrandProfile}
+              onProfileChange={setSelectedBrandProfile}
+            />
           </div>
         </div>
 

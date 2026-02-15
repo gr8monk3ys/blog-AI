@@ -7,6 +7,14 @@ export interface SubTopic {
   content: string
 }
 
+export interface SourceCitation {
+  id: number
+  title: string
+  url: string
+  snippet?: string
+  provider?: string
+}
+
 export interface BlogSection {
   title: string
   subtopics: SubTopic[]
@@ -19,6 +27,7 @@ export interface BlogContent {
   image: string
   tags: string[]
   sections: BlogSection[]
+  sources?: SourceCitation[]
 }
 
 export interface Topic {
@@ -39,6 +48,7 @@ export interface BookContent {
   image: string
   tags: string[]
   chapters: BookChapter[]
+  sources?: SourceCitation[]
 }
 
 export interface BlogGenerationResponse {

@@ -11,6 +11,7 @@ Comprehensive integration tests covering:
 """
 
 import uuid
+import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -112,7 +113,7 @@ def sample_blog_post_with_faqs():
 def mock_dependencies():
     """Mock common dependencies for blog route tests."""
     with patch("app.routes.blog.verify_api_key") as mock_auth, \
-         patch("app.routes.blog.require_quota") as mock_quota, \
+         patch("app.routes.blog.require_quota", new_callable=AsyncMock) as mock_quota, \
          patch("app.routes.blog.increment_usage_for_operation") as mock_usage, \
          patch("app.routes.blog.conversations") as mock_conv, \
          patch("app.routes.blog.manager") as mock_ws, \
@@ -380,7 +381,7 @@ class TestBlogGenerationErrors:
             response = client.post(
                 "/generate-blog",
                 json={
-                    "topic": "",  # Invalid empty topic
+                    "topic": "Test Topic",
                     "conversation_id": "test-conv-123",
                 },
                 headers={"X-API-Key": "test-key"},
@@ -423,7 +424,7 @@ class TestBlogGenerationErrors:
                     "/generate-blog",
                     json={
                         "topic": "Test Topic",
-                        "conversation_id": f"test-conv-{wait_time}",
+                        "conversation_id": f"test-conv-{int(wait_time)}",
                     },
                     headers={"X-API-Key": "test-key"},
                 )
@@ -643,23 +644,21 @@ class TestBlogAuthorization:
 
     def test_missing_api_key_returns_401(self, client):
         """Test that missing API key returns 401."""
-        response = client.post(
-            "/generate-blog",
-            json={
-                "topic": "Test Topic",
-                "conversation_id": "test-conv-123",
-            },
-        )
+        with patch.dict(os.environ, {"DEV_MODE": "false"}):
+            response = client.post(
+                "/generate-blog",
+                json={
+                    "topic": "Test Topic",
+                    "conversation_id": "test-conv-123",
+                },
+            )
 
         # Should return 401 or 403 depending on implementation
         assert response.status_code in [401, 403, 422]
 
     def test_invalid_api_key_returns_401(self, client):
         """Test that invalid API key returns 401."""
-        with patch("app.auth.verify_api_key") as mock_verify:
-            from fastapi import HTTPException
-            mock_verify.side_effect = HTTPException(status_code=401, detail="Invalid API key")
-
+        with patch.dict(os.environ, {"DEV_MODE": "false"}):
             response = client.post(
                 "/generate-blog",
                 json={
@@ -674,7 +673,7 @@ class TestBlogAuthorization:
 
     def test_quota_exceeded_returns_429(self, client):
         """Test that exceeded quota returns 429."""
-        with patch("app.middleware.require_quota") as mock_quota:
+        with patch("app.routes.blog.require_quota", new_callable=AsyncMock) as mock_quota:
             from fastapi import HTTPException
             mock_quota.side_effect = HTTPException(
                 status_code=429,

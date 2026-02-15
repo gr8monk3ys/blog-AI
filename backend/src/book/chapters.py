@@ -51,6 +51,7 @@ def generate_chapter(
     subtopics: List[str],
     keywords: Optional[List[str]] = None,
     tone: str = "informative",
+    brand_voice: Optional[str] = None,
     provider: Optional[LLMProvider] = None,
     options: Optional[GenerationOptions] = None,
     concurrent_sections: bool = True,
@@ -71,6 +72,7 @@ def generate_chapter(
             subtopics=subtopics,
             keywords=keywords,
             tone=tone,
+            brand_voice=brand_voice,
             provider=provider,
             options=options,
         )
@@ -81,6 +83,7 @@ def generate_chapter(
                 section_title=subtopic,
                 keywords=keywords,
                 tone=tone,
+                brand_voice=brand_voice,
                 provider=provider,
                 options=options,
             )
@@ -96,6 +99,7 @@ def generate_chapter(
             subtopics=subtopics,
             keywords=keywords,
             tone=tone,
+            brand_voice=brand_voice,
             provider=provider,
             options=options,
         )
@@ -129,6 +133,7 @@ def generate_chapter_with_research(
     research_results: Any,
     keywords: Optional[List[str]] = None,
     tone: str = "informative",
+    brand_voice: Optional[str] = None,
     provider: Optional[LLMProvider] = None,
     options: Optional[GenerationOptions] = None,
     concurrent_sections: bool = True,
@@ -152,6 +157,7 @@ def generate_chapter_with_research(
             research_results=research_results,
             keywords=keywords,
             tone=tone,
+            brand_voice=brand_voice,
             provider=provider,
             options=options,
         )
@@ -163,6 +169,7 @@ def generate_chapter_with_research(
                 research_results=research_results,
                 keywords=keywords,
                 tone=tone,
+                brand_voice=brand_voice,
                 provider=provider,
                 options=options,
             )
@@ -178,6 +185,7 @@ def generate_chapter_with_research(
             subtopics=subtopics,
             keywords=keywords,
             tone=tone,
+            brand_voice=brand_voice,
             provider=provider,
             options=options,
         )
@@ -218,6 +226,7 @@ def generate_introduction_chapter(
     chapters: List[Chapter],
     keywords: Optional[List[str]] = None,
     tone: str = "informative",
+    brand_voice: Optional[str] = None,
     provider: Optional[LLMProvider] = None,
     options: Optional[GenerationOptions] = None,
     generate_text_func: Optional[Callable[..., str]] = None,
@@ -237,6 +246,9 @@ def generate_introduction_chapter(
 
         if keywords:
             prompt += f"\n\nKeywords: {', '.join(keywords)}"
+
+        if brand_voice:
+            prompt += f"\n\nBRAND VOICE SUMMARY (follow strictly):\n{brand_voice}\n"
 
         prompt += f"""
         
@@ -289,6 +301,7 @@ def generate_introduction_chapter_with_research(
     research_results: Any,
     keywords: Optional[List[str]] = None,
     tone: str = "informative",
+    brand_voice: Optional[str] = None,
     provider: Optional[LLMProvider] = None,
     options: Optional[GenerationOptions] = None,
     generate_text_func: Optional[Callable[..., str]] = None,
@@ -309,6 +322,9 @@ def generate_introduction_chapter_with_research(
         if keywords:
             prompt += f"\n\nKeywords: {', '.join(keywords)}"
 
+        if brand_voice:
+            prompt += f"\n\nBRAND VOICE SUMMARY (follow strictly):\n{brand_voice}\n"
+
         prompt += f"""
         
         Based on the following research:
@@ -320,6 +336,8 @@ def generate_introduction_chapter_with_research(
         - Explain the purpose and scope of the book.
         - Provide an overview of what readers will learn.
         - Incorporate insights from the research.
+        - Add citations like [1] at the end of sentences that rely on a source.
+        - Only cite sources provided in the Sources list; do not invent citations.
         - Use a {tone} tone throughout.
         - The introduction should be 3-4 paragraphs.
         
@@ -365,6 +383,7 @@ def generate_conclusion_chapter(
     chapters: List[Chapter],
     keywords: Optional[List[str]] = None,
     tone: str = "informative",
+    brand_voice: Optional[str] = None,
     provider: Optional[LLMProvider] = None,
     options: Optional[GenerationOptions] = None,
     generate_text_func: Optional[Callable[..., str]] = None,
@@ -384,6 +403,9 @@ def generate_conclusion_chapter(
 
         if keywords:
             prompt += f"\n\nKeywords: {', '.join(keywords)}"
+
+        if brand_voice:
+            prompt += f"\n\nBRAND VOICE SUMMARY (follow strictly):\n{brand_voice}\n"
 
         prompt += f"""
         

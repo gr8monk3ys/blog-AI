@@ -80,6 +80,11 @@ class ToolExecuteRequest(BaseModel):
     """Request body for tool execution."""
 
     inputs: dict = Field(..., description="Tool input values")
+    brand_profile_id: Optional[str] = Field(
+        default=None,
+        description="Brand profile UUID to apply a trained brand voice",
+        max_length=100,
+    )
     provider_type: Literal["openai", "anthropic", "gemini"] = Field(
         default="openai",
         description="LLM provider to use (openai, anthropic, or gemini)"
@@ -88,6 +93,24 @@ class ToolExecuteRequest(BaseModel):
         default=None,
         description="Generation options with validated ranges"
     )
+
+    @field_validator("brand_profile_id")
+    @classmethod
+    def validate_brand_profile_id(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        v = str(v).strip()
+        if not v:
+            return None
+        import re
+
+        if not re.match(
+            r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            v,
+            re.IGNORECASE,
+        ):
+            raise ValueError("brand_profile_id must be a valid UUID")
+        return v
 
 
 @router.get("", response_model=ToolListResponse)
@@ -242,9 +265,24 @@ async def execute_tool(
             "presence_penalty": request.options.presence_penalty,
         }
 
+    inputs = dict(request.inputs or {})
+    # If a brand profile is provided, load the trained fingerprint summary and
+    # inject it as `brand_voice` so tools can either use it explicitly or we can
+    # append it as a generic instruction (see BaseTool).
+    if request.brand_profile_id:
+        try:
+            from src.brand.storage import get_brand_voice_storage
+
+            storage = get_brand_voice_storage()
+            fingerprint = await storage.get_fingerprint(user_id, request.brand_profile_id)
+            if fingerprint and fingerprint.voice_summary and not inputs.get("brand_voice"):
+                inputs["brand_voice"] = fingerprint.voice_summary
+        except Exception as e:
+            logger.debug("Failed to load brand voice fingerprint: %s", e)
+
     exec_request = ToolExecutionRequest(
         tool_id=tool_id,
-        inputs=request.inputs,
+        inputs=inputs,
         provider_type=request.provider_type,
         options=options_dict,
     )

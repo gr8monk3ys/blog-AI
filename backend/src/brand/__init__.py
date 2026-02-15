@@ -10,7 +10,7 @@ from src.brand.storage import (
     BaseBrandVoiceStorage,
     BrandVoiceStorage,
     InMemoryBrandVoiceStorage,
-    SupabaseBrandVoiceStorage,
+    PostgresBrandVoiceStorage,
     get_brand_voice_storage,
 )
 from src.brand.trainer import VoiceTrainer, train_voice_profile
@@ -25,6 +25,6 @@ __all__ = [
     "BaseBrandVoiceStorage",
     "BrandVoiceStorage",
     "InMemoryBrandVoiceStorage",
-    "SupabaseBrandVoiceStorage",
+    "PostgresBrandVoiceStorage",
     "get_brand_voice_storage",
 ]

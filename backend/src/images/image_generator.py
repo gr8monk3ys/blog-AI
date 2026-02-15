@@ -10,7 +10,12 @@ import asyncio
 import logging
 import os
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Union
+
+try:
+    import openai  # type: ignore
+except ImportError:  # pragma: no cover
+    openai = None  # type: ignore
 
 from ..types.images import (
     BlogImagesResult,
@@ -23,6 +28,9 @@ from ..types.images import (
 from .prompt_generator import PromptGenerator
 
 logger = logging.getLogger(__name__)
+
+# Sentinel to distinguish "not provided" from "explicitly None" when reading env vars.
+_UNSET: object = object()
 
 
 class ImageGenerationError(Exception):
@@ -68,20 +76,31 @@ class ImageGenerator:
     def __init__(
         self,
         provider: str = "openai",
-        openai_api_key: Optional[str] = None,
-        stability_api_key: Optional[str] = None,
+        openai_api_key: Union[str, None, object] = _UNSET,
+        stability_api_key: Union[str, None, object] = _UNSET,
     ):
         """
         Initialize the image generator.
 
         Args:
             provider: The default provider to use ("openai" or "stability").
-            openai_api_key: OpenAI API key. If not provided, reads from environment.
-            stability_api_key: Stability AI API key. If not provided, reads from environment.
+            openai_api_key: OpenAI API key. If omitted, reads from environment.
+                           If explicitly set to None, disables OpenAI.
+            stability_api_key: Stability AI API key. If omitted, reads from environment.
+                               If explicitly set to None, disables Stability.
         """
         self.default_provider = provider
-        self.openai_api_key = openai_api_key or os.environ.get("OPENAI_API_KEY")
-        self.stability_api_key = stability_api_key or os.environ.get("STABILITY_API_KEY")
+
+        if openai_api_key is _UNSET:
+            self.openai_api_key = os.environ.get("OPENAI_API_KEY")
+        else:
+            self.openai_api_key = openai_api_key  # type: ignore[assignment]
+
+        if stability_api_key is _UNSET:
+            self.stability_api_key = os.environ.get("STABILITY_API_KEY")
+        else:
+            self.stability_api_key = stability_api_key  # type: ignore[assignment]
+
         self.prompt_generator = PromptGenerator()
 
         # Validate that at least one provider is configured
@@ -346,9 +365,7 @@ class ImageGenerator:
                 provider="openai",
             )
 
-        try:
-            import openai
-        except ImportError:
+        if openai is None:
             raise ImageGenerationError(
                 "OpenAI package not installed. Install with 'pip install openai'.",
                 provider="openai",
@@ -367,14 +384,53 @@ class ImageGenerator:
             dalle_style = "vivid" if style == "vivid" else "natural"
             dalle_quality = "hd" if quality == "hd" else "standard"
 
-            response = await client.images.generate(
-                model="dall-e-3",
-                prompt=prompt,
-                size=openai_size,
-                quality=dalle_quality,
-                style=dalle_style,
-                n=1,
-            )
+            try:
+                response = await client.images.generate(
+                    model="dall-e-3",
+                    prompt=prompt,
+                    size=openai_size,
+                    quality=dalle_quality,
+                    style=dalle_style,
+                    n=1,
+                )
+            except Exception as e:
+                def _is_openai_exc(attr: str) -> bool:
+                    exc_cls = getattr(openai, attr, None)
+                    return (
+                        isinstance(exc_cls, type)
+                        and issubclass(exc_cls, Exception)
+                        and isinstance(e, exc_cls)
+                    )
+
+                if _is_openai_exc("AuthenticationError"):
+                    raise ImageGenerationError(
+                        f"OpenAI authentication failed: {e}",
+                        provider="openai",
+                        original_error=e,
+                    )
+                if _is_openai_exc("RateLimitError"):
+                    raise ImageGenerationError(
+                        f"OpenAI rate limit exceeded: {e}",
+                        provider="openai",
+                        original_error=e,
+                    )
+                if _is_openai_exc("BadRequestError"):
+                    raise ImageGenerationError(
+                        f"OpenAI bad request (possibly content policy violation): {e}",
+                        provider="openai",
+                        original_error=e,
+                    )
+                if _is_openai_exc("OpenAIError"):
+                    raise ImageGenerationError(
+                        f"OpenAI error: {e}",
+                        provider="openai",
+                        original_error=e,
+                    )
+                raise ImageGenerationError(
+                    f"OpenAI error: {e}",
+                    provider="openai",
+                    original_error=e,
+                )
 
             # Extract result
             image_data = response.data[0]
@@ -392,26 +448,10 @@ class ImageGenerator:
                     "model": "dall-e-3",
                 },
             )
-
-        except openai.AuthenticationError as e:
-            raise ImageGenerationError(
-                f"OpenAI authentication failed: {e}",
-                provider="openai",
-                original_error=e,
-            )
-        except openai.RateLimitError as e:
-            raise ImageGenerationError(
-                f"OpenAI rate limit exceeded: {e}",
-                provider="openai",
-                original_error=e,
-            )
-        except openai.BadRequestError as e:
-            raise ImageGenerationError(
-                f"OpenAI bad request (possibly content policy violation): {e}",
-                provider="openai",
-                original_error=e,
-            )
-        except openai.OpenAIError as e:
+        except ImageGenerationError:
+            raise
+        except Exception as e:
+            # Client construction or other unexpected failures.
             raise ImageGenerationError(
                 f"OpenAI error: {e}",
                 provider="openai",

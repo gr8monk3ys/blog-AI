@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Disclosure, Dialog, Transition } from '@headlessui/react';
 import { ChevronUpIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { Fragment } from 'react';
-import { Book, BookEditResponse } from '../types/book';
+import { Book } from '../types/book';
 import { useToast } from '../hooks/useToast';
 import { API_ENDPOINTS, getDefaultHeaders } from '../lib/api';
 
@@ -25,7 +25,7 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
     try {
       const response = await fetch(API_ENDPOINTS.saveBook, {
         method: 'POST',
-        headers: getDefaultHeaders(),
+        headers: await getDefaultHeaders(),
         body: JSON.stringify({
           file_path: filePath,
           book: editingBook,

@@ -2,6 +2,7 @@
 FAQ generation functionality.
 """
 
+import re
 from typing import List, Optional
 
 from ..text_generation.core import GenerationOptions, LLMProvider, generate_text
@@ -17,6 +18,7 @@ class FAQGenerationError(Exception):
 def generate_faqs(
     content: str,
     count: int = 5,
+    brand_voice: Optional[str] = None,
     provider: Optional[LLMProvider] = None,
     options: Optional[GenerationOptions] = None,
 ) -> FAQSection:
@@ -41,6 +43,12 @@ def generate_faqs(
         Generate {count} frequently asked questions (FAQs) with answers based on the following blog content:
         
         {content[:2000]}...
+        """
+
+        if brand_voice:
+            prompt += f"\n\nBRAND VOICE SUMMARY (follow strictly):\n{brand_voice}\n"
+
+        prompt += f"""
         
         Requirements:
         - Generate exactly {count} questions and answers.
@@ -75,6 +83,12 @@ def generate_faqs(
             Generate {more_count} additional frequently asked questions (FAQs) with answers based on the following blog content:
             
             {content[:2000]}...
+            """
+
+            if brand_voice:
+                more_prompt += f"\n\nBRAND VOICE SUMMARY (follow strictly):\n{brand_voice}\n"
+
+            more_prompt += f"""
             
             Requirements:
             - Generate exactly {more_count} questions and answers.
@@ -124,38 +138,67 @@ def parse_faqs(text: str) -> List[FAQ]:
         FAQGenerationError: If an error occurs during FAQ parsing.
     """
     try:
-        faqs = []
         lines = text.strip().split("\n")
 
-        question = None
-        answer = None
+        # If the model returns numbered Q/A pairs (Q1/A1, Q2/A2, ...), pair them by index.
+        # This avoids incorrectly pairing mismatched lines like Q1 with A2.
+        has_numbered_pairs = any(
+            re.match(r"^[QA]\s*\d+\s*:", line.strip(), re.IGNORECASE)
+            for line in lines
+            if line.strip()
+        )
 
-        for line in lines:
-            line = line.strip()
+        if has_numbered_pairs:
+            questions: dict[int, str] = {}
+            answers: dict[int, str] = {}
+
+            q_re = re.compile(r"^Q\s*(\d+)\s*:\s*(.+)$", re.IGNORECASE)
+            a_re = re.compile(r"^A\s*(\d+)\s*:\s*(.+)$", re.IGNORECASE)
+
+            for raw_line in lines:
+                line = raw_line.strip()
+                if not line:
+                    continue
+
+                q_match = q_re.match(line)
+                if q_match:
+                    questions[int(q_match.group(1))] = q_match.group(2).strip()
+                    continue
+
+                a_match = a_re.match(line)
+                if a_match:
+                    answers[int(a_match.group(1))] = a_match.group(2).strip()
+                    continue
+
+            faqs: List[FAQ] = []
+            for num in sorted(set(questions.keys()) & set(answers.keys())):
+                faqs.append(FAQ(question=questions[num], answer=answers[num]))
+            return faqs
+
+        # Fallback: parse sequentially (unnumbered Q:/A: format).
+        faqs: List[FAQ] = []
+        question: Optional[str] = None
+        answer: Optional[str] = None
+
+        for raw_line in lines:
+            line = raw_line.strip()
             if not line:
                 continue
 
-            # Check if line starts with Q or A followed by a number and colon
-            if line.startswith("Q") and ":" in line:
-                # If we already have a question and answer, add them to the list
+            if line.lower().startswith("q") and ":" in line:
                 if question and answer:
                     faqs.append(FAQ(question=question, answer=answer))
-                    question = None
                     answer = None
-
-                # Extract the question
                 question = line.split(":", 1)[1].strip()
-            elif line.startswith("A") and ":" in line:
-                # Extract the answer
-                answer = line.split(":", 1)[1].strip()
+                continue
 
-                # If we have both question and answer, add them to the list
+            if line.lower().startswith("a") and ":" in line:
+                answer = line.split(":", 1)[1].strip()
                 if question and answer:
                     faqs.append(FAQ(question=question, answer=answer))
                     question = None
                     answer = None
 
-        # Add the last FAQ if it exists
         if question and answer:
             faqs.append(FAQ(question=question, answer=answer))
 

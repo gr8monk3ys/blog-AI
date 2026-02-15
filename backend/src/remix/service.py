@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 from src.remix.analyzer import ContentAnalyzer
 from src.remix.adapters import get_adapter, FormatAdapter
+from src.brand.storage import get_brand_voice_storage
 from src.types.remix import (
     ContentAnalysis,
     ContentFormat,
@@ -35,7 +36,7 @@ class RemixService:
         self.analyzer = ContentAnalyzer(provider_type)
         self._executor = ThreadPoolExecutor(max_workers=5)
 
-    async def remix(self, request: RemixRequest) -> RemixResponse:
+    async def remix(self, request: RemixRequest, user_id: Optional[str] = None) -> RemixResponse:
         """Transform content into multiple formats."""
         start_time = time.time()
 
@@ -45,7 +46,7 @@ class RemixService:
         # Get brand voice if profile specified
         brand_voice = None
         if request.brand_profile_id:
-            brand_voice = await self._load_brand_voice(request.brand_profile_id)
+            brand_voice = await self._load_brand_voice(user_id, request.brand_profile_id)
         elif request.tone_override:
             brand_voice = request.tone_override
 
@@ -202,10 +203,18 @@ class RemixService:
 
         return min(1.0, max(0.3, base_confidence))
 
-    async def _load_brand_voice(self, profile_id: str) -> Optional[str]:
-        """Load brand voice from profile."""
-        # TODO: Integrate with brand profile storage
-        # For now, return None to use default voice
+    async def _load_brand_voice(self, user_id: Optional[str], profile_id: str) -> Optional[str]:
+        """Load a trained brand voice summary for the given user/profile."""
+        if not user_id:
+            logger.debug("Brand profile id provided but user_id is missing; skipping brand voice.")
+            return None
+        try:
+            storage = get_brand_voice_storage()
+            fingerprint = await storage.get_fingerprint(user_id, profile_id)
+            if fingerprint and fingerprint.voice_summary:
+                return fingerprint.voice_summary
+        except Exception as e:
+            logger.debug("Failed to load brand voice fingerprint: %s", e)
         return None
 
     def _count_words(self, content: Dict[str, Any]) -> int:

@@ -90,6 +90,7 @@ export interface CategoryInfo {
 
 export interface ToolExecutionRequest {
   inputs: Record<string, string | number | boolean>
+  brand_profile_id?: string
   provider_type?: 'openai' | 'anthropic' | 'gemini'
   options?: {
     temperature?: number
