@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
+from src.config import get_settings
 from src.organizations import AuthorizationContext
 from src.remix.service import get_remix_service
 from src.types.remix import (
@@ -33,6 +34,28 @@ from ..middleware import increment_usage_for_operation, require_quota
 
 
 router = APIRouter(prefix="/remix", tags=["Content Remix"])
+
+_ALLOWED_PROVIDERS = {"openai", "anthropic", "gemini"}
+
+
+def _normalize_provider(provider: str) -> str:
+    """Normalize and validate provider names, including deployment config."""
+    v = (provider or "").strip().lower() or "openai"
+    if v not in _ALLOWED_PROVIDERS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid provider '{v}'. Allowed: {', '.join(sorted(_ALLOWED_PROVIDERS))}",
+        )
+    configured = get_settings().llm.available_providers
+    if configured and v not in configured:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": f"Provider '{v}' is not configured for this deployment",
+                "configured_providers": configured,
+            },
+        )
+    return v
 
 
 # Request/Response models for the API
@@ -77,6 +100,10 @@ class PreviewRequestAPI(BaseModel):
     target_format: str = Field(
         ...,
         description="Target format identifier"
+    )
+    provider: str = Field(
+        default="openai",
+        description="LLM provider to use"
     )
 
 
@@ -147,7 +174,8 @@ async def analyze_content(request: AnalyzeRequestAPI):
     """
     from src.remix.analyzer import ContentAnalyzer
 
-    analyzer = ContentAnalyzer(request.provider)
+    provider = _normalize_provider(request.provider)
+    analyzer = ContentAnalyzer(provider)
     analysis = analyzer.analyze(request.source_content)
 
     return {
@@ -182,7 +210,8 @@ async def preview_remix(request: PreviewRequestAPI):
             detail=f"Invalid format: {request.target_format}"
         )
 
-    service = get_remix_service()
+    provider = _normalize_provider(request.provider)
+    service = get_remix_service(provider)
     preview_request = RemixPreviewRequest(
         source_content=request.source_content,
         target_format=format_enum,
@@ -244,7 +273,8 @@ async def transform_content(
     )
 
     # Get service with specified provider
-    service = get_remix_service(request.provider)
+    provider = _normalize_provider(request.provider)
+    service = get_remix_service(provider)
 
     result = await service.remix(remix_request, user_id=user_id)
 

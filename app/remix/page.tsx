@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { API_ENDPOINTS, apiFetch } from '@/lib/api'
+import { useLlmConfig } from '@/hooks/useLlmConfig'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import {
   SourceContentForm,
@@ -19,6 +20,7 @@ import type {
   ContentAnalysis,
   RemixedContent,
 } from '@/types/remix'
+import type { LlmProviderType } from '@/types/llm'
 
 function RemixPageContent() {
   // State
@@ -33,6 +35,23 @@ function RemixPageContent() {
   const [isTransforming, setIsTransforming] = useState(false)
   const [selectedResult, setSelectedResult] = useState<RemixedContent | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  const {
+    config: llmConfig,
+    availableProviders,
+    defaultProvider,
+    error: llmConfigError,
+  } = useLlmConfig()
+  const [provider, setProvider] = useState<LlmProviderType>('openai')
+  const [providerTouched, setProviderTouched] = useState(false)
+
+  useEffect(() => {
+    if (!providerTouched) setProvider(defaultProvider)
+  }, [defaultProvider, providerTouched])
+
+  useEffect(() => {
+    if (!availableProviders.includes(provider)) setProvider(defaultProvider)
+  }, [availableProviders, defaultProvider, provider])
 
   // Fetch available formats on mount
   useEffect(() => {
@@ -68,6 +87,7 @@ function RemixPageContent() {
               title: sourceTitle || 'Untitled',
               body: sourceContent,
             },
+            provider,
           }),
         }
       )
@@ -82,7 +102,7 @@ function RemixPageContent() {
     } finally {
       setIsAnalyzing(false)
     }
-  }, [sourceContent, sourceTitle])
+  }, [sourceContent, sourceTitle, provider])
 
   // Preview a format
   const previewFormat = useCallback(async (formatId: ContentFormatId) => {
@@ -97,6 +117,7 @@ function RemixPageContent() {
               body: sourceContent,
             },
             target_format: formatId,
+            provider,
           }),
         }
       )
@@ -104,7 +125,7 @@ function RemixPageContent() {
     } catch (err) {
       console.error(`Preview failed for ${formatId}:`, err)
     }
-  }, [sourceContent, sourceTitle])
+  }, [sourceContent, sourceTitle, provider])
 
   // Toggle format selection
   const toggleFormat = useCallback((formatId: ContentFormatId) => {
@@ -143,6 +164,7 @@ function RemixPageContent() {
         target_formats: selectedFormats,
         preserve_voice: true,
         conversation_id: crypto.randomUUID(),
+        provider,
       }
 
       const response = await apiFetch<RemixResponse>(
@@ -168,7 +190,7 @@ function RemixPageContent() {
     } finally {
       setIsTransforming(false)
     }
-  }, [selectedFormats, sourceTitle, sourceContent])
+  }, [selectedFormats, sourceTitle, sourceContent, provider])
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -196,6 +218,40 @@ function RemixPageContent() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Panel - Input */}
           <div className="space-y-6">
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <h2 className="text-lg font-semibold mb-4">Model Provider</h2>
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-medium text-gray-700 w-20">Provider</label>
+                <select
+                  value={provider}
+                  onChange={(e) => {
+                    setProviderTouched(true)
+                    setProvider(e.target.value as LlmProviderType)
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  {availableProviders.map((p) => {
+                    const model = llmConfig?.models?.[p]
+                    const label = p === 'openai'
+                      ? `OpenAI${model ? ` (${model})` : ''}`
+                      : p === 'anthropic'
+                        ? `Anthropic${model ? ` (${model})` : ''}`
+                        : `Gemini${model ? ` (${model})` : ''}`
+                    return (
+                      <option key={p} value={p}>
+                        {label}
+                      </option>
+                    )
+                  })}
+                </select>
+              </div>
+              {llmConfigError && (
+                <p className="mt-2 text-xs text-amber-700">
+                  {llmConfigError}. Showing default providers.
+                </p>
+              )}
+            </div>
+
             <SourceContentForm
               sourceTitle={sourceTitle}
               sourceContent={sourceContent}
