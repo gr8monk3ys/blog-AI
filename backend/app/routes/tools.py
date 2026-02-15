@@ -10,6 +10,7 @@ This module provides endpoints for:
 - Generating content variations (A/B testing)
 """
 
+import asyncio
 import logging
 from typing import List, Literal, Optional
 
@@ -19,6 +20,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from ..auth import verify_api_key
 from ..error_handlers import sanitize_error_message
+from ..middleware import increment_usage_for_operation, require_quota
 
 from src.scoring import score_content
 from src.tools import (
@@ -35,6 +37,8 @@ from src.types.scoring import (
     VariationGenerationResult,
 )
 from src.types.tools import CategoryInfo, ToolDefinition, ToolMetadata
+from src.types.usage import QuotaExceededError
+from src.usage.quota_service import get_usage_stats
 
 logger = logging.getLogger(__name__)
 
@@ -231,7 +235,7 @@ async def get_tool(
 async def execute_tool(
     tool_id: str,
     request: ToolExecuteRequest,
-    user_id: str = Depends(verify_api_key),
+    user_id: str = Depends(require_quota),
 ):
     """
     Execute a tool with the provided inputs.
@@ -288,7 +292,7 @@ async def execute_tool(
     )
 
     # Execute the tool
-    result = registry.execute(exec_request)
+    result = await asyncio.to_thread(registry.execute, exec_request)
 
     if not result.success:
         logger.warning(f"Tool execution failed: {tool_id} - {result.error}")
@@ -303,6 +307,18 @@ async def execute_tool(
                 "tool_id": result.tool_id,
             }
         )
+
+    # Increment quota usage after successful generation
+    await increment_usage_for_operation(
+        user_id=user_id,
+        operation_type="tool",
+        tokens_used=int(result.tokens_used or 0),
+        metadata={
+            "tool_id": tool_id,
+            "provider_type": request.provider_type,
+            "brand_profile_id": request.brand_profile_id,
+        },
+    )
 
     return result
 
@@ -433,6 +449,11 @@ class VariationExecuteRequest(BaseModel):
     """Request body for generating content variations."""
 
     inputs: dict = Field(..., description="Tool input values")
+    brand_profile_id: Optional[str] = Field(
+        default=None,
+        description="Brand profile UUID to apply a trained brand voice",
+        max_length=100,
+    )
     variation_count: int = Field(
         default=2,
         ge=2,
@@ -452,12 +473,30 @@ class VariationExecuteRequest(BaseModel):
         description="Keywords for SEO scoring"
     )
 
+    @field_validator("brand_profile_id")
+    @classmethod
+    def validate_brand_profile_id(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        v = str(v).strip()
+        if not v:
+            return None
+        import re
+
+        if not re.match(
+            r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            v,
+            re.IGNORECASE,
+        ):
+            raise ValueError("brand_profile_id must be a valid UUID")
+        return v
+
 
 @router.post("/{tool_id}/variations", response_model=VariationGenerationResult)
 async def generate_variations(
     tool_id: str,
     request: VariationExecuteRequest,
-    user_id: str = Depends(verify_api_key),
+    user_id: str = Depends(require_quota),
 ):
     """
     Generate multiple content variations for A/B testing.
@@ -483,9 +522,44 @@ async def generate_variations(
 
     tool = registry.get_tool(tool_id)
 
+    # Ensure the user has enough remaining quota for the number of requested
+    # variations. We treat each variation as a generation.
+    try:
+        stats = await get_usage_stats(user_id)
+        remaining = int(stats.remaining or 0)
+        if remaining != -1 and remaining < int(request.variation_count or 2):
+            err = QuotaExceededError(
+                error=(
+                    f"Not enough remaining quota to generate {request.variation_count} variations "
+                    f"(remaining: {remaining}). Upgrade to continue."
+                ),
+                tier=stats.tier,
+                current_usage=stats.current_usage,
+                quota_limit=stats.quota_limit,
+                reset_date=stats.reset_date,
+            )
+            raise HTTPException(status_code=429, detail=err.model_dump())
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning("Failed to validate remaining quota for variations: %s", e)
+
+    inputs = dict(request.inputs or {})
+    if request.brand_profile_id:
+        try:
+            from src.brand.storage import get_brand_voice_storage
+
+            storage = get_brand_voice_storage()
+            fingerprint = await storage.get_fingerprint(user_id, request.brand_profile_id)
+            if fingerprint and fingerprint.voice_summary and not inputs.get("brand_voice"):
+                inputs["brand_voice"] = fingerprint.voice_summary
+        except Exception as e:
+            logger.debug("Failed to load brand voice fingerprint: %s", e)
+
     # Execute variations
-    result = tool.execute_variations(
-        inputs=request.inputs,
+    result = await asyncio.to_thread(
+        tool.execute_variations,
+        inputs=inputs,
         variation_count=request.variation_count,
         provider_type=request.provider_type,
         include_scores=request.include_scores,
@@ -503,6 +577,23 @@ async def generate_variations(
                 "error": result.error,
                 "execution_time_ms": result.execution_time_ms,
             }
+        )
+
+    # Increment quota usage once per generated variation.
+    generated_count = len(result.variations or [])
+    for _ in range(generated_count):
+        await increment_usage_for_operation(
+            user_id=user_id,
+            operation_type="tool",
+            tokens_used=0,
+            metadata={
+                "tool_id": tool_id,
+                "provider_type": request.provider_type,
+                "variation": True,
+                "requested_variations": request.variation_count,
+                "generated_variations": generated_count,
+                "brand_profile_id": request.brand_profile_id,
+            },
         )
 
     return result
