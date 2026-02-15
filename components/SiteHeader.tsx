@@ -1,7 +1,12 @@
+'use client'
+
 import Link from 'next/link'
 import { SparklesIcon } from '@heroicons/react/24/outline'
+import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
 
 export default function SiteHeader() {
+  const isClerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+
   return (
     <header className="sticky top-0 z-20 bg-white border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -18,6 +23,30 @@ export default function SiteHeader() {
             <Link href="/pricing" className="hover:text-amber-600 transition-colors">Pricing</Link>
             <Link href="/history" className="hover:text-amber-600 transition-colors">History</Link>
           </nav>
+          <div className="flex items-center gap-3 text-sm">
+            {isClerkConfigured ? (
+              <>
+                <SignedIn>
+                  <UserButton afterSignOutUrl="/" />
+                </SignedIn>
+                <SignedOut>
+                  <Link
+                    href="/sign-in"
+                    className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 transition-colors text-white"
+                  >
+                    Sign in
+                  </Link>
+                </SignedOut>
+              </>
+            ) : (
+              <Link
+                href="/auth"
+                className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 transition-colors text-white"
+              >
+                Sign in
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </header>

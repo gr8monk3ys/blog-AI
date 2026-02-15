@@ -13,10 +13,10 @@ import logging
 import os
 import secrets
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Annotated, Dict, Optional
 
 import bcrypt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import APIKeyHeader
 
 logger = logging.getLogger(__name__)
@@ -390,12 +390,16 @@ def _is_dev_mode_safe() -> bool:
 _dev_mode_warning_logged = False
 
 
-async def verify_api_key(api_key: Optional[str] = Depends(API_KEY_HEADER)) -> str:
+async def verify_api_key(
+    authorization: Annotated[Optional[str], Header(alias="Authorization")] = None,
+    api_key: Optional[str] = Depends(API_KEY_HEADER),
+) -> str:
     """
     Verify API key and return user_id. In dev mode, allows requests without key.
 
     Args:
-        api_key: The API key from the request header.
+        authorization: Optional Authorization header (Bearer JWT from Clerk).
+        api_key: The API key from the X-API-Key header.
 
     Returns:
         The user_id associated with the API key.
@@ -405,7 +409,41 @@ async def verify_api_key(api_key: Optional[str] = Depends(API_KEY_HEADER)) -> st
     """
     global _dev_mode_warning_logged
 
-    # Development mode - allow requests without API key
+    # 1) Prefer Clerk JWTs (cloud SaaS).
+    if authorization and authorization.lower().startswith("bearer "):
+        token = authorization.split(" ", 1)[1].strip()
+        if not token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing Bearer token"
+            )
+
+        try:
+            from .clerk_jwt import is_clerk_jwt_configured, verify_clerk_session_token
+
+            if not is_clerk_jwt_configured():
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Bearer auth is not configured",
+                )
+
+            claims = verify_clerk_session_token(token)
+            user_id = claims.get("sub")
+            if not user_id:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid access token (missing sub claim)",
+                )
+            return str(user_id)
+        except HTTPException:
+            raise
+        except Exception as e:
+            # Avoid leaking details; log for operators.
+            logger.warning("JWT auth failed: %s", e)
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token"
+            )
+
+    # 2) Development mode - allow requests without API key
     # SECURITY: Default is FALSE - must explicitly enable dev mode
     # SECURITY: Blocked automatically if production indicators are detected
     dev_mode_requested = os.environ.get("DEV_MODE", "false").lower() == "true"
