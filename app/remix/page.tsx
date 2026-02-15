@@ -5,6 +5,7 @@ import { AnimatePresence } from 'framer-motion'
 import { API_ENDPOINTS, apiFetch } from '@/lib/api'
 import { useLlmConfig } from '@/hooks/useLlmConfig'
 import ErrorBoundary from '@/components/ErrorBoundary'
+import BrandVoiceSelector from '@/components/brand/BrandVoiceSelector'
 import {
   SourceContentForm,
   ContentAnalysisPanel,
@@ -20,6 +21,7 @@ import type {
   ContentAnalysis,
   RemixedContent,
 } from '@/types/remix'
+import type { BrandProfile } from '@/types/brand'
 import type { LlmProviderType } from '@/types/llm'
 
 function RemixPageContent() {
@@ -35,6 +37,9 @@ function RemixPageContent() {
   const [isTransforming, setIsTransforming] = useState(false)
   const [selectedResult, setSelectedResult] = useState<RemixedContent | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  const [brandVoiceEnabled, setBrandVoiceEnabled] = useState(false)
+  const [selectedBrandProfile, setSelectedBrandProfile] = useState<BrandProfile | null>(null)
 
   const {
     config: llmConfig,
@@ -152,6 +157,11 @@ function RemixPageContent() {
       return
     }
 
+    if (brandVoiceEnabled && !selectedBrandProfile) {
+      setError('Select a brand profile (or disable Brand Voice) to continue.')
+      return
+    }
+
     setIsTransforming(true)
     setError(null)
 
@@ -165,6 +175,9 @@ function RemixPageContent() {
         preserve_voice: true,
         conversation_id: crypto.randomUUID(),
         provider,
+        ...(brandVoiceEnabled && selectedBrandProfile?.id
+          ? { brand_profile_id: selectedBrandProfile.id }
+          : {}),
       }
 
       const response = await apiFetch<RemixResponse>(
@@ -190,7 +203,7 @@ function RemixPageContent() {
     } finally {
       setIsTransforming(false)
     }
-  }, [selectedFormats, sourceTitle, sourceContent, provider])
+  }, [selectedFormats, sourceTitle, sourceContent, provider, brandVoiceEnabled, selectedBrandProfile])
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -251,6 +264,13 @@ function RemixPageContent() {
                 </p>
               )}
             </div>
+
+            <BrandVoiceSelector
+              enabled={brandVoiceEnabled}
+              onEnabledChange={setBrandVoiceEnabled}
+              selectedProfile={selectedBrandProfile}
+              onProfileChange={setSelectedBrandProfile}
+            />
 
             <SourceContentForm
               sourceTitle={sourceTitle}
