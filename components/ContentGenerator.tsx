@@ -134,7 +134,12 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
       const isServerConnected = await checkServerConnection();
       
       if (!isServerConnected) {
-        // Use mock data if server is not running
+        // In production, never fall back to mock output.
+        if (process.env.NODE_ENV === 'production') {
+          throw new Error('Backend unavailable. Please try again later.');
+        }
+
+        // Use mock data in development if server is not running
         setTimeout(() => {
           setContent(generateMockBlogPost());
           setLoading(false);
@@ -162,7 +167,18 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || `Server error: ${response.status}`);
+        const detail = (errorData as any)?.detail
+        const message =
+          typeof detail === 'string'
+            ? detail
+            : detail && typeof detail === 'object' && typeof (detail as any).error === 'string'
+            ? (detail as any).error
+            : typeof (errorData as any)?.error === 'string'
+            ? (errorData as any).error
+            : `Server error: ${response.status}`
+        const err: any = new Error(message)
+        err.status = response.status
+        throw err
       }
 
       const data = await response.json();
@@ -172,7 +188,15 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
       setContent(data);
     } catch (err) {
       console.error('Error generating content:', err);
-      setError(err instanceof Error ? err.message : 'Failed to generate content. Please try again.');
+      const status = (err as any)?.status
+      if (status === 401 || status === 403) {
+        setError('Sign in required to generate content.')
+      } else if (status === 429) {
+        setLimitReached(true)
+        setError('You have reached your usage limit. Upgrade your plan to continue generating content.')
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to generate content. Please try again.')
+      }
     } finally {
       setLoading(false);
     }
