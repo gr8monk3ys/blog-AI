@@ -20,7 +20,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from ..auth import verify_api_key
 from ..error_handlers import sanitize_error_message
-from ..middleware import increment_usage_for_operation, require_pro_tier, require_quota
+from ..middleware import increment_usage_for_operation, require_quota
 
 from src.scoring import score_content
 from src.tools import (
@@ -235,7 +235,7 @@ async def get_tool(
 async def execute_tool(
     tool_id: str,
     request: ToolExecuteRequest,
-    user_id: str = Depends(require_pro_tier),
+    user_id: str = Depends(require_quota),
 ):
     """
     Execute a tool with the provided inputs.
@@ -496,7 +496,7 @@ class VariationExecuteRequest(BaseModel):
 async def generate_variations(
     tool_id: str,
     request: VariationExecuteRequest,
-    user_id: str = Depends(require_pro_tier),
+    user_id: str = Depends(require_quota),
 ):
     """
     Generate multiple content variations for A/B testing.
