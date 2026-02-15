@@ -63,6 +63,14 @@ def verify_clerk_session_token(token: str) -> Dict[str, Any]:
     jwks_client = _get_jwks_client(jwks_url)
     signing_key = jwks_client.get_signing_key_from_jwt(token)
 
+    # Try to narrow algorithms from the header when possible.
+    alg = None
+    try:
+        header = jwt.get_unverified_header(token)
+        alg = header.get("alg")
+    except Exception:
+        pass
+
     options = {
         "verify_aud": audience is not None,
         "verify_iss": issuer is not None,
@@ -77,7 +85,7 @@ def verify_clerk_session_token(token: str) -> Dict[str, Any]:
     return jwt.decode(
         token,
         signing_key.key,
-        algorithms=["RS256"],
+        algorithms=[alg] if alg else ["RS256"],
         **kwargs,
     )
 

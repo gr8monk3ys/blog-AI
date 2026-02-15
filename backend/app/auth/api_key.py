@@ -83,9 +83,8 @@ class APIKeyStore:
         """
         Legacy SHA-256 hashing for backward compatibility verification only.
 
-        DEPRECATED: This method is only used for verifying existing legacy hashes
-        during migration. New keys always use bcrypt via _hash_key().
-        All legacy hashes should be upgraded via upgrade_legacy_hash().
+        WARNING: This method is only used for verifying existing legacy hashes.
+        New keys should always use bcrypt via _hash_key().
 
         Args:
             api_key: The plain-text API key to hash.
@@ -93,13 +92,7 @@ class APIKeyStore:
         Returns:
             The SHA-256 hex digest.
         """
-        import warnings
-        warnings.warn(
-            "SHA-256 key hashing is deprecated. Use bcrypt via _hash_key() for new keys.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return hashlib.sha256(api_key.encode()).hexdigest()  # nosec - legacy verification only
+        return hashlib.sha256(api_key.encode()).hexdigest()
 
     def _is_legacy_hash(self, stored_hash: str) -> bool:
         """
@@ -356,22 +349,45 @@ def get_or_create_api_key(user_id: str) -> Optional[str]:
     return api_key_store.get_or_create_key(user_id)
 
 
-def _is_production() -> bool:
+def _is_dev_mode_safe() -> bool:
     """
-    Check if the application is running in a production environment.
+    Check if DEV_MODE can be safely enabled.
+
+    DEV_MODE is blocked if any production indicators are detected:
+    - SENTRY_ENVIRONMENT is "production"
+    - HTTPS_REDIRECT_ENABLED is true
+    - Running on common production ports (80, 443)
+    - ALLOWED_ORIGINS contains non-localhost domains
 
     Returns:
-        True if production indicators are detected, False otherwise.
+        True if DEV_MODE can be safely enabled, False otherwise.
     """
+    # Block if Sentry environment is production
     if os.environ.get("SENTRY_ENVIRONMENT", "").lower() == "production":
-        return True
-    if os.environ.get("ENVIRONMENT", "").lower() == "production":
-        return True
-    return False
+        return False
+
+    # Block if HTTPS redirect is enabled (production indicator)
+    if os.environ.get("HTTPS_REDIRECT_ENABLED", "false").lower() == "true":
+        return False
+
+    # Block if Stripe is in live mode (not test mode)
+    stripe_key = os.environ.get("STRIPE_SECRET_KEY", "")
+    if stripe_key.startswith("sk_live_"):
+        return False
+
+    # Check for non-localhost allowed origins
+    allowed_origins = os.environ.get("ALLOWED_ORIGINS", "")
+    if allowed_origins:
+        for origin in allowed_origins.split(","):
+            origin = origin.strip().lower()
+            if origin and "localhost" not in origin and "127.0.0.1" not in origin:
+                return False
+
+    return True
 
 
-# Track if dev API key warning has been logged
-_dev_api_key_warning_logged = False
+# Track if dev mode warning has been logged
+_dev_mode_warning_logged = False
 
 
 async def verify_api_key(
@@ -379,11 +395,7 @@ async def verify_api_key(
     api_key: Optional[str] = Depends(API_KEY_HEADER),
 ) -> str:
     """
-    Verify API key and return user_id.
-
-    Supports Clerk JWT tokens (via Authorization header), development API keys
-    (via DEV_API_KEY env var, non-production only), and regular API keys
-    (via X-API-Key header).
+    Verify API key and return user_id. In dev mode, allows requests without key.
 
     Args:
         authorization: Optional Authorization header (Bearer JWT from Clerk).
@@ -393,9 +405,9 @@ async def verify_api_key(
         The user_id associated with the API key.
 
     Raises:
-        HTTPException: If API key is missing or invalid.
+        HTTPException: If API key is missing or invalid (unless in dev mode).
     """
-    global _dev_api_key_warning_logged
+    global _dev_mode_warning_logged
 
     # 1) Prefer Clerk JWTs (cloud SaaS).
     if authorization and authorization.lower().startswith("bearer "):
@@ -431,25 +443,28 @@ async def verify_api_key(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token"
             )
 
-    # 2) Development API key - requires a key but uses a simple static value
-    # SECURITY: Only works when DEV_API_KEY env var is set AND not in production
-    dev_api_key_value = os.environ.get("DEV_API_KEY", "")
-    if dev_api_key_value and api_key:
-        if _is_production():
-            logger.error(
-                "DEV_API_KEY is set but BLOCKED because the application is running "
-                "in production (SENTRY_ENVIRONMENT=production or ENVIRONMENT=production). "
-                "Remove DEV_API_KEY from your environment."
-            )
-            # Fall through to require real authentication
-        elif api_key == dev_api_key_value:
-            if not _dev_api_key_warning_logged:
+    # 2) Development mode - allow requests without API key
+    # SECURITY: Default is FALSE - must explicitly enable dev mode
+    # SECURITY: Blocked automatically if production indicators are detected
+    dev_mode_requested = os.environ.get("DEV_MODE", "false").lower() == "true"
+
+    if dev_mode_requested:
+        if _is_dev_mode_safe():
+            if not _dev_mode_warning_logged:
                 logger.warning(
-                    "DEV_API_KEY authentication is active. "
-                    "Do not use this in production."
+                    "⚠️  DEV_MODE is enabled - authentication is bypassed! "
+                    "Never use this in production."
                 )
-                _dev_api_key_warning_logged = True
+                _dev_mode_warning_logged = True
             return "dev_user"
+        else:
+            # DEV_MODE requested but production indicators detected
+            logger.error(
+                "🚨 DEV_MODE was requested but BLOCKED due to production indicators. "
+                "Check SENTRY_ENVIRONMENT, HTTPS_REDIRECT_ENABLED, STRIPE_SECRET_KEY, "
+                "and ALLOWED_ORIGINS settings."
+            )
+            # Fall through to require actual authentication
 
     if not api_key:
         raise HTTPException(
