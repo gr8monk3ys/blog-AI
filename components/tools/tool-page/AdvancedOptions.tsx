@@ -6,6 +6,7 @@ import {
   BeakerIcon,
   ChartBarIcon,
 } from '@heroicons/react/24/outline'
+import type { LlmProviderType } from '../../../types/llm'
 
 interface AdvancedOptionsProps {
   useResearch: boolean
@@ -16,6 +17,9 @@ interface AdvancedOptionsProps {
   onVariationCountChange: (value: number) => void
   keywords: string
   onKeywordsChange: (value: string) => void
+  providerType: LlmProviderType
+  availableProviders: LlmProviderType[]
+  onProviderTypeChange: (value: LlmProviderType) => void
 }
 
 /**
@@ -30,6 +34,9 @@ export default function AdvancedOptions({
   onVariationCountChange,
   keywords,
   onKeywordsChange,
+  providerType,
+  availableProviders,
+  onProviderTypeChange,
 }: AdvancedOptionsProps) {
   return (
     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -118,6 +125,32 @@ export default function AdvancedOptions({
             placeholder="e.g., AI, machine learning, technology"
             className="block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
           />
+        </div>
+
+        {/* Provider selection */}
+        <div>
+          <label
+            htmlFor="provider"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Model Provider
+          </label>
+          <select
+            id="provider"
+            value={providerType}
+            onChange={(e) => onProviderTypeChange(e.target.value as LlmProviderType)}
+            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+            disabled={(availableProviders || []).length <= 1}
+          >
+            {(availableProviders || []).map((p) => (
+              <option key={p} value={p}>
+                {p === 'openai' ? 'OpenAI' : p === 'anthropic' ? 'Anthropic' : 'Gemini'}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-gray-500">
+            Uses whichever providers are configured on the server.
+          </p>
         </div>
       </div>
     </div>

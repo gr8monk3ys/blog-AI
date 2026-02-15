@@ -93,6 +93,11 @@ export const API_ENDPOINTS = {
     breakdown: `${API_V1_BASE_URL}/usage/quota/breakdown`,
   },
 
+  // Non-sensitive runtime config
+  config: {
+    llm: `${API_V1_BASE_URL}/config/llm`,
+  },
+
   // Payments / Stripe endpoints
   payments: {
     checkout: `${API_BASE_URL}/api/payments/create-checkout-session`,

@@ -128,7 +128,12 @@ async def generate_blog(
         await require_quota(user_id)
 
         settings = get_settings()
-        provider_type = settings.llm.default_provider or "openai"
+        provider_type = request.provider_type or settings.llm.default_provider or "openai"
+        if provider_type not in settings.llm.available_providers:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Provider not configured: {provider_type}",
+            )
         # Create generation options
         options = GenerationOptions(
             temperature=0.7,
@@ -253,7 +258,11 @@ async def generate_blog(
             user_id=user_id,
             operation_type="blog",
             tokens_used=4000,  # Estimated tokens
-            metadata={"topic": request.topic[:50], "research": request.research},
+            metadata={
+                "topic": request.topic[:50],
+                "research": request.research,
+                "provider_type": provider_type,
+            },
         )
 
         # Calculate word count for webhook

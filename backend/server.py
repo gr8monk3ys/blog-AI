@@ -71,6 +71,7 @@ from app.routes import (
     book_router,
     brand_voice_router,
     bulk_router,
+    config_router,
     content_router,
     conversations_router,
     export_router,
@@ -438,6 +439,7 @@ app.include_router(conversations_router)
 app.include_router(blog_router)
 app.include_router(book_router)
 app.include_router(bulk_router)
+app.include_router(config_router)
 app.include_router(export_router)
 app.include_router(extension_router)
 app.include_router(images_router)
@@ -487,6 +489,7 @@ api_v1_router.include_router(conversations_router)
 api_v1_router.include_router(blog_router)
 api_v1_router.include_router(book_router)
 api_v1_router.include_router(bulk_router)
+api_v1_router.include_router(config_router)
 api_v1_router.include_router(export_router)
 api_v1_router.include_router(extension_router)
 api_v1_router.include_router(images_router)

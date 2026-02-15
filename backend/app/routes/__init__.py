@@ -6,6 +6,7 @@ from .blog import router as blog_router
 from .book import router as book_router
 from .brand_voice import router as brand_voice_router
 from .bulk import router as bulk_router
+from .config import router as config_router
 from .content import router as content_router
 from .conversations import router as conversations_router
 from .export import router as export_router
@@ -32,6 +33,7 @@ __all__ = [
     "book_router",
     "brand_voice_router",
     "bulk_router",
+    "config_router",
     "content_router",
     "conversations_router",
     "export_router",

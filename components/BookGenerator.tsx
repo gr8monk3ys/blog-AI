@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Switch } from '@headlessui/react';
 import { BookOpenIcon, LightBulbIcon, PencilIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline';
 import { BookGenerationOptions } from '../types/book';
@@ -6,6 +6,8 @@ import { BookGenerationResponse, ContentGenerationResponse } from '../types/cont
 import { API_ENDPOINTS, getDefaultHeaders, checkServerConnection } from '../lib/api';
 import BrandVoiceSelector from './brand/BrandVoiceSelector'
 import type { BrandProfile } from '../types/brand'
+import type { LlmProviderType } from '../types/llm'
+import { useLlmConfig } from '../hooks/useLlmConfig'
 
 interface BookGeneratorProps {
   conversationId: string;
@@ -24,7 +26,13 @@ export default function BookGenerator({ conversationId, setContent, setLoading }
   const [humanize, setHumanize] = useState(true);
   const [brandVoiceEnabled, setBrandVoiceEnabled] = useState(false)
   const [selectedBrandProfile, setSelectedBrandProfile] = useState<BrandProfile | null>(null)
+  const { availableProviders, defaultProvider } = useLlmConfig()
+  const [providerType, setProviderType] = useState<LlmProviderType>('openai')
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setProviderType(defaultProvider)
+  }, [defaultProvider])
 
   // Mock book data for development or when server is not available
   const generateMockBook = (): BookGenerationResponse => {
@@ -108,6 +116,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
           keywords: keywords.split(',').map(k => k.trim()).filter(k => k),
           tone,
           research: useResearch,
+          provider_type: providerType,
           proofread,
           humanize,
           conversation_id: conversationId,
@@ -217,7 +226,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label htmlFor="keywords" className="block text-sm font-medium text-gray-700">
               Keywords (comma separated)
@@ -248,6 +257,25 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
               <option value="friendly">Friendly</option>
               <option value="authoritative">Authoritative</option>
               <option value="technical">Technical</option>
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="provider" className="block text-sm font-medium text-gray-700">
+              Model Provider
+            </label>
+            <select
+              id="provider"
+              value={providerType}
+              onChange={(e) => setProviderType(e.target.value as LlmProviderType)}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+              disabled={(availableProviders || []).length <= 1}
+            >
+              {(availableProviders || []).map((p) => (
+                <option key={p} value={p}>
+                  {p === 'openai' ? 'OpenAI' : p === 'anthropic' ? 'Anthropic' : 'Gemini'}
+                </option>
+              ))}
             </select>
           </div>
         </div>
