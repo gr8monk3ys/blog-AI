@@ -7,10 +7,9 @@ configured) without leaking secrets.
 
 from typing import Dict, List, Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
-from app.auth import verify_api_key
 from src.config import get_settings
 
 router = APIRouter(tags=["config"])
@@ -39,7 +38,7 @@ class LLMConfigResponse(BaseModel):
     summary="Get LLM provider configuration",
     description="Returns which LLM providers are configured, plus the default provider.",
 )
-async def get_llm_config(_: str = Depends(verify_api_key)) -> LLMConfigResponse:
+async def get_llm_config() -> LLMConfigResponse:
     settings = get_settings()
     llm = settings.llm
 

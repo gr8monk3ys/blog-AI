@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Switch } from '@headlessui/react';
 import { PencilIcon, LightBulbIcon, DocumentTextIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
@@ -8,6 +8,8 @@ import { API_ENDPOINTS, getDefaultHeaders, checkServerConnection } from '../lib/
 import { useUsageCheck } from './UsageIndicator';
 import BrandVoiceSelector from './brand/BrandVoiceSelector'
 import type { BrandProfile } from '../types/brand'
+import type { LlmProviderType } from '../types/llm'
+import { useLlmConfig } from '../hooks/useLlmConfig'
 
 interface ContentGeneratorProps {
   conversationId: string;
@@ -24,10 +26,16 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
   const [humanize, setHumanize] = useState(true);
   const [brandVoiceEnabled, setBrandVoiceEnabled] = useState(false)
   const [selectedBrandProfile, setSelectedBrandProfile] = useState<BrandProfile | null>(null)
+  const { availableProviders, defaultProvider } = useLlmConfig()
+  const [providerType, setProviderType] = useState<LlmProviderType>('openai')
   const [error, setError] = useState<string | null>(null);
   const [limitReached, setLimitReached] = useState(false);
 
   const { checkUsage } = useUsageCheck();
+
+  useEffect(() => {
+    setProviderType(defaultProvider)
+  }, [defaultProvider])
 
   // Mock blog post data for development or when server is not available
   const generateMockBlogPost = (): BlogGenerationResponse => {
@@ -156,6 +164,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
           keywords: keywords.split(',').map(k => k.trim()).filter(k => k),
           tone,
           research: useResearch,
+          provider_type: providerType,
           proofread,
           humanize,
           conversation_id: conversationId,
@@ -228,7 +237,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label htmlFor="keywords" className="block text-sm font-medium text-gray-700">
               Keywords (comma separated)
@@ -259,6 +268,25 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
               <option value="friendly">Friendly</option>
               <option value="authoritative">Authoritative</option>
               <option value="technical">Technical</option>
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="provider" className="block text-sm font-medium text-gray-700">
+              Model Provider
+            </label>
+            <select
+              id="provider"
+              value={providerType}
+              onChange={(e) => setProviderType(e.target.value as LlmProviderType)}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+              disabled={(availableProviders || []).length <= 1}
+            >
+              {(availableProviders || []).map((p) => (
+                <option key={p} value={p}>
+                  {p === 'openai' ? 'OpenAI' : p === 'anthropic' ? 'Anthropic' : 'Gemini'}
+                </option>
+              ))}
             </select>
           </div>
         </div>

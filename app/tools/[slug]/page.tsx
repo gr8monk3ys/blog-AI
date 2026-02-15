@@ -8,11 +8,13 @@ import type { TemplateCategory } from '../../../types/templates'
 import type { ExportFormat } from '../../../components/ExportMenu'
 import type { ContentVariation } from '../../../components/tools/VariationCompare'
 import type { BrandProfile } from '../../../types/brand'
+import type { LlmProviderType } from '../../../types/llm'
 import { historyApi } from '../../../lib/history-api'
 import { toolsApi } from '../../../lib/tools-api'
 import { API_ENDPOINTS, apiFetch, getDefaultHeaders } from '../../../lib/api'
 import SaveTemplateModal from '../../../components/templates/SaveTemplateModal'
 import type { PlagiarismCheckResponse, PlagiarismCheckResult } from '../../../types/plagiarism'
+import { useLlmConfig } from '../../../hooks/useLlmConfig'
 
 // Import extracted components
 import {
@@ -58,6 +60,8 @@ export default function ToolPage() {
   const [variationCount, setVariationCount] = useState(2)
   const [brandVoiceEnabled, setBrandVoiceEnabled] = useState(false)
   const [selectedBrandProfile, setSelectedBrandProfile] = useState<BrandProfile | null>(null)
+  const { availableProviders, defaultProvider } = useLlmConfig()
+  const [providerType, setProviderType] = useState<LlmProviderType>('openai')
 
   // Output state
   const [loading, setLoading] = useState(false)
@@ -105,6 +109,10 @@ export default function ToolPage() {
     loadFromHistory()
   }, [fromHistoryId])
 
+  useEffect(() => {
+    setProviderType(defaultProvider)
+  }, [defaultProvider])
+
 
   const buildExecutionInputs = (keywordList: string[]) => ({
     topic: inputText,
@@ -122,6 +130,7 @@ export default function ToolPage() {
       const result = await toolsApi.executeTool(tool.slug, {
         inputs: buildExecutionInputs(keywordList),
         brand_profile_id: brandVoiceEnabled ? (selectedBrandProfile?.id || undefined) : undefined,
+        provider_type: providerType,
       })
 
       if (result.success && result.output) {
@@ -219,7 +228,7 @@ export default function ToolPage() {
       const response = await toolsApi.generateVariations(tool.slug, {
         inputs: buildExecutionInputs(keywordList),
         variation_count: variationCount,
-        provider_type: 'openai',
+        provider_type: providerType,
         include_scores: true,
         keywords: keywordList,
         ...(brandVoiceEnabled && selectedBrandProfile?.id
@@ -338,7 +347,7 @@ export default function ToolPage() {
             brand_profile_id: brandVoiceEnabled ? selectedBrandProfile?.id : null,
           },
           output: finalOutput,
-          provider: backendOutput ? 'openai' : 'mock',
+          provider: backendOutput ? providerType : 'mock',
           execution_time_ms: executionTime,
         })
         setSavedContentId(saved.id)
@@ -531,6 +540,9 @@ export default function ToolPage() {
                 onVariationCountChange={setVariationCount}
                 keywords={keywords}
                 onKeywordsChange={setKeywords}
+                providerType={providerType}
+                availableProviders={availableProviders}
+                onProviderTypeChange={setProviderType}
                 brandVoiceEnabled={brandVoiceEnabled}
                 onBrandVoiceEnabledChange={setBrandVoiceEnabled}
                 selectedBrandProfile={selectedBrandProfile}

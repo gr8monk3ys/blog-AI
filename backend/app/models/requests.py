@@ -20,6 +20,8 @@ from .validation import (
 
 logger = logging.getLogger(__name__)
 
+ALLOWED_PROVIDERS = {"openai", "anthropic", "gemini"}
+
 
 class BlogGenerationRequest(BaseModel):
     """Request model for blog post generation."""
@@ -28,6 +30,10 @@ class BlogGenerationRequest(BaseModel):
     keywords: List[str] = Field(default=[], max_length=MAX_KEYWORDS_COUNT)
     tone: str = Field(default="informative")
     research: bool = False
+    provider_type: Optional[str] = Field(
+        default=None,
+        description="LLM provider to use (openai, anthropic, gemini)",
+    )
     brand_profile_id: Optional[str] = Field(
         default=None,
         description="Brand profile UUID to apply a trained brand voice",
@@ -70,6 +76,21 @@ class BlogGenerationRequest(BaseModel):
             raise ValueError(f"Tone must be one of: {', '.join(ALLOWED_TONES)}")
         return v.lower()
 
+    @field_validator("provider_type")
+    @classmethod
+    def validate_provider_type(cls, v: Optional[str]) -> Optional[str]:
+        """Validate provider is one of the allowed values."""
+        if v is None:
+            return None
+        v = str(v).strip().lower()
+        if not v:
+            return None
+        if v not in ALLOWED_PROVIDERS:
+            raise ValueError(
+                f"provider_type must be one of: {', '.join(sorted(ALLOWED_PROVIDERS))}"
+            )
+        return v
+
     @field_validator("conversation_id")
     @classmethod
     def validate_conversation_id(cls, v: str) -> str:
@@ -106,6 +127,10 @@ class BookGenerationRequest(BaseModel):
     keywords: List[str] = Field(default=[], max_length=MAX_KEYWORDS_COUNT)
     tone: str = Field(default="informative")
     research: bool = False
+    provider_type: Optional[str] = Field(
+        default=None,
+        description="LLM provider to use (openai, anthropic, gemini)",
+    )
     brand_profile_id: Optional[str] = Field(
         default=None,
         description="Brand profile UUID to apply a trained brand voice",
@@ -147,6 +172,21 @@ class BookGenerationRequest(BaseModel):
         if v.lower() not in ALLOWED_TONES:
             raise ValueError(f"Tone must be one of: {', '.join(ALLOWED_TONES)}")
         return v.lower()
+
+    @field_validator("provider_type")
+    @classmethod
+    def validate_provider_type(cls, v: Optional[str]) -> Optional[str]:
+        """Validate provider is one of the allowed values."""
+        if v is None:
+            return None
+        v = str(v).strip().lower()
+        if not v:
+            return None
+        if v not in ALLOWED_PROVIDERS:
+            raise ValueError(
+                f"provider_type must be one of: {', '.join(sorted(ALLOWED_PROVIDERS))}"
+            )
+        return v
 
     @field_validator("conversation_id")
     @classmethod

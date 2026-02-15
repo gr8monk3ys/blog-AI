@@ -128,7 +128,12 @@ async def generate_book_endpoint(
         await require_quota(user_id)
 
         settings = get_settings()
-        provider_type = settings.llm.default_provider or "openai"
+        provider_type = request.provider_type or settings.llm.default_provider or "openai"
+        if provider_type not in settings.llm.available_providers:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Provider not configured: {provider_type}",
+            )
         # Create generation options
         options = GenerationOptions(
             temperature=0.7,
@@ -268,6 +273,7 @@ async def generate_book_endpoint(
                 "title": request.title[:50],
                 "chapters": request.num_chapters,
                 "research": request.research,
+                "provider_type": provider_type,
             },
         )
 
