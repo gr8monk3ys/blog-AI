@@ -35,6 +35,7 @@ from src.blog.make_blog import (
     generate_blog_post_with_research,
     post_process_blog_post,
 )
+from src.brand.storage import get_brand_voice_storage
 from src.organizations import AuthorizationContext
 from src.storage import get_batch_job_store
 from src.text_generation.core import GenerationOptions, create_provider_from_env
@@ -53,25 +54,19 @@ from src.types.batch import (
     RetryRequest,
     estimate_batch_cost,
 )
-from src.usage import (
-    UsageLimitExceeded,
-    check_usage_limit,
-    increment_usage,
-)
 from src.usage.quota_service import (
     QuotaExceeded,
     check_quota as async_check_quota,
-    increment_usage as async_increment_usage,
+    get_usage_stats as async_get_usage_stats,
 )
 from src.webhooks import webhook_service
 
-from ..auth import verify_api_key
 from ..dependencies import (
     require_content_access,
     require_content_creation,
 )
 from ..error_handlers import sanitize_error_message
-from ..middleware import require_pro_tier
+from ..middleware import increment_usage_for_operation, require_pro_tier
 from ..storage import conversations
 from ..websocket import manager
 
@@ -122,22 +117,22 @@ async def _generate_single_item_enhanced(
     job_id: str,
     request: EnhancedBatchRequest,
     user_id: str,
+    brand_voice: Optional[str],
 ) -> EnhancedBatchItemResult:
     """Generate a single content item with enhanced features."""
     start_time = time.time()
     item_id = str(uuid.uuid4())
 
     try:
-        # Check usage limit
         try:
-            check_usage_limit(user_id)
-        except UsageLimitExceeded as e:
+            await async_check_quota(user_id)
+        except QuotaExceeded as e:
             return EnhancedBatchItemResult(
                 index=index,
                 item_id=item_id,
                 status=JobStatus.FAILED,
                 topic=item.topic,
-                error=sanitize_error_message(str(e)),
+                error=f"Quota exceeded: {sanitize_error_message(str(e))}",
                 execution_time_ms=int((time.time() - start_time) * 1000),
             )
 
@@ -158,34 +153,39 @@ async def _generate_single_item_enhanced(
             presence_penalty=0.0,
         )
 
-        # Generate content
-        if request.research_enabled:
-            blog_post = generate_blog_post_with_research(
-                title=item.topic,
-                keywords=item.keywords,
-                tone=item.tone,
-                provider_type=provider_type,
-                options=options,
-            )
-        else:
-            blog_post = generate_blog_post(
-                title=item.topic,
-                keywords=item.keywords,
-                tone=item.tone,
-                provider_type=provider_type,
-                options=options,
-            )
+        def _generate() -> Any:
+            if request.research_enabled:
+                blog_post = generate_blog_post_with_research(
+                    title=item.topic,
+                    keywords=item.keywords,
+                    tone=item.tone,
+                    brand_voice=brand_voice,
+                    provider_type=provider_type,
+                    options=options,
+                )
+            else:
+                blog_post = generate_blog_post(
+                    title=item.topic,
+                    keywords=item.keywords,
+                    tone=item.tone,
+                    brand_voice=brand_voice,
+                    provider_type=provider_type,
+                    options=options,
+                )
 
-        # Post-process if needed
-        if request.proofread_enabled or request.humanize_enabled:
-            provider = create_provider_from_env(provider_type)
-            blog_post = post_process_blog_post(
-                blog_post=blog_post,
-                proofread=request.proofread_enabled,
-                humanize=request.humanize_enabled,
-                provider=provider,
-                options=options,
-            )
+            if request.proofread_enabled or request.humanize_enabled:
+                provider = create_provider_from_env(provider_type)
+                blog_post = post_process_blog_post(
+                    blog_post=blog_post,
+                    proofread=request.proofread_enabled,
+                    humanize=request.humanize_enabled,
+                    provider=provider,
+                    options=options,
+                )
+            return blog_post
+
+        # Run potentially-blocking LLM calls off the event loop.
+        blog_post = await asyncio.to_thread(_generate)
 
         # Convert to serializable format
         blog_post_data = {
@@ -208,9 +208,34 @@ async def _generate_single_item_enhanced(
 
         blog_post_data["word_count"] = word_count
 
-        # Increment usage
+        sources = []
+        for s in getattr(blog_post, "sources", []) or []:
+            try:
+                sources.append(
+                    {
+                        "id": int(getattr(s, "id", 0) or 0),
+                        "title": str(getattr(s, "title", "") or ""),
+                        "url": str(getattr(s, "url", "") or ""),
+                        "snippet": str(getattr(s, "snippet", "") or ""),
+                        "provider": str(getattr(s, "provider", "") or ""),
+                    }
+                )
+            except Exception:
+                continue
+        if sources:
+            blog_post_data["sources"] = sources
+
         estimated_tokens = 4000  # Rough estimate
-        increment_usage(user_id, tokens_used=estimated_tokens, tool_id="batch-generation")
+        await increment_usage_for_operation(
+            user_id=user_id,
+            operation_type="batch",
+            tokens_used=estimated_tokens,
+            metadata={
+                "job_id": job_id,
+                "topic": item.topic[:50],
+                "research": request.research_enabled,
+            },
+        )
 
         # Estimate cost
         from src.types.batch import PROVIDER_COSTS
@@ -233,14 +258,14 @@ async def _generate_single_item_enhanced(
             completed_at=datetime.now().isoformat(),
         )
 
-    except UsageLimitExceeded as e:
-        logger.warning(f"Usage limit exceeded for item {index}: {str(e)}")
+    except QuotaExceeded as e:
+        logger.warning("Quota exceeded for batch item %s: %s", index, e)
         return EnhancedBatchItemResult(
             index=index,
             item_id=item_id,
             status=JobStatus.FAILED,
             topic=item.topic,
-            error=f"Usage limit exceeded: {sanitize_error_message(str(e))}",
+            error=f"Quota exceeded: {sanitize_error_message(str(e))}",
             execution_time_ms=int((time.time() - start_time) * 1000),
         )
     except ValueError as e:
@@ -278,9 +303,20 @@ async def _process_enhanced_batch(
             started_at=datetime.now().isoformat(),
         )
 
+        brand_voice = None
+        if request.brand_profile_id:
+            try:
+                storage = get_brand_voice_storage()
+                fingerprint = await storage.get_fingerprint(user_id, request.brand_profile_id)
+                if fingerprint and fingerprint.voice_summary:
+                    brand_voice = fingerprint.voice_summary
+            except Exception as e:
+                logger.debug("Failed to load brand voice fingerprint for batch: %s", e)
+
         results: List[EnhancedBatchItemResult] = []
         semaphore = asyncio.Semaphore(request.parallel_limit)
         providers_used: Dict[str, int] = {}
+        quota_exceeded = asyncio.Event()
 
         async def process_with_semaphore(index: int, item: BatchItemInput) -> EnhancedBatchItemResult:
             async with semaphore:
@@ -292,12 +328,32 @@ async def _process_enhanced_batch(
                         error="Job cancelled",
                         execution_time_ms=0,
                     )
+                if quota_exceeded.is_set():
+                    return EnhancedBatchItemResult(
+                        index=index,
+                        status=JobStatus.FAILED,
+                        topic=item.topic,
+                        error="Quota exceeded",
+                        execution_time_ms=0,
+                    )
+                try:
+                    await async_check_quota(user_id)
+                except QuotaExceeded as e:
+                    quota_exceeded.set()
+                    return EnhancedBatchItemResult(
+                        index=index,
+                        status=JobStatus.FAILED,
+                        topic=item.topic,
+                        error=f"Quota exceeded: {sanitize_error_message(str(e))}",
+                        execution_time_ms=0,
+                    )
                 return await _generate_single_item_enhanced(
                     index=index,
                     item=item,
                     job_id=job_id,
                     request=request,
                     user_id=user_id,
+                    brand_voice=brand_voice,
                 )
 
         # Process items with controlled parallelism
@@ -424,8 +480,94 @@ async def _process_enhanced_batch(
 # CSV Import/Export Endpoints
 # ============================================================================
 
+@router.post("", status_code=status.HTTP_202_ACCEPTED)
+async def create_batch_job(
+    request: EnhancedBatchRequest,
+    background_tasks: BackgroundTasks,
+    _: str = Depends(require_pro_tier),
+    auth_ctx: AuthorizationContext = Depends(require_content_creation),
+) -> Dict:
+    """
+    Create an enhanced batch job from a JSON request.
+
+    **Authorization:** Requires Pro tier (or higher) and content.create permission.
+    """
+    if len(request.items) > 100:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Maximum 100 items per batch"
+        )
+
+    # Ensure the request fits within the user's remaining quota to avoid
+    # partially-executed jobs that unexpectedly fail mid-run.
+    stats = await async_get_usage_stats(auth_ctx.user_id)
+    remaining_candidates = [
+        v for v in [stats.remaining, stats.daily_remaining] if isinstance(v, int) and v != -1
+    ]
+    allowed = min(remaining_candidates) if remaining_candidates else None
+    if allowed is not None and len(request.items) > allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={
+                "error": "Batch size exceeds your remaining quota",
+                "error_code": "BATCH_QUOTA_EXCEEDED",
+                "requested_items": len(request.items),
+                "allowed_items": allowed,
+                "remaining_monthly": stats.remaining,
+                "remaining_daily": stats.daily_remaining,
+                "tier": stats.tier.value,
+                "reset_date": stats.reset_date.isoformat(),
+            },
+        )
+
+    # Estimate cost
+    cost_estimate = estimate_batch_cost(
+        items=request.items,
+        provider=request.preferred_provider,
+        strategy=request.provider_strategy,
+        research_enabled=request.research_enabled,
+    )
+
+    # Use organization_id for scoping if available, fallback to user_id
+    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+
+    # Create job with ownership
+    job_id = str(uuid.uuid4())
+    job_status = EnhancedBatchStatus(
+        job_id=job_id,
+        name=request.name,
+        status=JobStatus.PENDING,
+        total_items=len(request.items),
+        provider_strategy=request.provider_strategy,
+        estimated_cost_usd=cost_estimate.estimated_cost_usd,
+    )
+
+    # Save job to Redis-backed storage with ownership (use scope_id for multi-tenant isolation)
+    await _job_store.save_job(job_id, job_status, scope_id)
+    await _job_store.set_cancel_flag(job_id, False)
+
+    # Start processing
+    background_tasks.add_task(
+        _process_enhanced_batch,
+        job_id,
+        request,
+        auth_ctx.user_id,
+    )
+
+    return {
+        "success": True,
+        "job_id": job_id,
+        "status": "pending",
+        "total_items": len(request.items),
+        "estimated_cost_usd": cost_estimate.estimated_cost_usd,
+        "cost_breakdown": cost_estimate.cost_breakdown,
+        "message": "Batch processing started.",
+    }
+
+
 @router.post("/import/csv", status_code=status.HTTP_202_ACCEPTED)
 async def import_csv_batch(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(..., description="CSV file with topics"),
     provider_strategy: ProviderStrategy = Query(default=ProviderStrategy.SINGLE),
     preferred_provider: str = Query(default="openai"),
@@ -434,7 +576,7 @@ async def import_csv_batch(
     humanize_enabled: bool = Query(default=False),
     parallel_limit: int = Query(default=3, ge=1, le=10),
     conversation_id: str = Query(...),
-    background_tasks: BackgroundTasks = None,
+    _: str = Depends(require_pro_tier),
     auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ) -> Dict:
     """
@@ -520,6 +662,26 @@ async def import_csv_batch(
         scope_id = auth_ctx.organization_id or auth_ctx.user_id
         user_id = auth_ctx.user_id
 
+        stats = await async_get_usage_stats(user_id)
+        remaining_candidates = [
+            v for v in [stats.remaining, stats.daily_remaining] if isinstance(v, int) and v != -1
+        ]
+        allowed = min(remaining_candidates) if remaining_candidates else None
+        if allowed is not None and len(items) > allowed:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail={
+                    "error": "Batch size exceeds your remaining quota",
+                    "error_code": "BATCH_QUOTA_EXCEEDED",
+                    "requested_items": len(items),
+                    "allowed_items": allowed,
+                    "remaining_monthly": stats.remaining,
+                    "remaining_daily": stats.daily_remaining,
+                    "tier": stats.tier.value,
+                    "reset_date": stats.reset_date.isoformat(),
+                },
+            )
+
         # Create job with ownership
         job_id = str(uuid.uuid4())
         job_status = EnhancedBatchStatus(
@@ -540,7 +702,7 @@ async def import_csv_batch(
             _process_enhanced_batch,
             job_id,
             request,
-            scope_id,
+            user_id,
         )
 
         return {
@@ -844,6 +1006,7 @@ async def retry_failed_items(
     job_id: str,
     retry_request: RetryRequest,
     background_tasks: BackgroundTasks,
+    _: str = Depends(require_pro_tier),
     auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ) -> Dict:
     """
@@ -923,7 +1086,7 @@ async def retry_failed_items(
         _process_enhanced_batch,
         retry_job_id,
         original_request,
-        scope_id,
+        user_id,
     )
 
     return {
@@ -1032,13 +1195,20 @@ async def get_batch_results(
         "total_cost_usd": job.actual_cost_usd,
         "total_tokens": job.total_tokens_used,
         "providers_used": job.providers_used,
-        "results": [r.model_dump() for r in results],
+        "results": [
+            {
+                **r.model_dump(),
+                "success": r.status in [JobStatus.COMPLETED, JobStatus.PARTIAL],
+            }
+            for r in results
+        ],
     }
 
 
 @router.post("/{job_id}/cancel")
 async def cancel_batch_job(
     job_id: str,
+    _: str = Depends(require_pro_tier),
     auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ) -> Dict:
     """

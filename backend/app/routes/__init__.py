@@ -12,10 +12,8 @@ from .export import router as export_router
 from .extension import router as extension_router
 from .health import router as health_router
 from .images import router as images_router
-from .knowledge import router as knowledge_router
 from .organizations import router as organizations_router
 from .payments import router as payments_router
-from .performance import router as performance_router
 from .remix import router as remix_router
 from .social import router as social_router
 from .sso import router as sso_router
@@ -23,7 +21,6 @@ from .sso_admin import router as sso_admin_router
 from .streaming import router as streaming_router
 from .tools import router as tools_router
 from .usage import router as usage_router
-from .versions import router as versions_router
 from .webhooks import router as webhooks_router
 from .websocket import router as websocket_router
 from .zapier import router as zapier_router
@@ -41,10 +38,8 @@ __all__ = [
     "extension_router",
     "health_router",
     "images_router",
-    "knowledge_router",
     "organizations_router",
     "payments_router",
-    "performance_router",
     "remix_router",
     "social_router",
     "sso_router",
@@ -52,7 +47,6 @@ __all__ = [
     "streaming_router",
     "tools_router",
     "usage_router",
-    "versions_router",
     "webhooks_router",
     "websocket_router",
     "zapier_router",

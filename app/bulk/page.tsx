@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import { v4 as uuidv4 } from 'uuid'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -22,14 +22,14 @@ import {
 } from '@heroicons/react/24/outline'
 import {
   BulkGenerationItem,
-  BulkGenerationItemResult,
-  BulkGenerationStatus,
   BulkJobStartResponse,
   CSVRow,
   ParsedCSVData,
   ProviderStrategy,
   CostEstimate,
   ExportFormat,
+  EnhancedBatchStatus,
+  EnhancedBatchItemResult,
 } from '../../types/bulk'
 import UsageIndicator, { useUsageCheck } from '../../components/UsageIndicator'
 import { API_ENDPOINTS, getDefaultHeaders } from '../../lib/api'
@@ -130,8 +130,8 @@ export default function BulkGenerationPage() {
   const [showExportMenu, setShowExportMenu] = useState(false)
 
   const [jobId, setJobId] = useState<string | null>(null)
-  const [status, setStatus] = useState<BulkGenerationStatus | null>(null)
-  const [results, setResults] = useState<BulkGenerationItemResult[]>([])
+  const [status, setStatus] = useState<EnhancedBatchStatus | null>(null)
+  const [results, setResults] = useState<EnhancedBatchItemResult[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -181,14 +181,14 @@ export default function BulkGenerationPage() {
 
     try {
       const response = await fetch(
-        `${API_ENDPOINTS.batch.estimate}?provider_strategy=${providerStrategy}&preferred_provider=${preferredProvider}&research_enabled=${useResearch}`,
-        {
-          method: 'POST',
-          headers: getDefaultHeaders(),
-          body: JSON.stringify(items.map(item => ({
-            topic: item.topic,
-            keywords: item.keywords,
-            tone: item.tone || sharedTone,
+	        `${API_ENDPOINTS.batch.estimate}?provider_strategy=${providerStrategy}&preferred_provider=${preferredProvider}&research_enabled=${useResearch}`,
+	        {
+	          method: 'POST',
+	          headers: await getDefaultHeaders(),
+	          body: JSON.stringify(items.map(item => ({
+	            topic: item.topic,
+	            keywords: item.keywords,
+	            tone: item.tone || sharedTone,
             content_type: 'blog',
           }))),
         }
@@ -203,9 +203,18 @@ export default function BulkGenerationPage() {
     }
   }, [items, providerStrategy, preferredProvider, useResearch, sharedTone])
 
+  // Re-estimate cost when inputs change (debounced)
+  useEffect(() => {
+    if (isProcessing) return
+    const timeout = setTimeout(() => {
+      void estimateCost()
+    }, 400)
+    return () => clearTimeout(timeout)
+  }, [estimateCost, isProcessing])
+
   // Retry failed items
   const retryFailed = async () => {
-    if (!jobId || !status?.can_cancel === false) return
+    if (!jobId || !status?.can_retry_failed) return
 
     const failedIndices = results
       .filter(r => !r.success)
@@ -216,14 +225,14 @@ export default function BulkGenerationPage() {
       return
     }
 
-    try {
-      const response = await fetch(API_ENDPOINTS.batch.retry(jobId), {
-        method: 'POST',
-        headers: getDefaultHeaders(),
-        body: JSON.stringify({
-          item_indices: failedIndices,
-          change_provider: preferredProvider !== 'openai' ? preferredProvider : undefined,
-        }),
+	 	    try {
+	      const response = await fetch(API_ENDPOINTS.batch.retry(jobId), {
+	        method: 'POST',
+	        headers: await getDefaultHeaders(),
+	        body: JSON.stringify({
+	          item_indices: failedIndices,
+	          change_provider: preferredProvider !== 'openai' ? preferredProvider : undefined,
+	        }),
       })
 
       if (!response.ok) {
@@ -232,6 +241,10 @@ export default function BulkGenerationPage() {
 
       const data = await response.json()
       setJobId(data.retry_job_id)
+      setStatus(null)
+      setResults([])
+      setProvidersUsed({})
+      setActualCost(0)
       setIsProcessing(true)
       startPolling(data.retry_job_id)
     } catch (err) {
@@ -243,10 +256,10 @@ export default function BulkGenerationPage() {
   const exportResults = async (format: ExportFormat) => {
     if (!jobId) return
 
-    try {
-      const response = await fetch(API_ENDPOINTS.batch.export(jobId, format), {
-        headers: getDefaultHeaders(),
-      })
+	    try {
+	      const response = await fetch(API_ENDPOINTS.batch.export(jobId, format), {
+	        headers: await getDefaultHeaders(),
+	      })
 
       if (!response.ok) {
         throw new Error('Failed to export results')
@@ -316,39 +329,53 @@ export default function BulkGenerationPage() {
     setError(null)
     setResults([])
 
-    try {
-      const response = await fetch(API_ENDPOINTS.bulk.generate, {
-        method: 'POST',
-        headers: getDefaultHeaders(),
-        body: JSON.stringify({
-          items: items.map((item) => ({
-            ...item,
-            tone: item.tone || sharedTone,
-          })),
-          tool_id: 'blog-post',
-          research: useResearch,
-          proofread,
-          humanize,
-          parallel_limit: parallelLimit,
-          conversation_id: conversationId,
-        }),
-      })
+	    try {
+	      const fallbackProviders = PROVIDER_OPTIONS.map((p) => p.value).filter(
+	        (p) => p !== preferredProvider
+	      )
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.detail?.error || errorData.detail || 'Failed to start bulk generation')
-      }
+	      const response = await fetch(API_ENDPOINTS.batch.create, {
+	        method: 'POST',
+	        headers: await getDefaultHeaders(),
+	        body: JSON.stringify({
+	          items: items.map((item) => ({
+	            topic: item.topic,
+	            keywords: item.keywords,
+	            tone: item.tone || sharedTone,
+	            content_type: 'blog',
+	          })),
+	          provider_strategy: providerStrategy,
+	          preferred_provider: preferredProvider,
+	          fallback_providers: fallbackProviders,
+	          parallel_limit: parallelLimit,
+	          research_enabled: useResearch,
+	          proofread_enabled: proofread,
+	          humanize_enabled: humanize,
+	          conversation_id: conversationId,
+	          name: `Bulk Generation (${items.length})`,
+	        }),
+	      })
 
-      const data: BulkJobStartResponse = await response.json()
-      setJobId(data.job_id)
+	      if (!response.ok) {
+	        const errorData = await response.json()
+	        throw new Error(
+	          errorData.detail?.error || errorData.detail || 'Failed to start batch generation'
+	        )
+	      }
 
-      // Start polling for status
-      startPolling(data.job_id)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to start bulk generation')
-      setIsProcessing(false)
-    }
-  }
+	      const data: BulkJobStartResponse = await response.json()
+	      setJobId(data.job_id)
+	      setStatus(null)
+	      setProvidersUsed({})
+	      setActualCost(0)
+
+	      // Start polling for status
+	      startPolling(data.job_id)
+	    } catch (err) {
+	      setError(err instanceof Error ? err.message : 'Failed to start batch generation')
+	      setIsProcessing(false)
+	    }
+	  }
 
   // Poll for job status
   const startPolling = (id: string) => {
@@ -356,26 +383,28 @@ export default function BulkGenerationPage() {
       clearInterval(pollIntervalRef.current)
     }
 
-    const poll = async () => {
-      try {
-        const response = await fetch(API_ENDPOINTS.bulk.status(id), {
-          headers: getDefaultHeaders(),
-        })
+	    const poll = async () => {
+	      try {
+	        const response = await fetch(API_ENDPOINTS.batch.status(id), {
+	          headers: await getDefaultHeaders(),
+	        })
 
         if (!response.ok) {
           throw new Error('Failed to fetch status')
         }
 
-        const statusData: BulkGenerationStatus = await response.json()
-        setStatus(statusData)
+	        const statusData: EnhancedBatchStatus = await response.json()
+	        setStatus(statusData)
+	        setProvidersUsed(statusData.providers_used || {})
+	        setActualCost(statusData.actual_cost_usd || 0)
 
-        if (['completed', 'failed', 'cancelled'].includes(statusData.status)) {
-          // Job finished, fetch results
-          stopPolling()
-          fetchResults(id)
-        }
-      } catch (err) {
-        console.error('Error polling status:', err)
+	        if (['completed', 'failed', 'cancelled', 'partial'].includes(statusData.status)) {
+	          // Job finished, fetch results
+	          stopPolling()
+	          fetchResults(id)
+	        }
+	      } catch (err) {
+	        console.error('Error polling status:', err)
       }
     }
 
@@ -391,58 +420,42 @@ export default function BulkGenerationPage() {
   }
 
   // Fetch final results
-  const fetchResults = async (id: string) => {
-    try {
-      const response = await fetch(API_ENDPOINTS.bulk.results(id), {
-        headers: getDefaultHeaders(),
-      })
+	  const fetchResults = async (id: string) => {
+	    try {
+	      const response = await fetch(API_ENDPOINTS.batch.results(id), {
+	        headers: await getDefaultHeaders(),
+	      })
 
       if (!response.ok) {
         throw new Error('Failed to fetch results')
       }
 
-      const data = await response.json()
-      setResults(data.results)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch results')
-    } finally {
-      setIsProcessing(false)
-    }
-  }
+	      const data = await response.json()
+	      setResults(data.results || [])
+	      setProvidersUsed(data.providers_used || {})
+	      setActualCost(data.total_cost_usd || 0)
+	    } catch (err) {
+	      setError(err instanceof Error ? err.message : 'Failed to fetch results')
+	    } finally {
+	      setIsProcessing(false)
+	    }
+	  }
 
   // Cancel job
-  const cancelJob = async () => {
-    if (!jobId) return
+	  const cancelJob = async () => {
+	    if (!jobId) return
 
-    try {
-      await fetch(API_ENDPOINTS.bulk.cancel(jobId), {
-        method: 'POST',
-        headers: getDefaultHeaders(),
-      })
-      stopPolling()
-      setIsProcessing(false)
-    } catch (err) {
-      console.error('Error cancelling job:', err)
-    }
-  }
-
-  // Download results as JSON
-  const downloadResults = () => {
-    const data = results.map((r) => ({
-      topic: r.topic,
-      success: r.success,
-      content: r.content,
-      error: r.error,
-    }))
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `bulk-generation-${new Date().toISOString().slice(0, 10)}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
+	    try {
+	      await fetch(API_ENDPOINTS.batch.cancel(jobId), {
+	        method: 'POST',
+	        headers: await getDefaultHeaders(),
+	      })
+	      stopPolling()
+	      setIsProcessing(false)
+	    } catch (err) {
+	      console.error('Error cancelling job:', err)
+	    }
+	  }
 
   // Download CSV template
   const downloadTemplate = () => {
@@ -880,6 +893,15 @@ export default function BulkGenerationPage() {
               className="bg-white rounded-xl border border-gray-200 p-6"
             >
               <div className="space-y-3">
+                {!canGenerate && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                    Usage limit reached.{' '}
+                    <Link href="/pricing" className="font-medium underline">
+                      Upgrade your plan
+                    </Link>{' '}
+                    to continue.
+                  </div>
+                )}
                 {isProcessing ? (
                   <button
                     onClick={cancelJob}
@@ -891,7 +913,7 @@ export default function BulkGenerationPage() {
                 ) : (
                   <button
                     onClick={startGeneration}
-                    disabled={items.length === 0}
+                    disabled={items.length === 0 || !canGenerate}
                     className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <PlayIcon className="w-5 h-5" />
