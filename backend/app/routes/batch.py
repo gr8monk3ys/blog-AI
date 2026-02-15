@@ -36,10 +36,12 @@ from src.blog.make_blog import (
     post_process_blog_post,
 )
 from src.brand.storage import get_brand_voice_storage
+from src.config import get_settings
 from src.organizations import AuthorizationContext
 from src.storage import get_batch_job_store
 from src.text_generation.core import GenerationOptions, create_provider_from_env
 from src.types.batch import (
+    ALLOWED_PROVIDERS,
     BatchItemInput,
     CostEstimate,
     CSVExportRow,
@@ -79,6 +81,48 @@ _job_store = get_batch_job_store()
 
 # Provider rotation state for round-robin (this can stay in-memory as it's stateless)
 _provider_index: Dict[str, int] = {}
+
+def _default_provider() -> str:
+    v = get_settings().llm.default_provider
+    return v or "openai"
+
+
+def _normalize_provider(provider: Optional[str], *, default: str) -> str:
+    v = (provider or "").strip().lower() or default
+    if v not in ALLOWED_PROVIDERS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid provider '{v}'. Allowed: {', '.join(sorted(ALLOWED_PROVIDERS))}",
+        )
+
+    configured = get_settings().llm.available_providers
+    if configured and v not in configured:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": f"Provider '{v}' is not configured for this deployment",
+                "configured_providers": configured,
+            },
+        )
+    return v
+
+
+def _validate_configured_providers(preferred: str, fallbacks: List[str]) -> None:
+    configured = get_settings().llm.available_providers
+    if not configured:
+        return
+
+    requested = [preferred] + list(fallbacks or [])
+    invalid = [p for p in requested if p not in configured]
+    if invalid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": "One or more requested providers are not configured for this deployment",
+                "invalid_providers": invalid,
+                "configured_providers": configured,
+            },
+        )
 
 
 def _get_next_provider(job_id: str, strategy: ProviderStrategy, preferred: str, fallbacks: List[str]) -> str:
@@ -498,6 +542,8 @@ async def create_batch_job(
             detail="Maximum 100 items per batch"
         )
 
+    _validate_configured_providers(request.preferred_provider, request.fallback_providers)
+
     # Ensure the request fits within the user's remaining quota to avoid
     # partially-executed jobs that unexpectedly fail mid-run.
     stats = await async_get_usage_stats(auth_ctx.user_id)
@@ -597,6 +643,8 @@ async def import_csv_batch(
         )
 
     try:
+        preferred_provider = _normalize_provider(preferred_provider, default=_default_provider())
+
         # Read CSV content
         content = await file.read()
         content_str = content.decode("utf-8")
@@ -637,11 +685,19 @@ async def import_csv_batch(
             )
 
         # Create enhanced request
+        configured = get_settings().llm.available_providers
+        fallback_providers = (
+            [p for p in configured if p != preferred_provider]
+            if configured
+            else [p for p in ["anthropic", "gemini"] if p != preferred_provider]
+        )
+        _validate_configured_providers(preferred_provider, fallback_providers)
+
         request = EnhancedBatchRequest(
             items=items,
             provider_strategy=provider_strategy,
             preferred_provider=preferred_provider,
-            fallback_providers=["anthropic", "gemini"],
+            fallback_providers=fallback_providers,
             parallel_limit=parallel_limit,
             research_enabled=research_enabled,
             proofread_enabled=proofread_enabled,
@@ -989,6 +1045,8 @@ async def estimate_cost(
             detail="Maximum 100 items per batch"
         )
 
+    preferred_provider = _normalize_provider(preferred_provider, default=_default_provider())
+
     return estimate_batch_cost(
         items=items,
         provider=preferred_provider,
@@ -1046,6 +1104,15 @@ async def retry_failed_items(
             detail="No matching failed items to retry"
         )
 
+    preferred_provider = _normalize_provider(retry_request.change_provider, default=_default_provider())
+    configured = get_settings().llm.available_providers
+    fallback_providers = (
+        [p for p in configured if p != preferred_provider]
+        if configured
+        else [p for p in ["anthropic", "gemini"] if p != preferred_provider]
+    )
+    _validate_configured_providers(preferred_provider, fallback_providers)
+
     # Create retry job
     retry_job_id = str(uuid.uuid4())
 
@@ -1059,8 +1126,8 @@ async def retry_failed_items(
     original_request = EnhancedBatchRequest(
         items=retry_items,
         provider_strategy=ProviderStrategy.SINGLE,
-        preferred_provider=retry_request.change_provider or "openai",
-        fallback_providers=["anthropic", "gemini"],
+        preferred_provider=preferred_provider,
+        fallback_providers=fallback_providers,
         parallel_limit=3,
         research_enabled=False,
         proofread_enabled=True,

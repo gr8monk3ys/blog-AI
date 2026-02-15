@@ -33,6 +33,8 @@ import {
 } from '../../types/bulk'
 import UsageIndicator, { useUsageCheck } from '../../components/UsageIndicator'
 import { API_ENDPOINTS, getDefaultHeaders } from '../../lib/api'
+import { useLlmConfig } from '../../hooks/useLlmConfig'
+import type { LlmProviderType } from '../../types/llm'
 
 const TONE_OPTIONS = [
   { value: 'informative', label: 'Informative' },
@@ -43,11 +45,11 @@ const TONE_OPTIONS = [
   { value: 'technical', label: 'Technical' },
 ]
 
-const PROVIDER_OPTIONS = [
-  { value: 'openai', label: 'OpenAI (GPT-4)', cost: '$$$' },
-  { value: 'anthropic', label: 'Anthropic (Claude)', cost: '$$' },
-  { value: 'gemini', label: 'Google (Gemini)', cost: '$' },
-]
+const PROVIDER_META: Record<LlmProviderType, { label: string; cost: string }> = {
+  openai: { label: 'OpenAI', cost: '$$$' },
+  anthropic: { label: 'Anthropic', cost: '$$' },
+  gemini: { label: 'Gemini', cost: '$' },
+}
 
 const STRATEGY_OPTIONS: { value: ProviderStrategy; label: string; description: string }[] = [
   { value: 'single', label: 'Single Provider', description: 'Use one provider for all items' },
@@ -123,7 +125,9 @@ export default function BulkGenerationPage() {
 
   // Tier 1 features: Provider and cost tracking
   const [providerStrategy, setProviderStrategy] = useState<ProviderStrategy>('single')
-  const [preferredProvider, setPreferredProvider] = useState('openai')
+  const { config: llmConfig, availableProviders, defaultProvider } = useLlmConfig()
+  const [preferredProvider, setPreferredProvider] = useState<LlmProviderType>('openai')
+  const [providerTouched, setProviderTouched] = useState(false)
   const [costEstimate, setCostEstimate] = useState<CostEstimate | null>(null)
   const [providersUsed, setProvidersUsed] = useState<Record<string, number>>({})
   const [actualCost, setActualCost] = useState(0)
@@ -139,6 +143,14 @@ export default function BulkGenerationPage() {
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   const { canGenerate, checkUsage } = useUsageCheck()
+
+  useEffect(() => {
+    if (!providerTouched) setPreferredProvider(defaultProvider)
+  }, [defaultProvider, providerTouched])
+
+  useEffect(() => {
+    if (!availableProviders.includes(preferredProvider)) setPreferredProvider(defaultProvider)
+  }, [availableProviders, defaultProvider, preferredProvider])
 
   // Add a single item manually
   const addItem = () => {
@@ -225,13 +237,13 @@ export default function BulkGenerationPage() {
       return
     }
 
-	 	    try {
+	    try {
 	      const response = await fetch(API_ENDPOINTS.batch.retry(jobId), {
 	        method: 'POST',
 	        headers: await getDefaultHeaders(),
 	        body: JSON.stringify({
 	          item_indices: failedIndices,
-	          change_provider: preferredProvider !== 'openai' ? preferredProvider : undefined,
+	          change_provider: preferredProvider,
 	        }),
       })
 
@@ -330,9 +342,7 @@ export default function BulkGenerationPage() {
     setResults([])
 
 	    try {
-	      const fallbackProviders = PROVIDER_OPTIONS.map((p) => p.value).filter(
-	        (p) => p !== preferredProvider
-	      )
+	      const fallbackProviders = availableProviders.filter((p) => p !== preferredProvider)
 
 	      const response = await fetch(API_ENDPOINTS.batch.create, {
 	        method: 'POST',
@@ -696,17 +706,23 @@ export default function BulkGenerationPage() {
                     <select
                       value={preferredProvider}
                       onChange={(e) => {
-                        setPreferredProvider(e.target.value)
+                        setProviderTouched(true)
+                        setPreferredProvider(e.target.value as LlmProviderType)
                         setCostEstimate(null)
                       }}
                       disabled={isProcessing}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100"
                     >
-                      {PROVIDER_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label} ({option.cost})
-                        </option>
-                      ))}
+                      {availableProviders.map((p) => {
+                        const meta = PROVIDER_META[p]
+                        const model = llmConfig?.models?.[p]
+                        const label = `${meta?.label || p}${model ? ` (${model})` : ''} (${meta?.cost || ''})`
+                        return (
+                          <option key={p} value={p}>
+                            {label.trim()}
+                          </option>
+                        )
+                      })}
                     </select>
                   </div>
                 )}
