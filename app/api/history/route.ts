@@ -116,16 +116,6 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  let body: Record<string, unknown>
-  try {
-    body = await request.json()
-  } catch {
-    return NextResponse.json(
-      { error: 'Invalid JSON' },
-      { status: 400 }
-    )
-  }
-
   try {
     const sql = getSqlOrNull()
     if (!sql) {
@@ -133,6 +123,7 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = await requireClerkUserId()
+    const body = await request.json()
 
     if (
       !body?.tool_id ||
