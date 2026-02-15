@@ -173,6 +173,7 @@ async function generateFromSelection(apiKey, text, action, settings) {
     topic: text,
     tone: settings.defaultTone || 'professional',
     length: settings.defaultLength || 'medium',
+    providerType: settings.defaultProvider || 'openai',
     keywords: [],
     research: settings.includeResearch || false,
     proofread: settings.enableProofreading || true,
@@ -462,6 +463,7 @@ async function setDefaultSettings() {
   const defaultSettings = {
     defaultTone: 'professional',
     defaultLength: 'medium',
+    defaultProvider: 'openai',
     includeResearch: false,
     enableProofreading: true,
     theme: 'system',

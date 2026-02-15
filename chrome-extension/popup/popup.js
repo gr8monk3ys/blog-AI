@@ -29,6 +29,7 @@ const elements = {
   topicInput: document.getElementById('topic-input'),
   toneSelect: document.getElementById('tone-select'),
   lengthSelect: document.getElementById('length-select'),
+  providerSelect: document.getElementById('provider-select'),
   keywordsInput: document.getElementById('keywords-input'),
   researchCheckbox: document.getElementById('research-checkbox'),
   proofreadCheckbox: document.getElementById('proofread-checkbox'),
@@ -60,6 +61,9 @@ async function init() {
   // Check connection status
   await checkConnection()
 
+  // Load saved default settings (tone/length/provider, etc.)
+  await loadSettings()
+
   // Load recent generations
   await loadRecentGenerations()
 
@@ -68,6 +72,30 @@ async function init() {
 
   // Check for selected text
   await checkSelectedText()
+}
+
+/**
+ * Load saved settings to prefill the popup form.
+ */
+async function loadSettings() {
+  try {
+    const { settings } = await chrome.storage.sync.get(['settings'])
+    const current = settings || {}
+
+    if (current.defaultTone) elements.toneSelect.value = current.defaultTone
+    if (current.defaultLength) elements.lengthSelect.value = current.defaultLength
+    if (current.defaultProvider && elements.providerSelect) {
+      elements.providerSelect.value = current.defaultProvider
+    }
+    if (typeof current.includeResearch === 'boolean') {
+      elements.researchCheckbox.checked = current.includeResearch
+    }
+    if (typeof current.enableProofreading === 'boolean') {
+      elements.proofreadCheckbox.checked = current.enableProofreading
+    }
+  } catch (error) {
+    console.error('Failed to load settings:', error)
+  }
 }
 
 /**
@@ -298,6 +326,7 @@ async function handleGenerate(e) {
     topic: topic,
     tone: elements.toneSelect.value,
     length: elements.lengthSelect.value,
+    providerType: elements.providerSelect?.value || 'openai',
     keywords: keywords,
     research: elements.researchCheckbox.checked,
     proofread: elements.proofreadCheckbox.checked,

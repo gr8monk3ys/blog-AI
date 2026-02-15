@@ -20,8 +20,10 @@ from pydantic import BaseModel, Field
 from src.blog.make_blog import (
     BlogGenerationError,
     generate_blog_post,
+    generate_blog_post_with_research,
     post_process_blog_post,
 )
+from src.config import get_settings
 from src.planning.content_outline import generate_content_outline
 from src.text_generation.core import (
     GenerationOptions,
@@ -30,6 +32,7 @@ from src.text_generation.core import (
     create_provider_from_env,
     generate_text,
 )
+from src.types.providers import ProviderType
 
 from ..auth import api_key_store, verify_api_key
 from ..error_handlers import sanitize_error_message
@@ -83,6 +86,10 @@ class ExtensionGenerateRequest(BaseModel):
     keywords: List[str] = Field(default_factory=list, description="SEO keywords")
     research: bool = Field(default=False, description="Include web research")
     proofread: bool = Field(default=True, description="Proofread content")
+    provider_type: Optional[ProviderType] = Field(
+        default=None,
+        description="LLM provider to use (openai, anthropic, gemini). Defaults to the deployment default.",
+    )
     action: Literal["blog", "outline", "summary", "expand"] = Field(
         default="blog", description="Generation action type"
     )
@@ -142,18 +149,42 @@ async def extension_auth(request: ExtensionAuthRequest):
                 tier="pro",  # Placeholder - replace with actual tier lookup
                 message="Authentication successful",
             )
-        else:
-            logger.warning("Extension auth failed: Invalid API key")
-            return ExtensionAuthResponse(
-                success=False,
-                message="Invalid API key",
-            )
+        logger.warning("Extension auth failed: Invalid API key")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API key",
+        )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Extension auth error: {str(e)}")
-        return ExtensionAuthResponse(
-            success=False,
-            message="Authentication failed",
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Authentication failed",
         )
+
+
+def _resolve_provider(provider_type: Optional[str]) -> str:
+    settings = get_settings()
+    provider = (provider_type or settings.llm.default_provider or "openai").strip().lower()
+    allowed = {"openai", "anthropic", "gemini"}
+    if provider not in allowed:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid provider '{provider}'. Allowed: {', '.join(sorted(allowed))}",
+        )
+
+    configured = settings.llm.available_providers
+    if configured and provider not in configured:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": f"Provider '{provider}' is not configured for this deployment",
+                "configured_providers": configured,
+            },
+        )
+
+    return provider
 
 
 @router.get(
@@ -226,6 +257,8 @@ async def extension_generate(
     logger.info(f"Extension generate: action={request.action}, user={user_id}")
 
     try:
+        provider_type = _resolve_provider(request.provider_type)
+
         # Create generation options
         options = GenerationOptions(
             temperature=0.7,
@@ -236,13 +269,13 @@ async def extension_generate(
         result = None
 
         if request.action == "blog":
-            result = await _generate_blog(request, options)
+            result = await _generate_blog(request, options, provider_type)
         elif request.action == "outline":
-            result = await _generate_outline(request, options)
+            result = await _generate_outline(request, options, provider_type)
         elif request.action == "summary":
-            result = await _generate_summary(request, options)
+            result = await _generate_summary(request, options, provider_type)
         elif request.action == "expand":
-            result = await _generate_expansion(request, options)
+            result = await _generate_expansion(request, options, provider_type)
         else:
             raise ValueError(f"Unknown action: {request.action}")
 
@@ -263,33 +296,41 @@ async def extension_generate(
 
     except RateLimitError as e:
         logger.warning(f"Rate limit exceeded: {str(e)}")
-        return ExtensionGenerateResponse(
-            success=False,
-            error=f"Rate limit exceeded. Please wait {e.wait_time:.0f}s before retrying.",
+        wait_time = getattr(e, "wait_time", None)
+        message = (
+            f"Rate limit exceeded. Please wait {wait_time:.0f}s before retrying."
+            if isinstance(wait_time, (int, float))
+            else "Rate limit exceeded. Please try again shortly."
+        )
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=message,
         )
     except TextGenerationError as e:
         logger.error(f"Text generation error: {str(e)}")
-        return ExtensionGenerateResponse(
-            success=False,
-            error="Failed to generate content. Please try again.",
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate content. Please try again.",
         )
     except BlogGenerationError as e:
         logger.error(f"Blog generation error: {str(e)}")
-        return ExtensionGenerateResponse(
-            success=False,
-            error="Failed to generate blog post. Please try again.",
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate blog post. Please try again.",
         )
     except ValueError as e:
         logger.warning(f"Validation error: {str(e)}")
-        return ExtensionGenerateResponse(
-            success=False,
-            error=sanitize_error_message(str(e)),
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=sanitize_error_message(str(e)),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Extension generation error: {str(e)}", exc_info=True)
-        return ExtensionGenerateResponse(
-            success=False,
-            error="An unexpected error occurred. Please try again.",
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred. Please try again.",
         )
 
 
@@ -333,22 +374,30 @@ async def extension_usage(user_id: str = Depends(verify_api_key)):
 # =============================================================================
 
 
-async def _generate_blog(request: ExtensionGenerateRequest, options: GenerationOptions) -> dict:
+async def _generate_blog(request: ExtensionGenerateRequest, options: GenerationOptions, provider_type: str) -> dict:
     """Generate a blog post."""
-    blog_post = await asyncio.to_thread(
-        partial(
-            generate_blog_post,
+    def _generate():
+        if request.research:
+            return generate_blog_post_with_research(
+                title=request.topic[:200],  # Limit title length
+                keywords=request.keywords[:10],  # Limit keywords
+                tone=request.tone,
+                provider_type=provider_type,
+                options=options,
+            )
+        return generate_blog_post(
             title=request.topic[:200],  # Limit title length
             keywords=request.keywords[:10],  # Limit keywords
             tone=request.tone,
-            provider_type="openai",
+            provider_type=provider_type,
             options=options,
         )
-    )
+
+    blog_post = await asyncio.to_thread(_generate)
 
     # Post-process if requested
     if request.proofread:
-        provider = await asyncio.to_thread(create_provider_from_env, "openai")
+        provider = await asyncio.to_thread(create_provider_from_env, provider_type)
         blog_post = await asyncio.to_thread(
             partial(
                 post_process_blog_post,
@@ -379,12 +428,12 @@ async def _generate_blog(request: ExtensionGenerateRequest, options: GenerationO
     }
 
 
-async def _generate_outline(request: ExtensionGenerateRequest, options: GenerationOptions) -> dict:
+async def _generate_outline(request: ExtensionGenerateRequest, options: GenerationOptions, provider_type: str) -> dict:
     """Generate a content outline."""
     # Determine number of sections based on target length
     num_sections = 3 if request.target_length < 1000 else 5 if request.target_length < 2000 else 7
 
-    provider = create_provider_from_env()
+    provider = await asyncio.to_thread(create_provider_from_env, provider_type)
     outline = await asyncio.to_thread(
         partial(
             generate_content_outline,
@@ -411,7 +460,7 @@ async def _generate_outline(request: ExtensionGenerateRequest, options: Generati
     }
 
 
-async def _generate_summary(request: ExtensionGenerateRequest, options: GenerationOptions) -> dict:
+async def _generate_summary(request: ExtensionGenerateRequest, options: GenerationOptions, provider_type: str) -> dict:
     """Generate a text summary."""
     # Limit summary length
     max_words = min(request.target_length, 300)
@@ -425,7 +474,7 @@ Text to summarize:
 
 Summary:"""
 
-    provider = await asyncio.to_thread(create_provider_from_env, "openai")
+    provider = await asyncio.to_thread(create_provider_from_env, provider_type)
 
     summary = await asyncio.to_thread(
         generate_text,
@@ -450,7 +499,7 @@ Summary:"""
     }
 
 
-async def _generate_expansion(request: ExtensionGenerateRequest, options: GenerationOptions) -> dict:
+async def _generate_expansion(request: ExtensionGenerateRequest, options: GenerationOptions, provider_type: str) -> dict:
     """Expand short text into a longer article."""
     prompt = f"""Expand the following text into a comprehensive article of approximately {request.target_length} words.
 Add relevant details, examples, and explanations while maintaining the original meaning and intent.
@@ -462,7 +511,7 @@ Original text:
 
 Expanded article:"""
 
-    provider = await asyncio.to_thread(create_provider_from_env, "openai")
+    provider = await asyncio.to_thread(create_provider_from_env, provider_type)
 
     expanded = await asyncio.to_thread(
         generate_text,

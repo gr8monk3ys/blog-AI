@@ -185,12 +185,36 @@ const BlogAI = {
       research: options.research || false,
       proofread: options.proofread || true,
       action: options.action || 'blog',
+      provider_type: options.providerType || options.provider_type || undefined,
     }
 
-    return await this.request('/extension/generate', {
+    const response = await this.request('/extension/generate', {
       method: 'POST',
       body: JSON.stringify(payload),
     }, apiKey)
+
+    if (!response.success) return response
+
+    // Backend returns { success: true, data: {...} }. Unwrap for extension UIs.
+    if (response.data && typeof response.data === 'object') {
+      const body = response.data
+      if (body.success === false) {
+        return {
+          success: false,
+          error: body.error || 'Generation failed',
+          status: response.status,
+        }
+      }
+      if (body.data) {
+        return {
+          success: true,
+          data: body.data,
+          status: response.status,
+        }
+      }
+    }
+
+    return response
   },
 
   /**
