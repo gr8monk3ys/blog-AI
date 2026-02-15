@@ -930,7 +930,8 @@ Get available pricing tiers (no authentication required).
       "price_yearly": 190.00,
       "generations_per_month": 50,
       "features": [...],
-      "stripe_price_id": "price_xxx"
+      "stripe_price_id_monthly": "price_xxx",
+      "stripe_price_id_yearly": "price_yyy"
     }
   ]
 }

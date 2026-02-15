@@ -2,6 +2,10 @@
 
 This comprehensive guide covers deploying the Blog AI application to various environments, from single-server Docker deployments to production-grade Kubernetes clusters.
 
+For the recommended cloud SaaS setup (Vercel + Railway + Neon + Clerk), see `docs/DEPLOYMENT_VERCEL_RAILWAY_NEON.md`.
+
+> Note: Supabase instructions below are legacy. For **Neon-only** deployments, use the Neon/Clerk guide above.
+
 ---
 
 ## Table of Contents
@@ -38,7 +42,7 @@ This comprehensive guide covers deploying the Blog AI application to various env
 | Docker Compose | 2.20+ | Required for multi-container orchestration |
 | Node.js | 18.x LTS | For frontend build (20.x recommended) |
 | Python | 3.11+ | Backend runtime (3.12 recommended) |
-| PostgreSQL | 15+ | Via Supabase or self-hosted |
+| PostgreSQL | 15+ | Neon (recommended) or self-hosted |
 | Redis | 7.x | Optional but recommended for production |
 | nginx | 1.24+ | Recommended reverse proxy |
 
@@ -547,6 +551,66 @@ flowchart TB
     App1 & App2 & AppN --> Stripe
     App1 & App2 & AppN --> Sentry
 ```
+
+### Vercel (Frontend) + Railway (Backend) + Neon/Vercel Postgres (Database)
+
+This repo is a monorepo:
+
+- Next.js frontend at the repo root (Vercel)
+- FastAPI backend under `backend/` (Railway)
+
+#### Recommended Production Split
+
+- **Vercel**: Next.js (UI + `/app/api/*` route handlers)
+- **Railway**: FastAPI (`/api/v1/*`, `/ws/*`, Stripe webhooks)
+- **Database**: This codebase currently uses **Supabase** for most persistence. If you want **Neon/Vercel Postgres** as the primary DB, plan a migration (see below).
+
+#### Vercel Setup (Next.js)
+
+1. Create a new Vercel project from this repo (root directory).
+2. Build settings: already configured via `vercel.json` (bun-based build).
+3. Set environment variables:
+   - `NEXT_PUBLIC_API_URL`: `https://<your-railway-backend-domain>`
+   - `NEXT_PUBLIC_WS_URL`: `wss://<your-railway-backend-domain>`
+   - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`: `<clerk publishable key>`
+   - `CLERK_SECRET_KEY`: `<clerk secret key>` (server-only; used by Next.js route handlers)
+   - `NEXT_PUBLIC_SUPABASE_URL`: `https://<your-supabase-project>.supabase.co`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: `<supabase anon key>`
+   - `SUPABASE_SERVICE_ROLE_KEY`: `<supabase service role key>` (server-only; used by Next.js route handlers)
+   - `BLOG_ADMIN_KEY`: `<random secret>` (server-only; protects blog admin endpoints)
+
+Notes:
+- The frontend authenticates users with Clerk and sends `Authorization: Bearer <jwt>` to the backend.
+- If you use custom domains, update backend `ALLOWED_ORIGINS` to include them.
+
+#### Railway Setup (FastAPI)
+
+1. Create a new Railway project/service.
+2. Point the service to the `backend/` directory and deploy using `backend/Dockerfile`.
+3. Set environment variables (minimum):
+   - `ENVIRONMENT=production`
+   - `DEV_MODE=false`
+   - `ALLOWED_ORIGINS=https://<your-vercel-domain>,https://<your-custom-domain>`
+   - `OPENAI_API_KEY=<...>` (and/or other LLM provider keys)
+   - `SUPABASE_URL=https://<your-supabase-project>.supabase.co`
+   - `SUPABASE_SERVICE_ROLE_KEY=<...>` (server-side DB access for quota + other services)
+   - `CLERK_JWKS_URL=<...>` (recommended; JWKS for Clerk JWT verification)
+   - `CLERK_JWT_ISSUER=<...>` (recommended; expected `iss`)
+   - `STRIPE_SECRET_KEY=<...>` (use `sk_test_` until you’re ready for live mode)
+   - `STRIPE_WEBHOOK_SECRET=<...>`
+
+Notes:
+- Railway provides `PORT` automatically; the backend Dockerfile runs Uvicorn using it.
+- If you add Railway Redis, set `REDIS_URL` and enable any job/queue features you want to run on Redis.
+
+#### Neon / Vercel Postgres (Migration Notes)
+
+If you want **Neon/Vercel Postgres** as the primary DB, avoid running two sources of truth long-term (Supabase Postgres + Neon).
+
+Pragmatic migration options:
+
+- **Fastest path to production**: use Clerk for auth, keep Supabase Postgres for storage, deploy Vercel + Railway now. Migrate storage to Neon later.
+- **Neon-first**: migrate storage layers off Supabase clients to direct Postgres (Neon) access. This is a larger refactor because many modules use Supabase SDK semantics.
 
 ### AWS Deployment
 

@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 async def get_organization_context(
     request: Request,
-    api_key: str = Depends(verify_api_key),
+    user_id: str = Depends(verify_api_key),
 ) -> AuthorizationContext:
     """
     Get the organization context for the current request.
@@ -62,11 +62,6 @@ async def get_organization_context(
                 "error_code": "MISSING_ORGANIZATION_ID",
             },
         )
-
-    # Get user_id from API key (simplified - in production this would be a lookup)
-    # For now, use the API key hash as user_id for demo purposes
-    import hashlib
-    user_id = hashlib.sha256(api_key.encode()).hexdigest()[:16]
 
     try:
         # Get organization service

@@ -89,6 +89,14 @@ dmypy.json
 # -----------------------------------------------------------------------------
 # Node.js / Frontend
 # -----------------------------------------------------------------------------
+node_modules/
+.next/
+out/
+.cache/
+coverage/
+.turbo/
+playwright-report/
+
 frontend/node_modules/
 frontend/.next/
 frontend/out/
@@ -222,7 +230,3 @@ CLAUDE.md
 
 # Makefile (not needed in container)
 Makefile
-
-# Poetry lock (we use requirements.txt for production)
-poetry.lock
-pyproject.toml

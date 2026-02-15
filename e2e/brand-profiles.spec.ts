@@ -63,6 +63,7 @@ test.describe('Brand Profiles', () => {
 
       // Either modal or form should appear
       const hasModalOrForm = await modal.count() > 0 || await form.count() > 0
+      expect(hasModalOrForm).toBeTruthy()
 
       // Form elements should be present
       const nameInput = page.getByLabel(/name/i).or(

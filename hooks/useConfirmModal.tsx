@@ -3,7 +3,6 @@
 import { useState, useCallback, useRef } from 'react'
 import ConfirmModal, {
   ConfirmModalVariant,
-  ConfirmModalProps,
 } from '../components/ui/ConfirmModal'
 
 export interface ConfirmOptions {

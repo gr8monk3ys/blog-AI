@@ -5,22 +5,22 @@ Provides aggregated statistics about content generation,
 tool usage, and activity timelines.
 
 Authorization:
-- All endpoints require organization membership
-- All operations require content.view permission for viewing analytics data
+- All endpoints require authentication (API key or Bearer token)
+- Organization context is optional via X-Organization-ID and only applies when the
+  user is a member of that organization
 """
 
 import logging
-import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 
+from src.db import fetch as db_fetch, fetchrow as db_fetchrow, is_database_configured
 from src.organizations import AuthorizationContext
 
-from ..auth import verify_api_key
-from ..dependencies import require_content_access
+from ..dependencies.organization import get_optional_organization_context
 
 logger = logging.getLogger(__name__)
 
@@ -67,40 +67,6 @@ class CategoryBreakdown(BaseModel):
     category: str
     count: int
     percentage: float
-
-
-# =============================================================================
-# Supabase Client
-# =============================================================================
-
-_supabase_client = None
-
-
-def get_supabase():
-    """Get or create Supabase client."""
-    global _supabase_client
-
-    if _supabase_client is not None:
-        return _supabase_client
-
-    supabase_url = os.environ.get("SUPABASE_URL")
-    supabase_key = os.environ.get("SUPABASE_SERVICE_KEY")
-
-    if not supabase_url or not supabase_key:
-        logger.warning("Supabase not configured, using mock data")
-        return None
-
-    try:
-        from supabase import create_client
-
-        _supabase_client = create_client(supabase_url, supabase_key)
-        return _supabase_client
-    except ImportError:
-        logger.warning("Supabase Python client not installed")
-        return None
-    except Exception as e:
-        logger.error(f"Failed to create Supabase client: {e}")
-        return None
 
 
 def get_time_range_dates(range_str: str) -> tuple[datetime, datetime]:
@@ -223,7 +189,7 @@ def get_mock_categories() -> list[CategoryBreakdown]:
 @router.get("/overview", response_model=OverviewResponse)
 async def get_overview(
     range: str = Query("30d", pattern="^(7d|30d|90d|all)$"),
-    auth_ctx: AuthorizationContext = Depends(require_content_access),
+    auth_ctx: AuthorizationContext = Depends(get_optional_organization_context),
 ):
     """
     Get overview statistics.
@@ -233,91 +199,115 @@ async def get_overview(
 
     Authorization: Requires content.view permission.
     """
-    # Use organization_id for scoping if available, fallback to user_id
-    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    # Scope to org only if the user is actually a member; otherwise fall back to user scope.
+    scope_id = (
+        auth_ctx.organization_id
+        if auth_ctx.organization_id and auth_ctx.is_org_member
+        else auth_ctx.user_id
+    )
     logger.info(f"Analytics overview requested by user: {auth_ctx.user_id}, org: {auth_ctx.organization_id}, range: {range}")
 
-    supabase = get_supabase()
-    if not supabase:
+    if not is_database_configured():
         return get_mock_overview()
 
     try:
         start, end = get_time_range_dates(range)
-        start_iso = start.isoformat()
-        end_iso = end.isoformat()
-        today = datetime.utcnow().strftime("%Y-%m-%d")
+        start_utc = start.replace(tzinfo=timezone.utc)
+        end_utc = end.replace(tzinfo=timezone.utc)
+        today_start_utc = (
+            datetime.utcnow()
+            .replace(hour=0, minute=0, second=0, microsecond=0)
+            .replace(tzinfo=timezone.utc)
+        )
 
-        # Get total generations in range - SECURITY: Filter by scope_id (org or user)
-        gen_result = (
-            supabase.table("generated_content")
-            .select("*", count="exact")
-            .eq("user_id", scope_id)
-            .gte("created_at", start_iso)
-            .lte("created_at", end_iso)
-            .execute()
+        gen_row = await db_fetchrow(
+            """
+            SELECT COUNT(*)::int AS count
+            FROM generated_content
+            WHERE user_id = $1
+              AND created_at >= $2
+              AND created_at <= $3
+            """,
+            scope_id,
+            start_utc,
+            end_utc,
         )
-        total_generations = gen_result.count or 0
+        total_generations = int(gen_row["count"] or 0) if gen_row else 0
 
-        # Get unique tools used - SECURITY: Filter by scope_id
-        tools_result = (
-            supabase.table("tool_usage")
-            .select("tool_id")
-            .eq("user_id", scope_id)
-            .execute()
+        tools_row = await db_fetchrow(
+            """
+            SELECT COUNT(DISTINCT tool_id)::int AS count
+            FROM generated_content
+            WHERE user_id = $1
+              AND created_at >= $2
+              AND created_at <= $3
+            """,
+            scope_id,
+            start_utc,
+            end_utc,
         )
-        total_tools_used = len(tools_result.data) if tools_result.data else 0
+        total_tools_used = int(tools_row["count"] or 0) if tools_row else 0
 
-        # Get today's activity - SECURITY: Filter by scope_id
-        today_result = (
-            supabase.table("generated_content")
-            .select("*", count="exact")
-            .eq("user_id", scope_id)
-            .gte("created_at", today)
-            .execute()
+        today_row = await db_fetchrow(
+            """
+            SELECT COUNT(*)::int AS count
+            FROM generated_content
+            WHERE user_id = $1
+              AND created_at >= $2
+            """,
+            scope_id,
+            today_start_utc,
         )
-        active_today = today_result.count or 0
+        active_today = int(today_row["count"] or 0) if today_row else 0
 
-        # Get average execution time - SECURITY: Filter by scope_id
-        exec_result = (
-            supabase.table("generated_content")
-            .select("execution_time_ms")
-            .eq("user_id", scope_id)
-            .gte("created_at", start_iso)
-            .lte("created_at", end_iso)
-            .execute()
+        avg_row = await db_fetchrow(
+            """
+            SELECT COALESCE(AVG(execution_time_ms), 0)::float AS avg_ms
+            FROM generated_content
+            WHERE user_id = $1
+              AND created_at >= $2
+              AND created_at <= $3
+            """,
+            scope_id,
+            start_utc,
+            end_utc,
         )
-        exec_times = [r["execution_time_ms"] for r in (exec_result.data or [])]
-        avg_exec_time = sum(exec_times) / len(exec_times) if exec_times else 0
+        avg_exec_time = float(avg_row["avg_ms"] or 0) if avg_row else 0.0
 
-        # Get most popular tool - SECURITY: Filter by scope_id
-        popular_result = (
-            supabase.table("tool_usage")
-            .select("tool_id, count")
-            .eq("user_id", scope_id)
-            .order("count", desc=True)
-            .limit(1)
-            .execute()
+        popular_row = await db_fetchrow(
+            """
+            SELECT tool_id
+            FROM generated_content
+            WHERE user_id = $1
+              AND created_at >= $2
+              AND created_at <= $3
+            GROUP BY tool_id
+            ORDER BY COUNT(*) DESC
+            LIMIT 1
+            """,
+            scope_id,
+            start_utc,
+            end_utc,
         )
-        popular_tool = (
-            popular_result.data[0]["tool_id"]
-            if popular_result.data
-            else None
-        )
+        popular_tool = str(popular_row["tool_id"]) if popular_row else None
 
         # Calculate change from previous period - SECURITY: Filter by scope_id
-        period_days = (end - start).days
+        period_days = max((end - start).days, 1)
         prev_start = start - timedelta(days=period_days)
         prev_end = start
-
-        prev_result = (
-            supabase.table("generated_content")
-            .select("*", count="exact")
-            .eq("user_id", scope_id)
-            .gte("created_at", prev_start.isoformat())
-            .lte("created_at", prev_end.isoformat())
-            .execute()
+        prev_row = await db_fetchrow(
+            """
+            SELECT COUNT(*)::int AS count
+            FROM generated_content
+            WHERE user_id = $1
+              AND created_at >= $2
+              AND created_at <= $3
+            """,
+            scope_id,
+            prev_start.replace(tzinfo=timezone.utc),
+            prev_end.replace(tzinfo=timezone.utc),
         )
-        prev_generations = prev_result.count or 0
+        prev_generations = int(prev_row["count"] or 0) if prev_row else 0
 
         if prev_generations > 0:
             change_percent = ((total_generations - prev_generations) / prev_generations) * 100
@@ -342,7 +332,7 @@ async def get_overview(
 async def get_tool_usage(
     range: str = Query("30d", pattern="^(7d|30d|90d|all)$"),
     limit: int = Query(10, ge=1, le=50),
-    auth_ctx: AuthorizationContext = Depends(require_content_access),
+    auth_ctx: AuthorizationContext = Depends(get_optional_organization_context),
 ):
     """
     Get tool usage statistics.
@@ -351,40 +341,59 @@ async def get_tool_usage(
 
     Authorization: Requires content.view permission.
     """
-    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    scope_id = (
+        auth_ctx.organization_id
+        if auth_ctx.organization_id and auth_ctx.is_org_member
+        else auth_ctx.user_id
+    )
     logger.info(f"Tool usage requested by user: {auth_ctx.user_id}, org: {auth_ctx.organization_id}, range: {range}")
 
-    supabase = get_supabase()
-    if not supabase:
+    if not is_database_configured():
         return get_mock_tool_usage()[:limit]
 
     try:
-        # SECURITY: Filter by scope_id for data isolation
-        result = (
-            supabase.table("tool_usage")
-            .select("*")
-            .eq("user_id", scope_id)
-            .order("count", desc=True)
-            .limit(limit)
-            .execute()
+        start, end = get_time_range_dates(range)
+        rows = await db_fetch(
+            """
+            SELECT
+                tool_id,
+                COUNT(*)::int AS count,
+                MAX(created_at) AS last_used_at
+            FROM generated_content
+            WHERE user_id = $1
+              AND created_at >= $2
+              AND created_at <= $3
+            GROUP BY tool_id
+            ORDER BY count DESC
+            LIMIT $4
+            """,
+            scope_id,
+            start.replace(tzinfo=timezone.utc),
+            end.replace(tzinfo=timezone.utc),
+            limit,
         )
 
-        if not result.data:
+        if not rows:
             return get_mock_tool_usage()[:limit]
 
-        total_count = sum(r["count"] for r in result.data)
+        total_count = sum(int(r["count"] or 0) for r in rows)
 
-        return [
-            ToolUsageResponse(
-                tool_id=r["tool_id"],
-                tool_name=format_tool_name(r["tool_id"]),
-                category=extract_category(r["tool_id"]),
-                count=r["count"],
-                last_used_at=r["last_used_at"],
-                percentage=(r["count"] / total_count) * 100 if total_count > 0 else 0,
+        responses: list[ToolUsageResponse] = []
+        for r in rows:
+            count = int(r["count"] or 0)
+            last_used = r["last_used_at"]
+            responses.append(
+                ToolUsageResponse(
+                    tool_id=r["tool_id"],
+                    tool_name=format_tool_name(r["tool_id"]),
+                    category=extract_category(r["tool_id"]),
+                    count=count,
+                    last_used_at=last_used.isoformat() if last_used else datetime.utcnow().isoformat(),
+                    percentage=(count / total_count) * 100 if total_count > 0 else 0,
+                )
             )
-            for r in result.data
-        ]
+
+        return responses
 
     except Exception as e:
         logger.error(f"Error fetching tool usage: {e}")
@@ -394,7 +403,7 @@ async def get_tool_usage(
 @router.get("/timeline", response_model=list[TimelineDataPoint])
 async def get_timeline(
     range: str = Query("30d", pattern="^(7d|30d|90d|all)$"),
-    auth_ctx: AuthorizationContext = Depends(require_content_access),
+    auth_ctx: AuthorizationContext = Depends(get_optional_organization_context),
 ):
     """
     Get generation timeline data.
@@ -403,40 +412,71 @@ async def get_timeline(
 
     Authorization: Requires content.view permission.
     """
-    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    scope_id = (
+        auth_ctx.organization_id
+        if auth_ctx.organization_id and auth_ctx.is_org_member
+        else auth_ctx.user_id
+    )
     logger.info(f"Timeline data requested by user: {auth_ctx.user_id}, org: {auth_ctx.organization_id}, range: {range}")
 
-    supabase = get_supabase()
-    if not supabase:
+    if not is_database_configured():
         return get_mock_timeline(range)
 
     try:
-        start, end = get_time_range_dates(range)
+        # We want a stable number of points for charting (7/30/90), including today.
+        now_utc = datetime.utcnow().replace(tzinfo=timezone.utc)
+        if range == "7d":
+            days = 7
+        elif range == "30d":
+            days = 30
+        elif range == "90d":
+            days = 90
+        else:
+            days = None
 
-        # SECURITY: Filter by scope_id for data isolation
-        result = (
-            supabase.table("generated_content")
-            .select("created_at")
-            .eq("user_id", scope_id)
-            .gte("created_at", start.isoformat())
-            .lte("created_at", end.isoformat())
-            .order("created_at")
-            .execute()
+        if days is not None:
+            start_day = (now_utc.date() - timedelta(days=days - 1))
+            start_utc = datetime.combine(start_day, datetime.min.time(), tzinfo=timezone.utc)
+            end_utc = now_utc
+        else:
+            start, end = get_time_range_dates(range)
+            start_utc = start.replace(tzinfo=timezone.utc)
+            end_utc = end.replace(tzinfo=timezone.utc)
+
+        rows = await db_fetch(
+            """
+            SELECT created_at::date AS day, COUNT(*)::int AS count
+            FROM generated_content
+            WHERE user_id = $1
+              AND created_at >= $2
+              AND created_at <= $3
+            GROUP BY day
+            ORDER BY day ASC
+            """,
+            scope_id,
+            start_utc,
+            end_utc,
         )
 
-        if not result.data:
-            return get_mock_timeline(range)
+        counts_by_day: dict[str, int] = {}
+        for r in rows or []:
+            try:
+                day = r["day"]
+                count = int(r["count"] or 0)
+            except Exception:
+                continue
+            if not day:
+                continue
+            counts_by_day[str(day)] = count
 
-        # Group by date
-        grouped: dict[str, int] = {}
-        for item in result.data:
-            date = item["created_at"][:10]  # Extract YYYY-MM-DD
-            grouped[date] = grouped.get(date, 0) + 1
+        if days is not None:
+            points: list[TimelineDataPoint] = []
+            for i in range(days):
+                day = (start_utc.date() + timedelta(days=i)).isoformat()
+                points.append(TimelineDataPoint(date=day, count=counts_by_day.get(day, 0)))
+            return points
 
-        return [
-            TimelineDataPoint(date=date, count=count)
-            for date, count in sorted(grouped.items())
-        ]
+        return [TimelineDataPoint(date=str(k), count=v) for k, v in sorted(counts_by_day.items())]
 
     except Exception as e:
         logger.error(f"Error fetching timeline: {e}")
@@ -446,7 +486,7 @@ async def get_timeline(
 @router.get("/categories", response_model=list[CategoryBreakdown])
 async def get_category_breakdown(
     range: str = Query("30d", pattern="^(7d|30d|90d|all)$"),
-    auth_ctx: AuthorizationContext = Depends(require_content_access),
+    auth_ctx: AuthorizationContext = Depends(get_optional_organization_context),
 ):
     """
     Get category breakdown statistics.
@@ -455,34 +495,49 @@ async def get_category_breakdown(
 
     Authorization: Requires content.view permission.
     """
-    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    scope_id = (
+        auth_ctx.organization_id
+        if auth_ctx.organization_id and auth_ctx.is_org_member
+        else auth_ctx.user_id
+    )
     logger.info(f"Category breakdown requested by user: {auth_ctx.user_id}, org: {auth_ctx.organization_id}, range: {range}")
 
-    supabase = get_supabase()
-    if not supabase:
+    if not is_database_configured():
         return get_mock_categories()
 
     try:
         start, end = get_time_range_dates(range)
+        start_utc = start.replace(tzinfo=timezone.utc)
+        end_utc = end.replace(tzinfo=timezone.utc)
 
-        # SECURITY: Filter by scope_id for data isolation
-        result = (
-            supabase.table("generated_content")
-            .select("tool_id")
-            .eq("user_id", scope_id)
-            .gte("created_at", start.isoformat())
-            .lte("created_at", end.isoformat())
-            .execute()
+        rows = await db_fetch(
+            """
+            SELECT tool_id, COUNT(*)::int AS count
+            FROM generated_content
+            WHERE user_id = $1
+              AND created_at >= $2
+              AND created_at <= $3
+            GROUP BY tool_id
+            """,
+            scope_id,
+            start_utc,
+            end_utc,
         )
 
-        if not result.data:
+        if not rows:
             return get_mock_categories()
 
-        # Group by category
         grouped: dict[str, int] = {}
-        for item in result.data:
-            category = extract_category(item["tool_id"])
-            grouped[category] = grouped.get(category, 0) + 1
+        for r in rows:
+            try:
+                tool_id = r["tool_id"]
+                count = int(r["count"] or 0)
+            except Exception:
+                continue
+            if not tool_id:
+                continue
+            category = extract_category(str(tool_id))
+            grouped[category] = grouped.get(category, 0) + count
 
         total = sum(grouped.values())
 
@@ -492,9 +547,7 @@ async def get_category_breakdown(
                 count=count,
                 percentage=(count / total) * 100 if total > 0 else 0,
             )
-            for category, count in sorted(
-                grouped.items(), key=lambda x: x[1], reverse=True
-            )
+            for category, count in sorted(grouped.items(), key=lambda x: x[1], reverse=True)
         ]
 
     except Exception as e:

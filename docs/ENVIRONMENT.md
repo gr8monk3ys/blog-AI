@@ -2,6 +2,9 @@
 
 This document provides comprehensive documentation for all environment variables used by Blog AI.
 
+> Note: The recommended cloud SaaS setup is **Clerk for auth** + **Neon Postgres for persistence**.
+> Any Supabase-related sections in this document are **legacy** and can be ignored for Neon-only deployments.
+
 ## Table of Contents
 
 - [Quick Start](#quick-start)
@@ -51,7 +54,7 @@ This document provides comprehensive documentation for all environment variables
 1. Configure all required environment variables
 2. Set `ENVIRONMENT=production`
 3. Enable HTTPS redirect: `HTTPS_REDIRECT_ENABLED=true`
-4. Configure Supabase for persistent storage
+4. Configure Postgres/Neon for persistent storage (`DATABASE_URL` / `DATABASE_URL_DIRECT`)
 5. Configure Stripe for billing (if monetizing)
 6. Configure Sentry for error tracking
 7. Set specific CORS origins (no wildcards)
@@ -221,26 +224,28 @@ SECURITY_MAX_BODY_SIZE=5242880  # 5MB
 
 ---
 
-### Database (Supabase)
+### Database (Neon / Postgres)
 
-Required for persistent storage of user data, brand voice profiles, and conversation history.
+Required for persistent storage of usage quotas, generation history, templates, analytics, and Stripe sync.
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `SUPABASE_URL` | Recommended | - | Supabase project URL |
-| `SUPABASE_KEY` | Recommended | - | Supabase anon/public key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Recommended | - | Supabase service role key (admin operations) |
+| `DATABASE_URL` | Recommended | - | Postgres connection string (pooled is fine for serverless) |
+| `DATABASE_URL_DIRECT` | Recommended | - | Direct (non-pooler) Postgres connection string (recommended for long-lived backends + migrations) |
+| `DATABASE_POOL_MIN_SIZE` | No | `1` | Python backend asyncpg pool min size |
+| `DATABASE_POOL_MAX_SIZE` | No | `5` | Python backend asyncpg pool max size |
 
-**Where to get credentials:**
-- Supabase Dashboard: https://supabase.com/dashboard/project/_/settings/api
+**Where to get the connection string:**
+- Neon console: https://neon.tech
 
-**Security Warning:** The service role key bypasses Row Level Security. Never expose it to clients.
+**Security Warning:** Connection strings contain credentials. Never expose them to the browser (do not use `NEXT_PUBLIC_` prefixes).
 
 **Example:**
 ```bash
-SUPABASE_URL=https://your-project-id.supabase.co
-SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.xxxx.anon-key
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.xxxx.service-role-key
+DATABASE_URL=postgresql://user:password@host/db?sslmode=require
+# DATABASE_URL_DIRECT=postgresql://user:password@host/db?sslmode=require
+DATABASE_POOL_MIN_SIZE=1
+DATABASE_POOL_MAX_SIZE=5
 ```
 
 ---
@@ -405,7 +410,7 @@ USAGE_STORAGE_DIR=/var/data/blog-ai/usage
 
 ## Frontend Environment Variables
 
-Frontend variables are configured in `frontend/.env.local` (development) or `frontend/.env.production.local` (production).
+Frontend variables are configured in `.env.local` (development) or `.env.production.local` (production).
 
 **Important:** All `NEXT_PUBLIC_*` variables are exposed to the browser. Never put secrets in these variables.
 
@@ -416,7 +421,7 @@ Frontend variables are configured in `frontend/.env.local` (development) or `fro
 | `NEXT_PUBLIC_API_URL` | Yes | `http://localhost:8000` | Backend API URL |
 | `NEXT_PUBLIC_WS_URL` | No | Derived from API URL | WebSocket URL |
 | `NEXT_PUBLIC_API_VERSION` | No | `v1` | API version prefix |
-| `NEXT_PUBLIC_API_KEY` | Production | - | API key for authentication |
+| `NEXT_PUBLIC_API_KEY` | No | - | Legacy API key (deprecated; Clerk JWTs are used instead) |
 
 **Example:**
 ```bash
@@ -427,7 +432,23 @@ NEXT_PUBLIC_WS_URL=ws://localhost:8000
 # Production
 NEXT_PUBLIC_API_URL=https://api.yourdomain.com
 NEXT_PUBLIC_WS_URL=wss://api.yourdomain.com
-NEXT_PUBLIC_API_KEY=your_production_api_key
+```
+
+---
+
+### Clerk (Frontend)
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Yes | - | Clerk publishable key (client-safe) |
+| `CLERK_SECRET_KEY` | Server-side | - | Clerk secret key (server-side only) |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | No | `/sign-in` | Default sign-in route |
+| `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | No | `/sign-up` | Default sign-up route |
+
+**Example:**
+```bash
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_REPLACE_WITH_PUBLISHABLE_KEY
+CLERK_SECRET_KEY=sk_live_REPLACE_WITH_SECRET_KEY
 ```
 
 ---
@@ -438,13 +459,13 @@ NEXT_PUBLIC_API_KEY=your_production_api_key
 |----------|----------|---------|-------------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Recommended | - | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Recommended | - | Supabase anon key (client-safe, uses RLS) |
-| `SUPABASE_SERVICE_KEY` | Server-side | - | Service role key (server-side only) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-side | - | Service role key (server-side only) |
 
 **Example:**
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.xxxx
-SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.xxxx
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.xxxx
 ```
 
 ---

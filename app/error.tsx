@@ -2,6 +2,7 @@
 
 import * as Sentry from '@sentry/nextjs'
 import { useEffect } from 'react'
+import Link from 'next/link'
 
 /**
  * Error Boundary Component
@@ -108,7 +109,7 @@ export default function Error({
             Try again
           </button>
 
-          <a
+          <Link
             href="/"
             className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-white text-gray-900 font-semibold shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600 transition-colors"
           >
@@ -127,7 +128,7 @@ export default function Error({
               />
             </svg>
             Return home
-          </a>
+          </Link>
         </div>
 
         {/* Help Text */}

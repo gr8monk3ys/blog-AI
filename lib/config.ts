@@ -30,13 +30,6 @@ export interface AppConfig {
     readonly key?: string
   }
 
-  // Supabase Configuration
-  readonly supabase: {
-    readonly url: string
-    readonly anonKey: string
-    readonly serviceKey?: string
-  }
-
   // Stripe Configuration (optional)
   readonly stripe: {
     readonly publishableKey?: string
@@ -136,11 +129,6 @@ function buildConfig(): AppConfig {
   const apiVersion = process.env.NEXT_PUBLIC_API_VERSION || 'v1'
   const apiKey = process.env.NEXT_PUBLIC_API_KEY
 
-  // Supabase Configuration
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY
-
   // Stripe Configuration
   const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 
@@ -155,13 +143,13 @@ function buildConfig(): AppConfig {
 
   // Validate required variables in production
   if (isProduction) {
-    // Warn about missing Supabase config but don't throw
-    // (allows graceful degradation)
-    if (!supabaseUrl || !supabaseAnonKey) {
-      console.warn(
-        '[Config] Supabase configuration is missing. Some features may not work.'
-      )
-    }
+    validateRequired(
+      {
+        NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+      },
+      'frontend'
+    )
 
     // Warn about missing Sentry
     if (!sentryDsn) {
@@ -182,12 +170,6 @@ function buildConfig(): AppConfig {
       wsUrl: apiWsUrl,
       version: apiVersion,
       key: apiKey,
-    },
-
-    supabase: {
-      url: supabaseUrl,
-      anonKey: supabaseAnonKey,
-      serviceKey: supabaseServiceKey,
     },
 
     stripe: {

@@ -10,6 +10,8 @@ export default defineConfig({
     setupFiles: ['./tests/setup.ts'],
     testTimeout: 10000,
     include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    // Keep Playwright E2E tests and any dependency test suites out of Vitest's collection.
+    exclude: ['e2e/**', 'node_modules/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

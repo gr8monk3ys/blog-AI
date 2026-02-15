@@ -99,7 +99,9 @@ test.describe('Blog Generation', () => {
       const chaptersInput = page.getByLabel(/chapter/i).or(
         page.locator('input[name*="chapter"]')
       )
-      // Book tab should change the form
+      if (await chaptersInput.count() > 0) {
+        await expect(chaptersInput.first()).toBeVisible()
+      }
 
       // Click back to blog tab
       await blogTab.click()

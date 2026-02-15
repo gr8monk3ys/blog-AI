@@ -26,7 +26,6 @@ export default function TimelineChart({
 
     // Calculate SVG path and points
     const padding = { top: 20, right: 20, bottom: 40, left: 50 }
-    const chartWidth = 100 // percentage
     const chartHeight = height - padding.top - padding.bottom
 
     const xStep = data.length > 1 ? 100 / (data.length - 1) : 0

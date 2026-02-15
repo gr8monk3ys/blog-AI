@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 import { withSentryConfig } from '@sentry/nextjs'
+import { dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 // Bundle analyzer - only loaded when ANALYZE env var is set
 const withBundleAnalyzer =
@@ -44,11 +48,14 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+      // Allow Clerk to load its JS bundle in production.
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https:",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https: blob:",
       "font-src 'self' data:",
       "connect-src 'self' https: wss: ws:",
+      // Clerk may use iframes for some auth flows.
+      "frame-src 'self' https:",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
@@ -61,7 +68,9 @@ const nextConfig = {
   reactStrictMode: true,
 
   // Turbopack configuration (Next.js 16+ default bundler)
-  turbopack: {},
+  // Explicit root prevents incorrect monorepo/workspace inference when multiple
+  // lockfiles exist elsewhere on disk.
+  turbopack: { root: __dirname },
 
   // Remove X-Powered-By header for security
   poweredByHeader: false,
@@ -88,10 +97,6 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: '**.unsplash.com',
-      },
-      {
-        protocol: 'https',
-        hostname: '**.supabase.co',
       },
     ],
     // Minimize image processing time

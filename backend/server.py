@@ -77,10 +77,8 @@ from app.routes import (
     extension_router,
     health_router,
     images_router,
-    knowledge_router,
     organizations_router,
     payments_router,
-    performance_router,
     remix_router,
     social_router,
     sso_admin_router,
@@ -88,11 +86,24 @@ from app.routes import (
     streaming_router,
     tools_router,
     usage_router,
-    versions_router,
     webhooks_router,
     websocket_router,
     zapier_router,
 )
+
+
+def _env_true(name: str, default: bool = False) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in ("1", "true", "yes", "on")
+
+
+# Legacy / Supabase-dependent modules. Keep code in-repo, but disable by default
+# for a Neon-only SaaS until they're migrated.
+ENABLE_KNOWLEDGE_BASE = _env_true("ENABLE_KNOWLEDGE_BASE", default=False)
+ENABLE_PERFORMANCE_ANALYTICS = _env_true("ENABLE_PERFORMANCE_ANALYTICS", default=False)
+ENABLE_CONTENT_VERSIONING = _env_true("ENABLE_CONTENT_VERSIONING", default=False)
 
 # =============================================================================
 # Sentry Error Tracking Configuration
@@ -204,6 +215,12 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning("Failed to close LLM clients: %s", e)
     try:
+        from src.db import close_pool
+
+        await close_pool()
+    except Exception as e:
+        logger.warning("Failed to close Postgres pool: %s", e)
+    try:
         clear_research_cache()
     except Exception as e:
         logger.warning("Failed to clear research cache: %s", e)
@@ -231,11 +248,10 @@ Blog AI provides a comprehensive API for generating high-quality content includi
 
 ### Authentication
 
-All API endpoints require authentication via API key. Include your API key in the `X-API-Key` header:
+All API endpoints require authentication. Supported methods:
 
-```
-X-API-Key: your_api_key_here
-```
+- **Cloud SaaS (recommended):** Clerk session JWT via `Authorization: Bearer <token>`
+- **API / CLI:** API key via `X-API-Key: <key>`
 
 ### Rate Limiting
 
@@ -425,21 +441,39 @@ app.include_router(bulk_router)
 app.include_router(export_router)
 app.include_router(extension_router)
 app.include_router(images_router)
-app.include_router(knowledge_router)
 app.include_router(organizations_router)
 app.include_router(payments_router)
-app.include_router(performance_router)
 app.include_router(remix_router)
 app.include_router(streaming_router)
 app.include_router(tools_router)
 app.include_router(usage_router)
-app.include_router(versions_router)
 app.include_router(webhooks_router)
 app.include_router(websocket_router)
 app.include_router(zapier_router)
 app.include_router(social_router)
 app.include_router(sso_router)
 app.include_router(sso_admin_router)
+
+if ENABLE_KNOWLEDGE_BASE:
+    from app.routes.knowledge import router as knowledge_router  # noqa: WPS433
+
+    app.include_router(knowledge_router)
+else:
+    logger.info("Knowledge base routes disabled (ENABLE_KNOWLEDGE_BASE=false)")
+
+if ENABLE_PERFORMANCE_ANALYTICS:
+    from app.routes.performance import router as performance_router  # noqa: WPS433
+
+    app.include_router(performance_router)
+else:
+    logger.info("Performance analytics routes disabled (ENABLE_PERFORMANCE_ANALYTICS=false)")
+
+if ENABLE_CONTENT_VERSIONING:
+    from app.routes.versions import router as versions_router  # noqa: WPS433
+
+    app.include_router(versions_router)
+else:
+    logger.info("Content versioning routes disabled (ENABLE_CONTENT_VERSIONING=false)")
 
 # Create versioned API router
 api_v1_router = APIRouter(prefix="/api/v1", tags=["v1"])
@@ -456,20 +490,32 @@ api_v1_router.include_router(bulk_router)
 api_v1_router.include_router(export_router)
 api_v1_router.include_router(extension_router)
 api_v1_router.include_router(images_router)
-api_v1_router.include_router(knowledge_router)
 api_v1_router.include_router(organizations_router)
 api_v1_router.include_router(payments_router)
-api_v1_router.include_router(performance_router)
 api_v1_router.include_router(remix_router)
 api_v1_router.include_router(streaming_router)
 api_v1_router.include_router(tools_router)
 api_v1_router.include_router(usage_router)
-api_v1_router.include_router(versions_router)
 api_v1_router.include_router(webhooks_router)
 api_v1_router.include_router(zapier_router)
 api_v1_router.include_router(social_router)
 api_v1_router.include_router(sso_router)
 api_v1_router.include_router(sso_admin_router)
+
+if ENABLE_KNOWLEDGE_BASE:
+    from app.routes.knowledge import router as knowledge_router  # noqa: WPS433
+
+    api_v1_router.include_router(knowledge_router)
+
+if ENABLE_PERFORMANCE_ANALYTICS:
+    from app.routes.performance import router as performance_router  # noqa: WPS433
+
+    api_v1_router.include_router(performance_router)
+
+if ENABLE_CONTENT_VERSIONING:
+    from app.routes.versions import router as versions_router  # noqa: WPS433
+
+    api_v1_router.include_router(versions_router)
 
 # Include versioned router
 app.include_router(api_v1_router)
@@ -522,5 +568,6 @@ async def get_config_status():
 
 if __name__ == "__main__":
     reload_enabled = os.environ.get("UVICORN_RELOAD", "false").lower() == "true"
-    port = int(os.environ.get("BACKEND_PORT", "8000"))
+    # Railway (and many other PaaS) provide `PORT`.
+    port = int(os.environ.get("PORT") or os.environ.get("BACKEND_PORT", "8000"))
     uvicorn.run("server:app", host="0.0.0.0", port=port, reload=reload_enabled)

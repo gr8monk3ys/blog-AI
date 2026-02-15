@@ -2,6 +2,7 @@
 
 import * as Sentry from '@sentry/nextjs'
 import { useEffect } from 'react'
+import Link from 'next/link'
 
 /**
  * Global Error Boundary
@@ -166,20 +167,20 @@ export default function GlobalError({
           )}
 
           {/* Action Buttons */}
-          <div style={styles.buttons}>
-            <button
-              onClick={() => reset()}
-              style={styles.btnPrimary}
-              type="button"
-            >
-              Try again
-            </button>
-            <a href="/" style={styles.btnSecondary}>
-              Return home
-            </a>
-          </div>
-        </main>
-      </body>
-    </html>
-  )
+	          <div style={styles.buttons}>
+	            <button
+	              onClick={() => reset()}
+	              style={styles.btnPrimary}
+	              type="button"
+	            >
+	              Try again
+	            </button>
+	            <Link href="/" style={styles.btnSecondary}>
+	              Return home
+	            </Link>
+	          </div>
+	        </main>
+	      </body>
+	    </html>
+	  )
 }

@@ -2,11 +2,10 @@
  * Analytics API client for Blog-AI
  *
  * Provides methods for fetching analytics data from the backend.
- * Falls back to Supabase direct queries when backend is unavailable.
+ * Falls back to mock data when backend is unavailable.
  */
 
 import { API_BASE_URL, API_VERSION, apiFetch } from './api'
-import { getSupabase, isSupabaseConfigured } from './supabase'
 import type {
   OverviewStats,
   ToolUsageStat,
@@ -71,8 +70,7 @@ export async function getOverviewStats(
       generationsChange: response.generations_change_percent,
     }
   } catch {
-    // Fall back to Supabase direct query
-    return getOverviewStatsFromSupabase(timeRange)
+    return getMockOverviewStats()
   }
 }
 
@@ -97,8 +95,7 @@ export async function getToolUsageStats(
       percentage: item.percentage,
     }))
   } catch {
-    // Fall back to Supabase direct query
-    return getToolUsageFromSupabase(timeRange, limit)
+    return getMockToolUsageStats().slice(0, limit)
   }
 }
 
@@ -119,8 +116,7 @@ export async function getTimelineData(
       label: formatDateLabel(item.date, timeRange),
     }))
   } catch {
-    // Fall back to Supabase direct query
-    return getTimelineFromSupabase(timeRange)
+    return getMockTimelineData(timeRange)
   }
 }
 
@@ -142,216 +138,6 @@ export async function getCategoryBreakdown(
       color: getCategoryColor(item.category),
     }))
   } catch {
-    // Fall back to Supabase direct query
-    return getCategoryBreakdownFromSupabase(timeRange)
-  }
-}
-
-// =============================================================================
-// Supabase Fallback Functions
-// =============================================================================
-
-// Internal types for Supabase responses
-interface GeneratedContentRow {
-  execution_time_ms: number
-  created_at: string
-  tool_id: string
-}
-
-interface ToolUsageRow {
-  tool_id: string
-  count: number
-  last_used_at: string
-}
-
-async function getOverviewStatsFromSupabase(
-  timeRange: TimeRangeOption
-): Promise<OverviewStats> {
-  if (!isSupabaseConfigured()) {
-    return getMockOverviewStats()
-  }
-
-  try {
-    const supabase = getSupabase()
-    const { start, end } = getTimeRangeDates(timeRange)
-    const today = new Date().toISOString().split('T')[0]
-
-    // Get total generations in range
-    const genResult = await supabase
-      .from('generated_content')
-      .select('*', { count: 'exact', head: true })
-      .gte('created_at', start)
-      .lte('created_at', end)
-
-    const totalGenerations = genResult.count || 0
-
-    // Get unique tools used
-    const toolResult = await supabase
-      .from('tool_usage')
-      .select('tool_id')
-
-    const totalToolsUsed = toolResult.data?.length || 0
-
-    // Get today's activity
-    const todayResult = await supabase
-      .from('generated_content')
-      .select('*', { count: 'exact', head: true })
-      .gte('created_at', today)
-
-    const activeToday = todayResult.count || 0
-
-    // Get average execution time
-    const execResult = await supabase
-      .from('generated_content')
-      .select('execution_time_ms')
-      .gte('created_at', start)
-      .lte('created_at', end)
-
-    const execData = (execResult.data || []) as unknown as GeneratedContentRow[]
-    const avgExecTime = execData.length
-      ? execData.reduce((sum, r) => sum + (r.execution_time_ms || 0), 0) / execData.length
-      : 0
-
-    // Get most popular tool
-    const popularResult = await supabase
-      .from('tool_usage')
-      .select('tool_id, count')
-      .order('count', { ascending: false })
-      .limit(1)
-      .single()
-
-    const popularToolData = popularResult.data as unknown as ToolUsageRow | null
-
-    return {
-      totalGenerations,
-      totalToolsUsed,
-      activeToday,
-      averageExecutionTime: Math.round(avgExecTime),
-      popularTool: popularToolData?.tool_id || null,
-      generationsChange: 0, // Would need previous period comparison
-    }
-  } catch {
-    return getMockOverviewStats()
-  }
-}
-
-async function getToolUsageFromSupabase(
-  timeRange: TimeRangeOption,
-  limit: number
-): Promise<ToolUsageStat[]> {
-  if (!isSupabaseConfigured()) {
-    return getMockToolUsageStats()
-  }
-
-  try {
-    const supabase = getSupabase()
-
-    const result = await supabase
-      .from('tool_usage')
-      .select('*')
-      .order('count', { ascending: false })
-      .limit(limit)
-
-    if (result.error || !result.data) {
-      return getMockToolUsageStats()
-    }
-
-    const data = result.data as unknown as ToolUsageRow[]
-    const totalCount = data.reduce((sum, item) => sum + (item.count || 0), 0)
-
-    return data.map((item) => ({
-      toolId: item.tool_id,
-      toolName: formatToolName(item.tool_id),
-      category: extractCategory(item.tool_id),
-      count: item.count || 0,
-      lastUsedAt: item.last_used_at,
-      percentage: totalCount > 0 ? ((item.count || 0) / totalCount) * 100 : 0,
-    }))
-  } catch {
-    return getMockToolUsageStats()
-  }
-}
-
-async function getTimelineFromSupabase(
-  timeRange: TimeRangeOption
-): Promise<TimelineDataPoint[]> {
-  if (!isSupabaseConfigured()) {
-    return getMockTimelineData(timeRange)
-  }
-
-  try {
-    const supabase = getSupabase()
-    const { start, end } = getTimeRangeDates(timeRange)
-
-    const result = await supabase
-      .from('generated_content')
-      .select('created_at')
-      .gte('created_at', start)
-      .lte('created_at', end)
-      .order('created_at', { ascending: true })
-
-    if (result.error || !result.data) {
-      return getMockTimelineData(timeRange)
-    }
-
-    const data = result.data as unknown as { created_at: string }[]
-
-    // Group by date
-    const grouped: Record<string, number> = {}
-    data.forEach((item) => {
-      const date = item.created_at.split('T')[0] ?? item.created_at
-      grouped[date] = (grouped[date] ?? 0) + 1
-    })
-
-    return Object.entries(grouped).map(([date, count]) => ({
-      date,
-      count,
-      label: formatDateLabel(date, timeRange),
-    }))
-  } catch {
-    return getMockTimelineData(timeRange)
-  }
-}
-
-async function getCategoryBreakdownFromSupabase(
-  timeRange: TimeRangeOption
-): Promise<CategoryBreakdown[]> {
-  if (!isSupabaseConfigured()) {
-    return getMockCategoryBreakdown()
-  }
-
-  try {
-    const supabase = getSupabase()
-    const { start, end } = getTimeRangeDates(timeRange)
-
-    const result = await supabase
-      .from('generated_content')
-      .select('tool_id')
-      .gte('created_at', start)
-      .lte('created_at', end)
-
-    if (result.error || !result.data) {
-      return getMockCategoryBreakdown()
-    }
-
-    const data = result.data as unknown as { tool_id: string }[]
-
-    // Group by category
-    const grouped: Record<string, number> = {}
-    data.forEach((item) => {
-      const category = extractCategory(item.tool_id)
-      grouped[category] = (grouped[category] || 0) + 1
-    })
-
-    const total = Object.values(grouped).reduce((sum, count) => sum + count, 0)
-
-    return Object.entries(grouped).map(([category, count]) => ({
-      category,
-      count,
-      percentage: total > 0 ? (count / total) * 100 : 0,
-      color: getCategoryColor(category),
-    }))
-  } catch {
     return getMockCategoryBreakdown()
   }
 }
@@ -359,75 +145,6 @@ async function getCategoryBreakdownFromSupabase(
 // =============================================================================
 // Helper Functions
 // =============================================================================
-
-function getTimeRangeDates(timeRange: TimeRangeOption): { start: string; end: string } {
-  const now = new Date()
-  let start: Date
-
-  switch (timeRange) {
-    case '7d':
-      start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-      break
-    case '30d':
-      start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-      break
-    case '90d':
-      start = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
-      break
-    case 'all':
-    default:
-      start = new Date(0)
-  }
-
-  return {
-    start: start.toISOString(),
-    end: now.toISOString(),
-  }
-}
-
-function formatToolName(toolId: string): string {
-  return toolId
-    .split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
-}
-
-function extractCategory(toolId: string): string {
-  // Common patterns: blog-post-generator, email-subject-lines, etc.
-  const categoryMap: Record<string, string> = {
-    blog: 'blog',
-    email: 'email',
-    newsletter: 'email',
-    instagram: 'social-media',
-    twitter: 'social-media',
-    linkedin: 'social-media',
-    facebook: 'social-media',
-    social: 'social-media',
-    business: 'business',
-    product: 'business',
-    brand: 'naming',
-    tagline: 'naming',
-    domain: 'naming',
-    youtube: 'video',
-    video: 'video',
-    meta: 'seo',
-    seo: 'seo',
-    keyword: 'seo',
-    rewrite: 'rewriting',
-    sentence: 'rewriting',
-    tone: 'rewriting',
-    grammar: 'rewriting',
-  }
-
-  const lowerToolId = toolId.toLowerCase()
-  for (const [key, category] of Object.entries(categoryMap)) {
-    if (lowerToolId.includes(key)) {
-      return category
-    }
-  }
-
-  return 'blog' // Default category
-}
 
 function formatDateLabel(date: string, timeRange: TimeRangeOption): string {
   const d = new Date(date)
