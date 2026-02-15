@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import SiteHeader from '../../components/SiteHeader'
 import SiteFooter from '../../components/SiteFooter'
@@ -14,6 +13,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { BrandProfile, SAMPLE_BRAND_PROFILES } from '../../types/brand'
 import { useConfirmModal } from '../../hooks/useConfirmModal'
+import { getDefaultHeaders } from '../../lib/api'
 
 export default function BrandPage() {
   const { confirm, ConfirmModalComponent } = useConfirmModal()
@@ -29,7 +29,9 @@ export default function BrandPage() {
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
-        const response = await fetch('/api/brand-profiles')
+        const response = await fetch('/api/brand-profiles', {
+          headers: await getDefaultHeaders(),
+        })
         const data = await response.json()
 
         if (data.success) {
@@ -54,7 +56,7 @@ export default function BrandPage() {
     try {
       const response = await fetch('/api/brand-profiles', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await getDefaultHeaders(),
         body: JSON.stringify(data),
       })
 
@@ -83,7 +85,7 @@ export default function BrandPage() {
     try {
       const response = await fetch(`/api/brand-profiles/${editingProfile.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await getDefaultHeaders(),
         body: JSON.stringify(data),
       })
 
@@ -121,6 +123,7 @@ export default function BrandPage() {
     try {
       const response = await fetch(`/api/brand-profiles/${profile.id}`, {
         method: 'DELETE',
+        headers: await getDefaultHeaders(),
       })
 
       const result = await response.json()
@@ -139,7 +142,7 @@ export default function BrandPage() {
     try {
       const response = await fetch(`/api/brand-profiles/${profile.id}/default`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await getDefaultHeaders(),
         body: JSON.stringify({}),
       })
 

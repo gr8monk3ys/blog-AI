@@ -1,9 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSupabase, isSupabaseConfigured } from '../../../../lib/supabase'
+import { getSqlOrNull } from '../../../../lib/db'
+import { requireClerkUserId } from '../../../../lib/clerk-auth'
 import { SAMPLE_BRAND_PROFILES } from '../../../../types/brand'
-import type { Database } from '../../../../types/database'
 
-type BrandProfileRow = Database['public']['Tables']['brand_profiles']['Row']
+type BrandProfileRow = {
+  id: string
+  name: string
+  slug: string
+  tone_keywords: string[] | null
+  writing_style: string
+  example_content: string | null
+  industry: string | null
+  target_audience: string | null
+  preferred_words: string[] | null
+  avoid_words: string[] | null
+  brand_values: string[] | null
+  content_themes: string[] | null
+  is_active: boolean
+  is_default: boolean
+  created_at: string
+  updated_at: string
+}
 
 interface RouteContext {
   params: Promise<{ id: string }>
@@ -17,8 +34,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params
 
-    // If Supabase is not configured, return sample data
-    if (!isSupabaseConfigured()) {
+    const sql = getSqlOrNull()
+
+    // If DB is not configured, return sample data
+    if (!sql) {
       const profile = SAMPLE_BRAND_PROFILES.find((p) => p.id === id || p.slug === id)
 
       if (!profile) {
@@ -34,38 +53,53 @@ export async function GET(request: NextRequest, context: RouteContext) {
       })
     }
 
-    const supabase = getSupabase()
-
-    // Try to find by ID first, then by slug
-    let query = supabase.from('brand_profiles').select('*')
+    let userId: string
+    try {
+      userId = await requireClerkUserId()
+    } catch {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
 
     // Check if it's a UUID
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
 
-    if (isUuid) {
-      query = query.eq('id', id)
-    } else {
-      query = query.eq('slug', id)
-    }
+    const rows = await sql.query(
+      `
+        SELECT
+          id,
+          name,
+          slug,
+          tone_keywords,
+          writing_style,
+          example_content,
+          industry,
+          target_audience,
+          preferred_words,
+          avoid_words,
+          brand_values,
+          content_themes,
+          is_active,
+          is_default,
+          created_at,
+          updated_at
+        FROM brand_profiles
+        WHERE user_id = $1 AND ${isUuid ? 'id' : 'slug'} = $2
+        LIMIT 1
+      `,
+      [userId, id]
+    )
 
-    const { data, error } = await query.single()
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return NextResponse.json(
-          { success: false, error: 'Brand profile not found' },
-          { status: 404 }
-        )
-      }
-
-      console.error('Error fetching brand profile:', error)
+    if (!rows || rows.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'Failed to fetch brand profile' },
-        { status: 500 }
+        { success: false, error: 'Brand profile not found' },
+        { status: 404 }
       )
     }
 
-    const row = data as BrandProfileRow
+    const row = rows[0] as BrandProfileRow
     const profile = {
       id: row.id,
       name: row.name,
@@ -107,8 +141,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const { id } = await context.params
     const body = await request.json()
 
-    // If Supabase is not configured, return mock response
-    if (!isSupabaseConfigured()) {
+    const sql = getSqlOrNull()
+
+    // If DB is not configured, return mock response
+    if (!sql) {
       const profileIndex = SAMPLE_BRAND_PROFILES.findIndex((p) => p.id === id || p.slug === id)
 
       if (profileIndex === -1) {
@@ -130,45 +166,108 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       })
     }
 
-    const supabase = getSupabase()
-
-    // Build update object
-    const updates: Record<string, unknown> = {}
-    if (body.name !== undefined) updates.name = body.name
-    if (body.toneKeywords !== undefined) updates.tone_keywords = body.toneKeywords
-    if (body.writingStyle !== undefined) updates.writing_style = body.writingStyle
-    if (body.exampleContent !== undefined) updates.example_content = body.exampleContent
-    if (body.industry !== undefined) updates.industry = body.industry
-    if (body.targetAudience !== undefined) updates.target_audience = body.targetAudience
-    if (body.preferredWords !== undefined) updates.preferred_words = body.preferredWords
-    if (body.avoidWords !== undefined) updates.avoid_words = body.avoidWords
-    if (body.brandValues !== undefined) updates.brand_values = body.brandValues
-    if (body.contentThemes !== undefined) updates.content_themes = body.contentThemes
-    if (body.isActive !== undefined) updates.is_active = body.isActive
-
-    const { data, error } = await supabase
-      .from('brand_profiles')
-      .update(updates as never)
-      .eq('id', id)
-      .select()
-      .single()
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return NextResponse.json(
-          { success: false, error: 'Brand profile not found' },
-          { status: 404 }
-        )
-      }
-
-      console.error('Error updating brand profile:', error)
+    let userId: string
+    try {
+      userId = await requireClerkUserId()
+    } catch {
       return NextResponse.json(
-        { success: false, error: 'Failed to update brand profile' },
-        { status: 500 }
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
       )
     }
 
-    const row = data as BrandProfileRow
+    const sets: string[] = []
+    const params: unknown[] = []
+    let i = 1
+
+    if (body.name !== undefined) {
+      sets.push(`name = $${i++}`)
+      params.push(body.name)
+    }
+    if (body.toneKeywords !== undefined) {
+      sets.push(`tone_keywords = $${i++}`)
+      params.push(Array.isArray(body.toneKeywords) ? body.toneKeywords : [])
+    }
+    if (body.writingStyle !== undefined) {
+      sets.push(`writing_style = $${i++}`)
+      params.push(body.writingStyle)
+    }
+    if (body.exampleContent !== undefined) {
+      sets.push(`example_content = $${i++}`)
+      params.push(body.exampleContent ?? null)
+    }
+    if (body.industry !== undefined) {
+      sets.push(`industry = $${i++}`)
+      params.push(body.industry ?? null)
+    }
+    if (body.targetAudience !== undefined) {
+      sets.push(`target_audience = $${i++}`)
+      params.push(body.targetAudience ?? null)
+    }
+    if (body.preferredWords !== undefined) {
+      sets.push(`preferred_words = $${i++}`)
+      params.push(Array.isArray(body.preferredWords) ? body.preferredWords : [])
+    }
+    if (body.avoidWords !== undefined) {
+      sets.push(`avoid_words = $${i++}`)
+      params.push(Array.isArray(body.avoidWords) ? body.avoidWords : [])
+    }
+    if (body.brandValues !== undefined) {
+      sets.push(`brand_values = $${i++}`)
+      params.push(Array.isArray(body.brandValues) ? body.brandValues : [])
+    }
+    if (body.contentThemes !== undefined) {
+      sets.push(`content_themes = $${i++}`)
+      params.push(Array.isArray(body.contentThemes) ? body.contentThemes : [])
+    }
+    if (body.isActive !== undefined) {
+      sets.push(`is_active = $${i++}`)
+      params.push(!!body.isActive)
+    }
+
+    if (sets.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'No fields to update' },
+        { status: 400 }
+      )
+    }
+
+    sets.push('updated_at = NOW()')
+
+    const rows = await sql.query(
+      `
+        UPDATE brand_profiles
+        SET ${sets.join(', ')}
+        WHERE id = $${i++} AND user_id = $${i++}
+        RETURNING
+          id,
+          name,
+          slug,
+          tone_keywords,
+          writing_style,
+          example_content,
+          industry,
+          target_audience,
+          preferred_words,
+          avoid_words,
+          brand_values,
+          content_themes,
+          is_active,
+          is_default,
+          created_at,
+          updated_at
+      `,
+      [...params, id, userId]
+    )
+
+    if (!rows || rows.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Brand profile not found' },
+        { status: 404 }
+      )
+    }
+
+    const row = rows[0] as BrandProfileRow
     const profile = {
       id: row.id,
       name: row.name,
@@ -209,22 +308,37 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params
 
-    // If Supabase is not configured, return mock response
-    if (!isSupabaseConfigured()) {
+    const sql = getSqlOrNull()
+
+    // If DB is not configured, return mock response
+    if (!sql) {
       return NextResponse.json({
         success: true,
         message: 'Brand profile deleted',
       })
     }
 
-    const supabase = getSupabase()
-    const { error } = await supabase.from('brand_profiles').delete().eq('id', id)
-
-    if (error) {
-      console.error('Error deleting brand profile:', error)
+    let userId: string
+    try {
+      userId = await requireClerkUserId()
+    } catch {
       return NextResponse.json(
-        { success: false, error: 'Failed to delete brand profile' },
-        { status: 500 }
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+
+    const rows = await sql.query(
+      `DELETE FROM brand_profiles WHERE ${isUuid ? 'id' : 'slug'} = $1 AND user_id = $2 RETURNING id`,
+      [id, userId]
+    )
+
+    if (!rows || rows.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Brand profile not found' },
+        { status: 404 }
       )
     }
 

@@ -16,6 +16,7 @@ import HistoryCard from '../../components/history/HistoryCard'
 import HistoryFilters from '../../components/history/HistoryFilters'
 import { historyApi } from '../../lib/history-api'
 import type { GeneratedContentItem, HistoryFilters as HistoryFiltersType } from '../../types/history'
+import { useAuth } from '@clerk/nextjs'
 
 export default function HistoryPage() {
   const [items, setItems] = useState<GeneratedContentItem[]>([])
@@ -30,8 +31,8 @@ export default function HistoryPage() {
   const [hasMore, setHasMore] = useState(false)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
 
-  // Check if Supabase is available
-  const isAvailable = historyApi.isAvailable()
+  const { isSignedIn } = useAuth()
+  const isAvailable = isSignedIn && historyApi.isAvailable()
 
   // Fetch history
   const fetchHistory = useCallback(
@@ -93,8 +94,9 @@ export default function HistoryPage() {
   useEffect(() => {
     fetchHistory()
     fetchStats()
+    // We want to refetch when auth becomes available (Clerk loads / user signs in).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [isAvailable])
 
   // Refetch when filters change
   useEffect(() => {
@@ -201,18 +203,17 @@ export default function HistoryPage() {
           >
             <ExclamationTriangleIcon className="w-16 h-16 mx-auto text-amber-500 mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              History Not Available
+              Sign In Required
             </h2>
             <p className="text-gray-600 max-w-md mx-auto mb-6">
-              Content history requires Supabase to be configured. Set up your
-              environment variables to enable this feature.
+              Sign in to view and manage your saved generations.
             </p>
             <Link
-              href="/tools"
+              href="/sign-in"
               className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
             >
               <DocumentTextIcon className="w-5 h-5" />
-              Browse Tools
+              Sign In
             </Link>
           </motion.div>
         ) : (

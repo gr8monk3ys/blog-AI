@@ -1,9 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSupabase, isSupabaseConfigured } from '../../../lib/supabase'
+import { getSqlOrNull } from '../../../lib/db'
+import { requireClerkUserId } from '../../../lib/clerk-auth'
 import { SAMPLE_BRAND_PROFILES } from '../../../types/brand'
-import type { Database } from '../../../types/database'
 
-type BrandProfileRow = Database['public']['Tables']['brand_profiles']['Row']
+type BrandProfileRow = {
+  id: string
+  name: string
+  slug: string
+  tone_keywords: string[] | null
+  writing_style: string
+  example_content: string | null
+  industry: string | null
+  target_audience: string | null
+  preferred_words: string[] | null
+  avoid_words: string[] | null
+  brand_values: string[] | null
+  content_themes: string[] | null
+  is_active: boolean
+  is_default: boolean
+  created_at: string
+  updated_at: string
+}
 
 /**
  * Generate a URL-friendly slug from a name
@@ -26,8 +43,10 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50', 10)
     const offset = parseInt(searchParams.get('offset') || '0', 10)
 
-    // If Supabase is not configured, return sample data
-    if (!isSupabaseConfigured()) {
+    const sql = getSqlOrNull()
+
+    // If DB is not configured, return sample data
+    if (!sql) {
       let filteredProfiles = [...SAMPLE_BRAND_PROFILES]
 
       if (activeOnly) {
@@ -41,22 +60,61 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    const supabase = getSupabase()
-    let query = supabase
-      .from('brand_profiles')
-      .select('*', { count: 'exact' })
-      .order('is_default', { ascending: false })
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1)
-
-    if (activeOnly) {
-      query = query.eq('is_active', true)
+    let userId: string
+    try {
+      userId = await requireClerkUserId()
+    } catch {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
     }
 
-    const { data, error, count } = await query
+    const where: string[] = ['user_id = $1']
+    const params: unknown[] = [userId]
+    let i = 2
 
-    if (error) {
-      console.error('Error fetching brand profiles:', error)
+    if (activeOnly) {
+      where.push('is_active = true')
+    }
+
+    const whereSql = `WHERE ${where.join(' AND ')}`
+
+    const countRows = await sql.query(
+      `SELECT COUNT(*)::int AS count FROM brand_profiles ${whereSql}`,
+      params
+    )
+    const total = Number((countRows?.[0] as { count?: unknown } | undefined)?.count ?? 0)
+
+    const dataRows = await sql.query(
+      `
+        SELECT
+          id,
+          name,
+          slug,
+          tone_keywords,
+          writing_style,
+          example_content,
+          industry,
+          target_audience,
+          preferred_words,
+          avoid_words,
+          brand_values,
+          content_themes,
+          is_active,
+          is_default,
+          created_at,
+          updated_at
+        FROM brand_profiles
+        ${whereSql}
+        ORDER BY is_default DESC, created_at DESC
+        LIMIT $${i++}
+        OFFSET $${i++}
+      `,
+      [...params, limit, offset]
+    )
+
+    if (!dataRows) {
       return NextResponse.json(
         { success: false, error: 'Failed to fetch brand profiles' },
         { status: 500 }
@@ -64,7 +122,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform database rows to API format
-    const profiles = (data as BrandProfileRow[] | null)?.map((row) => ({
+    const profiles = (dataRows as BrandProfileRow[]).map((row) => ({
       id: row.id,
       name: row.name,
       slug: row.slug,
@@ -86,7 +144,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: profiles,
-      total: count || 0,
+      total,
     })
   } catch (error) {
     console.error('Brand profiles GET error:', error)
@@ -116,8 +174,10 @@ export async function POST(request: NextRequest) {
     // Generate slug from name
     const slug = generateSlug(body.name)
 
-    // If Supabase is not configured, return mock response
-    if (!isSupabaseConfigured()) {
+    const sql = getSqlOrNull()
+
+    // If DB is not configured, return mock response
+    if (!sql) {
       const newProfile = {
         id: `bp-${Date.now()}`,
         name: body.name,
@@ -143,45 +203,92 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    const supabase = getSupabase()
-    const insertData: Database['public']['Tables']['brand_profiles']['Insert'] = {
-      name: body.name,
-      slug,
-      tone_keywords: body.toneKeywords,
-      writing_style: body.writingStyle || 'balanced',
-      example_content: body.exampleContent,
-      industry: body.industry,
-      target_audience: body.targetAudience,
-      preferred_words: body.preferredWords || [],
-      avoid_words: body.avoidWords || [],
-      brand_values: body.brandValues || [],
-      content_themes: body.contentThemes || [],
-      user_hash: body.userHash || null,
+    let userId: string
+    try {
+      userId = await requireClerkUserId()
+    } catch {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
     }
-    const { data, error } = await supabase
-      .from('brand_profiles')
-      .insert(insertData as never)
-      .select()
-      .single()
 
-    if (error) {
-      console.error('Error creating brand profile:', error)
+    let row: BrandProfileRow
+    try {
+      const rows = await sql.query(
+        `
+          INSERT INTO brand_profiles (
+            name,
+            slug,
+            tone_keywords,
+            writing_style,
+            example_content,
+            industry,
+            target_audience,
+            preferred_words,
+            avoid_words,
+            brand_values,
+            content_themes,
+            user_id
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+          RETURNING
+            id,
+            name,
+            slug,
+            tone_keywords,
+            writing_style,
+            example_content,
+            industry,
+            target_audience,
+            preferred_words,
+            avoid_words,
+            brand_values,
+            content_themes,
+            is_active,
+            is_default,
+            created_at,
+            updated_at
+        `,
+        [
+          body.name,
+          slug,
+          Array.isArray(body.toneKeywords) ? body.toneKeywords : [],
+          body.writingStyle || 'balanced',
+          body.exampleContent ?? null,
+          body.industry ?? null,
+          body.targetAudience ?? null,
+          Array.isArray(body.preferredWords) ? body.preferredWords : [],
+          Array.isArray(body.avoidWords) ? body.avoidWords : [],
+          Array.isArray(body.brandValues) ? body.brandValues : [],
+          Array.isArray(body.contentThemes) ? body.contentThemes : [],
+          userId,
+        ]
+      )
 
-      // Handle unique constraint violation
-      if (error.code === '23505') {
+      if (!rows || rows.length === 0) {
+        return NextResponse.json(
+          { success: false, error: 'Failed to create brand profile' },
+          { status: 500 }
+        )
+      }
+
+      row = rows[0] as BrandProfileRow
+    } catch (e: any) {
+      // Unique constraint violation (e.g., slug)
+      if (e?.code === '23505') {
         return NextResponse.json(
           { success: false, error: 'A brand profile with this name already exists' },
           { status: 409 }
         )
       }
 
+      console.error('Error creating brand profile:', e)
       return NextResponse.json(
         { success: false, error: 'Failed to create brand profile' },
         { status: 500 }
       )
     }
 
-    const row = data as BrandProfileRow
     const profile = {
       id: row.id,
       name: row.name,

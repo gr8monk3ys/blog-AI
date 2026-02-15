@@ -2,8 +2,6 @@
  * Types for Templates Library feature
  */
 
-import type { Json } from './database'
-
 /**
  * Template category for filtering
  */

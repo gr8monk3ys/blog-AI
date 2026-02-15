@@ -5,6 +5,7 @@ import { Listbox, Transition, Switch } from '@headlessui/react'
 import { ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline'
 import { SparklesIcon } from '@heroicons/react/24/solid'
 import { BrandProfile, SAMPLE_BRAND_PROFILES } from '../../types/brand'
+import { getDefaultHeaders } from '../../lib/api'
 
 interface BrandVoiceSelectorProps {
   enabled: boolean
@@ -26,10 +27,14 @@ export default function BrandVoiceSelector({
 
   // Fetch profiles from API
   useEffect(() => {
+    if (!enabled) return
+
     const fetchProfiles = async () => {
       setLoading(true)
       try {
-        const response = await fetch('/api/brand-profiles?activeOnly=true')
+        const response = await fetch('/api/brand-profiles?activeOnly=true', {
+          headers: await getDefaultHeaders(),
+        })
         const data = await response.json()
 
         if (data.success && data.data.length > 0) {
@@ -52,7 +57,7 @@ export default function BrandVoiceSelector({
     }
 
     fetchProfiles()
-  }, [])
+  }, [enabled, onProfileChange, selectedProfile])
 
   if (compact) {
     return (

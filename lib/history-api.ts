@@ -1,12 +1,10 @@
 /**
  * History API client for Blog-AI
  *
- * Provides methods for managing content history and favorites.
- * Uses Supabase for data storage.
+ * Talks to same-origin Next.js route handlers which persist to Neon.
+ * Requires an authenticated Clerk session for persistence.
  */
 
-import { createClient } from '@supabase/supabase-js'
-import { isSupabaseConfigured } from './supabase'
 import type {
   GeneratedContentItem,
   HistoryFilters,
@@ -16,66 +14,6 @@ import type {
 } from '../types/history'
 import type { ToolCategory } from '../types/tools'
 
-/**
- * Get a lightweight Supabase client without strict database types
- * This avoids type conflicts while still providing runtime functionality
- */
-function getHistoryClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return null
-  }
-
-  return createClient(supabaseUrl, supabaseAnonKey)
-}
-
-/**
- * Generate a consistent user hash for anonymous tracking
- * Uses a combination of browser fingerprint data
- */
-function generateUserHash(): string {
-  if (typeof window === 'undefined') return ''
-
-  const data = [
-    navigator.userAgent,
-    navigator.language,
-    screen.width,
-    screen.height,
-    new Date().getTimezoneOffset(),
-  ].join('|')
-
-  // Simple hash function
-  let hash = 0
-  for (let i = 0; i < data.length; i++) {
-    const char = data.charCodeAt(i)
-    hash = ((hash << 5) - hash) + char
-    hash = hash & hash
-  }
-  return `user_${Math.abs(hash).toString(16)}`
-}
-
-/**
- * Get cached user hash or generate new one
- */
-function getUserHash(): string {
-  if (typeof window === 'undefined') return ''
-
-  const storageKey = 'blog_ai_user_hash'
-  let hash = localStorage.getItem(storageKey)
-
-  if (!hash) {
-    hash = generateUserHash()
-    localStorage.setItem(storageKey, hash)
-  }
-
-  return hash
-}
-
-/**
- * Map tool_id to category (for filtering)
- */
 function getToolCategory(toolId: string): ToolCategory | null {
   const categoryMap: Record<string, ToolCategory> = {
     'blog-post-generator': 'blog',
@@ -111,299 +49,152 @@ function getToolCategory(toolId: string): ToolCategory | null {
   return categoryMap[toolId] || null
 }
 
-/**
- * History API methods
- */
+async function jsonOrThrow<T>(res: Response): Promise<T> {
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    const message =
+      (data && typeof data === 'object' && 'error' in data && typeof data.error === 'string'
+        ? data.error
+        : `Request failed (${res.status})`)
+    const error = new Error(message)
+    ;(error as any).status = res.status
+    throw error
+  }
+  return data as T
+}
+
 export const historyApi = {
-  /**
-   * Check if history features are available
-   */
   isAvailable(): boolean {
-    return isSupabaseConfigured()
+    // Availability is determined by auth + server configuration; handle per-request errors.
+    return true
   },
 
-  /**
-   * Get content history with optional filters
-   */
   async getHistory(filters: HistoryFilters = {}): Promise<HistoryResponse> {
-    const supabase = getHistoryClient()
-    if (!supabase) {
-      return { items: [], total: 0, limit: 20, offset: 0, has_more: false }
-    }
+    const params = new URLSearchParams()
+    if (filters.favorites_only) params.set('favorites_only', 'true')
+    if (filters.tool_id) params.set('tool_id', filters.tool_id)
+    if (filters.date_from) params.set('date_from', filters.date_from)
+    if (filters.date_to) params.set('date_to', filters.date_to)
+    if (filters.search) params.set('search', filters.search)
+    params.set('limit', String(filters.limit ?? 20))
+    params.set('offset', String(filters.offset ?? 0))
 
-    const userHash = getUserHash()
-    const limit = filters.limit || 20
-    const offset = filters.offset || 0
+    try {
+      const res = await fetch(`/api/history?${params.toString()}`, {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+      })
+      const payload = await jsonOrThrow<HistoryResponse & { items: GeneratedContentItem[] }>(res)
 
-    let query = supabase
-      .from('generated_content')
-      .select('*', { count: 'exact' })
-      .eq('user_hash', userHash)
-      .order('created_at', { ascending: false })
+      // Optional category filtering is done client-side (tool_id -> category).
+      let items = payload.items || []
+      if (filters.category && filters.category !== 'all') {
+        items = items.filter((item) => getToolCategory(item.tool_id) === filters.category)
+      }
 
-    // Apply filters
-    if (filters.favorites_only) {
-      query = query.eq('is_favorite', true)
-    }
-
-    if (filters.tool_id) {
-      query = query.eq('tool_id', filters.tool_id)
-    }
-
-    if (filters.date_from) {
-      query = query.gte('created_at', filters.date_from)
-    }
-
-    if (filters.date_to) {
-      query = query.lte('created_at', filters.date_to)
-    }
-
-    if (filters.search) {
-      // Search in title, output, and inputs
-      query = query.or(
-        `title.ilike.%${filters.search}%,output.ilike.%${filters.search}%`
-      )
-    }
-
-    // Apply pagination
-    query = query.range(offset, offset + limit - 1)
-
-    const { data, error, count } = await query
-
-    if (error) {
-      console.error('Error fetching history:', error)
-      throw new Error('Failed to fetch history')
-    }
-
-    // Filter by category client-side if needed
-    let items = (data || []) as GeneratedContentItem[]
-    if (filters.category && filters.category !== 'all') {
-      items = items.filter((item) => getToolCategory(item.tool_id) === filters.category)
-    }
-
-    return {
-      items,
-      total: count || 0,
-      limit,
-      offset,
-      has_more: (count || 0) > offset + limit,
-    }
-  },
-
-  /**
-   * Get a single history item by ID
-   */
-  async getById(id: string): Promise<GeneratedContentItem | null> {
-    const supabase = getHistoryClient()
-    if (!supabase) return null
-
-    const { data, error } = await supabase
-      .from('generated_content')
-      .select('*')
-      .eq('id', id)
-      .single()
-
-    if (error) {
-      if (error.code === 'PGRST116') return null
-      console.error('Error fetching content:', error)
-      throw new Error('Failed to fetch content')
-    }
-
-    return data as GeneratedContentItem
-  },
-
-  /**
-   * Toggle favorite status of a content item
-   */
-  async toggleFavorite(id: string): Promise<boolean> {
-    const supabase = getHistoryClient()
-    if (!supabase) {
-      throw new Error('Supabase not configured')
-    }
-
-    // Use direct update instead of RPC for better type safety
-    const { data: current, error: fetchError } = await supabase
-      .from('generated_content')
-      .select('is_favorite')
-      .eq('id', id)
-      .single()
-
-    if (fetchError) {
-      console.error('Error fetching content:', fetchError)
-      throw new Error('Failed to fetch content for toggle')
-    }
-
-    const currentRow = current as { is_favorite?: boolean } | null
-    const newStatus = !(currentRow?.is_favorite ?? false)
-
-    const { error: updateError } = await supabase
-      .from('generated_content')
-      .update({ is_favorite: newStatus })
-      .eq('id', id)
-
-    if (updateError) {
-      console.error('Error toggling favorite:', updateError)
-      throw new Error('Failed to toggle favorite')
-    }
-
-    return newStatus
-  },
-
-  /**
-   * Set favorite status explicitly
-   */
-  async setFavorite(id: string, isFavorite: boolean): Promise<boolean> {
-    const supabase = getHistoryClient()
-    if (!supabase) {
-      throw new Error('Supabase not configured')
-    }
-
-    const { error } = await supabase
-      .from('generated_content')
-      .update({ is_favorite: isFavorite })
-      .eq('id', id)
-
-    if (error) {
-      console.error('Error setting favorite:', error)
-      throw new Error('Failed to set favorite')
-    }
-
-    return isFavorite
-  },
-
-  /**
-   * Delete a generated content item
-   */
-  async deleteGeneration(id: string): Promise<void> {
-    const supabase = getHistoryClient()
-    if (!supabase) {
-      throw new Error('Supabase not configured')
-    }
-
-    const userHash = getUserHash()
-
-    const { error } = await supabase
-      .from('generated_content')
-      .delete()
-      .eq('id', id)
-      .eq('user_hash', userHash)
-
-    if (error) {
-      console.error('Error deleting content:', error)
-      throw new Error('Failed to delete content')
-    }
-  },
-
-  /**
-   * Save generated content to history
-   */
-  async saveGeneration(input: SaveContentInput): Promise<GeneratedContentItem> {
-    const supabase = getHistoryClient()
-    if (!supabase) {
-      throw new Error('Supabase not configured')
-    }
-
-    const userHash = getUserHash()
-
-    const insertData = {
-      tool_id: input.tool_id,
-      tool_name: input.tool_name,
-      title: input.title || null,
-      inputs: input.inputs,
-      output: input.output,
-      provider: input.provider,
-      execution_time_ms: input.execution_time_ms,
-      user_hash: userHash,
-      is_favorite: false,
-    }
-
-    const { data, error } = await supabase
-      .from('generated_content')
-      .insert(insertData)
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Error saving content:', error)
-      throw new Error('Failed to save content')
-    }
-
-    return data as GeneratedContentItem
-  },
-
-  /**
-   * Get history statistics
-   */
-  async getStats(): Promise<HistoryStats> {
-    const supabase = getHistoryClient()
-    if (!supabase) {
       return {
-        total_generations: 0,
-        total_favorites: 0,
-        by_category: {},
-        by_tool: {},
-        recent_count: 0,
+        ...payload,
+        items,
       }
-    }
-
-    const userHash = getUserHash()
-    const sevenDaysAgo = new Date()
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-
-    // Get total count
-    const { count: totalCount } = await supabase
-      .from('generated_content')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_hash', userHash)
-
-    // Get favorites count
-    const { count: favoritesCount } = await supabase
-      .from('generated_content')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_hash', userHash)
-      .eq('is_favorite', true)
-
-    // Get recent count
-    const { count: recentCount } = await supabase
-      .from('generated_content')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_hash', userHash)
-      .gte('created_at', sevenDaysAgo.toISOString())
-
-    // Get all items for category/tool breakdown
-    const { data: allItems } = await supabase
-      .from('generated_content')
-      .select('tool_id')
-      .eq('user_hash', userHash)
-
-    const byCategory: Record<string, number> = {}
-    const byTool: Record<string, number> = {}
-
-    if (allItems) {
-      for (const item of allItems as { tool_id: string }[]) {
-        const category = getToolCategory(item.tool_id)
-        if (category) {
-          byCategory[category] = (byCategory[category] || 0) + 1
-        }
-        byTool[item.tool_id] = (byTool[item.tool_id] || 0) + 1
+    } catch (e: any) {
+      // If not signed in or history is unavailable, behave like "no history".
+      if (e?.status === 401 || e?.status === 403 || e?.status === 503) {
+        return { items: [], total: 0, limit: filters.limit ?? 20, offset: filters.offset ?? 0, has_more: false }
       }
-    }
-
-    return {
-      total_generations: totalCount || 0,
-      total_favorites: favoritesCount || 0,
-      by_category: byCategory,
-      by_tool: byTool,
-      recent_count: recentCount || 0,
+      throw e
     }
   },
 
-  /**
-   * Get favorites only
-   */
+  async getById(id: string): Promise<GeneratedContentItem | null> {
+    const res = await fetch(`/api/history/${encodeURIComponent(id)}`, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    })
+
+    if (res.status === 404) return null
+    if (res.status === 401 || res.status === 403 || res.status === 503) return null
+
+    const payload = await jsonOrThrow<{ data: GeneratedContentItem }>(res)
+    return payload.data
+  },
+
+  async toggleFavorite(id: string): Promise<boolean> {
+    const res = await fetch(`/api/history/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ toggle: true }),
+    })
+    const payload = await jsonOrThrow<{ is_favorite: boolean }>(res)
+    return payload.is_favorite
+  },
+
+  async setFavorite(id: string, isFavorite: boolean): Promise<boolean> {
+    const res = await fetch(`/api/history/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ isFavorite }),
+    })
+    const payload = await jsonOrThrow<{ is_favorite: boolean }>(res)
+    return payload.is_favorite
+  },
+
+  async deleteGeneration(id: string): Promise<void> {
+    const res = await fetch(`/api/history/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: { Accept: 'application/json' },
+    })
+    if (res.status === 404) return
+    await jsonOrThrow(res)
+  },
+
+  async saveGeneration(input: SaveContentInput): Promise<GeneratedContentItem> {
+    const res = await fetch('/api/history', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(input),
+    })
+    const payload = await jsonOrThrow<{ data: GeneratedContentItem }>(res)
+    return payload.data
+  },
+
+  async getStats(): Promise<HistoryStats> {
+    try {
+      const res = await fetch('/api/history/stats', {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+      })
+      const payload = await jsonOrThrow<HistoryStats>(res)
+
+      // If server returns empty by_category, compute from by_tool.
+      if (!payload.by_category || Object.keys(payload.by_category).length === 0) {
+        const byCategory: Record<string, number> = {}
+        for (const [toolId, count] of Object.entries(payload.by_tool || {})) {
+          const category = getToolCategory(toolId)
+          if (!category) continue
+          byCategory[category] = (byCategory[category] || 0) + count
+        }
+        return { ...payload, by_category: byCategory }
+      }
+
+      return payload
+    } catch (e: any) {
+      if (e?.status === 401 || e?.status === 403 || e?.status === 503) {
+        return {
+          total_generations: 0,
+          total_favorites: 0,
+          by_category: {},
+          by_tool: {},
+          recent_count: 0,
+        }
+      }
+      throw e
+    }
+  },
+
   async getFavorites(limit = 20, offset = 0): Promise<HistoryResponse> {
     return this.getHistory({ favorites_only: true, limit, offset })
   },
 }
 
 export default historyApi
+

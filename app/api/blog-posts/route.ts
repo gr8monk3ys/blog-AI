@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getSupabase, isSupabaseConfigured } from '../../../lib/supabase'
+import { getSqlOrNull } from '../../../lib/db'
 
 const getAdminKey = () => process.env.BLOG_ADMIN_KEY
 
@@ -19,19 +19,27 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (!isSupabaseConfigured()) {
-    return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 })
+  const sql = getSqlOrNull()
+  if (!sql) {
+    return NextResponse.json({ error: 'Database not configured' }, { status: 503 })
   }
 
-  const supabase = getSupabase() as any
-  const { data, error } = await supabase
-    .from('blog_posts')
-    .select('id, title, slug, excerpt, tags, status, published_at, updated_at, created_at')
-    .order('published_at', { ascending: false, nullsFirst: false })
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
+  const data = await sql.query(
+    `
+      SELECT
+        id,
+        title,
+        slug,
+        excerpt,
+        tags,
+        status,
+        published_at,
+        updated_at,
+        created_at
+      FROM blog_posts
+      ORDER BY published_at DESC NULLS LAST
+    `
+  )
 
   return NextResponse.json({ data })
 }
@@ -41,8 +49,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (!isSupabaseConfigured()) {
-    return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 })
+  const sql = getSqlOrNull()
+  if (!sql) {
+    return NextResponse.json({ error: 'Database not configured' }, { status: 503 })
   }
 
   const payload = await request.json()
@@ -51,33 +60,60 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: 'Missing required fields: title, slug, body' },
       { status: 400 }
-    )
+      )
   }
 
-  const supabase = getSupabase() as any
-  const { data, error } = await supabase
-    .from('blog_posts')
-    .upsert(
-      {
-        title: payload.title,
-        slug: payload.slug,
-        excerpt: payload.excerpt || null,
-        body: payload.body,
-        tags: Array.isArray(payload.tags) ? payload.tags : [],
-        status: payload.status || 'draft',
-        published_at: payload.published_at || null,
-        cover_image: payload.cover_image || null,
-        seo_title: payload.seo_title || null,
-        seo_description: payload.seo_description || null,
-      },
-      { onConflict: 'slug' }
-    )
-    .select()
-    .single()
+  const rows = await sql.query(
+    `
+      INSERT INTO blog_posts (
+        title,
+        slug,
+        excerpt,
+        body,
+        tags,
+        status,
+        published_at,
+        cover_image,
+        seo_title,
+        seo_description,
+        updated_at
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, NOW())
+      ON CONFLICT (slug) DO UPDATE SET
+        title = EXCLUDED.title,
+        excerpt = EXCLUDED.excerpt,
+        body = EXCLUDED.body,
+        tags = EXCLUDED.tags,
+        status = EXCLUDED.status,
+        published_at = EXCLUDED.published_at,
+        cover_image = EXCLUDED.cover_image,
+        seo_title = EXCLUDED.seo_title,
+        seo_description = EXCLUDED.seo_description,
+        updated_at = NOW()
+      RETURNING
+        id,
+        title,
+        slug,
+        excerpt,
+        tags,
+        status,
+        published_at,
+        updated_at,
+        created_at
+    `,
+    [
+      payload.title,
+      payload.slug,
+      payload.excerpt || null,
+      payload.body,
+      Array.isArray(payload.tags) ? payload.tags : [],
+      payload.status || 'draft',
+      payload.published_at || null,
+      payload.cover_image || null,
+      payload.seo_title || null,
+      payload.seo_description || null,
+    ]
+  )
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
+  const data = rows?.[0] ?? null
   return NextResponse.json({ data })
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSupabase, isSupabaseConfigured, isNoRowsError } from '../../../../lib/supabase'
+import { getSqlOrNull } from '../../../../lib/db'
 
 const getAdminKey = () => process.env.BLOG_ADMIN_KEY
 
@@ -23,24 +23,20 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (!isSupabaseConfigured()) {
-    return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 })
+  const sql = getSqlOrNull()
+  if (!sql) {
+    return NextResponse.json({ error: 'Database not configured' }, { status: 503 })
   }
 
-  const supabase = getSupabase()
-  const { data, error } = await supabase
-    .from('blog_posts')
-    .select('*')
-    .eq('slug', resolvedParams.slug)
-    .single()
+  const rows = await sql.query(`SELECT * FROM blog_posts WHERE slug = $1 LIMIT 1`, [
+    resolvedParams.slug,
+  ])
 
-  if (error) {
-    if (isNoRowsError(error)) {
-      return NextResponse.json({ error: 'Not found' }, { status: 404 })
-    }
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  if (!rows || rows.length === 0) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
+  const data = rows[0] ?? null
   return NextResponse.json({ data })
 }
 
@@ -53,15 +49,17 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (!isSupabaseConfigured()) {
-    return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 })
+  const sql = getSqlOrNull()
+  if (!sql) {
+    return NextResponse.json({ error: 'Database not configured' }, { status: 503 })
   }
 
-  const supabase = getSupabase()
-  const { error } = await supabase.from('blog_posts').delete().eq('slug', resolvedParams.slug)
+  const rows = await sql.query(`DELETE FROM blog_posts WHERE slug = $1 RETURNING id`, [
+    resolvedParams.slug,
+  ])
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  if (!rows || rows.length === 0) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
   return NextResponse.json({ success: true })

@@ -96,12 +96,17 @@ function VoiceTrainingPageContent() {
   }, [])
 
   // Handle profile ID change
-  const handleProfileIdSubmit = useCallback(() => {
-    if (profileId.trim()) {
-      loadSamples(profileId)
-      loadStatus(profileId)
-    }
-  }, [profileId, loadSamples, loadStatus])
+  const handleProfileLoad = useCallback((id: string) => {
+    const next = (id || '').trim()
+    if (!next) return
+    setProfileId(next)
+    setSamples([])
+    setFingerprint(null)
+    setTrainingStatus('untrained')
+    setScoreResult(null)
+    loadSamples(next)
+    loadStatus(next)
+  }, [loadSamples, loadStatus])
 
   // Add a new sample
   const addSample = useCallback(async () => {
@@ -271,7 +276,7 @@ function VoiceTrainingPageContent() {
         <ProfileSelector
           profileId={profileId}
           onProfileIdChange={setProfileId}
-          onLoad={handleProfileIdSubmit}
+          onLoad={handleProfileLoad}
           isLoading={isLoading}
         />
 

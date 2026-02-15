@@ -1,9 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSupabase, isSupabaseConfigured } from '../../../lib/supabase'
+import { getSqlOrNull } from '../../../lib/db'
+import { requireClerkUserId } from '../../../lib/clerk-auth'
 import { SAMPLE_TEMPLATES } from '../../../types/templates'
-import type { Database } from '../../../types/database'
 
-type TemplateRow = Database['public']['Tables']['templates']['Row']
+type TemplateRow = {
+  id: string
+  name: string
+  description: string | null
+  slug: string
+  tool_id: string
+  preset_inputs: Record<string, unknown>
+  category: string
+  tags: string[] | null
+  is_public: boolean
+  use_count: number
+  created_at: string
+  updated_at: string
+}
 
 /**
  * Generate a URL-friendly slug from a name
@@ -28,8 +41,10 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50', 10)
     const offset = parseInt(searchParams.get('offset') || '0', 10)
 
-    // If Supabase is not configured, return sample data
-    if (!isSupabaseConfigured()) {
+    const sql = getSqlOrNull()
+
+    // If DB is not configured, return sample data
+    if (!sql) {
       let filteredTemplates = [...SAMPLE_TEMPLATES]
 
       if (category && category !== 'all') {
@@ -57,30 +72,59 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    const supabase = getSupabase()
-    let query = supabase
-      .from('templates')
-      .select('*', { count: 'exact' })
-      .eq('is_public', true)
-      .order('use_count', { ascending: false })
-      .range(offset, offset + limit - 1)
+    const where: string[] = ['is_public = true']
+    const params: unknown[] = []
+    let i = 1
 
     if (category && category !== 'all') {
-      query = query.eq('category', category)
+      where.push(`category = $${i++}`)
+      params.push(category)
     }
 
     if (toolId) {
-      query = query.eq('tool_id', toolId)
+      where.push(`tool_id = $${i++}`)
+      params.push(toolId)
     }
 
     if (search) {
-      query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`)
+      where.push(`(name ILIKE $${i++} OR description ILIKE $${i++})`)
+      const pattern = `%${search}%`
+      params.push(pattern, pattern)
     }
 
-    const { data, error, count } = await query
+    const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : ''
 
-    if (error) {
-      console.error('Error fetching templates:', error)
+    const countRows = await sql.query(
+      `SELECT COUNT(*)::int AS count FROM templates ${whereSql}`,
+      params
+    )
+    const total = Number((countRows?.[0] as { count?: unknown } | undefined)?.count ?? 0)
+
+    const dataRows = await sql.query(
+      `
+        SELECT
+          id,
+          name,
+          description,
+          slug,
+          tool_id,
+          preset_inputs,
+          category,
+          tags,
+          is_public,
+          use_count,
+          created_at,
+          updated_at
+        FROM templates
+        ${whereSql}
+        ORDER BY use_count DESC
+        LIMIT $${i++}
+        OFFSET $${i++}
+      `,
+      [...params, limit, offset]
+    )
+
+    if (!dataRows) {
       return NextResponse.json(
         { success: false, error: 'Failed to fetch templates' },
         { status: 500 }
@@ -88,7 +132,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform database rows to API format
-    const templates = (data as TemplateRow[] | null)?.map((row) => ({
+    const templates = (dataRows as TemplateRow[]).map((row) => ({
       id: row.id,
       name: row.name,
       description: row.description,
@@ -106,7 +150,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: templates,
-      total: count || 0,
+      total,
     })
   } catch (error) {
     console.error('Templates GET error:', error)
@@ -136,8 +180,10 @@ export async function POST(request: NextRequest) {
     // Generate slug from name
     const slug = generateSlug(body.name)
 
-    // If Supabase is not configured, return mock response
-    if (!isSupabaseConfigured()) {
+    const sql = getSqlOrNull()
+
+    // If DB is not configured, return mock response
+    if (!sql) {
       const newTemplate = {
         id: `tpl-${Date.now()}`,
         name: body.name,
@@ -159,42 +205,82 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    const supabase = getSupabase()
-    const insertData: Database['public']['Tables']['templates']['Insert'] = {
-      name: body.name,
-      description: body.description,
-      slug,
-      tool_id: body.toolId,
-      preset_inputs: body.presetInputs || {},
-      category: body.category,
-      tags: body.tags || [],
-      is_public: body.isPublic ?? true,
-      user_hash: body.userHash || null,
+    let userId: string
+    try {
+      userId = await requireClerkUserId()
+    } catch {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
     }
-    const { data, error } = await supabase
-      .from('templates')
-      .insert(insertData as never)
-      .select()
-      .single()
 
-    if (error) {
-      console.error('Error creating template:', error)
+    let row: TemplateRow
+    try {
+      const rows = await sql.query(
+        `
+          INSERT INTO templates (
+            name,
+            description,
+            slug,
+            tool_id,
+            preset_inputs,
+            category,
+            tags,
+            is_public,
+            user_id
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+          RETURNING
+            id,
+            name,
+            description,
+            slug,
+            tool_id,
+            preset_inputs,
+            category,
+            tags,
+            is_public,
+            use_count,
+            created_at,
+            updated_at
+        `,
+        [
+          body.name,
+          body.description ?? null,
+          slug,
+          body.toolId,
+          body.presetInputs || {},
+          body.category,
+          Array.isArray(body.tags) ? body.tags : [],
+          body.isPublic ?? true,
+          userId,
+        ]
+      )
 
-      // Handle unique constraint violation
-      if (error.code === '23505') {
+      if (!rows || rows.length === 0) {
+        return NextResponse.json(
+          { success: false, error: 'Failed to create template' },
+          { status: 500 }
+        )
+      }
+
+      row = rows[0] as TemplateRow
+    } catch (e: any) {
+      // Unique constraint violation (e.g., slug)
+      if (e?.code === '23505') {
         return NextResponse.json(
           { success: false, error: 'A template with this name already exists' },
           { status: 409 }
         )
       }
 
+      console.error('Error creating template:', e)
       return NextResponse.json(
         { success: false, error: 'Failed to create template' },
         { status: 500 }
       )
     }
 
-    const row = data as TemplateRow
     const template = {
       id: row.id,
       name: row.name,

@@ -2,7 +2,7 @@ import BlogPostEditor from '../../../components/admin/BlogPostEditor'
 
 export const metadata = {
   title: 'Blog Admin | Blog AI',
-  description: 'Create and manage blog posts in Supabase.',
+  description: 'Create and manage blog posts in Postgres (Neon).',
 }
 
 export default function BlogAdminPage() {

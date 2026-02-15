@@ -10,6 +10,7 @@ import {
   Squares2X2Icon,
 } from '@heroicons/react/24/outline'
 import { Template, TemplateCategory, SAMPLE_TEMPLATES } from '../../types/templates'
+import { getDefaultHeaders } from '../../lib/api'
 
 interface TemplateGridProps {
   showFilters?: boolean
@@ -48,7 +49,9 @@ export default function TemplateGrid({
           params.set('search', searchQuery)
         }
 
-        const response = await fetch(`/api/templates?${params.toString()}`)
+        const response = await fetch(`/api/templates?${params.toString()}`, {
+          headers: await getDefaultHeaders(),
+        })
         const data = await response.json()
 
         if (data.success) {
