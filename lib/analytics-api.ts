@@ -69,7 +69,8 @@ export async function getOverviewStats(
       popularTool: response.popular_tool,
       generationsChange: response.generations_change_percent,
     }
-  } catch {
+  } catch (err) {
+    if (process.env.NODE_ENV === 'production') throw err
     return getMockOverviewStats()
   }
 }
@@ -94,7 +95,8 @@ export async function getToolUsageStats(
       lastUsedAt: item.last_used_at,
       percentage: item.percentage,
     }))
-  } catch {
+  } catch (err) {
+    if (process.env.NODE_ENV === 'production') throw err
     return getMockToolUsageStats().slice(0, limit)
   }
 }
@@ -115,7 +117,8 @@ export async function getTimelineData(
       count: item.count,
       label: formatDateLabel(item.date, timeRange),
     }))
-  } catch {
+  } catch (err) {
+    if (process.env.NODE_ENV === 'production') throw err
     return getMockTimelineData(timeRange)
   }
 }
@@ -137,7 +140,8 @@ export async function getCategoryBreakdown(
       percentage: item.percentage,
       color: getCategoryColor(item.category),
     }))
-  } catch {
+  } catch (err) {
+    if (process.env.NODE_ENV === 'production') throw err
     return getMockCategoryBreakdown()
   }
 }

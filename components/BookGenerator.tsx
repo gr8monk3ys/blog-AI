@@ -84,7 +84,12 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
       const isServerConnected = await checkServerConnection();
       
       if (!isServerConnected) {
-        // Use mock data if server is not running
+        // In production, never fall back to mock output.
+        if (process.env.NODE_ENV === 'production') {
+          throw new Error('Backend unavailable. Please try again later.');
+        }
+
+        // Use mock data in development if server is not running
         setTimeout(() => {
           setContent(generateMockBook());
           setLoading(false);
@@ -114,7 +119,18 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || `Server error: ${response.status}`);
+        const detail = (errorData as any)?.detail
+        const message =
+          typeof detail === 'string'
+            ? detail
+            : detail && typeof detail === 'object' && typeof (detail as any).error === 'string'
+            ? (detail as any).error
+            : typeof (errorData as any)?.error === 'string'
+            ? (errorData as any).error
+            : `Server error: ${response.status}`
+        const err: any = new Error(message)
+        err.status = response.status
+        throw err
       }
 
       const data = await response.json();
@@ -124,7 +140,14 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
       setContent(data);
     } catch (err) {
       console.error('Error generating book:', err);
-      setError(err instanceof Error ? err.message : 'Failed to generate book. Please try again.');
+      const status = (err as any)?.status
+      if (status === 401 || status === 403) {
+        setError('Sign in required to generate books.')
+      } else if (status === 429) {
+        setError('Usage limit reached. Upgrade your plan to continue generating books.')
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to generate book. Please try again.')
+      }
     } finally {
       setLoading(false);
     }

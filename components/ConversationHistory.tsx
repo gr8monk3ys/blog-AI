@@ -141,7 +141,16 @@ export default function ConversationHistory({ conversationId }: ConversationHist
       if (isMounted) setIsServerConnected(isConnected);
 
 	      if (!isConnected) {
-	        // Use mock data if server is not running
+	        // In production, never show mock conversation history.
+	        if (process.env.NODE_ENV === 'production') {
+	          if (isMounted) {
+	            setError('Backend unavailable. Please try again later.');
+	            setIsLoading(false);
+	          }
+	          return;
+	        }
+
+	        // Use mock data in development if server is not running
 	        setTimeout(() => {
 	          if (isMounted) {
 	            setMessages(MOCK_MESSAGES);
