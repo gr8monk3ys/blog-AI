@@ -7,6 +7,8 @@
 import { API_ENDPOINTS, apiFetch } from './api'
 import type { Tool, ToolCategory } from '../types/tools'
 import { TOOL_CATEGORIES } from '../types/tools'
+import type { ContentScoreResult } from '../components/tools/ContentScore'
+import type { ContentVariation } from '../components/tools/VariationCompare'
 
 /**
  * Valid tool categories from the frontend
@@ -106,6 +108,28 @@ export interface ToolExecutionResult {
   tool_id: string
 }
 
+export interface ToolScoreRequest {
+  text: string
+  keywords?: string[]
+}
+
+export interface ToolVariationsRequest {
+  inputs: Record<string, unknown>
+  variation_count?: number
+  provider_type?: 'openai' | 'anthropic' | 'gemini'
+  include_scores?: boolean
+  keywords?: string[]
+  brand_profile_id?: string
+}
+
+export interface ToolVariationsResult {
+  success: boolean
+  tool_id: string
+  variations: ContentVariation[]
+  error?: string
+  execution_time_ms: number
+}
+
 export interface ValidationResult {
   valid: boolean
   errors: string[]
@@ -186,6 +210,32 @@ export const toolsApi = {
     request: ToolExecutionRequest
   ): Promise<ToolExecutionResult> {
     return apiFetch<ToolExecutionResult>(API_ENDPOINTS.tools.execute(toolId), {
+      method: 'POST',
+      body: JSON.stringify(request),
+    })
+  },
+
+  /**
+   * Score generated content for readability/SEO/engagement.
+   */
+  async scoreToolContent(
+    toolId: string,
+    request: ToolScoreRequest
+  ): Promise<ContentScoreResult> {
+    return apiFetch<ContentScoreResult>(API_ENDPOINTS.tools.score(toolId), {
+      method: 'POST',
+      body: JSON.stringify(request),
+    })
+  },
+
+  /**
+   * Generate A/B variations in a single backend call.
+   */
+  async generateVariations(
+    toolId: string,
+    request: ToolVariationsRequest
+  ): Promise<ToolVariationsResult> {
+    return apiFetch<ToolVariationsResult>(API_ENDPOINTS.tools.variations(toolId), {
       method: 'POST',
       body: JSON.stringify(request),
     })

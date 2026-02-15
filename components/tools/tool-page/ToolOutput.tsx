@@ -12,10 +12,12 @@ import ExportMenu from '../../ExportMenu'
 import FavoriteButton from '../../history/FavoriteButton'
 import ContentScore from '../ContentScore'
 import VariationCompare from '../VariationCompare'
+import PlagiarismCheck from '../PlagiarismCheck'
 import type { ExportContent, ExportFormat } from '../../ExportMenu'
 import type { ContentScoreResult } from '../ContentScore'
 import type { ContentVariation } from '../VariationCompare'
 import type { Tool } from '../../../types/tools'
+import type { PlagiarismCheckResult } from '../../../types/plagiarism'
 
 interface ToolOutputProps {
   tool: Tool
@@ -26,6 +28,10 @@ interface ToolOutputProps {
   onVariationSelect: (variation: ContentVariation) => void
   contentScore: ContentScoreResult | null
   scoringLoading: boolean
+  plagiarismResult: PlagiarismCheckResult | null
+  plagiarismLoading: boolean
+  plagiarismError: string | null
+  onPlagiarismCheck: (opts?: { skipCache?: boolean }) => void
   savedContentId: string | null
   isFavorite: boolean
   onFavoriteToggle: (newStatus: boolean) => void
@@ -72,6 +78,10 @@ export default function ToolOutput({
   onVariationSelect,
   contentScore,
   scoringLoading,
+  plagiarismResult,
+  plagiarismLoading,
+  plagiarismError,
+  onPlagiarismCheck,
   savedContentId,
   isFavorite,
   onFavoriteToggle,
@@ -165,6 +175,14 @@ export default function ToolOutput({
                 />
               </div>
             )}
+
+            {/* Plagiarism / originality check */}
+            <PlagiarismCheck
+              result={plagiarismResult}
+              loading={plagiarismLoading}
+              error={plagiarismError}
+              onRun={onPlagiarismCheck}
+            />
 
             {/* Save as Template and History indicator */}
             <div className="mt-4 flex items-center justify-between">

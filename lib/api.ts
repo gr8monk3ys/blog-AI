@@ -56,6 +56,8 @@ export const API_ENDPOINTS = {
     stats: `${API_V1_BASE_URL}/tools/stats`,
     get: (toolId: string) => `${API_V1_BASE_URL}/tools/${toolId}`,
     execute: (toolId: string) => `${API_V1_BASE_URL}/tools/${toolId}/execute`,
+    score: (toolId: string) => `${API_V1_BASE_URL}/tools/${toolId}/score`,
+    variations: (toolId: string) => `${API_V1_BASE_URL}/tools/${toolId}/variations`,
     validate: (toolId: string) => `${API_V1_BASE_URL}/tools/${toolId}/validate`,
     byCategory: (category: string) => `${API_V1_BASE_URL}/tools/category/${category}`,
   },
@@ -125,6 +127,11 @@ export const API_ENDPOINTS = {
     transformFormat: (formatId: string) => `${API_V1_BASE_URL}/remix/transform/${formatId}`,
     batch: `${API_V1_BASE_URL}/remix/batch`,
   },
+  // Content quality endpoints
+  content: {
+    checkPlagiarism: `${API_V1_BASE_URL}/content/check-plagiarism`,
+    plagiarismQuota: `${API_V1_BASE_URL}/content/plagiarism/quota`,
+  },
   // Brand Voice Training API endpoints
   brandVoice: {
     analyze: `${API_V1_BASE_URL}/brand-voice/analyze`,
@@ -191,6 +198,50 @@ export const checkServerConnection = async (): Promise<boolean> => {
 /**
  * Generic API fetch wrapper with error handling
  */
+export class ApiError extends Error {
+  status: number
+  data: unknown
+
+  constructor(message: string, status: number, data: unknown) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+    this.data = data
+  }
+}
+
+function extractErrorMessage(errorData: unknown, status: number): string {
+  if (typeof errorData === 'string') return errorData
+
+  if (errorData && typeof errorData === 'object') {
+    const obj: any = errorData
+    const detail = obj?.detail
+
+    // FastAPI HTTPException: { detail: "..." }
+    if (typeof detail === 'string') return detail
+
+    // FastAPI validation errors: { detail: [{ msg: "..." }, ...] }
+    if (Array.isArray(detail) && detail.length > 0) {
+      const first = detail[0]
+      if (first && typeof first === 'object' && typeof (first as any).msg === 'string') {
+        return String((first as any).msg)
+      }
+    }
+
+    // QuotaExceededError is returned as { detail: { error: "..." } }
+    if (detail && typeof detail === 'object') {
+      if (typeof (detail as any).error === 'string') return String((detail as any).error)
+      if (typeof (detail as any).message === 'string') return String((detail as any).message)
+    }
+
+    // Custom JSON errors: { error: "..." } or { message: "..." }
+    if (typeof obj?.error === 'string') return String(obj.error)
+    if (typeof obj?.message === 'string') return String(obj.message)
+  }
+
+  return `HTTP error! status: ${status}`
+}
+
 export const apiFetch = async <T>(
   url: string,
   options: RequestInit = {}
@@ -206,7 +257,8 @@ export const apiFetch = async <T>(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    const message = extractErrorMessage(errorData, response.status)
+    throw new ApiError(message, response.status, errorData)
   }
 
   return response.json();

@@ -10,8 +10,9 @@ import type { ContentVariation } from '../../../components/tools/VariationCompar
 import type { BrandProfile } from '../../../types/brand'
 import { historyApi } from '../../../lib/history-api'
 import { toolsApi } from '../../../lib/tools-api'
-import { getDefaultHeaders } from '../../../lib/api'
+import { API_ENDPOINTS, apiFetch, getDefaultHeaders } from '../../../lib/api'
 import SaveTemplateModal from '../../../components/templates/SaveTemplateModal'
+import type { PlagiarismCheckResponse, PlagiarismCheckResult } from '../../../types/plagiarism'
 
 // Import extracted components
 import {
@@ -65,6 +66,9 @@ export default function ToolPage() {
   const [selectedVariation, setSelectedVariation] = useState<ContentVariation | null>(null)
   const [contentScore, setContentScore] = useState<import('../../../components/tools/ContentScore').ContentScoreResult | null>(null)
   const [scoringLoading, setScoringLoading] = useState(false)
+  const [plagiarismResult, setPlagiarismResult] = useState<PlagiarismCheckResult | null>(null)
+  const [plagiarismLoading, setPlagiarismLoading] = useState(false)
+  const [plagiarismError, setPlagiarismError] = useState<string | null>(null)
 
   // UI state
   const [copied, setCopied] = useState(false)
@@ -123,7 +127,16 @@ export default function ToolPage() {
       if (result.success && result.output) {
         return result.output
       }
+
+      // Treat structured "success: false" responses as real errors so we don't
+      // silently fall back to mock output in production.
+      throw new Error(result.error || 'Tool execution failed')
     } catch (err) {
+      const status = (err as any)?.status
+      // In production, don't silently fall back to mock output for auth/quota issues.
+      if (process.env.NODE_ENV === 'production' || status === 401 || status === 403 || status === 429) {
+        throw err
+      }
       console.warn('Tool API execution failed, falling back to local preview.', err)
     }
 
@@ -138,6 +151,8 @@ export default function ToolPage() {
     setVariations([])
     setSelectedVariation(null)
     setContentScore(null)
+    setPlagiarismResult(null)
+    setPlagiarismError(null)
     setSavedContentId(null)
     setIsFavorite(false)
 
@@ -164,15 +179,67 @@ export default function ToolPage() {
       return
     }
 
-    if (generateVariations) {
-      await handleVariationGeneration(keywordList)
-    } else {
-      await handleSingleGeneration(keywordList, startTime)
+    try {
+      if (generateVariations) {
+        await handleVariationGeneration(keywordList)
+      } else {
+        await handleSingleGeneration(keywordList, startTime)
+      }
+    } catch (err: any) {
+      const status = err?.status
+      if (status === 401 || status === 403) {
+        setExportToast({
+          show: true,
+          message: 'Sign in required to use the tool.',
+          type: 'error',
+        })
+      } else if (status === 429) {
+        setExportToast({
+          show: true,
+          message: 'Usage limit reached. Upgrade your plan to continue.',
+          type: 'error',
+        })
+      } else {
+        setExportToast({
+          show: true,
+          message: err instanceof Error ? err.message : 'Generation failed. Please try again.',
+          type: 'error',
+        })
+      }
+      setLoading(false)
     }
   }
 
   // Generate multiple variations
   const handleVariationGeneration = async (keywordList: string[]) => {
+    if (!tool) return
+
+    // Prefer backend variations endpoint (single call, scored on server).
+    try {
+      const response = await toolsApi.generateVariations(tool.slug, {
+        inputs: buildExecutionInputs(keywordList),
+        variation_count: variationCount,
+        provider_type: 'openai',
+        include_scores: true,
+        keywords: keywordList,
+        ...(brandVoiceEnabled && selectedBrandProfile?.id
+          ? { brand_profile_id: selectedBrandProfile.id }
+          : {}),
+      })
+
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to generate variations')
+      }
+
+      setVariations(response.variations || [])
+      setLoading(false)
+      return
+    } catch (err) {
+      // In production, surface the failure (no mock fallback).
+      if (process.env.NODE_ENV === 'production') throw err
+    }
+
+    // Dev fallback: client-side loop with mock scoring/output.
     const generated: ContentVariation[] = []
     const labels = ['A', 'B', 'C']
     const styles = ['standard', 'creative', 'concise']
@@ -180,7 +247,13 @@ export default function ToolPage() {
     let usedFallback = false
 
     for (let i = 0; i < variationCount; i++) {
-      const backendOutput = await executeTool(keywordList)
+      let backendOutput: string | null = null
+      try {
+        backendOutput = await executeTool(keywordList)
+      } catch {
+        backendOutput = null
+      }
+
       const content = backendOutput || generateMockOutput(tool, inputText, styles[i])
       if (!backendOutput) usedFallback = true
       const scores = generateMockScore(content, keywordList)
@@ -210,6 +283,11 @@ export default function ToolPage() {
   // Generate single output
   const handleSingleGeneration = async (keywordList: string[], startTime: number) => {
     const backendOutput = await executeTool(keywordList)
+
+    if (!backendOutput && process.env.NODE_ENV === 'production') {
+      throw new Error('Backend unavailable. Please try again.')
+    }
+
     const finalOutput = backendOutput || generateMockOutput(tool, inputText)
 
     if (!backendOutput) {
@@ -225,8 +303,22 @@ export default function ToolPage() {
 
     // Auto-score the content
     setScoringLoading(true)
-    const scores = generateMockScore(finalOutput, keywordList)
-    setContentScore(scores)
+    try {
+      if (tool) {
+        const scores = await toolsApi.scoreToolContent(tool.slug, {
+          text: finalOutput,
+          keywords: keywordList.length > 0 ? keywordList : undefined,
+        })
+        setContentScore(scores)
+      }
+    } catch {
+      if (process.env.NODE_ENV !== 'production') {
+        const scores = generateMockScore(finalOutput, keywordList)
+        setContentScore(scores)
+      } else {
+        setContentScore(null)
+      }
+    }
     setScoringLoading(false)
 
     const executionTime = Date.now() - startTime
@@ -254,6 +346,49 @@ export default function ToolPage() {
       } catch (err) {
         console.error('Failed to save to history:', err)
       }
+    }
+  }
+
+  const runPlagiarismCheck = async (opts?: { skipCache?: boolean }) => {
+    if (!output?.trim()) return
+    if (output.trim().length < 50) {
+      setPlagiarismError('Add more content before running a plagiarism check (min 50 characters).')
+      return
+    }
+
+    setPlagiarismLoading(true)
+    setPlagiarismError(null)
+
+    try {
+      const payload = await apiFetch<PlagiarismCheckResponse>(
+        API_ENDPOINTS.content.checkPlagiarism,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            content: output,
+            title: tool?.name,
+            exclude_urls: [],
+            skip_cache: opts?.skipCache === true,
+          }),
+        }
+      )
+
+      if (!payload.success) {
+        throw new Error(payload.error || 'Plagiarism check failed')
+      }
+
+      setPlagiarismResult(payload.data || null)
+    } catch (err: any) {
+      const status = err?.status
+      if (status === 401 || status === 403) {
+        setPlagiarismError('Sign in required to run checks.')
+      } else if (status === 429) {
+        setPlagiarismError('Usage limit reached. Upgrade your plan to run checks.')
+      } else {
+        setPlagiarismError(err instanceof Error ? err.message : 'Plagiarism check failed')
+      }
+    } finally {
+      setPlagiarismLoading(false)
     }
   }
 
@@ -414,6 +549,10 @@ export default function ToolPage() {
                 onVariationSelect={handleVariationSelect}
                 contentScore={contentScore}
                 scoringLoading={scoringLoading}
+                plagiarismResult={plagiarismResult}
+                plagiarismLoading={plagiarismLoading}
+                plagiarismError={plagiarismError}
+                onPlagiarismCheck={runPlagiarismCheck}
                 savedContentId={savedContentId}
                 isFavorite={isFavorite}
                 onFavoriteToggle={setIsFavorite}
