@@ -57,6 +57,7 @@ export const API_ENDPOINTS = {
     get: (toolId: string) => `${API_V1_BASE_URL}/tools/${toolId}`,
     execute: (toolId: string) => `${API_V1_BASE_URL}/tools/${toolId}/execute`,
     score: (toolId: string) => `${API_V1_BASE_URL}/tools/${toolId}/score`,
+    scoreGeneric: `${API_V1_BASE_URL}/tools/score`,
     variations: (toolId: string) => `${API_V1_BASE_URL}/tools/${toolId}/variations`,
     validate: (toolId: string) => `${API_V1_BASE_URL}/tools/${toolId}/validate`,
     byCategory: (category: string) => `${API_V1_BASE_URL}/tools/category/${category}`,

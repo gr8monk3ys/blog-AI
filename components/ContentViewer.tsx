@@ -1,11 +1,60 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Popover } from '@headlessui/react';
 import BookViewer from './BookViewer';
 import BookEditor from './BookEditor';
 import ExportMenu, { ExportContent, ExportFormat } from './ExportMenu';
+import ContentScore from './tools/ContentScore'
+import PlagiarismCheck from './tools/PlagiarismCheck'
 import { Book } from '../types/book';
-import { ContentGenerationResponse, BlogSection, BookContent } from '../types/content';
-import { API_ENDPOINTS, getDefaultHeaders } from '../lib/api';
+import { BlogContent, ContentGenerationResponse, BlogSection, BookContent } from '../types/content';
+import { API_ENDPOINTS, apiFetch, getDefaultHeaders } from '../lib/api';
+import { toolsApi } from '../lib/tools-api'
+import type { ContentScoreResult } from './tools/ContentScore'
+import type { PlagiarismCheckResponse, PlagiarismCheckResult } from '../types/plagiarism'
+
+function blogToMarkdown(blog: BlogContent): string {
+  let markdown = `# ${blog.title}\n\n`;
+  if (blog.description) {
+    markdown += `> ${blog.description}\n\n`;
+  }
+  for (const section of blog.sections || []) {
+    markdown += `## ${section.title}\n\n`;
+    for (const subtopic of section.subtopics || []) {
+      markdown += `### ${subtopic.title}\n\n`;
+      markdown += `${subtopic.content}\n\n`;
+    }
+  }
+  if (blog.sources?.length) {
+    markdown += `---\n\n## Sources\n\n`;
+    for (const s of blog.sources) {
+      markdown += `- [${s.id}] ${s.title} (${s.url})\n`;
+    }
+    markdown += `\n`;
+  }
+  return markdown;
+}
+
+function bookToMarkdown(book: BookContent): string {
+  let markdown = `# ${book.title}\n\n`;
+  if (book.description) {
+    markdown += `> ${book.description}\n\n`;
+  }
+  for (const chapter of book.chapters || []) {
+    markdown += `## Chapter ${chapter.number}: ${chapter.title}\n\n`;
+    for (const topic of chapter.topics || []) {
+      markdown += `### ${topic.title}\n\n`;
+      markdown += `${topic.content}\n\n`;
+    }
+  }
+  if (book.sources?.length) {
+    markdown += `---\n\n## Sources\n\n`;
+    for (const s of book.sources) {
+      markdown += `- [${s.id}] ${s.title} (${s.url})\n`;
+    }
+    markdown += `\n`;
+  }
+  return markdown;
+}
 
 interface ContentViewerProps {
   content: ContentGenerationResponse;
@@ -15,6 +64,11 @@ export default function ContentViewer({ content }: ContentViewerProps) {
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
   const [editInstructions, setEditInstructions] = useState('');
   const [isEditingBook, setIsEditingBook] = useState(false);
+  const [contentScore, setContentScore] = useState<ContentScoreResult | null>(null)
+  const [scoringLoading, setScoringLoading] = useState(false)
+  const [plagiarismResult, setPlagiarismResult] = useState<PlagiarismCheckResult | null>(null)
+  const [plagiarismLoading, setPlagiarismLoading] = useState(false)
+  const [plagiarismError, setPlagiarismError] = useState<string | null>(null)
 
   // Convert BookContent to Book type for the editor
   const getBookData = (): Book | null => {
@@ -41,54 +95,101 @@ export default function ContentViewer({ content }: ContentViewerProps) {
     type: 'success' | 'error';
   }>({ show: false, message: '', type: 'success' });
 
-  // Convert blog content to markdown for export
-  const convertBlogToMarkdown = (): string => {
-    if (content.type !== 'blog') return '';
-    const blog = content.content;
-    let markdown = `# ${blog.title}\n\n`;
-    if (blog.description) {
-      markdown += `> ${blog.description}\n\n`;
+  const analysisText = useMemo((): string => {
+    if (content.type === 'blog') {
+      return blogToMarkdown(content.content as BlogContent);
     }
-    for (const section of blog.sections) {
-      markdown += `## ${section.title}\n\n`;
-      for (const subtopic of section.subtopics) {
-        markdown += `### ${subtopic.title}\n\n`;
-        markdown += `${subtopic.content}\n\n`;
-      }
+    if (content.type === 'book') {
+      return bookToMarkdown(content.content as BookContent);
     }
-    if (blog.sources?.length) {
-      markdown += `---\n\n## Sources\n\n`;
-      for (const s of blog.sources) {
-        markdown += `- [${s.id}] ${s.title} (${s.url})\n`;
-      }
-      markdown += `\n`;
-    }
-    return markdown;
-  };
+    return '';
+  }, [content]);
 
-  // Convert book content to markdown for export
-  const convertBookToMarkdown = (): string => {
-    if (content.type !== 'book') return '';
-    const book = content.content as BookContent;
-    let markdown = `# ${book.title}\n\n`;
-    if (book.description) {
-      markdown += `> ${book.description}\n\n`;
+  const analysisTags = useMemo((): string[] => {
+    const tags = (content?.content as any)?.tags;
+    return Array.isArray(tags) ? tags : [];
+  }, [content]);
+
+  useEffect(() => {
+    let mounted = true;
+    const text = analysisText;
+
+    setPlagiarismResult(null);
+    setPlagiarismError(null);
+    setContentScore(null);
+    setScoringLoading(false);
+
+    if (!text || text.trim().length < 50) {
+      return () => {
+        mounted = false;
+      };
     }
-    for (const chapter of book.chapters) {
-      markdown += `## Chapter ${chapter.number}: ${chapter.title}\n\n`;
-      for (const topic of chapter.topics) {
-        markdown += `### ${topic.title}\n\n`;
-        markdown += `${topic.content}\n\n`;
+
+    setScoringLoading(true);
+    (async () => {
+      try {
+        const score = await toolsApi.scoreGenericContent({
+          text,
+          keywords: analysisTags.length > 0 ? analysisTags : undefined,
+        });
+        if (!mounted) return;
+        setContentScore(score);
+      } catch {
+        if (!mounted) return;
+        setContentScore(null);
+      } finally {
+        if (mounted) setScoringLoading(false);
       }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [analysisText, analysisTags]);
+
+  const runPlagiarismCheck = async (opts?: { skipCache?: boolean }) => {
+    const text = analysisText;
+    if (!text?.trim()) return;
+    if (text.trim().length < 50) {
+      setPlagiarismError('Add more content before running a plagiarism check (min 50 characters).');
+      return;
     }
-    if (book.sources?.length) {
-      markdown += `---\n\n## Sources\n\n`;
-      for (const s of book.sources) {
-        markdown += `- [${s.id}] ${s.title} (${s.url})\n`;
+
+    setPlagiarismLoading(true);
+    setPlagiarismError(null);
+
+    try {
+      const title = String((content.content as any)?.title || '');
+      const payload = await apiFetch<PlagiarismCheckResponse>(
+        API_ENDPOINTS.content.checkPlagiarism,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            content: text,
+            title,
+            exclude_urls: [],
+            skip_cache: opts?.skipCache === true,
+          }),
+        }
+      );
+
+      if (!payload.success) {
+        throw new Error(payload.error || 'Plagiarism check failed');
       }
-      markdown += `\n`;
+
+      setPlagiarismResult(payload.data || null);
+    } catch (err: any) {
+      const status = err?.status;
+      if (status === 401 || status === 403) {
+        setPlagiarismError('Sign in required to run checks.');
+      } else if (status === 429) {
+        setPlagiarismError('Usage limit reached. Upgrade your plan to run checks.');
+      } else {
+        setPlagiarismError(err instanceof Error ? err.message : 'Plagiarism check failed');
+      }
+    } finally {
+      setPlagiarismLoading(false);
     }
-    return markdown;
   };
 
   // Get export content based on content type
@@ -96,7 +197,7 @@ export default function ContentViewer({ content }: ContentViewerProps) {
     if (content.type === 'blog') {
       return {
         title: content.content.title,
-        content: convertBlogToMarkdown(),
+        content: analysisText,
         type: 'blog',
         metadata: {
           date: content.content.date,
@@ -108,7 +209,7 @@ export default function ContentViewer({ content }: ContentViewerProps) {
       const book = content.content as BookContent;
       return {
         title: book.title,
-        content: convertBookToMarkdown(),
+        content: analysisText,
         type: 'book',
         metadata: {
           date: book.date,
@@ -204,17 +305,35 @@ export default function ContentViewer({ content }: ContentViewerProps) {
           </div>
         )}
 
-        {/* Header with export button */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">{content.content.title}</h1>
-          <ExportMenu
-            content={getExportContent()}
-            onExportComplete={handleExportComplete}
-          />
-        </div>
+	        {/* Header with export button */}
+	        <div className="flex items-center justify-between mb-6">
+	          <h1 className="text-3xl font-bold text-gray-900">{content.content.title}</h1>
+	          <ExportMenu
+	            content={getExportContent()}
+	            onExportComplete={handleExportComplete}
+	          />
+	        </div>
 
-	        <div className="prose prose-lg max-w-none">
-	        {content.content.sections.map((section: BlogSection, index: number) => (
+          {/* Content analysis */}
+          {(contentScore || scoringLoading) && (
+            <div className="mb-6">
+              <ContentScore
+                scores={contentScore!}
+                isLoading={scoringLoading}
+                showDetails={true}
+              />
+            </div>
+          )}
+
+          <PlagiarismCheck
+            result={plagiarismResult}
+            loading={plagiarismLoading}
+            error={plagiarismError}
+            onRun={runPlagiarismCheck}
+          />
+
+		        <div className="prose prose-lg max-w-none">
+		        {content.content.sections.map((section: BlogSection, index: number) => (
           <Popover key={`section-${index}`} className="relative">
             <div
               className="hover:bg-gray-50 p-2 rounded transition-colors cursor-pointer group"
@@ -312,22 +431,40 @@ export default function ContentViewer({ content }: ContentViewerProps) {
           </div>
         )}
 
-        <div className="flex justify-end gap-3 mb-4">
-          <ExportMenu
-            content={getExportContent()}
-            onExportComplete={handleExportComplete}
-          />
-          <button
-            onClick={() => setIsEditingBook(true)}
-            className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700"
-          >
-            Edit Book
-          </button>
-        </div>
+	        <div className="flex justify-end gap-3 mb-4">
+	          <ExportMenu
+	            content={getExportContent()}
+	            onExportComplete={handleExportComplete}
+	          />
+	          <button
+	            onClick={() => setIsEditingBook(true)}
+	            className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700"
+	          >
+	            Edit Book
+	          </button>
+	        </div>
 
-	        {bookData ? (
-	          <BookViewer book={bookData} filePath={filePath} />
-	        ) : (
+          {/* Content analysis */}
+          {(contentScore || scoringLoading) && (
+            <div className="mb-6">
+              <ContentScore
+                scores={contentScore!}
+                isLoading={scoringLoading}
+                showDetails={true}
+              />
+            </div>
+          )}
+
+          <PlagiarismCheck
+            result={plagiarismResult}
+            loading={plagiarismLoading}
+            error={plagiarismError}
+            onRun={runPlagiarismCheck}
+          />
+
+		        {bookData ? (
+		          <BookViewer book={bookData} filePath={filePath} />
+		        ) : (
           <div>
             <h1 className="text-3xl font-bold">{content.content.title}</h1>
             {filePath && (

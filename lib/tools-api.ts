@@ -229,6 +229,16 @@ export const toolsApi = {
   },
 
   /**
+   * Score arbitrary content (blog/book) without a specific tool id.
+   */
+  async scoreGenericContent(request: ToolScoreRequest): Promise<ContentScoreResult> {
+    return apiFetch<ContentScoreResult>(API_ENDPOINTS.tools.scoreGeneric, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    })
+  },
+
+  /**
    * Generate A/B variations in a single backend call.
    */
   async generateVariations(
