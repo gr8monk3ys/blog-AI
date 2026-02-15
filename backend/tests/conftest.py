@@ -46,25 +46,25 @@ def async_client():
 @pytest.fixture
 def mock_openai():
     """Mock OpenAI API calls."""
-    with patch("src.text_generation.core.OpenAI") as mock:
-        mock_instance = MagicMock()
-        mock_instance.chat.completions.create.return_value = MagicMock(
+    with patch("src.text_generation.core.openai") as mock_module:
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = MagicMock(
             choices=[MagicMock(message=MagicMock(content="Generated content"))]
         )
-        mock.return_value = mock_instance
-        yield mock
+        mock_module.OpenAI.return_value = mock_client
+        yield mock_module
 
 
 @pytest.fixture
 def mock_anthropic():
     """Mock Anthropic API calls."""
-    with patch("src.text_generation.core.Anthropic") as mock:
-        mock_instance = MagicMock()
-        mock_instance.messages.create.return_value = MagicMock(
+    with patch("src.text_generation.core.anthropic") as mock_module:
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = MagicMock(
             content=[MagicMock(text="Generated content")]
         )
-        mock.return_value = mock_instance
-        yield mock
+        mock_module.Anthropic.return_value = mock_client
+        yield mock_module
 
 
 @pytest.fixture

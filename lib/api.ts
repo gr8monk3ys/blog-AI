@@ -69,6 +69,7 @@ export const API_ENDPOINTS = {
   // Enhanced batch generation endpoints (Tier 1)
   batch: {
     // Job management
+    create: `${API_V1_BASE_URL}/batch`,
     list: `${API_V1_BASE_URL}/batch/jobs`,
     status: (jobId: string) => `${API_V1_BASE_URL}/batch/${jobId}`,
     results: (jobId: string) => `${API_V1_BASE_URL}/batch/${jobId}/results`,
@@ -83,19 +84,18 @@ export const API_ENDPOINTS = {
   },
   // Usage tracking endpoints
   usage: {
-    stats: `${API_V1_BASE_URL}/usage/stats`,
-    check: `${API_V1_BASE_URL}/usage/check`,
-    tiers: `${API_V1_BASE_URL}/usage/tiers`,
-    tier: (tierName: string) => `${API_V1_BASE_URL}/usage/tier/${tierName}`,
-    upgrade: `${API_V1_BASE_URL}/usage/upgrade`,
-    features: `${API_V1_BASE_URL}/usage/features`,
+    // Quota-based subscription system (source of truth for SaaS billing/limits)
+    stats: `${API_V1_BASE_URL}/usage/quota/stats`,
+    check: `${API_V1_BASE_URL}/usage/quota/check`,
+    tiers: `${API_V1_BASE_URL}/usage/quota/tiers`,
+    breakdown: `${API_V1_BASE_URL}/usage/quota/breakdown`,
   },
 
   // Payments / Stripe endpoints
   payments: {
     checkout: `${API_BASE_URL}/api/payments/create-checkout-session`,
     portal: `${API_BASE_URL}/api/payments/create-portal-session`,
-    pricing: `${API_BASE_URL}/api/payments/pricing-tiers`,
+    pricing: `${API_BASE_URL}/api/payments/pricing`,
   },
   // Templates API endpoints
   templates: {
@@ -143,15 +143,25 @@ export const API_ENDPOINTS = {
 } as const;
 
 // Default headers for API requests
-export const getDefaultHeaders = (): HeadersInit => {
+export const getDefaultHeaders = async (): Promise<HeadersInit> => {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
   };
 
-  // Add API key if available
-  const apiKey = process.env.NEXT_PUBLIC_API_KEY;
-  if (apiKey) {
-    headers['X-API-Key'] = apiKey;
+  // In the cloud SaaS, clients authenticate with Clerk session JWTs.
+  // We attach the current session token as `Authorization: Bearer ...` so the
+  // backend (Railway) can verify it.
+  if (typeof window !== 'undefined') {
+    try {
+      // Clerk injects a global `window.Clerk` when configured.
+      const clerk = (window as any)?.Clerk
+      if (clerk?.session?.getToken) {
+        const token = await clerk.session.getToken()
+        if (token) headers['Authorization'] = `Bearer ${token}`
+      }
+    } catch {
+      // Ignore auth header if Clerk is not configured or session is unavailable.
+    }
   }
 
   return headers;
@@ -167,7 +177,7 @@ export const checkServerConnection = async (): Promise<boolean> => {
 
     const response = await fetch(API_ENDPOINTS.root, {
       signal: controller.signal,
-      headers: getDefaultHeaders(),
+      headers: await getDefaultHeaders(),
     });
 
     clearTimeout(timeoutId);
@@ -185,10 +195,11 @@ export const apiFetch = async <T>(
   url: string,
   options: RequestInit = {}
 ): Promise<T> => {
+  const defaultHeaders = await getDefaultHeaders()
   const response = await fetch(url, {
     ...options,
     headers: {
-      ...getDefaultHeaders(),
+      ...defaultHeaders,
       ...options.headers,
     },
   });

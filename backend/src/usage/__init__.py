@@ -5,6 +5,9 @@ This module provides functionality for tracking user usage,
 enforcing tier-based limits, and managing usage statistics.
 """
 
+# Ensure `src.usage.limiter` is importable/patchable (tests rely on this path).
+from . import limiter as limiter
+
 from .limiter import (
     TIER_CONFIGS,
     UsageLimiter,
@@ -19,6 +22,7 @@ from .limiter import (
 )
 
 __all__ = [
+    "limiter",
     "TIER_CONFIGS",
     "UsageLimiter",
     "UsageTier",

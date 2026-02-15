@@ -160,17 +160,11 @@ def validate_database_config(settings: Settings, result: ValidationResult) -> No
 
     if not db.is_configured:
         result.add_warning(
-            "Supabase is not configured (SUPABASE_URL, SUPABASE_KEY/SUPABASE_SERVICE_KEY). "
-            "Features requiring database storage will use in-memory fallback."
+            "Database is not configured (DATABASE_URL or DATABASE_URL_DIRECT). "
+            "Features requiring persistence may fall back to in-memory or local storage."
         )
     else:
-        result.add_info("Supabase database configured")
-
-        if not db.has_service_role:
-            result.add_warning(
-                "SUPABASE_SERVICE_ROLE_KEY not configured. "
-                "Some admin operations may not be available."
-            )
+        result.add_info("Postgres database configured")
 
 
 def validate_stripe_config(settings: Settings, result: ValidationResult) -> None:
@@ -360,7 +354,7 @@ def log_config_summary(settings: Optional[Settings] = None) -> None:
     logger.info("Features:")
     logger.info(f"  LLM Providers: {', '.join(summary['llm_providers']) or 'None'}")
     logger.info(f"  Default Provider: {summary['default_llm_provider'] or 'None'}")
-    logger.info(f"  Supabase: {'Enabled' if summary['supabase_configured'] else 'Disabled'}")
+    logger.info(f"  Database: {'Enabled' if summary.get('database_configured') else 'Disabled'}")
     logger.info(f"  Stripe Payments: {'Enabled' if summary['stripe_configured'] else 'Disabled'}")
     logger.info(f"  Stripe Webhooks: {'Enabled' if summary['stripe_webhooks_enabled'] else 'Disabled'}")
     logger.info(f"  Sentry Monitoring: {'Enabled' if summary['sentry_configured'] else 'Disabled'}")

@@ -9,6 +9,7 @@ Provides API endpoints for:
 """
 
 import logging
+import os
 from typing import Dict
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
@@ -25,6 +26,7 @@ from src.types.payments import (
     SubscriptionTier,
     WebhookResponse,
 )
+from src.types.usage import SubscriptionTier as UsageSubscriptionTier, get_tier_config
 
 from ..auth import verify_api_key
 from ..error_handlers import sanitize_error_message
@@ -32,6 +34,9 @@ from ..error_handlers import sanitize_error_message
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/payments", tags=["payments"])
+
+def _business_tier_enabled() -> bool:
+    return os.environ.get("ENABLE_BUSINESS_TIER", "").strip().lower() in ("1", "true", "yes", "on")
 
 
 @router.post(
@@ -69,6 +74,27 @@ async def create_checkout_session(
             },
         )
 
+    # SECURITY: only allow checkout for configured plan price IDs.
+    if not stripe_service.is_configured_price_id(request.price_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"error": "Invalid price_id", "success": False},
+        )
+
+    tier = stripe_service.get_tier_for_price_id(request.price_id)
+    if tier == SubscriptionTier.FREE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"error": "Invalid price_id", "success": False},
+        )
+
+    # Don't sell the Business/Agency tier until team features exist.
+    if tier == SubscriptionTier.BUSINESS and not _business_tier_enabled():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"error": "Business tier is not available", "success": False},
+        )
+
     try:
         result = await stripe_service.create_checkout_session(
             price_id=request.price_id,
@@ -85,6 +111,8 @@ async def create_checkout_session(
             url=result["url"],
         )
 
+    except HTTPException:
+        raise
     except ValueError as e:
         logger.error(f"Configuration error creating checkout session: {e}")
         raise HTTPException(
@@ -327,6 +355,13 @@ async def get_pricing_tiers() -> Dict:
     """
     tiers = []
     for tier_key, tier_config in PRICING_TIERS.items():
+        # Map to usage tier config so limits/descriptions stay consistent with quota enforcement.
+        usage_config = None
+        try:
+            usage_config = get_tier_config(UsageSubscriptionTier(tier_key.value))
+        except Exception:
+            usage_config = None
+
         tier_data = {
             "id": tier_key.value,
             "name": tier_config.name,
@@ -336,10 +371,19 @@ async def get_pricing_tiers() -> Dict:
             "features": tier_config.features,
         }
 
-        # Add price IDs if configured (for checkout)
-        price_id = stripe_service.get_price_id_for_tier(tier_key)
-        if price_id:
-            tier_data["stripe_price_id"] = price_id
+        if usage_config:
+            tier_data["daily_limit"] = usage_config.daily_limit
+            tier_data["monthly_limit"] = usage_config.monthly_limit
+            tier_data["description"] = usage_config.description
+
+        # Add price IDs if configured (for checkout). We intentionally omit Business
+        # price IDs unless explicitly enabled.
+        if tier_key != SubscriptionTier.BUSINESS or _business_tier_enabled():
+            price_ids = stripe_service.get_price_ids_for_tier(tier_key)
+            if price_ids.get("month"):
+                tier_data["stripe_price_id_monthly"] = price_ids.get("month")
+            if price_ids.get("year"):
+                tier_data["stripe_price_id_yearly"] = price_ids.get("year")
 
         tiers.append(tier_data)
 

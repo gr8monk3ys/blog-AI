@@ -36,15 +36,18 @@ export default function UsageIndicator({
   }, [])
 
   useEffect(() => {
-    if (usage?.is_limit_reached && onLimitReached) {
-      onLimitReached()
-    }
-  }, [usage?.is_limit_reached, onLimitReached])
+    if (!usage || !onLimitReached) return
+    const atLimit =
+      usage.is_quota_exceeded ||
+      (usage.daily_limit !== -1 && usage.daily_remaining <= 0) ||
+      (usage.quota_limit !== -1 && usage.remaining <= 0)
+    if (atLimit) onLimitReached()
+  }, [usage, onLimitReached])
 
   const fetchUsageStats = async () => {
     try {
       const response = await fetch(API_ENDPOINTS.usage.stats, {
-        headers: getDefaultHeaders(),
+        headers: await getDefaultHeaders(),
       })
 
       if (!response.ok) {
@@ -75,13 +78,30 @@ export default function UsageIndicator({
     return null // Silently hide if there's an error
   }
 
-  const tierDisplay = TIER_DISPLAY[usage.tier]
-  const isUnlimited = usage.daily_limit === -1
-  const isNearLimit = !isUnlimited && usage.percentage_used_daily >= 80
-  const isAtLimit = usage.is_limit_reached
+  const isDailyUnlimited = usage.daily_limit === -1
+  const isMonthlyUnlimited = usage.quota_limit === -1
+  const dailyPercentUsed = isDailyUnlimited || usage.daily_limit <= 0
+    ? 0
+    : (usage.daily_usage / usage.daily_limit) * 100
+  const monthlyPercentUsed = typeof usage.percentage_used === 'number'
+    ? usage.percentage_used
+    : (!isMonthlyUnlimited && usage.quota_limit > 0 ? (usage.current_usage / usage.quota_limit) * 100 : 0)
+
+  const isNearLimit = (!isDailyUnlimited && dailyPercentUsed >= 80) || (!isMonthlyUnlimited && monthlyPercentUsed >= 80)
+  const isAtLimit =
+    usage.is_quota_exceeded ||
+    (!isDailyUnlimited && usage.daily_remaining <= 0) ||
+    (!isMonthlyUnlimited && usage.remaining <= 0)
 
   // Compact version for header
   if (compact) {
+    const compactLabel = (() => {
+      if (isDailyUnlimited && isMonthlyUnlimited) return 'Unlimited'
+      if (!isDailyUnlimited) return `${usage.daily_remaining}/${usage.daily_limit}`
+      // Daily unlimited, show monthly remaining.
+      return isMonthlyUnlimited ? 'Unlimited' : `${usage.remaining}/${usage.quota_limit}`
+    })()
+
     return (
       <div className="relative">
         <button
@@ -95,13 +115,7 @@ export default function UsageIndicator({
           }`}
         >
           <ChartBarIcon className="h-4 w-4" />
-          {isUnlimited ? (
-            <span className="text-sm font-medium">Unlimited</span>
-          ) : (
-            <span className="text-sm font-medium">
-              {usage.daily_remaining}/{usage.daily_limit}
-            </span>
-          )}
+          <span className="text-sm font-medium">{compactLabel}</span>
         </button>
 
         <AnimatePresence>
@@ -135,9 +149,20 @@ interface UsageDetailsProps {
 
 function UsageDetails({ usage, showUpgradePrompt }: UsageDetailsProps) {
   const tierDisplay = TIER_DISPLAY[usage.tier]
-  const isUnlimited = usage.daily_limit === -1
-  const isNearLimit = !isUnlimited && usage.percentage_used_daily >= 80
-  const isAtLimit = usage.is_limit_reached
+  const isDailyUnlimited = usage.daily_limit === -1
+  const isMonthlyUnlimited = usage.quota_limit === -1
+  const dailyPercentUsed = isDailyUnlimited || usage.daily_limit <= 0
+    ? 0
+    : (usage.daily_usage / usage.daily_limit) * 100
+  const monthlyPercentUsed = typeof usage.percentage_used === 'number'
+    ? usage.percentage_used
+    : (!isMonthlyUnlimited && usage.quota_limit > 0 ? (usage.current_usage / usage.quota_limit) * 100 : 0)
+
+  const isNearLimit = (!isDailyUnlimited && dailyPercentUsed >= 80) || (!isMonthlyUnlimited && monthlyPercentUsed >= 80)
+  const isAtLimit =
+    usage.is_quota_exceeded ||
+    (!isDailyUnlimited && usage.daily_remaining <= 0) ||
+    (!isMonthlyUnlimited && usage.remaining <= 0)
 
   return (
     <div className="space-y-4">
@@ -158,19 +183,19 @@ function UsageDetails({ usage, showUpgradePrompt }: UsageDetailsProps) {
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <span className="text-gray-600">Today</span>
-          {isUnlimited ? (
+          {isDailyUnlimited ? (
             <span className="font-medium text-gray-900">Unlimited</span>
           ) : (
             <span className="font-medium text-gray-900">
-              {usage.daily_count} / {usage.daily_limit}
+              {usage.daily_usage} / {usage.daily_limit}
             </span>
           )}
         </div>
-        {!isUnlimited && (
+        {!isDailyUnlimited && (
           <div className="w-full bg-gray-200 rounded-full h-2">
             <motion.div
               initial={{ width: 0 }}
-              animate={{ width: `${Math.min(usage.percentage_used_daily, 100)}%` }}
+              animate={{ width: `${Math.min(dailyPercentUsed, 100)}%` }}
               className={`h-2 rounded-full ${
                 isAtLimit
                   ? 'bg-red-500'
@@ -186,24 +211,24 @@ function UsageDetails({ usage, showUpgradePrompt }: UsageDetailsProps) {
       {/* Monthly usage */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600">This month</span>
-          {usage.monthly_limit === -1 ? (
+          <span className="text-gray-600">This period</span>
+          {isMonthlyUnlimited ? (
             <span className="font-medium text-gray-900">Unlimited</span>
           ) : (
             <span className="font-medium text-gray-900">
-              {usage.monthly_count} / {usage.monthly_limit}
+              {usage.current_usage} / {usage.quota_limit}
             </span>
           )}
         </div>
-        {usage.monthly_limit !== -1 && (
+        {!isMonthlyUnlimited && (
           <div className="w-full bg-gray-200 rounded-full h-2">
             <motion.div
               initial={{ width: 0 }}
-              animate={{ width: `${Math.min(usage.percentage_used_monthly, 100)}%` }}
+              animate={{ width: `${Math.min(monthlyPercentUsed, 100)}%` }}
               className={`h-2 rounded-full ${
-                usage.percentage_used_monthly >= 100
+                monthlyPercentUsed >= 100
                   ? 'bg-red-500'
-                  : usage.percentage_used_monthly >= 80
+                  : monthlyPercentUsed >= 80
                   ? 'bg-amber-500'
                   : 'bg-amber-500'
               }`}
@@ -231,20 +256,24 @@ function UsageDetails({ usage, showUpgradePrompt }: UsageDetailsProps) {
           <div className="text-sm">
             <p className="font-medium text-amber-800">Running low</p>
             <p className="text-amber-600">
-              {usage.daily_remaining} generations remaining today
+              {!isDailyUnlimited
+                ? `${usage.daily_remaining} generations remaining today`
+                : !isMonthlyUnlimited
+                ? `${usage.remaining} generations remaining this period`
+                : 'Unlimited usage'}
             </p>
           </div>
         </div>
       )}
 
       {/* Upgrade prompt */}
-      {showUpgradePrompt && usage.tier !== 'enterprise' && (
+      {showUpgradePrompt && usage.tier !== 'pro' && usage.tier !== 'business' && (
         <Link
           href="/pricing"
           className="flex items-center justify-center gap-2 w-full py-2 px-4 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white text-sm font-medium rounded-lg transition-all"
         >
           <ArrowUpCircleIcon className="h-4 w-4" />
-          {usage.tier === 'free' ? 'Upgrade to Pro' : 'Upgrade to Enterprise'}
+          {usage.tier === 'free' ? 'Upgrade to Starter' : 'Upgrade to Pro'}
         </Link>
       )}
 
@@ -266,7 +295,7 @@ export function useUsageCheck() {
     setLoading(true)
     try {
       const response = await fetch(API_ENDPOINTS.usage.check, {
-        headers: getDefaultHeaders(),
+        headers: await getDefaultHeaders(),
       })
 
       if (response.status === 429) {
@@ -281,9 +310,16 @@ export function useUsageCheck() {
       }
 
       const data = await response.json()
-      setCanGenerate(data.can_generate)
-      setRemaining(data.remaining_today)
-      return data.can_generate
+      setCanGenerate(!!data.has_quota)
+      // Prefer daily remaining if present; fallback to period remaining.
+      const rem =
+        typeof data.daily_remaining === 'number'
+          ? data.daily_remaining
+          : typeof data.remaining === 'number'
+          ? data.remaining
+          : null
+      setRemaining(rem)
+      return !!data.has_quota
     } catch (err) {
       console.error('Error checking usage:', err)
       // Fail open for development

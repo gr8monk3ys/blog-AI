@@ -19,12 +19,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 # Add the project root to the path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-# Mock supabase module before imports
-mock_supabase = MagicMock()
-mock_supabase.create_client = MagicMock()
-sys.modules["supabase"] = mock_supabase
-
-
 def get_quota_module():
     """Get the quota_service module with fresh import for isolation."""
     # Clear cached modules
@@ -569,20 +563,13 @@ class TestSetUserTier(unittest.IsolatedAsyncioTestCase):
     async def test_set_user_tier_updates_quota(self):
         """set_user_tier should update the user's tier."""
         with patch.dict(os.environ, {
-            "SUPABASE_URL": "https://test.supabase.co",
-            "SUPABASE_SERVICE_ROLE_KEY": "test-key",
+            "DATABASE_URL": "postgresql://test:test@localhost:5432/test",
         }, clear=True):
-            # Mock Supabase client
-            mock_client = MagicMock()
-            mock_client.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock()
-
-            mock_supabase.create_client.return_value = mock_client
-
             quota_module = get_quota_module()
             usage_types = get_usage_types()
 
             service = quota_module.QuotaService()
-            service._supabase_client = mock_client
+            service._use_db = True
 
             now = datetime.utcnow()
             period_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -599,15 +586,19 @@ class TestSetUserTier(unittest.IsolatedAsyncioTestCase):
             )
             service._get_user_quota = AsyncMock(return_value=mock_quota)
 
-            result = await service.set_user_tier(
-                "test-user",
-                usage_types.SubscriptionTier.PRO
-            )
+            with patch("src.usage.quota_service.db_execute", new=AsyncMock()) as mock_db_execute:
+                result = await service.set_user_tier(
+                    "test-user",
+                    usage_types.SubscriptionTier.PRO
+                )
 
             self.assertEqual(result.tier, usage_types.SubscriptionTier.PRO)
 
-            # Verify Supabase was called with correct tier
-            mock_client.table.assert_called_with("user_quotas")
+            # Verify the DB update was attempted with the correct tier value.
+            self.assertTrue(mock_db_execute.await_count >= 1)
+            args = mock_db_execute.await_args.args
+            self.assertIn("test-user", args)
+            self.assertIn("pro", args)
 
 
 class TestGetQuotaServiceSingleton(unittest.TestCase):

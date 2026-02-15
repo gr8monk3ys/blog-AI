@@ -28,8 +28,13 @@ class BlogGenerationRequest(BaseModel):
     keywords: List[str] = Field(default=[], max_length=MAX_KEYWORDS_COUNT)
     tone: str = Field(default="informative")
     research: bool = False
-    proofread: bool = True
-    humanize: bool = True
+    brand_profile_id: Optional[str] = Field(
+        default=None,
+        description="Brand profile UUID to apply a trained brand voice",
+    )
+    # Default to disabled to avoid surprise latency/cost; callers can opt-in.
+    proofread: bool = False
+    humanize: bool = False
     use_knowledge_base: bool = Field(
         default=False,
         description="Whether to search the knowledge base for relevant context"
@@ -74,6 +79,23 @@ class BlogGenerationRequest(BaseModel):
             raise ValueError("Conversation ID contains invalid characters")
         return v
 
+    @field_validator("brand_profile_id")
+    @classmethod
+    def validate_brand_profile_id(cls, v: Optional[str]) -> Optional[str]:
+        """Validate brand profile ID is a UUID (when provided)."""
+        if v is None:
+            return None
+        v = str(v).strip()
+        if not v:
+            return None
+        if not re.match(
+            r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            v,
+            re.IGNORECASE,
+        ):
+            raise ValueError("Brand profile ID must be a valid UUID")
+        return v
+
 
 class BookGenerationRequest(BaseModel):
     """Request model for book generation."""
@@ -84,8 +106,13 @@ class BookGenerationRequest(BaseModel):
     keywords: List[str] = Field(default=[], max_length=MAX_KEYWORDS_COUNT)
     tone: str = Field(default="informative")
     research: bool = False
-    proofread: bool = True
-    humanize: bool = True
+    brand_profile_id: Optional[str] = Field(
+        default=None,
+        description="Brand profile UUID to apply a trained brand voice",
+    )
+    # Default to disabled to avoid surprise latency/cost; callers can opt-in.
+    proofread: bool = False
+    humanize: bool = False
     use_knowledge_base: bool = Field(
         default=False,
         description="Whether to search the knowledge base for relevant context"
@@ -127,6 +154,23 @@ class BookGenerationRequest(BaseModel):
         """Validate conversation ID format."""
         if not re.match(r"^[a-zA-Z0-9_-]+$", v):
             raise ValueError("Conversation ID contains invalid characters")
+        return v
+
+    @field_validator("brand_profile_id")
+    @classmethod
+    def validate_brand_profile_id(cls, v: Optional[str]) -> Optional[str]:
+        """Validate brand profile ID is a UUID (when provided)."""
+        if v is None:
+            return None
+        v = str(v).strip()
+        if not v:
+            return None
+        if not re.match(
+            r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            v,
+            re.IGNORECASE,
+        ):
+            raise ValueError("Brand profile ID must be a valid UUID")
         return v
 
 

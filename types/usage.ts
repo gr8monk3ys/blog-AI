@@ -1,70 +1,48 @@
 /**
- * Types for usage tracking and tier management
+ * Types for subscription tiers and quota usage.
+ *
+ * Frontend tier IDs must match backend enums:
+ * - backend/src/types/usage.py SubscriptionTier
+ * - backend/src/types/payments.py SubscriptionTier
  */
 
-export type UsageTier = 'free' | 'pro' | 'enterprise'
+export type UsageTier = 'free' | 'starter' | 'pro' | 'business'
 
+/**
+ * Usage stats returned by the quota-based usage endpoints:
+ * - GET /api/v1/usage/quota/stats
+ */
 export interface UsageStats {
-  user_hash: string
+  success: boolean
   tier: UsageTier
-  daily_count: number
+  tier_name: string
+
+  // Monthly/billing-period quota
+  current_usage: number
+  quota_limit: number
+  remaining: number
+  percentage_used: number
+  is_quota_exceeded: boolean
+  period_start: string
+  reset_date: string
+
+  // Daily quota
+  daily_usage: number
   daily_limit: number
   daily_remaining: number
-  monthly_count: number
-  monthly_limit: number
-  monthly_remaining: number
-  tokens_used_today: number
-  tokens_used_month: number
-  is_limit_reached: boolean
-  percentage_used_daily: number
-  percentage_used_monthly: number
-  reset_daily_at: string
-  reset_monthly_at: string
-}
 
-export interface TierInfo {
-  name: string
-  daily_limit: number
-  monthly_limit: number
-  features_enabled: string[]
-  price_monthly: number
-  price_yearly: number
-  description: string
-}
-
-export interface AllTiersResponse {
-  tiers: TierInfo[]
-  current_tier: UsageTier
+  // Optional (backend includes this today)
+  tokens_used?: number
 }
 
 export interface UsageCheckResponse {
   success: boolean
-  can_generate: boolean
-  remaining_today: number
-  tier: UsageTier
-  daily_limit: number
-  monthly_remaining: number
-}
-
-export interface UsageLimitError {
-  success: false
-  error: string
-  tier: UsageTier
-  limit_type: 'daily' | 'monthly'
-  upgrade_url: string
-  daily_limit: number
+  has_quota: boolean
+  remaining: number
   daily_remaining: number
-  monthly_limit: number
-  monthly_remaining: number
-}
-
-export interface UserFeatures {
   tier: UsageTier
-  tier_name: string
-  features_enabled: string[]
-  bulk_generation_enabled: boolean
-  research_enabled: boolean
-  api_access_enabled: boolean
+  quota_limit: number
+  reset_date: string
 }
 
 // Tier display configuration
@@ -82,18 +60,26 @@ export const TIER_DISPLAY: Record<UsageTier, {
     borderColor: 'border-gray-200',
     badgeColor: 'bg-gray-500',
   },
+  starter: {
+    name: 'Starter',
+    color: 'text-amber-700',
+    bgColor: 'bg-amber-100',
+    borderColor: 'border-amber-200',
+    badgeColor: 'bg-amber-600',
+  },
   pro: {
     name: 'Pro',
     color: 'text-indigo-700',
     bgColor: 'bg-indigo-100',
     borderColor: 'border-indigo-200',
-    badgeColor: 'bg-indigo-500',
+    badgeColor: 'bg-indigo-600',
   },
-  enterprise: {
-    name: 'Enterprise',
+  business: {
+    name: 'Business',
     color: 'text-purple-700',
     bgColor: 'bg-purple-100',
     borderColor: 'border-purple-200',
-    badgeColor: 'bg-purple-500',
+    badgeColor: 'bg-purple-600',
   },
 }
+

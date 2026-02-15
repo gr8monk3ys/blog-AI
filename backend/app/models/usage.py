@@ -49,7 +49,7 @@ class AllTiersResponse(BaseModel):
 class UpgradeTierRequest(BaseModel):
     """Request model for upgrading user tier."""
 
-    tier: str = Field(..., pattern=r"^(free|pro|enterprise)$")
+    tier: str = Field(..., pattern=r"^(free|starter|pro|business)$")
 
 
 class UsageLimitErrorResponse(BaseModel):

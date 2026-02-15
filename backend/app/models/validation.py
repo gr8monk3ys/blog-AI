@@ -19,4 +19,6 @@ ALLOWED_TONES: Set[str] = {
     "friendly",
     "formal",
     "conversational",
+    "technical",
+    "academic",
 }

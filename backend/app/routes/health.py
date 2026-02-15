@@ -10,6 +10,7 @@ from typing import Any, Dict
 import sentry_sdk
 from fastapi import APIRouter
 
+from src.db import get_database_url, fetchrow as db_fetchrow
 from src.storage import redis_client, job_storage
 
 logger = logging.getLogger(__name__)
@@ -19,43 +20,31 @@ router = APIRouter(tags=["health"])
 
 async def get_database_status() -> Dict[str, Any]:
     """
-    Check Supabase database connectivity.
+    Check Postgres database connectivity.
 
     Performs a simple query to verify the database is accessible.
     """
-    supabase_url = os.environ.get("SUPABASE_URL")
-    supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
-
-    if not supabase_url or not supabase_key:
+    database_url = get_database_url()
+    if not database_url:
         return {
             "configured": False,
             "connected": False,
-            "error": "SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set",
+            "error": "DATABASE_URL not set",
         }
 
     try:
-        from supabase import create_client
-
-        client = create_client(supabase_url, supabase_key)
-
         # Simple query to verify connection
         start_time = datetime.now()
-        response = client.table("tier_limits").select("tier").limit(1).execute()
+        response = await db_fetchrow("SELECT 1 AS ok")
         latency_ms = (datetime.now() - start_time).total_seconds() * 1000
 
         return {
             "configured": True,
-            "connected": True,
+            "connected": bool(response),
             "latency_ms": round(latency_ms, 2),
             "tables_accessible": True,
         }
 
-    except ImportError:
-        return {
-            "configured": True,
-            "connected": False,
-            "error": "supabase package not installed",
-        }
     except Exception as e:
         logger.warning(f"Database health check failed: {e}")
         return {
@@ -290,7 +279,7 @@ async def database_health() -> Dict[str, Any]:
     """
     Detailed database health check.
 
-    Returns comprehensive information about Supabase database connectivity.
+    Returns comprehensive information about Postgres (Neon) connectivity.
     """
     db_status = await get_database_status()
 

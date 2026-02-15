@@ -125,12 +125,12 @@ class LLMSettings(BaseSettings):
 
 
 # =============================================================================
-# Database Settings (Supabase)
+# Database Settings (Postgres / Neon)
 # =============================================================================
 
 
 class DatabaseSettings(BaseSettings):
-    """Configuration for Supabase database."""
+    """Configuration for Postgres database (Neon or any managed Postgres)."""
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -138,29 +138,30 @@ class DatabaseSettings(BaseSettings):
         extra="ignore",
     )
 
-    supabase_url: Optional[str] = Field(
+    # Use DATABASE_URL in serverless environments (Vercel) and prefer
+    # DATABASE_URL_DIRECT for long-lived backends (Railway) when available.
+    database_url: Optional[SecretStr] = Field(
         default=None,
-        description="Supabase project URL",
+        description="Postgres connection string (pooled is fine for serverless)",
     )
-    supabase_key: Optional[SecretStr] = Field(
+    database_url_direct: Optional[SecretStr] = Field(
         default=None,
-        description="Supabase anon/public key",
-    )
-    supabase_service_role_key: Optional[SecretStr] = Field(
-        default=None,
-        alias="supabase_service_key",
-        description="Supabase service role key (for admin operations)",
+        description="Direct Postgres connection string (recommended for long-lived backends)",
     )
 
     @property
     def is_configured(self) -> bool:
-        """Check if Supabase is properly configured."""
-        return bool(self.supabase_url and (self.supabase_key or self.supabase_service_role_key))
+        """Check if a Postgres connection is configured."""
+        return bool(self.database_url_direct or self.database_url)
 
     @property
-    def has_service_role(self) -> bool:
-        """Check if service role key is available."""
-        return bool(self.supabase_url and self.supabase_service_role_key)
+    def effective_url(self) -> Optional[str]:
+        """Return the preferred connection URL without exposing secrets in logs."""
+        if self.database_url_direct:
+            return self.database_url_direct.get_secret_value()
+        if self.database_url:
+            return self.database_url.get_secret_value()
+        return None
 
 
 # =============================================================================
@@ -593,7 +594,12 @@ class Settings(BaseSettings):
 
     @property
     def is_supabase_configured(self) -> bool:
-        """Check if Supabase database is available."""
+        """Deprecated: kept for backward compatibility."""
+        return self.database.is_configured
+
+    @property
+    def is_database_configured(self) -> bool:
+        """Check if the Postgres database is available."""
         return self.database.is_configured
 
     @property
@@ -642,7 +648,7 @@ class Settings(BaseSettings):
             "dev_mode": self.is_dev_mode,
             "llm_providers": self.llm.available_providers,
             "default_llm_provider": self.llm.default_provider,
-            "supabase_configured": self.is_supabase_configured,
+            "database_configured": self.is_database_configured,
             "stripe_configured": self.is_stripe_configured,
             "stripe_webhooks_enabled": self.stripe.has_webhook_secret,
             "sentry_configured": self.is_sentry_configured,
