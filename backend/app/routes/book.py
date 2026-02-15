@@ -32,12 +32,7 @@ from src.text_generation.core import (
 from ..auth import verify_api_key
 from ..dependencies import require_content_creation
 from ..error_handlers import sanitize_error_message
-from ..middleware import (
-    check_generation_rate_limit,
-    increment_usage_for_operation,
-    require_pro_tier,
-    require_quota,
-)
+from ..middleware import increment_usage_for_operation, require_quota
 from ..models import BookGenerationRequest
 from ..storage import conversations
 from ..websocket import manager
@@ -128,26 +123,12 @@ async def generate_book_endpoint(
         f"title_length: {len(request.title)}, chapters: {request.num_chapters}"
     )
     try:
-        # Enforce per-user generation rate limit BEFORE any expensive work.
-        # This prevents a single user from overwhelming the LLM backend.
-        await check_generation_rate_limit(user_id)
-
-        # Pro tier features: research mode and brand voice require an upgraded plan.
-        # Check tier BEFORE quota so we never decrement quota for gated features.
-        if request.research or request.brand_profile_id:
-            await require_pro_tier(user_id)
-
         # Enforce quota before doing any expensive generation work.
         # We call the dependency directly so we reuse the already-authenticated user_id.
         await require_quota(user_id)
 
         settings = get_settings()
-        provider_type = request.provider_type or settings.llm.default_provider or "openai"
-        if provider_type not in settings.llm.available_providers:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Provider not configured: {provider_type}",
-            )
+        provider_type = settings.llm.default_provider or "openai"
         # Create generation options
         options = GenerationOptions(
             temperature=0.7,
@@ -287,7 +268,6 @@ async def generate_book_endpoint(
                 "title": request.title[:50],
                 "chapters": request.num_chapters,
                 "research": request.research,
-                "provider_type": provider_type,
             },
         )
 

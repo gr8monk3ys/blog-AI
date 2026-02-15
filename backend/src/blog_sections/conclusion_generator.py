@@ -43,57 +43,42 @@ def generate_conclusion(
         ConclusionGenerationError: If an error occurs during conclusion generation.
     """
     try:
-        # PROMPT DESIGN: Conclusions are where most AI content falls flat -- they just
-        # restate the intro. We push for a "so what?" synthesis and a forward-looking
-        # final thought rather than mechanical summarization.
-        prompt = f"""Write the conclusion for a blog post.
-
-Title: {title}
-
-Content covered in this post:
-{content[:1000]}
-"""
+        # Create prompt for conclusion generation
+        prompt = f"""
+        Generate a compelling conclusion for a blog post with the following details:
+        
+        Title: {title}
+        
+        Content Summary:
+        {content[:1000]}...
+        
+        """
 
         if keywords:
-            prompt += f"Target keywords: {', '.join(keywords)}\n"
+            prompt += f"Keywords: {', '.join(keywords)}\n"
 
         if brand_voice:
-            prompt += f"\nBRAND VOICE (match this voice exactly):\n{brand_voice}\n"
+            prompt += f"\nBRAND VOICE SUMMARY (follow strictly):\n{brand_voice}\n"
 
-        prompt += f"""Tone: {tone}
-
-STRUCTURE (2-3 paragraphs):
-
-Paragraph 1 -- THE SYNTHESIS (not a summary):
-Do NOT start with "In conclusion," "To sum up," "In summary," or "As we've seen."
-Instead, connect the dots between the key ideas in the article. What's the bigger
-picture? What pattern or insight emerges when you put all the pieces together?
-Give the reader a fresh "aha" -- not a recap they already read.
-
-Paragraph 2 -- THE FORWARD LOOK:
-What should the reader do NEXT? Be specific and actionable.
-"""
+        prompt += f"""
+        Tone: {tone}
+        
+        Requirements:
+        - The conclusion should be 2-3 paragraphs.
+        - Summarize the key points from the blog post.
+        - Reinforce the main message or thesis.
+        - Include at least one of the main keywords naturally.
+        - Use a {tone} tone throughout.
+        """
 
         if include_call_to_action:
-            prompt += """Give one clear, concrete next step the reader can take today.
-Frame it as an invitation, not a sales pitch. Make it feel natural.
-"""
+            prompt += """
+            - Include a clear and relevant call to action in the final paragraph.
+            """
 
         prompt += """
-Final sentence: End with something memorable -- a thought-provoking question,
-a bold statement, or a vivid image that sticks with the reader.
-
-STYLE RULES:
-- Do NOT mechanically restate every point from the article
-- Write with conviction -- this is your parting thought, make it count
-- Use contractions naturally (you'll, it's, don't)
-- Vary sentence length for rhythm
-- BANNED openers: "In conclusion", "To sum up", "In summary", "As we've seen", "As we've discussed"
-- BANNED words: delve, landscape, leverage, robust, seamless, utilize, aforementioned, multifaceted
-- BANNED phrases: "it's important to note that", "it's worth mentioning that"
-- Include keywords naturally -- do not force them
-
-Return ONLY the conclusion paragraphs. No headings, labels, or meta-commentary."""
+        Return only the conclusion, nothing else.
+        """
 
         # Generate conclusion
         conclusion_text = generate_text(prompt, provider, options)
@@ -203,54 +188,44 @@ def generate_conclusion_with_key_points(
         ConclusionGenerationError: If an error occurs during conclusion generation.
     """
     try:
-        # PROMPT DESIGN: Key-points conclusion variant. Synthesize the points into
-        # an insight rather than just listing them back.
-        prompt = f"""Write the conclusion for a blog post.
-
-Title: {title}
-
-Key points covered in this post:
-"""
+        # Create prompt for conclusion generation
+        prompt = f"""
+        Generate a compelling conclusion for a blog post with the following details:
+        
+        Title: {title}
+        
+        Key Points:
+        """
 
         for i, point in enumerate(key_points):
-            prompt += f"- {point}\n"
+            prompt += f"{i+1}. {point}\n"
 
         if keywords:
-            prompt += f"\nTarget keywords: {', '.join(keywords)}"
+            prompt += f"\nKeywords: {', '.join(keywords)}"
 
         if brand_voice:
-            prompt += f"\nBRAND VOICE (match this voice exactly):\n{brand_voice}\n"
+            prompt += f"\n\nBRAND VOICE SUMMARY (follow strictly):\n{brand_voice}\n"
 
         prompt += f"""
-Tone: {tone}
-
-STRUCTURE (2-3 paragraphs):
-
-Paragraph 1 -- THE SYNTHESIS:
-Do NOT start with "In conclusion" or mechanically restate each point.
-Instead, weave the key points together into a cohesive insight. What's the
-bigger takeaway when you connect these ideas? Give the reader a fresh perspective.
-
-Paragraph 2 -- WHAT NOW:
-Provide a specific, actionable next step the reader can take.
-"""
+        
+        Tone: {tone}
+        
+        Requirements:
+        - The conclusion should be 2-3 paragraphs.
+        - Summarize the key points provided.
+        - Reinforce the main message or thesis.
+        - Include at least one of the main keywords naturally.
+        - Use a {tone} tone throughout.
+        """
 
         if include_call_to_action:
-            prompt += """Frame the call to action as a natural invitation, not a hard sell.
-Be concrete: tell them exactly what to do, not just "take action."
-"""
+            prompt += """
+            - Include a clear and relevant call to action in the final paragraph.
+            """
 
         prompt += """
-End with a memorable final sentence -- a thought-provoking question, bold claim,
-or vivid image that stays with the reader.
-
-STYLE RULES:
-- BANNED openers: "In conclusion", "To sum up", "In summary", "As we've seen"
-- BANNED words: delve, landscape, leverage, robust, seamless, utilize, aforementioned
-- Use contractions naturally and vary sentence length
-- Include keywords naturally -- never force them
-
-Return ONLY the conclusion paragraphs. No headings, labels, or meta-commentary."""
+        Return only the conclusion, nothing else.
+        """
 
         # Generate conclusion
         conclusion_text = generate_text(prompt, provider, options)

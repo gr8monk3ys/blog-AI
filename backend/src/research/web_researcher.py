@@ -2,12 +2,9 @@
 Web research functionality.
 """
 
-import logging
 import os
 import json
 from typing import Any, Dict, List, Optional, Tuple
-
-logger = logging.getLogger(__name__)
 
 from ..types.research import (
     GoogleSerpResult,
@@ -161,7 +158,7 @@ def conduct_web_research(
     """
     options = options or SearchOptions()
     cache = get_research_cache()
-    cache_enabled = not bool(os.environ.get("DEV_API_KEY"))
+    cache_enabled = os.environ.get("DEV_MODE", "false").lower() != "true"
 
     try:
         # Convert keywords list to a string for searching
@@ -193,8 +190,9 @@ def conduct_web_research(
         # Re-raise ResearchError as-is
         raise
     except Exception as e:
-        # Catch-all for unexpected errors
-        logger.exception("Failed to conduct web research")
+        # Catch-all for unexpected errors, log full traceback
+        import traceback
+        traceback.print_exc()
         raise ResearchError(f"Unexpected error conducting web research: {str(e)}") from e
 
 

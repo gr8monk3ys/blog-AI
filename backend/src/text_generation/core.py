@@ -7,13 +7,6 @@ import logging
 import os
 from typing import Dict, Optional, Tuple
 
-from tenacity import (
-    retry,
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_exponential,
-)
-
 from ..types.providers import (
     AnthropicConfig,
     GeminiConfig,
@@ -46,48 +39,6 @@ try:
 except ImportError:  # pragma: no cover
     genai = None  # type: ignore
     google_exceptions = None  # type: ignore
-
-
-# ---------------------------------------------------------------------------
-# Retry configuration for transient LLM provider errors
-# ---------------------------------------------------------------------------
-# Build the tuple of retryable exception types dynamically so that imports
-# that failed gracefully (set to None above) do not cause AttributeError.
-
-_retryable_exceptions: list = [ConnectionError, TimeoutError]
-
-if openai is not None:
-    for _attr in ("RateLimitError", "APIConnectionError", "APITimeoutError", "InternalServerError"):
-        _exc = getattr(openai, _attr, None)
-        if _exc is not None:
-            _retryable_exceptions.append(_exc)
-
-if anthropic is not None:
-    for _attr in ("RateLimitError", "APIConnectionError", "InternalServerError"):
-        _exc = getattr(anthropic, _attr, None)
-        if _exc is not None:
-            _retryable_exceptions.append(_exc)
-
-if google_exceptions is not None:
-    for _attr in ("ServiceUnavailable", "ResourceExhausted", "DeadlineExceeded"):
-        _exc = getattr(google_exceptions, _attr, None)
-        if _exc is not None:
-            _retryable_exceptions.append(_exc)
-
-_RETRYABLE_EXCEPTIONS = tuple(_retryable_exceptions)
-
-LLM_RETRY = retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=2, max=30),
-    retry=retry_if_exception_type(_RETRYABLE_EXCEPTIONS),
-    reraise=True,
-    before_sleep=lambda retry_state: logger.warning(
-        "LLM call attempt %d failed (%s), retrying in %.1fs ...",
-        retry_state.attempt_number,
-        retry_state.outcome.exception() if retry_state.outcome else "unknown",
-        retry_state.next_action.sleep if retry_state.next_action else 0,
-    ),
-)
 
 
 class TextGenerationError(Exception):
@@ -324,7 +275,6 @@ def close_llm_clients() -> None:
     _anthropic_clients.clear()
 
 
-@LLM_RETRY
 def generate_with_openai(
     prompt: str, config: OpenAIConfig, options: GenerationOptions
 ) -> str:
@@ -397,7 +347,6 @@ def generate_with_openai(
         raise TextGenerationError(f"OpenAI error: {e}") from e
 
 
-@LLM_RETRY
 def generate_with_anthropic(
     prompt: str, config: AnthropicConfig, options: GenerationOptions
 ) -> str:
@@ -465,7 +414,6 @@ def generate_with_anthropic(
         raise TextGenerationError(f"Anthropic error: {e}") from e
 
 
-@LLM_RETRY
 def generate_with_gemini(
     prompt: str, config: GeminiConfig, options: GenerationOptions
 ) -> str:
@@ -489,20 +437,20 @@ def generate_with_gemini(
         )
 
     try:
-        # Create a per-request client to avoid thread-unsafe global state mutation
-        # from genai.configure(). Each request gets its own client instance.
-        client = genai.Client(api_key=config.api_key)
+        genai.configure(api_key=config.api_key)
 
-        generation_config = genai.types.GenerateContentConfig(
-            temperature=options.temperature,
-            top_p=options.top_p,
-            max_output_tokens=options.max_tokens,
-        )
+        generation_config = {
+            "temperature": options.temperature,
+            "top_p": options.top_p,
+            "max_output_tokens": options.max_tokens,
+        }
 
-        response = client.models.generate_content(
-            model=config.model,
-            contents=prompt,
-            config=generation_config,
+        model = genai.GenerativeModel(config.model, generation_config=generation_config)
+
+        # Gemini uses request_options for timeout
+        response = model.generate_content(
+            prompt,
+            request_options={"timeout": LLM_API_TIMEOUT},
         )
 
         # Validate response structure before accessing

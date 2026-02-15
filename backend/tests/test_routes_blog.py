@@ -644,30 +644,32 @@ class TestBlogAuthorization:
 
     def test_missing_api_key_returns_401(self, client):
         """Test that missing API key returns 401."""
-        response = client.post(
-            "/generate-blog",
-            json={
-                "topic": "Test Topic",
-                "conversation_id": "test-conv-123",
-            },
-        )
+        with patch.dict(os.environ, {"DEV_MODE": "false"}):
+            response = client.post(
+                "/generate-blog",
+                json={
+                    "topic": "Test Topic",
+                    "conversation_id": "test-conv-123",
+                },
+            )
 
         # Should return 401 or 403 depending on implementation
         assert response.status_code in [401, 403, 422]
 
     def test_invalid_api_key_returns_401(self, client):
         """Test that invalid API key returns 401."""
-        response = client.post(
-            "/generate-blog",
-            json={
-                "topic": "Test Topic",
-                "conversation_id": "test-conv-123",
-            },
-            headers={"X-API-Key": "invalid-key"},
-        )
+        with patch.dict(os.environ, {"DEV_MODE": "false"}):
+            response = client.post(
+                "/generate-blog",
+                json={
+                    "topic": "Test Topic",
+                    "conversation_id": "test-conv-123",
+                },
+                headers={"X-API-Key": "invalid-key"},
+            )
 
-        # Depending on how the dependency is structured, this may vary
-        assert response.status_code in [401, 403, 422]
+            # Depending on how the dependency is structured, this may vary
+            assert response.status_code in [401, 403, 422]
 
     def test_quota_exceeded_returns_429(self, client):
         """Test that exceeded quota returns 429."""

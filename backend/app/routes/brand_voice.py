@@ -12,13 +12,12 @@ import logging
 import uuid
 from typing import Any, Dict, List, Optional, Set
 
-import nh3
+import bleach
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from ..auth import verify_api_key
 from ..error_handlers import sanitize_error_message
-from ..middleware import require_pro_tier
 
 
 # =============================================================================
@@ -71,7 +70,7 @@ class AnalyzeSampleRequest(BaseModel):
             raise ValueError("Content is required")
         v = str(v).strip()
         # Use bleach for proper HTML sanitization (cannot be bypassed like regex)
-        v = nh3.clean(v, tags=ALLOWED_HTML_TAGS)
+        v = bleach.clean(v, tags=ALLOWED_HTML_TAGS, strip=True, strip_comments=True)
         if len(v) < 50:
             raise ValueError("Content must be at least 50 characters after sanitization")
         return v
@@ -125,7 +124,7 @@ class AddSampleRequest(BaseModel):
             raise ValueError("Content is required")
         v = str(v).strip()
         # Use bleach for proper HTML sanitization (cannot be bypassed like regex)
-        v = nh3.clean(v, tags=ALLOWED_HTML_TAGS)
+        v = bleach.clean(v, tags=ALLOWED_HTML_TAGS, strip=True, strip_comments=True)
         if len(v) < 50:
             raise ValueError("Content must be at least 50 characters after sanitization")
         return v
@@ -458,7 +457,7 @@ async def delete_sample(
 @router.post("/train", response_model=TrainVoiceResponse)
 async def train_voice(
     request: TrainVoiceRequest,
-    user_id: str = Depends(require_pro_tier),
+    user_id: str = Depends(verify_api_key),
 ):
     """
     Train a voice fingerprint from samples.

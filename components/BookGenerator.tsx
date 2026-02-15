@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Switch } from '@headlessui/react';
 import { BookOpenIcon, LightBulbIcon, PencilIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline';
 import { BookGenerationOptions } from '../types/book';
@@ -6,8 +6,6 @@ import { BookGenerationResponse, ContentGenerationResponse } from '../types/cont
 import { API_ENDPOINTS, getDefaultHeaders, checkServerConnection } from '../lib/api';
 import BrandVoiceSelector from './brand/BrandVoiceSelector'
 import type { BrandProfile } from '../types/brand'
-import type { LlmProviderType } from '../types/llm'
-import { useLlmConfig } from '../hooks/useLlmConfig'
 
 interface BookGeneratorProps {
   conversationId: string;
@@ -26,17 +24,7 @@ export default function BookGenerator({ conversationId, setContent, setLoading }
   const [humanize, setHumanize] = useState(true);
   const [brandVoiceEnabled, setBrandVoiceEnabled] = useState(false)
   const [selectedBrandProfile, setSelectedBrandProfile] = useState<BrandProfile | null>(null)
-  const { availableProviders, defaultProvider } = useLlmConfig()
-  const [providerType, setProviderType] = useState<LlmProviderType>('openai')
   const [error, setError] = useState<string | null>(null);
-
-  const hasUserSelection = useRef(false)
-
-  useEffect(() => {
-    if (!hasUserSelection.current && defaultProvider) {
-      setProviderType(defaultProvider)
-    }
-  }, [defaultProvider])
 
   // Mock book data for development or when server is not available
   const generateMockBook = (): BookGenerationResponse => {
@@ -96,12 +84,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
       const isServerConnected = await checkServerConnection();
       
       if (!isServerConnected) {
-        // In production, never fall back to mock output.
-        if (process.env.NODE_ENV === 'production') {
-          throw new Error('Backend unavailable. Please try again later.');
-        }
-
-        // Use mock data in development if server is not running
+        // Use mock data if server is not running
         setTimeout(() => {
           setContent(generateMockBook());
           setLoading(false);
@@ -120,7 +103,6 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
           keywords: keywords.split(',').map(k => k.trim()).filter(k => k),
           tone,
           research: useResearch,
-          provider_type: providerType,
           proofread,
           humanize,
           conversation_id: conversationId,
@@ -131,19 +113,8 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
       });
 
       if (!response.ok) {
-        const errorData: Record<string, unknown> = await response.json().catch(() => ({}));
-        const detail = errorData?.detail
-        const message =
-          typeof detail === 'string'
-            ? detail
-            : detail && typeof detail === 'object' && typeof (detail as Record<string, unknown>).error === 'string'
-            ? (detail as Record<string, unknown>).error as string
-            : typeof errorData?.error === 'string'
-            ? errorData.error as string
-            : `Server error: ${response.status}`
-        const err = new Error(message) as Error & { status?: number }
-        err.status = response.status
-        throw err
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `Server error: ${response.status}`);
       }
 
       const data = await response.json();
@@ -153,14 +124,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
       setContent(data);
     } catch (err) {
       console.error('Error generating book:', err);
-      const status = (err as Error & { status?: number })?.status
-      if (status === 401 || status === 403) {
-        setError('Sign in required to generate books.')
-      } else if (status === 429) {
-        setError('Usage limit reached. Upgrade your plan to continue generating books.')
-      } else {
-        setError(err instanceof Error ? err.message : 'Failed to generate book. Please try again.')
-      }
+      setError(err instanceof Error ? err.message : 'Failed to generate book. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -230,7 +194,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label htmlFor="keywords" className="block text-sm font-medium text-gray-700">
               Keywords (comma separated)
@@ -263,28 +227,6 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
               <option value="technical">Technical</option>
             </select>
           </div>
-
-          <div>
-            <label htmlFor="provider" className="block text-sm font-medium text-gray-700">
-              Model Provider
-            </label>
-            <select
-              id="provider"
-              value={providerType}
-              onChange={(e) => {
-                hasUserSelection.current = true
-                setProviderType(e.target.value as LlmProviderType)
-              }}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
-              disabled={(availableProviders || []).length <= 1}
-            >
-              {(availableProviders || []).map((p) => (
-                <option key={p} value={p}>
-                  {p === 'openai' ? 'OpenAI' : p === 'anthropic' ? 'Anthropic' : 'Gemini'}
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
 
         <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -298,7 +240,6 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
               <Switch
                 checked={useResearch}
                 onChange={setUseResearch}
-                aria-label="Use web research"
                 className={`${
                   useResearch ? 'bg-amber-600' : 'bg-gray-200'
                 } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
@@ -316,7 +257,6 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
               <Switch
                 checked={proofread}
                 onChange={setProofread}
-                aria-label="Proofread content"
                 className={`${
                   proofread ? 'bg-amber-600' : 'bg-gray-200'
                 } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
@@ -334,7 +274,6 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
               <Switch
                 checked={humanize}
                 onChange={setHumanize}
-                aria-label="Humanize content"
                 className={`${
                   humanize ? 'bg-amber-600' : 'bg-gray-200'
                 } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}

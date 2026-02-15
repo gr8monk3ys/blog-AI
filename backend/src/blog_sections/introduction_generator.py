@@ -43,63 +43,38 @@ def generate_introduction(
         IntroductionGenerationError: If an error occurs during introduction generation.
     """
     try:
-        # PROMPT DESIGN: The introduction is the most critical section -- it determines
-        # whether a reader stays or bounces. We front-load a concrete hook requirement,
-        # ban common AI-slop openers, and demand specificity over generalities.
-        prompt = f"""Write the introduction for a blog post.
-
-Title: {title}
-"""
+        # Create prompt for introduction generation
+        prompt = f"""
+        Generate an engaging introduction for a blog post with the following details:
+        
+        Title: {title}
+        """
 
         if keywords:
-            prompt += f"Target keywords: {', '.join(keywords)}\n"
+            prompt += f"\nKeywords: {', '.join(keywords)}"
 
         if outline:
-            prompt += f"Article outline (for context on scope):\n{outline}\n"
+            prompt += f"\nOutline: {outline}"
 
         if target_audience:
-            prompt += f"Target audience: {target_audience}\n"
+            prompt += f"\nTarget Audience: {target_audience}"
 
         if brand_voice:
-            prompt += f"\nBRAND VOICE (match this voice exactly):\n{brand_voice}\n"
+            prompt += f"\n\nBRAND VOICE SUMMARY (follow strictly):\n{brand_voice}\n"
 
-        prompt += f"""Tone: {tone}
-
-STRUCTURE (3-4 paragraphs):
-
-Paragraph 1 -- THE HOOK:
-Open with ONE of these proven hook types (pick the best fit):
-- A surprising statistic or data point relevant to the topic
-- A brief, specific anecdote or scenario the reader can relate to
-- A provocative question that challenges a common assumption
-- A concrete before/after contrast that shows stakes
-
-Do NOT open with any of these (they are generic AI filler):
-- "In today's fast-paced world..."
-- "In the ever-evolving landscape of..."
-- "Have you ever wondered..."
-- "In today's digital age..."
-- Any sentence starting with "In today's..."
-
-Paragraph 2 -- THE PROBLEM/CONTEXT:
-Ground the reader in WHY this topic matters right now. Be specific.
-Reference a real trend, pain point, or shift -- not vague generalizations.
-
-Paragraph 3 -- THE PROMISE:
-Tell the reader exactly what they'll walk away with after reading.
-Be concrete: "You'll learn X, understand Y, and be able to do Z."
-Do NOT say "this comprehensive guide will delve into..."
-
-STYLE RULES:
-- Write like a knowledgeable friend, not a textbook or a press release
-- Vary sentence length: mix short punchy sentences with longer explanatory ones
-- Use contractions naturally (you'll, it's, don't, we're)
-- Weave in keywords where they fit naturally -- never force them
-- Every sentence must earn its place. Cut filler ruthlessly.
-- Do NOT use these overused words: delve, landscape, leverage, robust, seamless, utilize, aforementioned, comprehensive, multifaceted
-- Do NOT use the phrase "it's important to note that" or "it's worth mentioning that"
-
-Return ONLY the introduction paragraphs. No headings, no labels, no meta-commentary."""
+        prompt += f"""
+        Tone: {tone}
+        
+        Requirements:
+        - The introduction should be 3-4 paragraphs.
+        - Include a compelling hook in the first paragraph to grab the reader's attention.
+        - Clearly state the purpose or thesis of the blog post.
+        - Include at least one of the main keywords naturally.
+        - Set the tone and expectations for the rest of the blog post.
+        - Use a {tone} tone throughout.
+        
+        Return only the introduction, nothing else.
+        """
 
         # Generate introduction
         introduction_text = generate_text(prompt, provider, options)
@@ -203,55 +178,42 @@ def generate_introduction_with_research(
         IntroductionGenerationError: If an error occurs during introduction generation.
     """
     try:
-        # PROMPT DESIGN: Research-backed introduction. We instruct the model to lead
-        # with a concrete data point from the research and weave citations naturally.
-        prompt = f"""Write the introduction for a research-backed blog post.
-
-Title: {title}
-"""
+        # Create prompt for introduction generation
+        prompt = f"""
+        Generate an engaging introduction for a blog post with the following details:
+        
+        Title: {title}
+        """
 
         if keywords:
-            prompt += f"Target keywords: {', '.join(keywords)}\n"
+            prompt += f"\nKeywords: {', '.join(keywords)}"
 
         if outline:
-            prompt += f"Article outline (for context on scope):\n{outline}\n"
+            prompt += f"\nOutline: {outline}"
 
         if target_audience:
-            prompt += f"Target audience: {target_audience}\n"
+            prompt += f"\nTarget Audience: {target_audience}"
 
         if brand_voice:
-            prompt += f"\nBRAND VOICE (match this voice exactly):\n{brand_voice}\n"
+            prompt += f"\n\nBRAND VOICE SUMMARY (follow strictly):\n{brand_voice}\n"
 
-        prompt += f"""Tone: {tone}
-
-RESEARCH CONTEXT (use specific findings from this):
-{str(research_results)[:1000]}
-
-STRUCTURE (3-4 paragraphs):
-
-Paragraph 1 -- THE HOOK:
-Open with a specific finding, statistic, or insight from the research above.
-Ground it in concrete numbers or real examples -- not vague claims.
-Do NOT open with "In today's...", "In the ever-evolving...", or any generic opener.
-
-Paragraph 2 -- THE PROBLEM/CONTEXT:
-Use research findings to establish WHY this topic matters right now.
-Reference specific trends, data, or expert perspectives from the sources.
-
-Paragraph 3 -- THE PROMISE:
-Tell the reader exactly what they'll learn. Be specific and actionable.
-Connect it back to the research -- "Based on [finding], we'll show you how to..."
-
-STYLE RULES:
-- Write like a knowledgeable friend, not a textbook or press release
-- Vary sentence length: mix short punchy sentences with longer ones
-- Use contractions naturally (you'll, it's, don't, we're)
-- Weave keywords in where they fit -- never force them
-- Every sentence must earn its place. Cut filler ruthlessly.
-- BANNED words: delve, landscape, leverage, robust, seamless, utilize, aforementioned, comprehensive, multifaceted
-- BANNED phrases: "it's important to note that", "it's worth mentioning that", "in conclusion"
-
-Return ONLY the introduction paragraphs. No headings, labels, or meta-commentary."""
+        prompt += f"""
+        Tone: {tone}
+        
+        Research Results:
+        {str(research_results)[:1000]}...
+        
+        Requirements:
+        - The introduction should be 3-4 paragraphs.
+        - Include a compelling hook in the first paragraph to grab the reader's attention.
+        - Clearly state the purpose or thesis of the blog post.
+        - Include at least one of the main keywords naturally.
+        - Incorporate relevant information from the research results.
+        - Set the tone and expectations for the rest of the blog post.
+        - Use a {tone} tone throughout.
+        
+        Return only the introduction, nothing else.
+        """
 
         # Generate introduction
         introduction_text = generate_text(prompt, provider, options)
