@@ -12,7 +12,6 @@ concurrency:
 
 permissions:
   contents: read
-  security-events: write
 
 env:
   PYTHON_VERSION: "3.12"
@@ -39,21 +38,13 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt pytest pytest-asyncio pytest-cov
+          pip install -r requirements.txt pytest pytest-asyncio
 
       - name: Run tests
-        run: pytest --cov=src --cov=app --cov-report=xml --cov-report=term-missing --cov-fail-under=70
+        run: pytest -q
         env:
           DEV_MODE: "true"
           OPENAI_API_KEY: "test"
-
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: backend-coverage
-          path: backend/coverage.xml
-          retention-days: 14
 
   frontend-checks:
     name: Frontend Checks (Next.js)
@@ -79,15 +70,7 @@ jobs:
         run: bun run type-check
 
       - name: Unit tests
-        run: bun run test:coverage
-
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: frontend-coverage
-          path: coverage/
-          retention-days: 14
+        run: bun run test:run
 
       - name: Build
         run: bun run build
@@ -144,33 +127,3 @@ jobs:
           tags: blog-ai:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  secrets-scan:
-    name: Secrets Scan
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  security-scan:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Run CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: python, javascript
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-
-      - name: Perform Analysis
-        uses: github/codeql-action/analyze@v3

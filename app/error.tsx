@@ -4,9 +4,6 @@ import * as Sentry from '@sentry/nextjs'
 import { useEffect } from 'react'
 import Link from 'next/link'
 
-const SUPPORT_EMAIL =
-  process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@blogai.com'
-
 /**
  * Error Boundary Component
  *
@@ -138,7 +135,7 @@ export default function Error({
         <p className="mt-8 text-sm text-gray-500">
           Need help?{' '}
           <a
-            href={`mailto:${SUPPORT_EMAIL}`}
+            href="mailto:support@example.com"
             className="text-blue-600 hover:text-blue-500 underline underline-offset-2"
           >
             Contact support

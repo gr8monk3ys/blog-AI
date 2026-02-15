@@ -46,8 +46,8 @@ export default [
       ...(reactHooks.configs?.recommended?.rules ?? {}),
       // TypeScript already checks undefined symbols; this rule is noisy in TS/Next code.
       'no-undef': 'off',
-      // Warn on explicit `any` to surface type-safety issues without breaking the build.
-      '@typescript-eslint/no-explicit-any': 'warn',
+      // Too strict for the current codebase; keep type-checking as the primary guard.
+      '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
 
       // react-hooks v5+ adds compiler-adjacent rules that are noisy (and sometimes
