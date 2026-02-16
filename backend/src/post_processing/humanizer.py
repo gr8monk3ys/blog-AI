@@ -63,7 +63,7 @@ def humanize_content(
 
         return humanized_content.strip()
     except Exception as e:
-        raise HumanizationError(f"Error humanizing content: {str(e)}")
+        raise HumanizationError(f"Error humanizing content: {str(e)}") from e
 
 
 def humanize_with_style(
@@ -111,7 +111,7 @@ def humanize_with_style(
 
         return humanized_content.strip()
     except Exception as e:
-        raise HumanizationError(f"Error humanizing content with style: {str(e)}")
+        raise HumanizationError(f"Error humanizing content with style: {str(e)}") from e
 
 
 def humanize_for_audience(
@@ -160,7 +160,7 @@ def humanize_for_audience(
 
         return humanized_content.strip()
     except Exception as e:
-        raise HumanizationError(f"Error humanizing content for audience: {str(e)}")
+        raise HumanizationError(f"Error humanizing content for audience: {str(e)}") from e
 
 
 def add_personal_anecdotes(
@@ -209,7 +209,7 @@ def add_personal_anecdotes(
 
         return anecdotal_content.strip()
     except Exception as e:
-        raise HumanizationError(f"Error adding personal anecdotes: {str(e)}")
+        raise HumanizationError(f"Error adding personal anecdotes: {str(e)}") from e
 
 
 def add_humor(
@@ -258,4 +258,4 @@ def add_humor(
 
         return humorous_content.strip()
     except Exception as e:
-        raise HumanizationError(f"Error adding humor: {str(e)}")
+        raise HumanizationError(f"Error adding humor: {str(e)}") from e

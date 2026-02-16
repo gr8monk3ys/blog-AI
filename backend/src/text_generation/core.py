@@ -437,20 +437,20 @@ def generate_with_gemini(
         )
 
     try:
-        genai.configure(api_key=config.api_key)
+        # Create a per-request client to avoid thread-unsafe global state mutation
+        # from genai.configure(). Each request gets its own client instance.
+        client = genai.Client(api_key=config.api_key)
 
-        generation_config = {
-            "temperature": options.temperature,
-            "top_p": options.top_p,
-            "max_output_tokens": options.max_tokens,
-        }
+        generation_config = genai.types.GenerateContentConfig(
+            temperature=options.temperature,
+            top_p=options.top_p,
+            max_output_tokens=options.max_tokens,
+        )
 
-        model = genai.GenerativeModel(config.model, generation_config=generation_config)
-
-        # Gemini uses request_options for timeout
-        response = model.generate_content(
-            prompt,
-            request_options={"timeout": LLM_API_TIMEOUT},
+        response = client.models.generate_content(
+            model=config.model,
+            contents=prompt,
+            config=generation_config,
         )
 
         # Validate response structure before accessing

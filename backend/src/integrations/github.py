@@ -8,6 +8,8 @@ from typing import Any, Dict, List, Optional
 
 import requests
 
+HTTP_REQUEST_TIMEOUT = 30
+
 from ..types.integrations import (
     GitHubCredentials,
     GitHubFileOptions,
@@ -57,6 +59,7 @@ def upload_file(
                 f"https://api.github.com/repos/{repository.owner}/{repository.name}/contents/{options.path}",
                 headers=headers,
                 params={"ref": options.branch},
+                timeout=HTTP_REQUEST_TIMEOUT,
             )
 
             if response.status_code == 200:
@@ -84,6 +87,7 @@ def upload_file(
             f"https://api.github.com/repos/{repository.owner}/{repository.name}/contents/{options.path}",
             headers=headers,
             json=file_data,
+            timeout=HTTP_REQUEST_TIMEOUT,
         )
 
         # Check response
@@ -152,7 +156,10 @@ def create_repository(
 
         # Create repository
         response = requests.post(
-            "https://api.github.com/user/repos", headers=headers, json=repo_data
+            "https://api.github.com/user/repos",
+            headers=headers,
+            json=repo_data,
+            timeout=HTTP_REQUEST_TIMEOUT,
         )
 
         # Check response
@@ -202,7 +209,11 @@ def get_repositories(credentials: GitHubCredentials) -> List[GitHubRepository]:
         }
 
         # Get repositories
-        response = requests.get("https://api.github.com/user/repos", headers=headers)
+        response = requests.get(
+            "https://api.github.com/user/repos",
+            headers=headers,
+            timeout=HTTP_REQUEST_TIMEOUT,
+        )
 
         # Check response
         if response.status_code == 200:
@@ -261,7 +272,9 @@ def get_repository(
 
         # Get repository
         response = requests.get(
-            f"https://api.github.com/repos/{owner}/{name}", headers=headers
+            f"https://api.github.com/repos/{owner}/{name}",
+            headers=headers,
+            timeout=HTTP_REQUEST_TIMEOUT,
         )
 
         # Check response
@@ -320,6 +333,7 @@ def create_branch(
         response = requests.get(
             f"https://api.github.com/repos/{repository.owner}/{repository.name}/git/refs/heads/{base_branch}",
             headers=headers,
+            timeout=HTTP_REQUEST_TIMEOUT,
         )
 
         # Check response
@@ -339,6 +353,7 @@ def create_branch(
             f"https://api.github.com/repos/{repository.owner}/{repository.name}/git/refs",
             headers=headers,
             json=branch_data,
+            timeout=HTTP_REQUEST_TIMEOUT,
         )
 
         # Check response
@@ -411,6 +426,7 @@ def create_pull_request(
             f"https://api.github.com/repos/{repository.owner}/{repository.name}/pulls",
             headers=headers,
             json=pr_data,
+            timeout=HTTP_REQUEST_TIMEOUT,
         )
 
         # Check response

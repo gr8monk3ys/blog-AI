@@ -23,14 +23,8 @@ export interface BlogGenerationOptions {
   humanize?: boolean;
 }
 
-export interface BlogGenerationResponse {
-  success: boolean;
-  content: BlogPost;
-  file_path: string;
-  message?: string;
-  detail?: string;
-  type: 'blog';
-}
+// Re-export from canonical source to avoid duplicate definitions
+export type { BlogGenerationResponse } from './content'
 
 export interface BlogEditResponse {
   success: boolean;
