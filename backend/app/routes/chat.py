@@ -14,7 +14,7 @@ import re
 import uuid
 from typing import Any, Dict, List, Optional, Set
 
-import nh3
+import bleach
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
@@ -119,7 +119,7 @@ class ChatContextRequest(BaseModel):
     @classmethod
     def sanitize_working_content(cls, v: Optional[str]) -> Optional[str]:
         if v is not None:
-            v = nh3.clean(v, tags=ALLOWED_HTML_TAGS)
+            v = bleach.clean(v, tags=ALLOWED_HTML_TAGS, strip=True, strip_comments=True)
         return v
 
 
@@ -145,7 +145,7 @@ class ChatMessageRequest(BaseModel):
         v = v.strip()
         if not v:
             raise ValueError("Message cannot be empty")
-        return nh3.clean(v, tags=set())
+        return bleach.clean(v, tags=set(), strip=True, strip_comments=True)
 
     @field_validator("conversation_id")
     @classmethod
