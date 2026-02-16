@@ -2,9 +2,12 @@
 Web research functionality.
 """
 
+import logging
 import os
 import json
 from typing import Any, Dict, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 from ..types.research import (
     GoogleSerpResult,
@@ -190,9 +193,8 @@ def conduct_web_research(
         # Re-raise ResearchError as-is
         raise
     except Exception as e:
-        # Catch-all for unexpected errors, log full traceback
-        import traceback
-        traceback.print_exc()
+        # Catch-all for unexpected errors
+        logger.exception("Failed to conduct web research")
         raise ResearchError(f"Unexpected error conducting web research: {str(e)}") from e
 
 
