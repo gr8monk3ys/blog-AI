@@ -175,17 +175,17 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const detail = (errorData as any)?.detail
+        const errorData: Record<string, unknown> = await response.json().catch(() => ({}));
+        const detail = errorData?.detail
         const message =
           typeof detail === 'string'
             ? detail
-            : detail && typeof detail === 'object' && typeof (detail as any).error === 'string'
-            ? (detail as any).error
-            : typeof (errorData as any)?.error === 'string'
-            ? (errorData as any).error
+            : detail && typeof detail === 'object' && typeof (detail as Record<string, unknown>).error === 'string'
+            ? (detail as Record<string, unknown>).error as string
+            : typeof errorData?.error === 'string'
+            ? errorData.error as string
             : `Server error: ${response.status}`
-        const err: any = new Error(message)
+        const err = new Error(message) as Error & { status?: number }
         err.status = response.status
         throw err
       }
@@ -197,7 +197,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
       setContent(data);
     } catch (err) {
       console.error('Error generating content:', err);
-      const status = (err as any)?.status
+      const status = (err as Error & { status?: number })?.status
       if (status === 401 || status === 403) {
         setError('Sign in required to generate content.')
       } else if (status === 429) {

@@ -106,7 +106,7 @@ export default function ContentViewer({ content }: ContentViewerProps) {
   }, [content]);
 
   const analysisTags = useMemo((): string[] => {
-    const tags = (content?.content as any)?.tags;
+    const tags = content?.content?.tags;
     return Array.isArray(tags) ? tags : [];
   }, [content]);
 
@@ -159,7 +159,7 @@ export default function ContentViewer({ content }: ContentViewerProps) {
     setPlagiarismError(null);
 
     try {
-      const title = String((content.content as any)?.title || '');
+      const title = String(content.content?.title || '');
       const payload = await apiFetch<PlagiarismCheckResponse>(
         API_ENDPOINTS.content.checkPlagiarism,
         {
@@ -178,8 +178,8 @@ export default function ContentViewer({ content }: ContentViewerProps) {
       }
 
       setPlagiarismResult(payload.data || null);
-    } catch (err: any) {
-      const status = err?.status;
+    } catch (err) {
+      const status = (err as Error & { status?: number })?.status;
       if (status === 401 || status === 403) {
         setPlagiarismError('Sign in required to run checks.');
       } else if (status === 429) {

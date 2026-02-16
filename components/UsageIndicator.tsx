@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -28,23 +28,7 @@ export default function UsageIndicator({
   const [error, setError] = useState<string | null>(null)
   const [showDetails, setShowDetails] = useState(false)
 
-  useEffect(() => {
-    fetchUsageStats()
-    // Refresh usage stats every 30 seconds
-    const interval = setInterval(fetchUsageStats, 30000)
-    return () => clearInterval(interval)
-  }, [])
-
-  useEffect(() => {
-    if (!usage || !onLimitReached) return
-    const atLimit =
-      usage.is_quota_exceeded ||
-      (usage.daily_limit !== -1 && usage.daily_remaining <= 0) ||
-      (usage.quota_limit !== -1 && usage.remaining <= 0)
-    if (atLimit) onLimitReached()
-  }, [usage, onLimitReached])
-
-  const fetchUsageStats = async () => {
+  const fetchUsageStats = useCallback(async () => {
     try {
       const response = await fetch(API_ENDPOINTS.usage.stats, {
         headers: await getDefaultHeaders(),
@@ -63,7 +47,23 @@ export default function UsageIndicator({
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchUsageStats()
+    // Refresh usage stats every 30 seconds
+    const interval = setInterval(fetchUsageStats, 30000)
+    return () => clearInterval(interval)
+  }, [fetchUsageStats])
+
+  useEffect(() => {
+    if (!usage || !onLimitReached) return
+    const atLimit =
+      usage.is_quota_exceeded ||
+      (usage.daily_limit !== -1 && usage.daily_remaining <= 0) ||
+      (usage.quota_limit !== -1 && usage.remaining <= 0)
+    if (atLimit) onLimitReached()
+  }, [usage, onLimitReached])
 
   if (loading) {
     return (
