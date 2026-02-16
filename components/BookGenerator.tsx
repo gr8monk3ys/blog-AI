@@ -127,17 +127,17 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const detail = (errorData as any)?.detail
+        const errorData: Record<string, unknown> = await response.json().catch(() => ({}));
+        const detail = errorData?.detail
         const message =
           typeof detail === 'string'
             ? detail
-            : detail && typeof detail === 'object' && typeof (detail as any).error === 'string'
-            ? (detail as any).error
-            : typeof (errorData as any)?.error === 'string'
-            ? (errorData as any).error
+            : detail && typeof detail === 'object' && typeof (detail as Record<string, unknown>).error === 'string'
+            ? (detail as Record<string, unknown>).error as string
+            : typeof errorData?.error === 'string'
+            ? errorData.error as string
             : `Server error: ${response.status}`
-        const err: any = new Error(message)
+        const err = new Error(message) as Error & { status?: number }
         err.status = response.status
         throw err
       }
@@ -149,7 +149,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
       setContent(data);
     } catch (err) {
       console.error('Error generating book:', err);
-      const status = (err as any)?.status
+      const status = (err as Error & { status?: number })?.status
       if (status === 401 || status === 403) {
         setError('Sign in required to generate books.')
       } else if (status === 429) {
@@ -291,6 +291,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
               <Switch
                 checked={useResearch}
                 onChange={setUseResearch}
+                aria-label="Use web research"
                 className={`${
                   useResearch ? 'bg-amber-600' : 'bg-gray-200'
                 } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
@@ -308,6 +309,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
               <Switch
                 checked={proofread}
                 onChange={setProofread}
+                aria-label="Proofread content"
                 className={`${
                   proofread ? 'bg-amber-600' : 'bg-gray-200'
                 } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
@@ -325,6 +327,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
               <Switch
                 checked={humanize}
                 onChange={setHumanize}
+                aria-label="Humanize content"
                 className={`${
                   humanize ? 'bg-amber-600' : 'bg-gray-200'
                 } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
