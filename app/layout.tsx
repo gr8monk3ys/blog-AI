@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
+import { Providers } from './providers'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -19,10 +20,10 @@ export default function RootLayout({
       <body className="font-sans">
         {publishableKey ? (
           <ClerkProvider publishableKey={publishableKey}>
-            {children}
+            <Providers>{children}</Providers>
           </ClerkProvider>
         ) : (
-          children
+          <Providers>{children}</Providers>
         )}
       </body>
     </html>
