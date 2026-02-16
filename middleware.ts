@@ -2,6 +2,17 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+/**
+ * Route protection middleware
+ *
+ * Conditionally applies Clerk authentication when the publishable key
+ * is configured. Routes listed in isProtectedRoute require the user
+ * to be signed in; all other routes remain public.
+ *
+ * When Clerk is not configured (e.g. local development without auth),
+ * requests pass through without authentication checks.
+ */
+
 const isProtectedRoute = createRouteMatcher([
   '/history(.*)',
   '/brand(.*)',
@@ -9,25 +20,9 @@ const isProtectedRoute = createRouteMatcher([
   '/bulk(.*)',
   '/remix(.*)',
   '/analytics(.*)',
-  '/tools(.*)',
-  '/templates(.*)',
-  '/onboarding(.*)',
 ])
 
 const clerkEnabled = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-const isProduction = process.env.NODE_ENV === 'production'
-
-if (isProduction && !clerkEnabled) {
-  throw new Error('NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is required in production')
-}
-
-if (!clerkEnabled && !isProduction) {
-  console.warn(
-    '[middleware] WARNING: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is not set. ' +
-    'Authentication is disabled and all routes are publicly accessible. ' +
-    'This is acceptable for local development only.'
-  )
-}
 
 export default clerkEnabled
   ? clerkMiddleware(async (auth, req) => {
