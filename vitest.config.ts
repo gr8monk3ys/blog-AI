@@ -17,11 +17,22 @@ export default defineConfig({
       reporter: ['text', 'json', 'html'],
       exclude: [
         'node_modules/',
+        '.next/',
         'tests/setup.ts',
         '**/*.d.ts',
         '**/*.config.*',
         '**/types/**',
+        'e2e/**',
+        'backend/**',
+        'supabase/**',
+        'chrome-extension/**',
       ],
+      thresholds: {
+        branches: 80,
+        functions: 80,
+        lines: 80,
+        statements: 80,
+      },
     },
   },
   resolve: {

@@ -10,6 +10,66 @@ afterEach(() => {
 // Mock fetch globally
 global.fetch = vi.fn()
 
+// ---------------------------------------------------------------------------
+// Mock next/navigation
+// ---------------------------------------------------------------------------
+const mockRouter = {
+  push: vi.fn(),
+  replace: vi.fn(),
+  back: vi.fn(),
+  forward: vi.fn(),
+  refresh: vi.fn(),
+  prefetch: vi.fn(),
+}
+
+vi.mock('next/navigation', () => ({
+  useRouter: vi.fn(() => mockRouter),
+  usePathname: vi.fn(() => '/'),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+  useParams: vi.fn(() => ({})),
+  redirect: vi.fn(),
+  notFound: vi.fn(),
+}))
+
+// ---------------------------------------------------------------------------
+// Mock next/image
+// ---------------------------------------------------------------------------
+vi.mock('next/image', () => ({
+  default: (props: Record<string, unknown>) => {
+    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+    const { fill, priority, ...rest } = props as any
+    return <img {...rest} />
+  },
+}))
+
+// ---------------------------------------------------------------------------
+// Mock next/link (render as plain <a> to keep assertions simple)
+// ---------------------------------------------------------------------------
+vi.mock('next/link', () => ({
+  default: ({ children, href, ...rest }: any) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  ),
+}))
+
+// ---------------------------------------------------------------------------
+// Mock @clerk/nextjs
+// ---------------------------------------------------------------------------
+vi.mock('@clerk/nextjs', () => ({
+  SignedIn: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  SignedOut: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  UserButton: () => <div data-testid="clerk-user-button" />,
+  useUser: () => ({ isSignedIn: true, user: { id: 'test-user' } }),
+  useAuth: () => ({
+    isSignedIn: true,
+    userId: 'test-user',
+    getToken: vi.fn().mockResolvedValue('mock-token'),
+  }),
+  ClerkProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  auth: () => ({ userId: 'test-user' }),
+}))
+
 // Mock scrollIntoView
 Element.prototype.scrollIntoView = vi.fn()
 
