@@ -37,7 +37,7 @@ from src.workflows.workflow_engine import (
 from ..auth import verify_api_key
 from ..dependencies import require_content_access, require_content_creation
 from ..error_handlers import sanitize_error_message
-from ..middleware import increment_usage_for_operation, require_pro_tier, require_quota
+from ..middleware import increment_usage_for_operation, require_quota
 
 logger = logging.getLogger(__name__)
 
@@ -193,7 +193,6 @@ async def get_preset(preset_id: str) -> Dict[str, Any]:
 )
 async def create_workflow(
     request: CreateWorkflowRequest,
-    _tier: str = Depends(require_pro_tier),
     auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ) -> Dict[str, Any]:
     """Create and store a custom workflow definition."""
@@ -259,7 +258,6 @@ async def create_workflow(
 async def execute_workflow(
     workflow_id: str,
     request: ExecuteWorkflowRequest,
-    _tier: str = Depends(require_pro_tier),
     auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ) -> Dict[str, Any]:
     """Execute a workflow and return an execution handle."""
