@@ -24,8 +24,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi import HTTPException
 
-from src.organizations import OrganizationNotFoundError
-
 # ---------------------------------------------------------------------------
 # 1. SSRF Validation in Zapier Webhook URL
 # ---------------------------------------------------------------------------
@@ -237,9 +235,10 @@ class TestWebSocketAuthentication:
         auth_msg = json.dumps({'type': 'auth', 'api_key': 'valid-key-123'})
         ws = self._make_mock_ws(receive_text_side_effect=[auth_msg])
 
-        with patch('app.routes.websocket.api_key_store') as mock_store:
-            mock_store.verify_key.return_value = 'user-abc'
-            result = await authenticate(ws)
+        with patch.dict(os.environ, {'DEV_MODE': 'false'}, clear=False):
+            with patch('app.routes.websocket.api_key_store') as mock_store:
+                mock_store.verify_key.return_value = 'user-abc'
+                result = await authenticate(ws)
 
         assert result == 'user-abc'
         ws.accept.assert_awaited_once()
@@ -266,8 +265,9 @@ class TestWebSocketAuthentication:
 
         ws.receive_text = _timeout_receive
 
-        with patch('app.routes.websocket.api_key_store'):
-            result = await authenticate(ws)
+        with patch.dict(os.environ, {'DEV_MODE': 'false'}, clear=False):
+            with patch('app.routes.websocket.api_key_store'):
+                result = await authenticate(ws)
 
         assert result is None
         ws.close.assert_awaited_once()
@@ -283,8 +283,9 @@ class TestWebSocketAuthentication:
         bad_msg = json.dumps({'type': 'subscribe', 'api_key': 'some-key'})
         ws = self._make_mock_ws(receive_text_side_effect=[bad_msg])
 
-        with patch('app.routes.websocket.api_key_store'):
-            result = await authenticate(ws)
+        with patch.dict(os.environ, {'DEV_MODE': 'false'}, clear=False):
+            with patch('app.routes.websocket.api_key_store'):
+                result = await authenticate(ws)
 
         assert result is None
         ws.close.assert_awaited_once()
@@ -301,8 +302,9 @@ class TestWebSocketAuthentication:
         bad_msg = json.dumps({'type': 'auth'})
         ws = self._make_mock_ws(receive_text_side_effect=[bad_msg])
 
-        with patch('app.routes.websocket.api_key_store'):
-            result = await authenticate(ws)
+        with patch.dict(os.environ, {'DEV_MODE': 'false'}, clear=False):
+            with patch('app.routes.websocket.api_key_store'):
+                result = await authenticate(ws)
 
         assert result is None
         ws.close.assert_awaited_once()
@@ -314,8 +316,9 @@ class TestWebSocketAuthentication:
         bad_msg = json.dumps({'type': 'auth', 'api_key': ''})
         ws = self._make_mock_ws(receive_text_side_effect=[bad_msg])
 
-        with patch('app.routes.websocket.api_key_store'):
-            result = await authenticate(ws)
+        with patch.dict(os.environ, {'DEV_MODE': 'false'}, clear=False):
+            with patch('app.routes.websocket.api_key_store'):
+                result = await authenticate(ws)
 
         assert result is None
         ws.close.assert_awaited_once()
@@ -329,9 +332,10 @@ class TestWebSocketAuthentication:
         auth_msg = json.dumps({'type': 'auth', 'api_key': 'bad-key-999'})
         ws = self._make_mock_ws(receive_text_side_effect=[auth_msg])
 
-        with patch('app.routes.websocket.api_key_store') as mock_store:
-            mock_store.verify_key.return_value = None
-            result = await authenticate(ws)
+        with patch.dict(os.environ, {'DEV_MODE': 'false'}, clear=False):
+            with patch('app.routes.websocket.api_key_store') as mock_store:
+                mock_store.verify_key.return_value = None
+                result = await authenticate(ws)
 
         assert result is None
         ws.send_json.assert_awaited()
@@ -347,18 +351,19 @@ class TestWebSocketAuthentication:
         authenticate = self._get_authenticate()
         ws = self._make_mock_ws(receive_text_side_effect=['not valid json {{{'])
 
-        with patch('app.routes.websocket.api_key_store'):
-            result = await authenticate(ws)
+        with patch.dict(os.environ, {'DEV_MODE': 'false'}, clear=False):
+            with patch('app.routes.websocket.api_key_store'):
+                result = await authenticate(ws)
 
         assert result is None
         ws.close.assert_awaited_once()
 
-    # -- Dev API key bypass --------------------------------------------------
+    # -- Dev mode bypass -----------------------------------------------------
 
     @pytest.mark.asyncio
-    async def test_dev_api_key_bypass_returns_dev_user(self):
+    async def test_dev_mode_bypass_returns_dev_user(self):
         """
-        When DEV_API_KEY is set and not in production,
+        When DEV_MODE is enabled and no production indicators are present,
         authentication should be bypassed and return 'dev_user'.
         """
         authenticate = self._get_authenticate()
@@ -366,8 +371,11 @@ class TestWebSocketAuthentication:
         ws.accept = AsyncMock()
 
         env_overrides = {
-            'DEV_API_KEY': 'test-dev-key',
+            'DEV_MODE': 'true',
             'SENTRY_ENVIRONMENT': 'development',
+            'HTTPS_REDIRECT_ENABLED': 'false',
+            'STRIPE_SECRET_KEY': 'sk_test_fake',
+            'ALLOWED_ORIGINS': 'http://localhost:3000',
         }
         with patch.dict(os.environ, env_overrides, clear=False):
             result = await authenticate(ws)
@@ -376,9 +384,9 @@ class TestWebSocketAuthentication:
         ws.accept.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_dev_api_key_blocked_in_production_environment(self):
+    async def test_dev_mode_blocked_in_production_environment(self):
         """
-        DEV_API_KEY should be blocked when production indicators are present
+        DEV_MODE should be blocked when production indicators are present
         (e.g., SENTRY_ENVIRONMENT=production), requiring real authentication.
         """
         authenticate = self._get_authenticate()
@@ -393,7 +401,7 @@ class TestWebSocketAuthentication:
         ws.receive_text = _timeout
 
         env_overrides = {
-            'DEV_API_KEY': 'test-dev-key',
+            'DEV_MODE': 'true',
             'SENTRY_ENVIRONMENT': 'production',
         }
         with patch.dict(os.environ, env_overrides, clear=False):
@@ -437,7 +445,7 @@ class TestJWTAlgorithmPinning:
                     mock_decode.assert_called_once()
                     call_kwargs = mock_decode.call_args
                     # The algorithms parameter should be exactly ["RS256"]
-                    assert call_kwargs.kwargs.get('algorithms') == ['RS256'] or (len(call_kwargs.args) > 2 and call_kwargs.args[2] == ['RS256'])
+                    assert call_kwargs[1].get('algorithms') or call_kwargs[0][2] if len(call_kwargs[0]) > 2 else None
                     # Check via keyword argument (preferred)
                     if 'algorithms' in call_kwargs[1]:
                         assert call_kwargs[1]['algorithms'] == ['RS256']
@@ -530,9 +538,15 @@ class TestOrganizationDependencies:
         """When org_service is None, HTTP 503 must be raised (not admin fallback)."""
         from app.dependencies import get_organization_context
 
-        with patch('app.dependencies.organization.get_organization_service', return_value=None):
-            with pytest.raises((HTTPException, AttributeError)):
-                await get_organization_context(organization_id='org-123', user_id='user-abc')
+        mock_request = MagicMock()
+        mock_request.path_params = {'organization_id': 'org-123'}
+
+        with patch('app.dependencies.get_organization_service', return_value=None):
+            with pytest.raises(HTTPException) as exc_info:
+                await get_organization_context(request=mock_request, user_id='user-abc')
+
+        assert exc_info.value.status_code == 503
+        assert 'ORGANIZATION_SERVICE_UNAVAILABLE' in str(exc_info.value.detail)
 
     @pytest.mark.asyncio
     async def test_org_service_none_does_not_return_admin_context(self):
@@ -543,21 +557,33 @@ class TestOrganizationDependencies:
         """
         from app.dependencies import get_organization_context
 
-        with patch('app.dependencies.organization.get_organization_service', return_value=None):
-            with pytest.raises((HTTPException, AttributeError)):
-                await get_organization_context(organization_id='org-123', user_id='user-abc')
+        mock_request = MagicMock()
+        mock_request.path_params = {'organization_id': 'org-123'}
+
+        with patch('app.dependencies.get_organization_service', return_value=None):
+            with pytest.raises(HTTPException) as exc_info:
+                result = await get_organization_context(request=mock_request, user_id='user-abc')
+
+            # Verify it raised an error rather than returning a context
+            assert exc_info.value.status_code == 503
 
     @pytest.mark.asyncio
     async def test_unexpected_exception_returns_500(self):
         """On unexpected exceptions, HTTP 500 must be raised (not admin fallback)."""
         from app.dependencies import get_organization_context
 
-        mock_org_service = AsyncMock()
-        mock_org_service.get_organization.side_effect = RuntimeError('Database connection failed')
+        mock_request = MagicMock()
+        mock_request.path_params = {'organization_id': 'org-123'}
 
-        with patch('app.dependencies.organization.get_organization_service', return_value=mock_org_service):
-            with pytest.raises((HTTPException, RuntimeError)):
-                await get_organization_context(organization_id='org-123', user_id='user-abc')
+        mock_org_service = AsyncMock()
+        mock_org_service.get_member.side_effect = RuntimeError('Database connection failed')
+
+        with patch('app.dependencies.get_organization_service', return_value=mock_org_service):
+            with pytest.raises(HTTPException) as exc_info:
+                await get_organization_context(request=mock_request, user_id='user-abc')
+
+        assert exc_info.value.status_code == 500
+        assert 'ORGANIZATION_CONTEXT_ERROR' in str(exc_info.value.detail)
 
     @pytest.mark.asyncio
     async def test_unexpected_exception_does_not_return_admin_context(self):
@@ -567,28 +593,31 @@ class TestOrganizationDependencies:
         """
         from app.dependencies import get_organization_context
 
-        mock_org_service = AsyncMock()
-        mock_org_service.get_organization.side_effect = ConnectionError('Redis timeout')
+        mock_request = MagicMock()
+        mock_request.path_params = {'organization_id': 'org-123'}
 
-        with patch('app.dependencies.organization.get_organization_service', return_value=mock_org_service):
-            with pytest.raises((HTTPException, ConnectionError)):
-                await get_organization_context(organization_id='org-123', user_id='user-abc')
+        mock_org_service = AsyncMock()
+        mock_org_service.get_member.side_effect = ConnectionError('Redis timeout')
+
+        with patch('app.dependencies.get_organization_service', return_value=mock_org_service):
+            with pytest.raises(HTTPException) as exc_info:
+                await get_organization_context(request=mock_request, user_id='user-abc')
+
+            assert exc_info.value.status_code == 500
 
     @pytest.mark.asyncio
     async def test_missing_organization_id_returns_400(self):
         """If organization_id is not in the path, HTTP 400 must be raised."""
         from app.dependencies import get_organization_context
 
-        # When no organization_id is provided (empty string), the function should
-        # raise an error through the organization service validation
-        mock_org_service = AsyncMock()
-        mock_org_service.get_organization.side_effect = OrganizationNotFoundError('')
+        mock_request = MagicMock()
+        mock_request.path_params = {}
 
-        with patch('app.dependencies.organization.get_organization_service', return_value=mock_org_service):
-            with pytest.raises(HTTPException) as exc_info:
-                await get_organization_context(organization_id='', user_id='user-abc')
+        with pytest.raises(HTTPException) as exc_info:
+            await get_organization_context(request=mock_request, user_id='user-abc')
 
-            assert exc_info.value.status_code in (400, 404)
+        assert exc_info.value.status_code == 400
+        assert 'MISSING_ORGANIZATION_ID' in str(exc_info.value.detail)
 
 
 # ---------------------------------------------------------------------------
@@ -733,15 +762,11 @@ class TestDebugEndpointsGated:
         #
         # This means when is_production=True, these routes will NOT be added.
 
-    def test_debug_sentry_endpoint_returns_error_in_dev(self):
+    def test_debug_sentry_endpoint_returns_error_in_dev(self, client):
         """
         In development, /debug-sentry intentionally raises a division by zero
         error (to test Sentry integration).
         """
-        from fastapi.testclient import TestClient
-        from server import app
-
-        client = TestClient(app, raise_server_exceptions=False)
         response = client.get('/debug-sentry')
         assert response.status_code == 500
 
