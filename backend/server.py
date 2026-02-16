@@ -71,6 +71,7 @@ from app.routes import (
     book_router,
     brand_voice_router,
     bulk_router,
+    chat_router,
     config_router,
     content_router,
     conversations_router,
@@ -81,14 +82,17 @@ from app.routes import (
     organizations_router,
     payments_router,
     remix_router,
+    seo_router,
     social_router,
     sso_admin_router,
     sso_router,
     streaming_router,
+    templates_marketing_router,
     tools_router,
     usage_router,
     webhooks_router,
     websocket_router,
+    workflows_router,
     zapier_router,
 )
 
@@ -293,19 +297,23 @@ The API supports versioning via URL path. Current version: `v1`
         {"name": "health", "description": "Health checks and system status"},
         {"name": "blog", "description": "Blog post generation endpoints"},
         {"name": "book", "description": "Book generation endpoints"},
+        {"name": "Chat Assistant", "description": "Conversational content creation and editing"},
         {"name": "Brand Voice Training", "description": "Train and apply custom brand voices"},
         {"name": "Content Remix", "description": "Transform content across formats"},
         {"name": "content", "description": "Content quality and plagiarism detection"},
+        {"name": "seo", "description": "SERP analysis and content optimization"},
         {"name": "Knowledge Base", "description": "Upload documents and search your knowledge base for RAG"},
         {"name": "batch", "description": "Batch processing for bulk content generation"},
         {"name": "images", "description": "AI-powered image generation"},
         {"name": "export", "description": "Export content to various formats"},
+        {"name": "marketing-templates", "description": "Marketing copy template library with 50+ templates"},
         {"name": "tools", "description": "Content generation tools and utilities"},
         {"name": "usage", "description": "Usage tracking and quota management"},
         {"name": "payments", "description": "Subscription and billing management"},
         {"name": "conversations", "description": "Conversation history management"},
         {"name": "social", "description": "Social media scheduling and publishing"},
         {"name": "sso", "description": "Single Sign-On authentication (SAML/OIDC)"},
+        {"name": "Workflows", "description": "Workflow automation for chaining generation steps into reusable pipelines"},
         {"name": "sso-admin", "description": "SSO configuration and administration"},
         {"name": "debug", "description": "Debug and development endpoints"},
     ],
@@ -443,6 +451,7 @@ app.include_router(health_router)
 app.include_router(analytics_router)
 app.include_router(batch_router)
 app.include_router(brand_voice_router)
+app.include_router(chat_router)
 app.include_router(content_router)
 app.include_router(conversations_router)
 app.include_router(blog_router)
@@ -455,11 +464,14 @@ app.include_router(images_router)
 app.include_router(organizations_router)
 app.include_router(payments_router)
 app.include_router(remix_router)
+app.include_router(seo_router)
 app.include_router(streaming_router)
+app.include_router(templates_marketing_router)
 app.include_router(tools_router)
 app.include_router(usage_router)
 app.include_router(webhooks_router)
 app.include_router(websocket_router)
+app.include_router(workflows_router)
 app.include_router(zapier_router)
 app.include_router(social_router)
 app.include_router(sso_router)
@@ -493,6 +505,7 @@ api_v1_router = APIRouter(prefix="/api/v1", tags=["v1"])
 api_v1_router.include_router(analytics_router)
 api_v1_router.include_router(batch_router)
 api_v1_router.include_router(brand_voice_router)
+api_v1_router.include_router(chat_router)
 api_v1_router.include_router(content_router)
 api_v1_router.include_router(conversations_router)
 api_v1_router.include_router(blog_router)
@@ -505,10 +518,13 @@ api_v1_router.include_router(images_router)
 api_v1_router.include_router(organizations_router)
 api_v1_router.include_router(payments_router)
 api_v1_router.include_router(remix_router)
+api_v1_router.include_router(seo_router)
 api_v1_router.include_router(streaming_router)
+api_v1_router.include_router(templates_marketing_router)
 api_v1_router.include_router(tools_router)
 api_v1_router.include_router(usage_router)
 api_v1_router.include_router(webhooks_router)
+api_v1_router.include_router(workflows_router)
 api_v1_router.include_router(zapier_router)
 api_v1_router.include_router(social_router)
 api_v1_router.include_router(sso_router)
