@@ -230,7 +230,16 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning("Failed to close webhook service client: %s", e)
 
+# Disable OpenAPI/Swagger docs in production to avoid exposing API schema
+_is_production = settings.is_production
+_docs_url = None if _is_production else "/docs"
+_redoc_url = None if _is_production else "/redoc"
+_openapi_url = None if _is_production else "/openapi.json"
+
 app = FastAPI(
+    docs_url=_docs_url,
+    redoc_url=_redoc_url,
+    openapi_url=_openapi_url,
     title="Blog AI API",
     description="""
 ## AI-Powered Content Generation API
@@ -525,48 +534,36 @@ app.include_router(api_v1_router)
 
 
 # =============================================================================
-# Debug Endpoints
+# Debug Endpoints (only registered in non-production environments)
 # =============================================================================
 
+if not settings.is_production:
 
-@app.get("/debug-sentry", tags=["debug"])
-async def trigger_sentry_error():
-    """
-    Debug endpoint to verify Sentry error tracking is working.
+    @app.get("/debug-sentry", tags=["debug"])
+    async def trigger_sentry_error():
+        """
+        Debug endpoint to verify Sentry error tracking is working.
 
-    WARNING: This endpoint intentionally raises an exception.
-    Only use this in development/staging to verify Sentry integration.
-    Should be disabled or protected in production.
-    """
-    if settings.is_production:
+        WARNING: This endpoint intentionally raises an exception.
+        Only available in development/staging environments.
+        """
+        division_by_zero = 1 / 0
+        return {"this": "will never be reached"}
+
+    @app.get("/config-status", tags=["debug"])
+    async def get_config_status():
+        """
+        Get current configuration status (without secrets).
+
+        Only available in non-production environments.
+        """
         return {
-            "error": "Debug endpoint disabled in production",
-            "sentry_configured": is_sentry_initialized(),
+            "success": True,
+            "config": settings.get_config_summary(),
         }
 
-    # This will trigger an error in Sentry
-    division_by_zero = 1 / 0
-    return {"this": "will never be reached"}
-
-
-@app.get("/config-status", tags=["debug"])
-async def get_config_status():
-    """
-    Get current configuration status (without secrets).
-
-    This endpoint returns the configuration summary for debugging
-    and operational visibility.
-    """
-    if settings.is_production and not settings.is_dev_mode:
-        return {
-            "error": "Config status endpoint disabled in production",
-            "environment": settings.security.environment,
-        }
-
-    return {
-        "success": True,
-        "config": settings.get_config_summary(),
-    }
+else:
+    logger.info("Debug endpoints disabled in production environment")
 
 
 if __name__ == "__main__":

@@ -64,7 +64,7 @@ services:
       - RATE_LIMIT_GENERATION=${RATE_LIMIT_GENERATION:-10}
 
       # Redis connection
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
 
       # API Keys (from .env or secrets)
       - OPENAI_API_KEY=${OPENAI_API_KEY}
@@ -155,6 +155,7 @@ services:
     # Redis configuration
     command: >
       redis-server
+      --requirepass ${REDIS_PASSWORD}
       --appendonly yes
       --maxmemory 200mb
       --maxmemory-policy allkeys-lru
@@ -163,7 +164,7 @@ services:
 
     # Health check
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5

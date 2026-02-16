@@ -5,6 +5,8 @@ import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
+const isDev = process.env.NODE_ENV === 'development'
+
 // Bundle analyzer - only loaded when ANALYZE env var is set
 const withBundleAnalyzer =
   process.env.ANALYZE === 'true'
@@ -45,17 +47,29 @@ const securityHeaders = [
   },
   {
     // Content Security Policy
+    // In development, Next.js requires 'unsafe-eval' for fast refresh / HMR.
+    // In production we drop it and restrict sources to known origins only.
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      // Allow Clerk to load its JS bundle in production.
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https:",
+      [
+        "script-src 'self'",
+        isDev ? "'unsafe-eval'" : '',
+        'https://*.clerk.accounts.dev',
+        'https://cdn.clerk.io',
+        'https://challenges.cloudflare.com',
+      ].filter(Boolean).join(' '),
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: https: blob:",
+      "img-src 'self' data: https://*.clerk.com https://*.unsplash.com blob:",
       "font-src 'self' data:",
-      "connect-src 'self' https: wss: ws:",
-      // Clerk may use iframes for some auth flows.
-      "frame-src 'self' https:",
+      [
+        "connect-src 'self'",
+        'https://*.clerk.accounts.dev',
+        'https://api.clerk.io',
+        isDev ? 'ws://localhost:* wss://localhost:*' : '',
+        process.env.NEXT_PUBLIC_API_URL || '',
+      ].filter(Boolean).join(' '),
+      "frame-src 'self' https://*.clerk.accounts.dev https://challenges.cloudflare.com",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",

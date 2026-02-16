@@ -68,17 +68,18 @@ async def get_organization_context(
         org_service = get_organization_service()
 
         if org_service is None:
-            # Organization service not initialized - return a default admin context
-            # This allows SSO admin endpoints to work without full org setup
-            logger.warning(
-                f"Organization service not initialized, using default admin context"
+            # Organization service not initialized - deny access.
+            # Callers must ensure the organization service is available
+            # before org-scoped endpoints can be used.
+            logger.error(
+                "Organization service not initialized, denying access"
             )
-            return AuthorizationContext(
-                user_id=user_id,
-                organization_id=organization_id,
-                role="admin",
-                permissions=[p for p in Permission],  # All permissions for admin
-                is_owner=False,
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={
+                    "error": "Organization service is not available",
+                    "error_code": "ORGANIZATION_SERVICE_UNAVAILABLE",
+                },
             )
 
         # Get membership from organization service
@@ -118,15 +119,16 @@ async def get_organization_context(
                 "error_code": "ORGANIZATION_NOT_FOUND",
             },
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error resolving organization context: {e}")
-        # For development/demo, return admin context on error
-        return AuthorizationContext(
-            user_id=user_id,
-            organization_id=organization_id,
-            role="admin",
-            permissions=[p for p in Permission],
-            is_owner=False,
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "Failed to resolve organization context",
+                "error_code": "ORGANIZATION_CONTEXT_ERROR",
+            },
         )
 
 
