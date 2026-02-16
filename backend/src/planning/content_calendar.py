@@ -4,9 +4,12 @@ Content calendar generation functionality.
 
 import csv
 import json
+import logging
 import os
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 from ..research.web_researcher import ResearchError, conduct_web_research
 from ..text_generation.core import GenerationOptions, LLMProvider, TextGenerationError, generate_text
@@ -116,8 +119,7 @@ def generate_content_calendar(
     except ValueError as e:
         raise ContentCalendarError(f"Invalid parameters for content calendar: {str(e)}") from e
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        logger.exception("Failed to generate content calendar")
         raise ContentCalendarError(f"Unexpected error generating content calendar: {str(e)}") from e
 
 
@@ -222,8 +224,7 @@ def generate_content_topics(
     except ValueError as e:
         raise ContentCalendarError(f"Invalid parameters for content topics: {str(e)}") from e
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        logger.exception("Failed to generate content topics")
         raise ContentCalendarError(f"Unexpected error generating content topics: {str(e)}") from e
 
 
@@ -335,8 +336,7 @@ def generate_content_topics_with_research(
     except ValueError as e:
         raise ContentCalendarError(f"Invalid parameters for content topics with research: {str(e)}") from e
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        logger.exception("Failed to generate content topics with research")
         raise ContentCalendarError(f"Unexpected error generating content topics with research: {str(e)}") from e
 
 
@@ -385,8 +385,7 @@ def save_content_calendar_to_csv(calendar: ContentCalendar, file_path: str) -> N
     except (TypeError, AttributeError) as e:
         raise ContentCalendarError(f"Invalid calendar data for CSV serialization: {str(e)}") from e
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        logger.exception("Failed to save content calendar to CSV")
         raise ContentCalendarError(f"Unexpected error saving content calendar to CSV: {str(e)}") from e
 
 
@@ -437,8 +436,7 @@ def save_content_calendar_to_json(calendar: ContentCalendar, file_path: str) -> 
     except TypeError as e:
         raise ContentCalendarError(f"JSON serialization error: {str(e)}") from e
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        logger.exception("Failed to save content calendar to JSON")
         raise ContentCalendarError(f"Unexpected error saving content calendar to JSON: {str(e)}") from e
 
 
@@ -496,6 +494,5 @@ def load_content_calendar_from_json(file_path: str) -> ContentCalendar:
     except ValueError as e:
         raise ContentCalendarError(f"Invalid date format in calendar file: {str(e)}") from e
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        logger.exception("Failed to load content calendar from JSON")
         raise ContentCalendarError(f"Unexpected error loading content calendar from JSON: {str(e)}") from e

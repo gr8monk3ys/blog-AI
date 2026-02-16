@@ -3,8 +3,11 @@ Content outline generation functionality.
 """
 
 import json
+import logging
 import os
 from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 from ..research.web_researcher import ResearchError, conduct_web_research
 from ..text_generation.core import GenerationOptions, LLMProvider, TextGenerationError, generate_text
@@ -108,8 +111,7 @@ def generate_content_outline(
     except AttributeError as e:
         raise ContentOutlineError(f"Invalid data structure during outline generation: {str(e)}") from e
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        logger.exception("Failed to generate content outline")
         raise ContentOutlineError(f"Unexpected error generating content outline: {str(e)}") from e
 
 
@@ -211,8 +213,7 @@ def generate_detailed_content_outline(
     except AttributeError as e:
         raise ContentOutlineError(f"Invalid data structure during detailed outline generation: {str(e)}") from e
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        logger.exception("Failed to generate detailed content outline")
         raise ContentOutlineError(f"Unexpected error generating detailed content outline: {str(e)}") from e
 
 
@@ -319,8 +320,7 @@ def generate_content_outline_with_research(
     except ValueError as e:
         raise ContentOutlineError(f"Invalid parameters for content outline with research: {str(e)}") from e
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        logger.exception("Failed to generate content outline with research")
         raise ContentOutlineError(f"Unexpected error generating content outline with research: {str(e)}") from e
 
 
@@ -412,8 +412,7 @@ def generate_content_outline_from_topic(
     except AttributeError as e:
         raise ContentOutlineError(f"Invalid topic data structure: {str(e)}") from e
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        logger.exception("Failed to generate content outline from topic")
         raise ContentOutlineError(f"Unexpected error generating content outline from topic: {str(e)}") from e
 
 
@@ -451,8 +450,7 @@ def save_content_outline_to_json(outline: ContentOutline, file_path: str) -> Non
     except TypeError as e:
         raise ContentOutlineError(f"JSON serialization error: {str(e)}") from e
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        logger.exception("Failed to save content outline to JSON")
         raise ContentOutlineError(f"Unexpected error saving content outline to JSON: {str(e)}") from e
 
 
@@ -489,6 +487,5 @@ def load_content_outline_from_json(file_path: str) -> ContentOutline:
     except KeyError as e:
         raise ContentOutlineError(f"Missing required field in outline JSON: {str(e)}") from e
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        logger.exception("Failed to load content outline from JSON")
         raise ContentOutlineError(f"Unexpected error loading content outline from JSON: {str(e)}") from e
