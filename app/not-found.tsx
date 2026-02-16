@@ -3,6 +3,9 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
+const SUPPORT_EMAIL =
+  process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@blogai.com'
+
 /**
  * Custom 404 Not Found page
  *
@@ -92,7 +95,7 @@ export default function NotFound() {
         <p className="mt-10 text-sm text-gray-500">
           If you believe this is a mistake, please{' '}
           <a
-            href="mailto:support@example.com"
+            href={`mailto:${SUPPORT_EMAIL}`}
             className="text-blue-600 hover:text-blue-500 underline underline-offset-2"
           >
             contact support

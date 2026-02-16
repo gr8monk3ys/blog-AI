@@ -1,5 +1,6 @@
 # Core dependencies
 # Versions aligned with pyproject.toml
+tenacity>=8.2.0
 openai>=2.15.0
 anthropic>=0.76.0
 google-generativeai>=0.3.1
@@ -8,8 +9,7 @@ pydantic>=2.5.2
 pydantic-settings>=2.1.0
 python-dotenv>=1.0.0
 
-# Image generation
-stability-sdk>=0.8.0
+# Image generation (Stability AI uses REST API via httpx, no SDK needed)
 Pillow>=10.0.0
 
 # Backend server

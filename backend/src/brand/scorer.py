@@ -4,6 +4,7 @@ Voice Consistency Scorer.
 Scores generated content against a trained brand voice fingerprint.
 """
 
+import logging
 import re
 import json
 from typing import Any, Dict, List, Optional
@@ -16,6 +17,8 @@ from src.types.brand import (
     SampleAnalysis,
     ContentType,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class VoiceScorer:
@@ -290,7 +293,7 @@ Return ONLY the JSON."""
             if json_match:
                 return json.loads(json_match.group())
         except (json.JSONDecodeError, ValueError) as e:
-            print(f"Feedback generation error: {e}")
+            logger.warning("Feedback generation error: %s", e)
 
         # Fallback feedback
         grade = (
