@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { Popover } from '@headlessui/react';
 import BookViewer from './BookViewer';
 import BookEditor from './BookEditor';
+import ContentEditor from './ContentEditor';
 import ExportMenu, { ExportContent, ExportFormat } from './ExportMenu';
 import ContentScore from './tools/ContentScore'
 import PlagiarismCheck from './tools/PlagiarismCheck'
+import ContentRating from './ContentRating'
 import { Book } from '../types/book';
 import { BlogContent, ContentGenerationResponse, BlogSection, BookContent } from '../types/content';
 import { API_ENDPOINTS, apiFetch, getDefaultHeaders } from '../lib/api';
@@ -58,17 +60,32 @@ function bookToMarkdown(book: BookContent): string {
 
 interface ContentViewerProps {
   content: ContentGenerationResponse;
+  contentId?: string;
 }
 
-export default function ContentViewer({ content }: ContentViewerProps) {
+export default function ContentViewer({ content, contentId }: ContentViewerProps) {
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
   const [editInstructions, setEditInstructions] = useState('');
   const [isEditingBook, setIsEditingBook] = useState(false);
+  const [isInlineEditing, setIsInlineEditing] = useState(false);
   const [contentScore, setContentScore] = useState<ContentScoreResult | null>(null)
   const [scoringLoading, setScoringLoading] = useState(false)
   const [plagiarismResult, setPlagiarismResult] = useState<PlagiarismCheckResult | null>(null)
   const [plagiarismLoading, setPlagiarismLoading] = useState(false)
   const [plagiarismError, setPlagiarismError] = useState<string | null>(null)
+
+  // Derive a stable identifier for the feedback system
+  const feedbackContentId = useMemo(() => {
+    if (contentId) return contentId
+    // Fall back to a slug of the title + type
+    const title = content.content?.title || ''
+    return `${content.type}-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 80)}`
+  }, [contentId, content])
+
+  // Stable key for the inline content editor localStorage persistence
+  const editorStorageKey = useMemo(() => {
+    return `editor-${feedbackContentId}`
+  }, [feedbackContentId])
 
   // Convert BookContent to Book type for the editor
   const getBookData = (): Book | null => {
@@ -290,6 +307,53 @@ export default function ContentViewer({ content }: ContentViewerProps) {
 
   if (content.type === 'blog') {
     const sources = content.content.sources || []
+
+    // When the inline editor is active, render ContentEditor with the full
+    // markdown representation of the blog post.
+    if (isInlineEditing) {
+      return (
+        <div className="mt-8">
+          {/* Toast notification */}
+          {exportToast.show && (
+            <div
+              className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg ${
+                exportToast.type === 'success'
+                  ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                  : 'bg-red-50 border border-red-200 text-red-800'
+              }`}
+            >
+              <span className="text-sm font-medium">{exportToast.message}</span>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-3xl font-bold text-gray-900">{content.content.title}</h1>
+            <div className="flex items-center gap-3">
+              <ExportMenu
+                content={getExportContent()}
+                onExportComplete={handleExportComplete}
+              />
+              <button
+                type="button"
+                onClick={() => setIsInlineEditing(false)}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors"
+              >
+                Back to View
+              </button>
+            </div>
+          </div>
+
+          <ContentEditor
+            initialContent={analysisText}
+            storageKey={editorStorageKey}
+            title={content.content.title}
+          />
+
+          <ContentRating contentId={feedbackContentId} />
+        </div>
+      )
+    }
+
     return (
       <div className="mt-8">
         {/* Toast notification */}
@@ -305,76 +369,85 @@ export default function ContentViewer({ content }: ContentViewerProps) {
           </div>
         )}
 
-	        {/* Header with export button */}
-	        <div className="flex items-center justify-between mb-6">
-	          <h1 className="text-3xl font-bold text-gray-900">{content.content.title}</h1>
-	          <ExportMenu
-	            content={getExportContent()}
-	            onExportComplete={handleExportComplete}
-	          />
-	        </div>
-
-          {/* Content analysis */}
-          {(contentScore || scoringLoading) && (
-            <div className="mb-6">
-              <ContentScore
-                scores={contentScore!}
-                isLoading={scoringLoading}
-                showDetails={true}
-              />
-            </div>
-          )}
-
-          <PlagiarismCheck
-            result={plagiarismResult}
-            loading={plagiarismLoading}
-            error={plagiarismError}
-            onRun={runPlagiarismCheck}
-          />
-
-		        <div className="prose prose-lg max-w-none">
-		        {content.content.sections.map((section: BlogSection, index: number) => (
-          <Popover key={`section-${index}`} className="relative">
-            <div
-              className="hover:bg-gray-50 p-2 rounded transition-colors cursor-pointer group"
-              onMouseEnter={() => setEditingSectionId(`section-${index}`)}
-              onMouseLeave={() => setEditingSectionId(null)}
+        {/* Header with export + edit buttons */}
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">{content.content.title}</h1>
+          <div className="flex items-center gap-3">
+            <ExportMenu
+              content={getExportContent()}
+              onExportComplete={handleExportComplete}
+            />
+            <button
+              type="button"
+              onClick={() => setIsInlineEditing(true)}
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-amber-600 border border-transparent rounded-lg hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors"
             >
-              <h2 className="text-xl font-semibold">{section.title}</h2>
-              <div className="prose">
-                {section.subtopics.map((subtopic, subIndex) => (
-                  <div key={subIndex}>
-                    <h3>{subtopic.title}</h3>
-                    <p>{subtopic.content}</p>
-                  </div>
-                ))}
-              </div>
+              Edit Content
+            </button>
+          </div>
+        </div>
 
-              {editingSectionId === `section-${index}` && (
-                <Popover.Panel className="absolute z-10 w-96 px-4 mt-3 transform -translate-x-1/2 left-1/2">
-                  <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
-                    <div className="relative bg-white p-4">
-                      <textarea
-                        className="w-full p-2 border rounded"
-                        placeholder="How would you like to change this section?"
-                        value={editInstructions}
-                        onChange={(e) => setEditInstructions(e.target.value)}
-                        rows={4}
-                      />
-                      <button
-                        onClick={() => handleSectionEdit(`section-${index}`)}
-                        className="mt-2 w-full bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700"
-                      >
-                        Update Section
-                      </button>
+        {/* Content analysis */}
+        {(contentScore || scoringLoading) && (
+          <div className="mb-6">
+            <ContentScore
+              scores={contentScore!}
+              isLoading={scoringLoading}
+              showDetails={true}
+            />
+          </div>
+        )}
+
+        <PlagiarismCheck
+          result={plagiarismResult}
+          loading={plagiarismLoading}
+          error={plagiarismError}
+          onRun={runPlagiarismCheck}
+        />
+
+        <div className="prose prose-lg max-w-none">
+          {content.content.sections.map((section: BlogSection, index: number) => (
+            <Popover key={`section-${index}`} className="relative">
+              <div
+                className="hover:bg-gray-50 p-2 rounded transition-colors cursor-pointer group"
+                onMouseEnter={() => setEditingSectionId(`section-${index}`)}
+                onMouseLeave={() => setEditingSectionId(null)}
+              >
+                <h2 className="text-xl font-semibold">{section.title}</h2>
+                <div className="prose">
+                  {section.subtopics.map((subtopic, subIndex) => (
+                    <div key={subIndex}>
+                      <h3>{subtopic.title}</h3>
+                      <p>{subtopic.content}</p>
                     </div>
-                  </div>
-                </Popover.Panel>
-              )}
-            </div>
-          </Popover>
-	        ))}
-	        </div>
+                  ))}
+                </div>
+
+                {editingSectionId === `section-${index}` && (
+                  <Popover.Panel className="absolute z-10 w-96 px-4 mt-3 transform -translate-x-1/2 left-1/2">
+                    <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
+                      <div className="relative bg-white p-4">
+                        <textarea
+                          className="w-full p-2 border rounded"
+                          placeholder="How would you like to change this section?"
+                          value={editInstructions}
+                          onChange={(e) => setEditInstructions(e.target.value)}
+                          rows={4}
+                        />
+                        <button
+                          onClick={() => handleSectionEdit(`section-${index}`)}
+                          className="mt-2 w-full bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700"
+                        >
+                          Update Section
+                        </button>
+                      </div>
+                    </div>
+                  </Popover.Panel>
+                )}
+              </div>
+            </Popover>
+          ))}
+        </div>
 
         {sources.length > 0 && (
           <div className="mt-10 border-t border-gray-200 pt-6">
@@ -398,6 +471,8 @@ export default function ContentViewer({ content }: ContentViewerProps) {
             </ul>
           </div>
         )}
+
+        <ContentRating contentId={feedbackContentId} />
       </div>
     );
   }
@@ -416,6 +491,50 @@ export default function ContentViewer({ content }: ContentViewerProps) {
       );
     }
 
+    // Book inline markdown editor
+    if (isInlineEditing) {
+      return (
+        <div className="mt-8">
+          {exportToast.show && (
+            <div
+              className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg ${
+                exportToast.type === 'success'
+                  ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                  : 'bg-red-50 border border-red-200 text-red-800'
+              }`}
+            >
+              <span className="text-sm font-medium">{exportToast.message}</span>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-3xl font-bold text-gray-900">{content.content.title}</h1>
+            <div className="flex items-center gap-3">
+              <ExportMenu
+                content={getExportContent()}
+                onExportComplete={handleExportComplete}
+              />
+              <button
+                type="button"
+                onClick={() => setIsInlineEditing(false)}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors"
+              >
+                Back to View
+              </button>
+            </div>
+          </div>
+
+          <ContentEditor
+            initialContent={analysisText}
+            storageKey={editorStorageKey}
+            title={content.content.title}
+          />
+
+          <ContentRating contentId={feedbackContentId} />
+        </div>
+      )
+    }
+
     return (
       <div className="mt-8">
         {/* Toast notification */}
@@ -431,18 +550,25 @@ export default function ContentViewer({ content }: ContentViewerProps) {
           </div>
         )}
 
-	        <div className="flex justify-end gap-3 mb-4">
-	          <ExportMenu
-	            content={getExportContent()}
-	            onExportComplete={handleExportComplete}
-	          />
-	          <button
-	            onClick={() => setIsEditingBook(true)}
-	            className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700"
-	          >
-	            Edit Book
-	          </button>
-	        </div>
+        <div className="flex justify-end gap-3 mb-4">
+          <ExportMenu
+            content={getExportContent()}
+            onExportComplete={handleExportComplete}
+          />
+          <button
+            type="button"
+            onClick={() => setIsInlineEditing(true)}
+            className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-amber-600 border border-transparent rounded-lg hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors"
+          >
+            Edit Content
+          </button>
+          <button
+            onClick={() => setIsEditingBook(true)}
+            className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700"
+          >
+            Edit Book
+          </button>
+        </div>
 
           {/* Content analysis */}
           {(contentScore || scoringLoading) && (
@@ -506,6 +632,8 @@ export default function ContentViewer({ content }: ContentViewerProps) {
             </ul>
           </div>
         )}
+
+        <ContentRating contentId={feedbackContentId} />
       </div>
     );
   }
