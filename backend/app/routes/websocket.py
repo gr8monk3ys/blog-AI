@@ -131,9 +131,19 @@ async def websocket_endpoint(
 
     # WebSocket was already accepted during authentication.
     # Register with the connection manager without re-accepting.
+    if conversation_id in manager.active_connections:
+        existing_user_ids = [
+            getattr(conn, '_user_id', None) 
+            for conn in manager.active_connections[conversation_id]
+        ]
+        if existing_user_ids and user_id not in existing_user_ids and None not in existing_user_ids:
+            await websocket.close(code=4003, reason="Not authorized for this conversation")
+            return
+
     if conversation_id not in manager.active_connections:
         manager.active_connections[conversation_id] = []
     manager.active_connections[conversation_id].append(websocket)
+    websocket._user_id = user_id
     logger.info(f"WebSocket connected for conversation: {conversation_id}")
 
     try:

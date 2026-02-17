@@ -10,8 +10,9 @@ Provides API endpoints for:
 
 import logging
 import secrets
+import time
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -45,6 +46,8 @@ from ..error_handlers import sanitize_error_message
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/social", tags=["social"])
+
+_oauth_states: Dict[str, Dict[str, Any]] = {}
 
 
 # =============================================================================
@@ -145,6 +148,8 @@ async def connect_account(
             state=state_token,
         )
 
+        _oauth_states[state_token] = {"user_id": user_id, "created_at": time.time()}
+
         logger.info(f"Generated OAuth URL for {platform.value} (user: {user_id[:8]}...)")
 
         return ConnectAccountResponse(
@@ -192,6 +197,13 @@ async def oauth_callback(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail={"error": f"Platform {platform.value} not supported", "success": False},
+            )
+
+        stored = _oauth_states.pop(state, None)
+        if not stored or stored["user_id"] != user_id or time.time() - stored["created_at"] > 600:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"error": "Invalid or expired state parameter", "success": False},
             )
 
         # Exchange code for tokens

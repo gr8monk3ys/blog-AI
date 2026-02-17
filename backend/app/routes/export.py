@@ -147,7 +147,7 @@ class ExportRequest(BaseModel):
     """Request model for export endpoints."""
 
     title: str = Field(..., min_length=1, max_length=500)
-    content: str = Field(..., min_length=1)
+    content: str = Field(..., min_length=1, max_length=500000)
     content_type: str = Field(default="blog", pattern=r"^(blog|book|tool)$")
     metadata: Optional[Dict] = Field(default=None)
 

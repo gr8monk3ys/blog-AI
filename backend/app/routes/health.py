@@ -8,8 +8,9 @@ from datetime import datetime
 from typing import Any, Dict
 
 import sentry_sdk
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from app.auth import verify_api_key
 from src.db import get_database_url, fetchrow as db_fetchrow
 from src.storage import redis_client, job_storage
 
@@ -275,7 +276,7 @@ async def health_check() -> Dict[str, Any]:
 
 
 @router.get("/health/db")
-async def database_health() -> Dict[str, Any]:
+async def database_health(_: str = Depends(verify_api_key)) -> Dict[str, Any]:
     """
     Detailed database health check.
 
@@ -290,7 +291,7 @@ async def database_health() -> Dict[str, Any]:
 
 
 @router.get("/health/stripe")
-async def stripe_health() -> Dict[str, Any]:
+async def stripe_health(_: str = Depends(verify_api_key)) -> Dict[str, Any]:
     """
     Detailed Stripe health check.
 
@@ -313,7 +314,7 @@ async def stripe_health() -> Dict[str, Any]:
 
 
 @router.get("/health/sentry")
-async def sentry_health() -> Dict[str, Any]:
+async def sentry_health(_: str = Depends(verify_api_key)) -> Dict[str, Any]:
     """
     Detailed Sentry configuration status.
 
@@ -338,7 +339,7 @@ async def sentry_health() -> Dict[str, Any]:
 
 
 @router.get("/health/redis")
-async def redis_health() -> Dict[str, Any]:
+async def redis_health(_: str = Depends(verify_api_key)) -> Dict[str, Any]:
     """
     Detailed Redis health check.
 
@@ -353,7 +354,7 @@ async def redis_health() -> Dict[str, Any]:
 
 
 @router.get("/health/cache")
-async def cache_stats() -> Dict[str, Any]:
+async def cache_stats(_: str = Depends(verify_api_key)) -> Dict[str, Any]:
     """
     Get cache statistics for monitoring.
 
@@ -374,7 +375,7 @@ async def cache_stats() -> Dict[str, Any]:
 
 
 @router.post("/health/cache/cleanup")
-async def cleanup_caches() -> Dict[str, Any]:
+async def cleanup_caches(_: str = Depends(verify_api_key)) -> Dict[str, Any]:
     """
     Cleanup expired cache entries.
 

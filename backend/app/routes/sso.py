@@ -21,6 +21,9 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 from urllib.parse import urlencode
+import time as _time
+from urllib.parse import urlparse as _urlparse
+
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -61,6 +64,79 @@ _sso_user_sessions: Dict[str, SSOSession] = {}
 SSO_AUTH_SESSION_TIMEOUT = timedelta(minutes=10)  # Auth flow timeout
 SSO_USER_SESSION_TIMEOUT = timedelta(hours=8)  # User session timeout
 
+_SSO_SESSION_PREFIX = "sso:auth:"
+_SSO_USER_PREFIX = "sso:user:"
+_MAX_MEMORY_SESSIONS = 500
+
+
+def _safe_redirect_url(url: str) -> str:
+    if not url:
+        return "/"
+    parsed = _urlparse(url)
+    if parsed.scheme or parsed.netloc:
+        return "/"
+    return url
+
+
+async def _get_redis():
+    """Get Redis client if available."""
+    try:
+        from src.storage.redis_client import redis_client
+        client = await redis_client.get_client()
+        return client
+    except Exception:
+        return None
+
+
+async def _store_auth_session(session_id: str, data: dict, ttl_seconds: int = 600) -> None:
+    redis = await _get_redis()
+    if redis:
+        import json as _json
+        await redis.setex(f"{_SSO_SESSION_PREFIX}{session_id}", ttl_seconds, _json.dumps(data, default=str))
+    else:
+        if len(_sso_auth_sessions) >= _MAX_MEMORY_SESSIONS:
+            oldest = next(iter(_sso_auth_sessions))
+            del _sso_auth_sessions[oldest]
+        _sso_auth_sessions[session_id] = data
+
+
+async def _get_auth_session(session_id: str) -> dict | None:
+    redis = await _get_redis()
+    if redis:
+        import json as _json
+        raw = await redis.get(f"{_SSO_SESSION_PREFIX}{session_id}")
+        return _json.loads(raw) if raw else None
+    return _sso_auth_sessions.get(session_id)
+
+
+async def _delete_auth_session(session_id: str) -> None:
+    redis = await _get_redis()
+    if redis:
+        await redis.delete(f"{_SSO_SESSION_PREFIX}{session_id}")
+    else:
+        _sso_auth_sessions.pop(session_id, None)
+
+
+async def _store_user_session(session_id: str, session: "SSOSession", ttl_seconds: int = 86400) -> None:
+    redis = await _get_redis()
+    if redis:
+        import json as _json
+        await redis.setex(f"{_SSO_USER_PREFIX}{session_id}", ttl_seconds, _json.dumps(session.__dict__ if hasattr(session, '__dict__') else str(session), default=str))
+    else:
+        if len(_sso_user_sessions) >= _MAX_MEMORY_SESSIONS:
+            oldest = next(iter(_sso_user_sessions))
+            del _sso_user_sessions[oldest]
+        _sso_user_sessions[session_id] = session
+
+
+async def _get_user_session(session_id: str):
+    redis = await _get_redis()
+    if redis:
+        import json as _json
+        raw = await redis.get(f"{_SSO_USER_PREFIX}{session_id}")
+        return _json.loads(raw) if raw else None
+    return _sso_user_sessions.get(session_id)
+
 
 # =============================================================================
 # Helper Functions
@@ -82,34 +158,7 @@ def _get_sso_config(organization_id: str) -> Optional[SSOConfiguration]:
     return _sso_configurations.get(organization_id)
 
 
-def _save_auth_session(session_id: str, data: Dict[str, Any]) -> None:
-    """Save authentication session data."""
-    data["created_at"] = datetime.now(timezone.utc).isoformat()
-    _sso_auth_sessions[session_id] = data
-    logger.debug(f"Saved auth session: {session_id[:20]}...")
-
-
-def _get_auth_session(session_id: str) -> Optional[Dict[str, Any]]:
-    """Get and validate authentication session data."""
-    data = _sso_auth_sessions.get(session_id)
-    if not data:
-        return None
-
-    # Check timeout
-    created_at = datetime.fromisoformat(data.get("created_at", ""))
-    if datetime.now(timezone.utc) - created_at > SSO_AUTH_SESSION_TIMEOUT:
-        del _sso_auth_sessions[session_id]
-        return None
-
-    return data
-
-
-def _delete_auth_session(session_id: str) -> None:
-    """Delete authentication session data."""
-    _sso_auth_sessions.pop(session_id, None)
-
-
-def _create_user_session(
+async def _create_user_session(
     organization_id: str,
     sso_user: SSOUser,
     provider_type: SSOProviderType,
@@ -140,7 +189,7 @@ def _create_user_session(
         saml_name_id_format=saml_name_id_format,
     )
 
-    _sso_user_sessions[session_id] = session
+    await _store_user_session(session_id, session)
     logger.info(
         f"Created SSO session for user {sso_user.email} in org {organization_id}"
     )
@@ -298,7 +347,7 @@ async def saml_login(
         # Save session data for callback validation
         session_id = secrets.token_urlsafe(16)
         session_data["organization_id"] = organization_id
-        _save_auth_session(session_id, session_data)
+        await _store_auth_session(session_id, session_data)
 
         # Set session cookie and redirect
         response = RedirectResponse(
@@ -371,7 +420,7 @@ async def saml_acs(
 
         # Get session data
         session_id = request.cookies.get("sso_auth_session")
-        session_data = _get_auth_session(session_id) if session_id else {}
+        session_data = (await _get_auth_session(session_id)) if session_id else {}
 
         # Create SAML provider
         provider = SAMLProvider(organization_id, sso_config)
@@ -406,7 +455,7 @@ async def saml_acs(
                 )
 
         # Create user session
-        session_token = _create_user_session(
+        session_token = await _create_user_session(
             organization_id=organization_id,
             sso_user=sso_user,
             provider_type=SSOProviderType.SAML,
@@ -418,10 +467,10 @@ async def saml_acs(
 
         # Clean up auth session
         if session_id:
-            _delete_auth_session(session_id)
+            await _delete_auth_session(session_id)
 
         # Determine redirect URL
-        redirect_url = relay_state or "/"
+        redirect_url = _safe_redirect_url(relay_state or "/")
 
         # Create response with session token
         response = RedirectResponse(
@@ -488,11 +537,13 @@ async def saml_slo(
     session_token = request.cookies.get("sso_session")
     if session_token:
         session_hash = hashlib.sha256(session_token.encode()).hexdigest()
-        session = _sso_user_sessions.pop(session_hash, None)
+        session = await _get_user_session(session_hash)
 
         if session:
+            await _delete_auth_session(session_hash)
+            user_email = session.sso_user.email if hasattr(session, 'sso_user') else session.get('sso_user', {}).get('email', 'unknown')
             logger.info(
-                f"SAML logout for user {session.sso_user.email} in org {organization_id}"
+                f"SAML logout for user {user_email} in org {organization_id}"
             )
 
     # Create response
@@ -557,7 +608,7 @@ async def oidc_authorize(
         # Save session data for callback validation
         session_id = secrets.token_urlsafe(16)
         session_data["organization_id"] = organization_id
-        _save_auth_session(session_id, session_data)
+        await _store_auth_session(session_id, session_data)
 
         # Set session cookie and redirect
         response = RedirectResponse(
@@ -633,7 +684,7 @@ async def oidc_callback(
     try:
         # Get session data
         session_id = request.cookies.get("sso_auth_session")
-        session_data = _get_auth_session(session_id) if session_id else {}
+        session_data = (await _get_auth_session(session_id)) if session_id else {}
 
         if not session_data:
             raise HTTPException(
@@ -687,7 +738,7 @@ async def oidc_callback(
             )
 
         # Create user session
-        session_token = _create_user_session(
+        session_token = await _create_user_session(
             organization_id=organization_id,
             sso_user=sso_user,
             provider_type=SSOProviderType.OIDC,
@@ -697,10 +748,10 @@ async def oidc_callback(
 
         # Clean up auth session
         if session_id:
-            _delete_auth_session(session_id)
+            await _delete_auth_session(session_id)
 
         # Determine redirect URL
-        redirect_url = session_data.get("relay_state") or "/"
+        redirect_url = _safe_redirect_url(session_data.get("relay_state") or "/")
 
         # Create response with session token
         response = RedirectResponse(
@@ -821,16 +872,18 @@ async def sso_logout(
 
     # Find and remove session
     session_hash = hashlib.sha256(session_token.encode()).hexdigest()
-    session = _sso_user_sessions.pop(session_hash, None)
+    session = await _get_user_session(session_hash)
 
     if session:
+        user_email = session.sso_user.email if hasattr(session, 'sso_user') else session.get('sso_user', {}).get('email', 'unknown')
+        org_id = session.organization_id if hasattr(session, 'organization_id') else session.get('organization_id', 'unknown')
         logger.info(
-            f"SSO logout for user {session.sso_user.email} "
-            f"in org {session.organization_id}"
+            f"SSO logout for user {user_email} "
+            f"in org {org_id}"
         )
 
         # Check if we need to redirect to IdP for SLO
-        sso_config = _get_sso_config(session.organization_id)
+        sso_config = _get_sso_config(org_id)
         if sso_config:
             if (
                 sso_config.provider_type == SSOProviderType.SAML
@@ -840,7 +893,7 @@ async def sso_logout(
                 return {
                     "success": True,
                     "message": "Logged out",
-                    "slo_redirect": f"/sso/saml/slo/{session.organization_id}",
+                    "slo_redirect": f"/sso/saml/slo/{org_id}",
                 }
 
     return {"success": True, "message": "Logged out"}
@@ -865,22 +918,42 @@ async def get_sso_session(
         return {"authenticated": False}
 
     session_hash = hashlib.sha256(session_token.encode()).hexdigest()
-    session = _sso_user_sessions.get(session_hash)
+    session = await _get_user_session(session_hash)
 
-    if not session or session.expires_at < datetime.now(timezone.utc):
+    if not session:
         return {"authenticated": False, "reason": "Session expired or not found"}
+
+    expires_at = session.expires_at if hasattr(session, 'expires_at') else datetime.fromisoformat(session.get('expires_at', ''))
+    if expires_at < datetime.now(timezone.utc):
+        return {"authenticated": False, "reason": "Session expired or not found"}
+
+    sso_user = session.sso_user if hasattr(session, 'sso_user') else session.get('sso_user', {})
+    if hasattr(sso_user, 'email'):
+        user_data = {
+            "email": sso_user.email,
+            "display_name": sso_user.display_name,
+            "first_name": sso_user.first_name,
+            "last_name": sso_user.last_name,
+            "groups": sso_user.groups,
+        }
+    else:
+        user_data = {
+            "email": sso_user.get("email"),
+            "display_name": sso_user.get("display_name"),
+            "first_name": sso_user.get("first_name"),
+            "last_name": sso_user.get("last_name"),
+            "groups": sso_user.get("groups", []),
+        }
+
+    org_id = session.organization_id if hasattr(session, 'organization_id') else session.get('organization_id')
+    provider_type = session.provider_type.value if hasattr(session, 'provider_type') else session.get('provider_type')
+    created_at = session.created_at.isoformat() if hasattr(session, 'created_at') else session.get('created_at')
 
     return {
         "authenticated": True,
-        "user": {
-            "email": session.sso_user.email,
-            "display_name": session.sso_user.display_name,
-            "first_name": session.sso_user.first_name,
-            "last_name": session.sso_user.last_name,
-            "groups": session.sso_user.groups,
-        },
-        "organization_id": session.organization_id,
-        "provider_type": session.provider_type.value,
-        "expires_at": session.expires_at.isoformat(),
-        "created_at": session.created_at.isoformat(),
+        "user": user_data,
+        "organization_id": org_id,
+        "provider_type": provider_type,
+        "expires_at": expires_at.isoformat() if hasattr(expires_at, 'isoformat') else str(expires_at),
+        "created_at": created_at,
     }

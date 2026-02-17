@@ -45,8 +45,14 @@ export async function GET(request: NextRequest) {
 
     const sql = getSqlOrNull()
 
-    // If DB is not configured, return sample data
     if (!sql) {
+      if (process.env.NODE_ENV === 'production') {
+        return NextResponse.json(
+          { success: false, error: 'Database not configured' },
+          { status: 503 }
+        )
+      }
+
       let filteredProfiles = [...SAMPLE_BRAND_PROFILES]
 
       if (activeOnly) {
@@ -160,11 +166,18 @@ export async function GET(request: NextRequest) {
  * Create a new brand profile
  */
 export async function POST(request: NextRequest) {
+  let body: Record<string, unknown>
   try {
-    const body = await request.json()
+    body = await request.json()
+  } catch {
+    return NextResponse.json(
+      { success: false, error: 'Invalid JSON' },
+      { status: 400 }
+    )
+  }
 
-    // Validate required fields
-    if (!body.name || !body.toneKeywords || body.toneKeywords.length === 0) {
+  try {
+    if (!body.name || !body.toneKeywords || (body.toneKeywords as unknown[]).length === 0) {
       return NextResponse.json(
         { success: false, error: 'Name and at least one tone keyword are required' },
         { status: 400 }

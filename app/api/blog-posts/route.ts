@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import crypto from 'crypto'
 import { getSqlOrNull } from '../../../lib/db'
 
 const getAdminKey = () => process.env.BLOG_ADMIN_KEY
@@ -11,7 +12,16 @@ const isAuthorized = (request: Request) => {
     request.headers.get('x-admin-key') ||
     request.headers.get('authorization')?.replace('Bearer ', '')
 
-  return headerKey === adminKey
+  if (!headerKey) return false
+
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(headerKey),
+      Buffer.from(adminKey)
+    )
+  } catch {
+    return false
+  }
 }
 
 export async function GET(request: Request) {
