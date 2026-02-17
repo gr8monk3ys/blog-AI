@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -28,10 +28,13 @@ export default function UsageIndicator({
   const [error, setError] = useState<string | null>(null)
   const [showDetails, setShowDetails] = useState(false)
 
-  const fetchUsageStats = useCallback(async () => {
+  const consecutiveErrors = useRef(0)
+
+  const fetchUsageStats = useCallback(async (signal?: AbortSignal) => {
     try {
       const response = await fetch(API_ENDPOINTS.usage.stats, {
         headers: await getDefaultHeaders(),
+        signal,
       })
 
       if (!response.ok) {
@@ -41,19 +44,28 @@ export default function UsageIndicator({
       const data = await response.json()
       setUsage(data)
       setError(null)
+      consecutiveErrors.current = 0
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return
       console.error('Error fetching usage stats:', err)
       setError('Unable to load usage')
+      consecutiveErrors.current += 1
     } finally {
       setLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    fetchUsageStats()
-    // Refresh usage stats every 30 seconds
-    const interval = setInterval(fetchUsageStats, 30000)
-    return () => clearInterval(interval)
+    const controller = new AbortController()
+    fetchUsageStats(controller.signal)
+    const interval = setInterval(() => {
+      if (consecutiveErrors.current >= 3) return
+      fetchUsageStats(controller.signal)
+    }, 30000)
+    return () => {
+      controller.abort()
+      clearInterval(interval)
+    }
   }, [fetchUsageStats])
 
   useEffect(() => {
