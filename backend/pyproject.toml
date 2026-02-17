@@ -30,7 +30,7 @@ httpx = "^0.27.0"
 
 # Security
 bcrypt = "^4.0.0"
-bleach = "^6.0.0"
+nh3 = "^0.2.14"
 
 # Redis for job storage
 redis = "^5.0.0"
@@ -54,6 +54,14 @@ target-version = ["py312"]
 [tool.isort]
 profile = "black"
 line_length = 88
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers --tb=short -q"
+markers = [
+    "security: marks tests as security-related",
+    "slow: marks tests as slow-running",
+]
 
 [build-system]
 requires = ["poetry-core"]

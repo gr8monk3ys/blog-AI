@@ -12,7 +12,7 @@ import logging
 import uuid
 from typing import Any, Dict, List, Optional, Set
 
-import bleach
+import nh3
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
@@ -70,7 +70,7 @@ class AnalyzeSampleRequest(BaseModel):
             raise ValueError("Content is required")
         v = str(v).strip()
         # Use bleach for proper HTML sanitization (cannot be bypassed like regex)
-        v = bleach.clean(v, tags=ALLOWED_HTML_TAGS, strip=True, strip_comments=True)
+        v = nh3.clean(v, tags=ALLOWED_HTML_TAGS)
         if len(v) < 50:
             raise ValueError("Content must be at least 50 characters after sanitization")
         return v
@@ -124,7 +124,7 @@ class AddSampleRequest(BaseModel):
             raise ValueError("Content is required")
         v = str(v).strip()
         # Use bleach for proper HTML sanitization (cannot be bypassed like regex)
-        v = bleach.clean(v, tags=ALLOWED_HTML_TAGS, strip=True, strip_comments=True)
+        v = nh3.clean(v, tags=ALLOWED_HTML_TAGS)
         if len(v) < 50:
             raise ValueError("Content must be at least 50 characters after sanitization")
         return v

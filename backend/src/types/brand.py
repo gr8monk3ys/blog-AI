@@ -12,7 +12,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 from pydantic import BaseModel, Field, field_validator
 
-import bleach
+import nh3
 
 
 # =============================================================================
@@ -144,7 +144,7 @@ class VoiceSample(BaseModel):
         v = str(v).strip()
 
         # Use bleach for proper HTML sanitization (cannot be bypassed like regex)
-        v = bleach.clean(v, tags=ALLOWED_HTML_TAGS, strip=True, strip_comments=True)
+        v = nh3.clean(v, tags=ALLOWED_HTML_TAGS)
 
         if len(v) < 10:
             raise ValueError("Content must be at least 10 characters")
@@ -293,7 +293,7 @@ class AddSampleRequest(BaseModel):
         v = str(v).strip()
 
         # Use bleach for proper HTML sanitization (cannot be bypassed like regex)
-        v = bleach.clean(v, tags=ALLOWED_HTML_TAGS, strip=True, strip_comments=True)
+        v = nh3.clean(v, tags=ALLOWED_HTML_TAGS)
 
         if len(v) < 10:
             raise ValueError("Content must be at least 10 characters")
