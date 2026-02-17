@@ -10,7 +10,7 @@ python-dotenv>=1.0.0
 
 # Image generation
 stability-sdk>=0.8.0
-Pillow>=10.0.0
+Pillow>=12.1.1
 
 # Backend server
 fastapi>=0.115.0
@@ -42,3 +42,5 @@ sentry-sdk[fastapi]>=1.40.0
 # black>=24.3.0
 # isort>=7.0.0
 # mypy>=1.5.1
+protobuf>=5.29.6
+starlette>=0.47.2
