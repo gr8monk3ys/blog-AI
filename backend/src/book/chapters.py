@@ -235,32 +235,55 @@ def generate_introduction_chapter(
     Generate an introduction chapter.
     """
     try:
-        prompt = f"""
-        Generate an introduction chapter for a book titled '{title}'.
-        
-        The book contains the following chapters:
-        """
+        # PROMPT DESIGN: Book introduction chapter. This sets the tone for the
+        # entire book. We push for a compelling narrative frame and clear reader
+        # benefit statement rather than a dry table-of-contents summary.
+        prompt = f"""Write the introduction chapter for a book titled '{title}'.
+
+This book contains the following chapters:
+"""
 
         for chapter in chapters:
-            prompt += f"\n- {chapter.title}"
+            prompt += f"- {chapter.title}\n"
 
         if keywords:
-            prompt += f"\n\nKeywords: {', '.join(keywords)}"
+            prompt += f"\nTarget keywords: {', '.join(keywords)}\n"
 
         if brand_voice:
-            prompt += f"\n\nBRAND VOICE SUMMARY (follow strictly):\n{brand_voice}\n"
+            prompt += f"\nBRAND VOICE (match this voice exactly):\n{brand_voice}\n"
 
-        prompt += f"""
-        
-        Requirements:
-        - The introduction should be engaging and set the stage for the book.
-        - Explain the purpose and scope of the book.
-        - Provide an overview of what readers will learn.
-        - Use a {tone} tone throughout.
-        - The introduction should be 3-4 paragraphs.
-        
-        Return only the introduction content, nothing else.
-        """
+        prompt += f"""Tone: {tone}
+
+STRUCTURE (3-4 paragraphs):
+
+Paragraph 1 -- THE HOOK:
+Open with a compelling scenario, question, or insight that captures why this
+book's topic matters RIGHT NOW. Make the reader feel the urgency or excitement.
+Do NOT open with "In today's..." or "Welcome to this book..."
+
+Paragraph 2 -- THE PROMISE:
+What will the reader be able to do, understand, or achieve after reading this
+book? Be specific and concrete. Frame it as a transformation: "By the time you
+finish, you'll go from X to Y."
+
+Paragraph 3 -- THE ROADMAP:
+Give a brief, engaging preview of the book's journey. Don't just list chapter
+titles -- describe the narrative arc. What do they learn first and why? How do
+the chapters build on each other? Make it feel like a path, not a checklist.
+
+Optional Paragraph 4 -- WHO THIS IS FOR:
+If appropriate, briefly describe who will get the most value from this book.
+Be specific: "This is for mid-level engineers who..." not "This book is for anyone
+interested in..."
+
+STYLE RULES:
+- Write with warmth and authority -- you're welcoming the reader into a journey
+- Use contractions and address the reader directly ("you'll", "your")
+- Vary sentence length for rhythm
+- BANNED words: delve, landscape, leverage, robust, seamless, utilize, comprehensive
+- BANNED phrases: "it's important to note", "in today's fast-paced world"
+
+Return ONLY the introduction content. No headings, labels, or commentary."""
 
         text_func = generate_text_func or generate_text
         introduction_content = text_func(prompt, provider, options).strip()
@@ -310,39 +333,57 @@ def generate_introduction_chapter_with_research(
     Generate an introduction chapter with research.
     """
     try:
-        prompt = f"""
-        Generate an introduction chapter for a book titled '{title}'.
-        
-        The book contains the following chapters:
-        """
+        # PROMPT DESIGN: Research-backed book introduction. We lead with research
+        # findings to establish authority and use citations to ground the narrative.
+        prompt = f"""Write the introduction chapter for a research-backed book titled '{title}'.
+
+This book contains the following chapters:
+"""
 
         for chapter in chapters:
-            prompt += f"\n- {chapter.title}"
+            prompt += f"- {chapter.title}\n"
 
         if keywords:
-            prompt += f"\n\nKeywords: {', '.join(keywords)}"
+            prompt += f"\nTarget keywords: {', '.join(keywords)}\n"
 
         if brand_voice:
-            prompt += f"\n\nBRAND VOICE SUMMARY (follow strictly):\n{brand_voice}\n"
+            prompt += f"\nBRAND VOICE (match this voice exactly):\n{brand_voice}\n"
 
         prompt += f"""
-        
-        Based on the following research:
-        
-        {str(research_results)[:2000]}...
-        
-        Requirements:
-        - The introduction should be engaging and set the stage for the book.
-        - Explain the purpose and scope of the book.
-        - Provide an overview of what readers will learn.
-        - Incorporate insights from the research.
-        - Add citations like [1] at the end of sentences that rely on a source.
-        - Only cite sources provided in the Sources list; do not invent citations.
-        - Use a {tone} tone throughout.
-        - The introduction should be 3-4 paragraphs.
-        
-        Return only the introduction content, nothing else.
-        """
+RESEARCH CONTEXT (use to ground your introduction in evidence):
+{str(research_results)[:2000]}
+
+Tone: {tone}
+
+STRUCTURE (3-4 paragraphs):
+
+Paragraph 1 -- THE HOOK:
+Open with a striking finding, trend, or data point from the research that
+captures why this book's topic matters urgently. Be specific -- use numbers
+or concrete examples. Do NOT open with "In today's..." or "Welcome to..."
+
+Paragraph 2 -- THE PROMISE:
+What will the reader achieve after finishing this book? Frame it as a concrete
+transformation backed by the research: "The data shows X is possible -- this
+book shows you exactly how."
+
+Paragraph 3 -- THE ROADMAP:
+Preview the book's journey. Don't just list chapters -- describe the arc.
+Reference research findings that informed the structure.
+
+CITATION RULES:
+- Add [N] at the end of sentences referencing specific sources.
+- Only cite sources from the research context -- never invent.
+- Use 2-3 citations total, placed naturally.
+
+STYLE RULES:
+- Write with warmth and authority
+- Use contractions and address the reader directly
+- Vary sentence length for rhythm
+- BANNED words: delve, landscape, leverage, robust, seamless, utilize, comprehensive
+- BANNED phrases: "it's important to note", "in today's fast-paced world"
+
+Return ONLY the introduction content. No headings, labels, or commentary."""
 
         text_func = generate_text_func or generate_text
         introduction_content = text_func(prompt, provider, options).strip()
@@ -392,33 +433,55 @@ def generate_conclusion_chapter(
     Generate a conclusion chapter.
     """
     try:
-        prompt = f"""
-        Generate a conclusion chapter for a book titled '{title}'.
-        
-        The book contains the following chapters:
-        """
+        # PROMPT DESIGN: Book conclusion chapter. This is the reader's final
+        # impression. We push for synthesis and forward momentum rather than
+        # mechanical recap.
+        prompt = f"""Write the conclusion chapter for a book titled '{title}'.
+
+This book covered the following chapters:
+"""
 
         for chapter in chapters:
-            prompt += f"\n- {chapter.title}"
+            prompt += f"- {chapter.title}\n"
 
         if keywords:
-            prompt += f"\n\nKeywords: {', '.join(keywords)}"
+            prompt += f"\nTarget keywords: {', '.join(keywords)}\n"
 
         if brand_voice:
-            prompt += f"\n\nBRAND VOICE SUMMARY (follow strictly):\n{brand_voice}\n"
+            prompt += f"\nBRAND VOICE (match this voice exactly):\n{brand_voice}\n"
 
-        prompt += f"""
-        
-        Requirements:
-        - The conclusion should summarize the key points from the book.
-        - Reinforce the main message or thesis.
-        - Provide final thoughts and recommendations.
-        - Include a call to action for the reader.
-        - Use a {tone} tone throughout.
-        - The conclusion should be 3-4 paragraphs.
-        
-        Return only the conclusion content, nothing else.
-        """
+        prompt += f"""Tone: {tone}
+
+STRUCTURE (3-4 paragraphs):
+
+Paragraph 1 -- THE SYNTHESIS:
+Do NOT start with "In conclusion" or mechanically recap each chapter.
+Instead, connect the chapters' themes into a unified insight. What's the
+bigger picture that emerges? What should the reader understand differently
+about the topic now compared to when they started?
+
+Paragraph 2 -- THE FORWARD LOOK:
+Where is this field, practice, or topic heading? What trends or shifts
+should the reader watch for? Give them something to think about beyond
+what the book covered.
+
+Paragraph 3 -- THE CALL TO ACTION:
+Give the reader a specific, motivating next step. Not "go forth and apply
+what you've learned" but something concrete they can do THIS WEEK.
+Frame it as an invitation, not an order.
+
+Final sentence: End with something memorable -- a bold claim, an inspiring
+thought, or a callback to the book's opening hook.
+
+STYLE RULES:
+- Write with conviction and warmth -- this is your farewell to the reader
+- Use contractions and "you" language
+- Vary sentence length for emotional rhythm
+- BANNED openers: "In conclusion", "To sum up", "In summary", "As we've explored"
+- BANNED words: delve, landscape, leverage, robust, seamless, utilize, comprehensive
+- BANNED phrases: "it's important to note", "it's worth mentioning"
+
+Return ONLY the conclusion content. No headings, labels, or commentary."""
 
         text_func = generate_text_func or generate_text
         conclusion_content = text_func(prompt, provider, options).strip()

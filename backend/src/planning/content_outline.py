@@ -44,47 +44,58 @@ def generate_content_outline(
         ContentOutlineError: If an error occurs during generation.
     """
     try:
-        # Create prompt for outline generation
-        prompt = f"""
-        Generate a detailed outline for a blog post or article with the following title:
-        
-        Title: {title}
-        """
+        # PROMPT DESIGN: The outline determines the entire article's structure and
+        # reading experience. We push for search-intent alignment, logical progression,
+        # and headings that are specific enough to be useful on their own.
+        prompt = f"""Create a blog post outline.
+
+Title: {title}
+"""
 
         if keywords:
-            prompt += f"\nKeywords: {', '.join(keywords)}"
+            prompt += f"Target keywords: {', '.join(keywords)}\n"
 
         prompt += f"""
-        
-        Requirements:
-        - Include {num_sections} main sections.
-        - Each section should have a clear, descriptive heading.
-        - The outline should follow a logical flow.
-        - Include an introduction and conclusion.
-        """
+Number of main sections: {num_sections}
+
+OUTLINE RULES:
+- Start with "# Introduction" and end with "# Conclusion".
+- Between them, create exactly {num_sections} section headings.
+- Each heading must be SPECIFIC and descriptive -- a reader should understand
+  what that section covers just from the heading alone.
+- BAD headings: "Understanding the Basics", "Key Considerations", "Best Practices"
+  (too vague -- could apply to any article)
+- GOOD headings: "Why React Re-Renders More Than You Think", "3 Caching Patterns
+  That Cut Load Time in Half" (specific, promise clear value)
+- Sections must follow a logical progression: context/problem first, then
+  solutions/how-to, then advanced tips or forward-looking content.
+- Do NOT use these words in headings: comprehensive, ultimate, leverage, delve,
+  robust, landscape, seamless, unlock, harness, navigate, empower.
+"""
 
         if keywords:
-            prompt += """
-            - Incorporate the keywords naturally throughout the outline.
-            """
+            prompt += """- Work keywords into headings naturally where they fit -- but NEVER
+  force a keyword into a heading where it reads awkwardly.
+"""
 
         prompt += """
-        Return your outline in the following format:
-        
-        # Introduction
-        
-        # [Section 1 Heading]
-        
-        # [Section 2 Heading]
-        
-        # [Section 3 Heading]
-        
-        # [Section 4 Heading]
-        
-        # [Section 5 Heading]
-        
-        # Conclusion
-        """
+OUTPUT FORMAT (follow exactly -- one heading per line, no bullet points):
+
+# Introduction
+
+# [Section 1 Heading]
+
+# [Section 2 Heading]
+
+# [Section 3 Heading]
+
+# [Section 4 Heading]
+
+# [Section 5 Heading]
+
+# Conclusion
+
+Return ONLY the outline in the format above. No descriptions, no bullet points, no commentary."""
 
         # Generate outline
         outline_text = generate_text(prompt, provider, options)
@@ -139,54 +150,62 @@ def generate_detailed_content_outline(
         ContentOutlineError: If an error occurs during generation.
     """
     try:
-        # Create prompt for outline generation
-        prompt = f"""
-        Generate a detailed outline for a blog post or article with the following title:
-        
-        Title: {title}
-        """
+        # PROMPT DESIGN: Detailed outline with key points per section. These bullet
+        # points serve as a content brief for each section generator, so they need to
+        # be specific and actionable, not generic placeholders.
+        prompt = f"""Create a detailed blog post outline with key points for each section.
+
+Title: {title}
+"""
 
         if keywords:
-            prompt += f"\nKeywords: {', '.join(keywords)}"
+            prompt += f"Target keywords: {', '.join(keywords)}\n"
 
         prompt += f"""
-        
-        Requirements:
-        - Include {num_sections} main sections.
-        - Each section should have a clear, descriptive heading.
-        - Each section should have 3-5 bullet points outlining the key points to cover.
-        - The outline should follow a logical flow.
-        - Include an introduction and conclusion.
-        """
+Number of main sections: {num_sections}
+
+OUTLINE RULES:
+- Start with "# Introduction" and end with "# Conclusion".
+- Create exactly {num_sections} section headings between them.
+- Under each heading, list 3-5 bullet points describing SPECIFIC content to cover.
+- Bullet points should be concrete and actionable, not vague.
+  BAD: "- Discuss the benefits" (vague)
+  GOOD: "- Compare response times: cached vs uncached queries (include benchmarks)" (specific)
+- Headings must be specific and descriptive -- avoid generic titles.
+- Follow a logical progression: problem/context, then solutions, then advanced/future.
+- Do NOT use these words in headings: comprehensive, ultimate, leverage, delve,
+  robust, landscape, seamless, unlock, harness.
+"""
 
         if keywords:
-            prompt += """
-            - Incorporate the keywords naturally throughout the outline.
-            """
+            prompt += "- Weave keywords into headings and bullet points naturally -- never force them.\n"
 
         prompt += """
-        Return your outline in the following format:
-        
-        # Introduction
-        - [Key point 1]
-        - [Key point 2]
-        - [Key point 3]
-        
-        # [Section 1 Heading]
-        - [Key point 1]
-        - [Key point 2]
-        - [Key point 3]
-        - [Key point 4]
-        - [Key point 5]
-        
-        # [Section 2 Heading]
-        - [Key point 1]
-        - [Key point 2]
-        - [Key point 3]
-        - [Key point 4]
-        
-        And so on.
-        """
+OUTPUT FORMAT:
+
+# Introduction
+- [Specific point about what the hook should cover]
+- [Key context to establish]
+- [What the reader will learn]
+
+# [Section 1 Heading]
+- [Specific point 1]
+- [Specific point 2]
+- [Specific point 3]
+
+# [Section 2 Heading]
+- [Specific point 1]
+- [Specific point 2]
+- [Specific point 3]
+- [Specific point 4]
+
+(continue for all sections)
+
+# Conclusion
+- [Key synthesis point]
+- [Actionable takeaway]
+
+Return ONLY the outline. No extra commentary."""
 
         # Generate outline
         outline_text = generate_text(prompt, provider, options)
@@ -248,52 +267,55 @@ def generate_content_outline_with_research(
 
         research_results = conduct_web_research(research_keywords)
 
-        # Create prompt for outline generation
-        prompt = f"""
-        Generate a detailed outline for a blog post or article with the following title:
-        
-        Title: {title}
-        """
+        # PROMPT DESIGN: Research-informed outline. We instruct the model to identify
+        # gaps in existing coverage and structure the outline to add unique value.
+        prompt = f"""Create a research-informed blog post outline.
+
+Title: {title}
+"""
 
         if keywords:
-            prompt += f"\nKeywords: {', '.join(keywords)}"
+            prompt += f"Target keywords: {', '.join(keywords)}\n"
 
         prompt += f"""
-        
-        Based on the following research:
-        
-        {str(research_results)[:2000]}...
-        
-        Requirements:
-        - Include {num_sections} main sections.
-        - Each section should have a clear, descriptive heading.
-        - The outline should follow a logical flow.
-        - Include an introduction and conclusion.
-        - Incorporate insights from the research.
-        """
+RESEARCH FINDINGS (use these to inform structure and identify gaps):
+{str(research_results)[:2000]}
+
+Number of main sections: {num_sections}
+
+OUTLINE RULES:
+- Start with "# Introduction" and end with "# Conclusion".
+- Create exactly {num_sections} section headings between them.
+- Use the research to identify what EXISTING content covers -- then structure
+  your outline to add unique value. Cover angles others miss.
+- Headings must be specific and descriptive (not "Understanding X" or "Key Benefits").
+- Follow a logical progression informed by the research: what does the reader
+  need to understand first before they can grasp later sections?
+- Do NOT use these words in headings: comprehensive, ultimate, leverage, delve,
+  robust, landscape, seamless, unlock, harness.
+"""
 
         if keywords:
-            prompt += """
-            - Incorporate the keywords naturally throughout the outline.
-            """
+            prompt += "- Weave keywords into headings naturally -- never force them.\n"
 
         prompt += """
-        Return your outline in the following format:
-        
-        # Introduction
-        
-        # [Section 1 Heading]
-        
-        # [Section 2 Heading]
-        
-        # [Section 3 Heading]
-        
-        # [Section 4 Heading]
-        
-        # [Section 5 Heading]
-        
-        # Conclusion
-        """
+OUTPUT FORMAT (follow exactly):
+
+# Introduction
+
+# [Section 1 Heading]
+
+# [Section 2 Heading]
+
+# [Section 3 Heading]
+
+# [Section 4 Heading]
+
+# [Section 5 Heading]
+
+# Conclusion
+
+Return ONLY the outline. No bullet points, no descriptions, no commentary."""
 
         # Generate outline
         outline_text = generate_text(prompt, provider, options)
@@ -346,44 +368,48 @@ def generate_content_outline_from_topic(
         ContentOutlineError: If an error occurs during generation.
     """
     try:
-        # Create prompt for outline generation
-        prompt = f"""
-        Generate a detailed outline for a blog post or article with the following details:
-        
-        Title: {topic.title}
-        Keywords: {', '.join(topic.keywords)}
-        """
+        # PROMPT DESIGN: Topic-based outline. The topic object provides richer context
+        # (description + keywords) so we use it to generate more targeted headings.
+        prompt = f"""Create a blog post outline from a content topic brief.
+
+Title: {topic.title}
+Target keywords: {', '.join(topic.keywords)}
+"""
 
         if topic.description:
-            prompt += f"\nDescription: {topic.description}"
+            prompt += f"Topic brief: {topic.description}\n"
 
         prompt += f"""
-        
-        Requirements:
-        - Include {num_sections} main sections.
-        - Each section should have a clear, descriptive heading.
-        - The outline should follow a logical flow.
-        - Include an introduction and conclusion.
-        - Incorporate the keywords naturally throughout the outline.
-        """
+Number of main sections: {num_sections}
 
-        prompt += """
-        Return your outline in the following format:
-        
-        # Introduction
-        
-        # [Section 1 Heading]
-        
-        # [Section 2 Heading]
-        
-        # [Section 3 Heading]
-        
-        # [Section 4 Heading]
-        
-        # [Section 5 Heading]
-        
-        # Conclusion
-        """
+OUTLINE RULES:
+- Start with "# Introduction" and end with "# Conclusion".
+- Create exactly {num_sections} section headings between them.
+- Align headings with the topic brief and keywords -- each section should
+  advance the reader's understanding in a clear, logical way.
+- Headings must be specific and descriptive (avoid generic titles like
+  "Understanding X" or "Key Considerations").
+- Do NOT use these words in headings: comprehensive, ultimate, leverage, delve,
+  robust, landscape, seamless, unlock, harness.
+- Weave keywords into headings naturally -- never force them.
+
+OUTPUT FORMAT (follow exactly):
+
+# Introduction
+
+# [Section 1 Heading]
+
+# [Section 2 Heading]
+
+# [Section 3 Heading]
+
+# [Section 4 Heading]
+
+# [Section 5 Heading]
+
+# Conclusion
+
+Return ONLY the outline. No bullet points, descriptions, or commentary."""
 
         # Generate outline
         outline_text = generate_text(prompt, provider, options)
