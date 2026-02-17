@@ -14,6 +14,7 @@ Security Considerations:
 - All sensitive operations are logged for audit
 """
 
+from __future__ import annotations
 import hashlib
 import logging
 import os

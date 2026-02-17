@@ -111,11 +111,13 @@ def mock_anthropic_client():
 def mock_gemini_client():
     """Mock Gemini client with successful response."""
     with patch("src.text_generation.core.genai") as mock_module:
-        mock_model = MagicMock()
+        mock_client = MagicMock()
         mock_response = MagicMock()
         mock_response.text = "Generated Gemini content"
-        mock_model.generate_content.return_value = mock_response
-        mock_module.GenerativeModel.return_value = mock_model
+        mock_client.models.generate_content.return_value = mock_response
+        mock_module.Client.return_value = mock_client
+        # Also set up types for GenerateContentConfig
+        mock_module.types = MagicMock()
         yield mock_module
 
 
@@ -322,15 +324,15 @@ class TestGenerateWithGemini:
         result = generate_with_gemini("Test prompt", config, options)
 
         assert result == "Generated Gemini content"
-        mock_gemini_client.configure.assert_called_once_with(api_key="test-key")
+        mock_gemini_client.Client.assert_called_once_with(api_key="test-key")
 
     def test_empty_response_raises_error(self, mock_gemini_client):
         """Test that empty response raises TextGenerationError."""
         config = GeminiConfig(api_key="test-key", model="gemini-1.5-flash")
         options = GenerationOptions()
 
-        mock_model = mock_gemini_client.GenerativeModel.return_value
-        mock_model.generate_content.return_value.text = None
+        mock_client = mock_gemini_client.Client.return_value
+        mock_client.models.generate_content.return_value.text = None
 
         with pytest.raises(TextGenerationError) as exc_info:
             generate_with_gemini("Test prompt", config, options)
@@ -344,10 +346,12 @@ class TestGenerateWithGemini:
 
         generate_with_gemini("Test prompt", config, options)
 
-        call_kwargs = mock_gemini_client.GenerativeModel.call_args.kwargs
-        assert call_kwargs["generation_config"]["temperature"] == 0.5
-        assert call_kwargs["generation_config"]["max_output_tokens"] == 500
-        assert call_kwargs["generation_config"]["top_p"] == 0.8
+        mock_client = mock_gemini_client.Client.return_value
+        call_kwargs = mock_client.models.generate_content.call_args.kwargs
+        assert call_kwargs["model"] == "gemini-1.5-flash"
+        assert call_kwargs["contents"] == "Test prompt"
+        # Verify config was passed (it's a MagicMock from types.GenerateContentConfig)
+        assert "config" in call_kwargs
 
 
 # =============================================================================

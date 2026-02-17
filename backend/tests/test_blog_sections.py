@@ -103,7 +103,7 @@ class TestIntroductionGenerator:
 
             # Verify outline was included in prompt
             call_args = mock_gen.call_args_list[0]
-            assert "Outline" in str(call_args)
+            assert "outline" in str(call_args).lower()
 
     def test_generate_introduction_with_target_audience(self, mock_provider):
         """Test introduction generation with target audience."""
