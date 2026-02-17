@@ -149,6 +149,11 @@ export const API_ENDPOINTS = {
     score: `${API_V1_BASE_URL}/brand-voice/score`,
     status: (profileId: string) => `${API_V1_BASE_URL}/brand-voice/status/${profileId}`,
   },
+  // Content feedback endpoints
+  feedback: {
+    submit: '/api/feedback',
+    stats: (contentId: string) => `/api/feedback?content_id=${encodeURIComponent(contentId)}`,
+  },
   // Content editing endpoints
   editSection: `${API_BASE_URL}/edit-section`,
   saveBook: `${API_BASE_URL}/save-book`,
