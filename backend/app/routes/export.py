@@ -157,18 +157,18 @@ def markdown_to_plain_text(content: str) -> str:
     text = content
     # Remove headers
     text = re.sub(r"^#{1,6}\s+", "", text, flags=re.MULTILINE)
-    # Remove bold/italic - using non-greedy quantifiers to prevent ReDoS
-    text = re.sub(r"\*\*(.+?)\*\*", r"\1", text)
-    text = re.sub(r"\*(.+?)\*", r"\1", text)
-    text = re.sub(r"__(.+?)__", r"\1", text)
-    text = re.sub(r"_(.+?)_", r"\1", text)
-    # Remove links but keep text - using non-greedy quantifiers
-    text = re.sub(r"\[(.+?)\]\(.+?\)", r"\1", text)
-    # Remove images - using non-greedy quantifiers
-    text = re.sub(r"!\[(.*?)\]\(.+?\)", r"\1", text)
+    # Remove bold/italic - using negated character classes to prevent ReDoS
+    text = re.sub(r"\*\*([^*]+)\*\*", r"\1", text)
+    text = re.sub(r"\*([^*]+)\*", r"\1", text)
+    text = re.sub(r"__([^_]+)__", r"\1", text)
+    text = re.sub(r"_([^_]+)_", r"\1", text)
+    # Remove links but keep text - using negated character classes to prevent ReDoS
+    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
+    # Remove images - using negated character classes to prevent ReDoS
+    text = re.sub(r"!\[([^\]]*)\]\([^)]+\)", r"\1", text)
     # Remove code blocks - using non-greedy quantifiers
     text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
-    text = re.sub(r"`(.+?)`", r"\1", text)
+    text = re.sub(r"`([^`]+)`", r"\1", text)
     # Remove blockquotes
     text = re.sub(r"^>\s+", "", text, flags=re.MULTILINE)
     # Remove horizontal rules
@@ -187,29 +187,30 @@ def markdown_to_html(content: str, title: str, metadata: Optional[Dict] = None) 
     # Sanitize the title to prevent XSS
     safe_title = sanitize_html_content(title)
 
-    html_content = content
+    # Escape raw content to prevent XSS, then apply markdown conversions
+    html_content = html.escape(content, quote=True)
 
-    # Convert headers
-    html_content = re.sub(r"^######\s+(.+)$", r"<h6>\1</h6>", html_content, flags=re.MULTILINE)
-    html_content = re.sub(r"^#####\s+(.+)$", r"<h5>\1</h5>", html_content, flags=re.MULTILINE)
-    html_content = re.sub(r"^####\s+(.+)$", r"<h4>\1</h4>", html_content, flags=re.MULTILINE)
-    html_content = re.sub(r"^###\s+(.+)$", r"<h3>\1</h3>", html_content, flags=re.MULTILINE)
-    html_content = re.sub(r"^##\s+(.+)$", r"<h2>\1</h2>", html_content, flags=re.MULTILINE)
-    html_content = re.sub(r"^#\s+(.+)$", r"<h1>\1</h1>", html_content, flags=re.MULTILINE)
+    # Convert headers - using [^\n]+ instead of .+ to prevent ReDoS
+    html_content = re.sub(r"^######\s+([^\n]+)$", r"<h6>\1</h6>", html_content, flags=re.MULTILINE)
+    html_content = re.sub(r"^#####\s+([^\n]+)$", r"<h5>\1</h5>", html_content, flags=re.MULTILINE)
+    html_content = re.sub(r"^####\s+([^\n]+)$", r"<h4>\1</h4>", html_content, flags=re.MULTILINE)
+    html_content = re.sub(r"^###\s+([^\n]+)$", r"<h3>\1</h3>", html_content, flags=re.MULTILINE)
+    html_content = re.sub(r"^##\s+([^\n]+)$", r"<h2>\1</h2>", html_content, flags=re.MULTILINE)
+    html_content = re.sub(r"^#\s+([^\n]+)$", r"<h1>\1</h1>", html_content, flags=re.MULTILINE)
 
-    # Convert bold and italic - using non-greedy quantifiers to prevent ReDoS
-    html_content = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", html_content)
-    html_content = re.sub(r"\*(.+?)\*", r"<em>\1</em>", html_content)
-    html_content = re.sub(r"__(.+?)__", r"<strong>\1</strong>", html_content)
-    html_content = re.sub(r"_(.+?)_", r"<em>\1</em>", html_content)
+    # Convert bold and italic - using negated character classes to prevent ReDoS
+    html_content = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", html_content)
+    html_content = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", html_content)
+    html_content = re.sub(r"__([^_]+)__", r"<strong>\1</strong>", html_content)
+    html_content = re.sub(r"_([^_]+)_", r"<em>\1</em>", html_content)
 
     # Convert links (with URL sanitization to prevent XSS via javascript: scheme)
-    # Using non-greedy quantifiers to prevent ReDoS
-    html_content = re.sub(r"\[(.+?)\]\((.+?)\)", _replace_markdown_link, html_content)
+    # Using negated character classes to prevent ReDoS
+    html_content = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", _replace_markdown_link, html_content)
 
     # Convert images (with URL sanitization to prevent XSS via javascript: scheme)
-    # Using non-greedy quantifiers to prevent ReDoS
-    html_content = re.sub(r"!\[(.*?)\]\((.+?)\)", _replace_markdown_image, html_content)
+    # Using negated character classes to prevent ReDoS
+    html_content = re.sub(r"!\[([^\]]*)\]\(([^)]+)\)", _replace_markdown_image, html_content)
 
     # Convert code blocks - using non-greedy quantifiers to prevent ReDoS
     def replace_code_block(match):
@@ -217,14 +218,16 @@ def markdown_to_html(content: str, title: str, metadata: Optional[Dict] = None) 
         code = match.group(2)
         # Sanitize language identifier to prevent XSS
         safe_lang = re.sub(r"[^a-zA-Z0-9_-]", "", lang)
-        return f'<pre><code class="language-{safe_lang}">{html.escape(code)}</code></pre>'
+        # Code content is already HTML-escaped from the initial escape step
+        return f'<pre><code class="language-{safe_lang}">{code}</code></pre>'
     html_content = re.sub(r"```(\w*)\n(.*?)```", replace_code_block, html_content, flags=re.DOTALL)
 
-    # Convert inline code - using non-greedy quantifier to prevent ReDoS
-    html_content = re.sub(r"`(.+?)`", r"<code>\1</code>", html_content)
+    # Convert inline code - using negated character class to prevent ReDoS
+    html_content = re.sub(r"`([^`]+)`", r"<code>\1</code>", html_content)
 
-    # Convert blockquotes
-    html_content = re.sub(r"^>\s+(.+)$", r"<blockquote>\1</blockquote>", html_content, flags=re.MULTILINE)
+    # Convert blockquotes - handle both raw > and escaped &gt; (from html.escape)
+    html_content = re.sub(r"^&gt;\s+([^\n]+)$", r"<blockquote>\1</blockquote>", html_content, flags=re.MULTILINE)
+    html_content = re.sub(r"^>\s+([^\n]+)$", r"<blockquote>\1</blockquote>", html_content, flags=re.MULTILINE)
 
     # Convert unordered lists
     def process_lists(text):
@@ -557,9 +560,9 @@ def content_to_medium_html(content: str, title: str) -> str:
         if line.startswith("#"):
             if current_paragraph:
                 text = " ".join(current_paragraph)
-                # Using non-greedy quantifiers to prevent ReDoS
-                text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
-                text = re.sub(r"\*(.+?)\*", r"<em>\1</em>", text)
+                # Using negated character classes to prevent ReDoS
+                text = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", text)
+                text = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", text)
                 html_parts.append(f"<p>{text}</p>")
                 current_paragraph = []
 
@@ -571,9 +574,9 @@ def content_to_medium_html(content: str, title: str) -> str:
         elif re.match(r"^[\*\-\+]\s+", line):
             if current_paragraph:
                 text = " ".join(current_paragraph)
-                # Using non-greedy quantifiers to prevent ReDoS
-                text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
-                text = re.sub(r"\*(.+?)\*", r"<em>\1</em>", text)
+                # Using negated character classes to prevent ReDoS
+                text = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", text)
+                text = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", text)
                 html_parts.append(f"<p>{text}</p>")
                 current_paragraph = []
 
@@ -581,18 +584,18 @@ def content_to_medium_html(content: str, title: str) -> str:
                 in_list = True
                 list_items = []
             item_text = re.sub(r"^[\*\-\+]\s+", "", line)
-            # Using non-greedy quantifiers to prevent ReDoS
-            item_text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", item_text)
-            item_text = re.sub(r"\*(.+?)\*", r"<em>\1</em>", item_text)
+            # Using negated character classes to prevent ReDoS
+            item_text = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", item_text)
+            item_text = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", item_text)
             list_items.append(f"<li>{item_text}</li>")
 
         # Handle blockquotes
         elif line.startswith(">"):
             if current_paragraph:
                 text = " ".join(current_paragraph)
-                # Using non-greedy quantifiers to prevent ReDoS
-                text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
-                text = re.sub(r"\*(.+?)\*", r"<em>\1</em>", text)
+                # Using negated character classes to prevent ReDoS
+                text = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", text)
+                text = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", text)
                 html_parts.append(f"<p>{text}</p>")
                 current_paragraph = []
             if in_list:
@@ -610,9 +613,9 @@ def content_to_medium_html(content: str, title: str) -> str:
                 list_items = []
             elif current_paragraph:
                 text = " ".join(current_paragraph)
-                # Using non-greedy quantifiers to prevent ReDoS
-                text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
-                text = re.sub(r"\*(.+?)\*", r"<em>\1</em>", text)
+                # Using negated character classes to prevent ReDoS
+                text = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", text)
+                text = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", text)
                 html_parts.append(f"<p>{text}</p>")
                 current_paragraph = []
 

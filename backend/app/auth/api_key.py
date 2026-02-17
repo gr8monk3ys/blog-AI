@@ -83,8 +83,9 @@ class APIKeyStore:
         """
         Legacy SHA-256 hashing for backward compatibility verification only.
 
-        WARNING: This method is only used for verifying existing legacy hashes.
-        New keys should always use bcrypt via _hash_key().
+        DEPRECATED: This method is only used for verifying existing legacy hashes
+        during migration. New keys always use bcrypt via _hash_key().
+        All legacy hashes should be upgraded via upgrade_legacy_hash().
 
         Args:
             api_key: The plain-text API key to hash.
@@ -92,7 +93,13 @@ class APIKeyStore:
         Returns:
             The SHA-256 hex digest.
         """
-        return hashlib.sha256(api_key.encode()).hexdigest()
+        import warnings
+        warnings.warn(
+            "SHA-256 key hashing is deprecated. Use bcrypt via _hash_key() for new keys.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return hashlib.sha256(api_key.encode()).hexdigest()  # nosec - legacy verification only
 
     def _is_legacy_hash(self, stored_hash: str) -> bool:
         """

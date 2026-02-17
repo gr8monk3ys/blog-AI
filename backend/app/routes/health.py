@@ -61,7 +61,7 @@ async def get_database_status() -> Dict[str, Any]:
         return {
             "configured": True,
             "connected": False,
-            "error": str(e)[:100],  # Truncate for safety
+            "error": "Database connection failed",
         }
 
 
@@ -121,7 +121,7 @@ def get_stripe_status() -> Dict[str, Any]:
             "connected": False,
             "mode": mode,
             "webhook_configured": bool(webhook_secret),
-            "error": str(e)[:100],
+            "error": "Stripe connection failed",
         }
 
 
@@ -143,12 +143,13 @@ def get_sentry_status() -> Dict[str, Any]:
             "dsn_set": bool(dsn),
         }
     except Exception as e:
+        logger.warning(f"Sentry status check failed: {e}")
         return {
             "configured": False,
             "active": False,
             "environment": None,
             "dsn_set": False,
-            "error": str(e)[:100],  # Truncate for safety
+            "error": "Sentry status check failed",
         }
 
 
@@ -202,7 +203,7 @@ async def get_redis_status() -> Dict[str, Any]:
         return {
             "configured": True,
             "connected": False,
-            "error": str(e)[:100],
+            "error": "Redis connection failed",
         }
 
 

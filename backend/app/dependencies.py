@@ -63,10 +63,14 @@ async def get_organization_context(
             },
         )
 
-    # Get user_id from API key (simplified - in production this would be a lookup)
-    # For now, use the API key hash as user_id for demo purposes
-    import hashlib
-    user_id = hashlib.sha256(api_key.encode()).hexdigest()[:16]
+    # Look up user_id from the API key store
+    from app.auth.api_key import api_key_store
+    user_id = api_key_store.verify_key(api_key)
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API key",
+        )
 
     try:
         # Get organization service

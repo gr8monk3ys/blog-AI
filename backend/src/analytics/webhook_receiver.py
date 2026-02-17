@@ -98,9 +98,11 @@ class WebhookReceiver:
         try:
             # Different platforms use different signature schemes
             if platform == "mailchimp":
-                # Mailchimp uses MD5
-                expected = hashlib.md5(
-                    (self._secret_key + payload.decode()).encode()
+                # Use HMAC-SHA256 for signature verification
+                expected = hmac.new(
+                    self._secret_key.encode(),
+                    payload,
+                    hashlib.sha256,
                 ).hexdigest()
                 return hmac.compare_digest(signature, expected)
 
