@@ -30,6 +30,16 @@ const getWsProtocol = (apiUrl: string): string => {
 // In production, these should be set to HTTPS URLs
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+// Warn at module load time when NEXT_PUBLIC_API_URL is missing in production.
+// This runs once during build/startup so operators see the problem immediately.
+if (!process.env.NEXT_PUBLIC_API_URL && process.env.NODE_ENV === 'production') {
+  console.warn(
+    '[api] WARNING: NEXT_PUBLIC_API_URL is not set. ' +
+    'Falling back to http://localhost:8000 which will not work in production. ' +
+    'Set the NEXT_PUBLIC_API_URL environment variable to your backend URL.'
+  )
+}
+
 // API version - can be overridden via environment variable
 export const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || 'v1';
 
@@ -273,4 +283,58 @@ export const apiFetch = async <T>(
   }
 
   return response.json();
+};
+
+/**
+ * HTTP status codes that are safe to retry (server/gateway issues).
+ * Client errors (4xx) are NOT retried since the request itself is wrong.
+ */
+const RETRYABLE_STATUS_CODES = new Set([502, 503, 504])
+
+/**
+ * Check if an error is a network-level failure (e.g. DNS, connection refused).
+ */
+function isNetworkError(err: unknown): boolean {
+  return err instanceof TypeError && err.message.toLowerCase().includes('fetch')
+}
+
+/**
+ * API fetch wrapper with exponential backoff retry for transient failures.
+ *
+ * Retries up to `maxRetries` times on 502, 503, 504, and network errors.
+ * Does NOT retry on 4xx client errors (400, 401, 403, 404, 429, etc.).
+ *
+ * Use this for long-running generation endpoints where transient gateway
+ * failures are expected.
+ */
+export const apiFetchWithRetry = async <T>(
+  url: string,
+  options: RequestInit = {},
+  maxRetries = 3
+): Promise<T> => {
+  let lastError: unknown
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await apiFetch<T>(url, options)
+    } catch (err) {
+      lastError = err
+
+      // Only retry on retryable status codes or network errors
+      const isRetryable =
+        (err instanceof ApiError && RETRYABLE_STATUS_CODES.has(err.status)) ||
+        isNetworkError(err)
+
+      if (!isRetryable || attempt >= maxRetries) {
+        throw err
+      }
+
+      // Exponential backoff: 1s, 2s, 4s
+      const delayMs = 1000 * Math.pow(2, attempt)
+      await new Promise((resolve) => setTimeout(resolve, delayMs))
+    }
+  }
+
+  // This is unreachable but satisfies TypeScript
+  throw lastError
 };

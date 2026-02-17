@@ -158,12 +158,12 @@ export default function OnboardingWizard({
 
   /* ---- save brand profile on final step ---- */
 
-  const saveBrandProfile = useCallback(async () => {
+  const saveBrandProfile = useCallback(async (): Promise<boolean> => {
     // Only attempt save if user provided meaningful brand voice data.
     const hasBrandData =
       formData.toneKeywords.length > 0 || formData.sampleWriting.trim() !== ''
 
-    if (!hasBrandData) return
+    if (!hasBrandData) return true
 
     setSaving(true)
     setSaveError(null)
@@ -191,18 +191,24 @@ export default function OnboardingWizard({
           (data as Record<string, string>).error || 'Failed to save brand profile'
         )
       }
+      return true
     } catch (err) {
       setSaveError(
         err instanceof Error ? err.message : 'Could not save brand profile.'
       )
+      return false
     } finally {
       setSaving(false)
     }
   }, [formData])
 
   const handleFinish = useCallback(async () => {
-    await saveBrandProfile()
-    markOnboardingComplete()
+    const ok = await saveBrandProfile()
+    // Always mark onboarding complete so the user can proceed.
+    // The done step shows the error with retry if the save failed.
+    if (ok) {
+      markOnboardingComplete()
+    }
   }, [saveBrandProfile])
 
   /* ---- keyboard navigation ---- */
@@ -488,18 +494,35 @@ export default function OnboardingWizard({
         </p>
 
         {saveError && (
-          <div className="mt-4 mx-auto max-w-sm p-3 rounded-lg bg-red-50 border border-red-100 text-sm text-red-700">
-            {saveError}
-            <button
-              type="button"
-              className="ml-2 text-xs underline hover:text-red-900"
-              onClick={() => {
-                setSaveError(null)
-                saveBrandProfile()
-              }}
-            >
-              Retry
-            </button>
+          <div
+            role="alert"
+            className="mt-4 mx-auto max-w-sm p-3 rounded-lg bg-red-50 border border-red-100 text-sm text-red-700"
+          >
+            <p className="font-medium">Could not save brand profile</p>
+            <p className="mt-1">{saveError}</p>
+            <div className="mt-2 flex items-center gap-3">
+              <button
+                type="button"
+                className="text-xs font-medium underline hover:text-red-900"
+                onClick={async () => {
+                  setSaveError(null)
+                  const ok = await saveBrandProfile()
+                  if (ok) markOnboardingComplete()
+                }}
+              >
+                Retry
+              </button>
+              <button
+                type="button"
+                className="text-xs text-gray-500 hover:text-gray-700"
+                onClick={() => {
+                  setSaveError(null)
+                  markOnboardingComplete()
+                }}
+              >
+                Skip and continue
+              </button>
+            </div>
           </div>
         )}
       </div>
