@@ -23,6 +23,8 @@ from .rate_limit import (
     TierRateLimits,
     TIER_RATE_LIMITS,
     DEFAULT_RATE_LIMITS,
+    GENERATION_TIER_RATE_LIMITS,
+    DEFAULT_GENERATION_RATE_LIMITS,
     RateLimitResult,
     RateLimitExceededError,
     RateLimitException,
@@ -33,6 +35,10 @@ from .rate_limit import (
     # Rate limiter class (tier-based)
     RateLimiter,
     get_rate_limiter,
+    # Generation rate limiter
+    GenerationRateLimiter,
+    get_generation_rate_limiter,
+    check_generation_rate_limit,
     # IP-based middleware
     RateLimitMiddleware,
     DEFAULT_MAX_TRACKED_IPS,
@@ -76,6 +82,8 @@ __all__ = [
     "TierRateLimits",
     "TIER_RATE_LIMITS",
     "DEFAULT_RATE_LIMITS",
+    "GENERATION_TIER_RATE_LIMITS",
+    "DEFAULT_GENERATION_RATE_LIMITS",
     "RateLimitResult",
     "RateLimitExceededError",
     "RateLimitException",
@@ -84,6 +92,11 @@ __all__ = [
     "RedisBackend",
     "RateLimiter",
     "get_rate_limiter",
+    # Rate Limiting - Generation-specific per-user limits
+    "GenerationRateLimiter",
+    "get_generation_rate_limiter",
+    "check_generation_rate_limit",
+    # Rate Limiting - FastAPI dependencies
     "rate_limit",
     "rate_limit_soft",
     "get_rate_limit_status",

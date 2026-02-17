@@ -420,6 +420,48 @@ class RateLimitSettings(BaseSettings):
         description="Generation endpoints: requests per minute per IP",
     )
 
+    # Per-user generation rate limits by tier (per minute)
+    rate_limit_gen_free_per_minute: int = Field(
+        default=5,
+        ge=1,
+        description="Free tier: generation requests per minute per user",
+    )
+    rate_limit_gen_free_per_hour: int = Field(
+        default=30,
+        ge=1,
+        description="Free tier: generation requests per hour per user",
+    )
+    rate_limit_gen_starter_per_minute: int = Field(
+        default=10,
+        ge=1,
+        description="Starter tier: generation requests per minute per user",
+    )
+    rate_limit_gen_starter_per_hour: int = Field(
+        default=100,
+        ge=1,
+        description="Starter tier: generation requests per hour per user",
+    )
+    rate_limit_gen_pro_per_minute: int = Field(
+        default=20,
+        ge=1,
+        description="Pro tier: generation requests per minute per user",
+    )
+    rate_limit_gen_pro_per_hour: int = Field(
+        default=200,
+        ge=1,
+        description="Pro tier: generation requests per hour per user",
+    )
+    rate_limit_gen_business_per_minute: int = Field(
+        default=60,
+        ge=1,
+        description="Business tier: generation requests per minute per user",
+    )
+    rate_limit_gen_business_per_hour: int = Field(
+        default=600,
+        ge=1,
+        description="Business tier: generation requests per hour per user",
+    )
+
 
 # =============================================================================
 # Logging Settings
