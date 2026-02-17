@@ -22,6 +22,7 @@ from .social import router as social_router
 from .sso import router as sso_router
 from .sso_admin import router as sso_admin_router
 from .streaming import router as streaming_router
+from .subscription import router as subscription_router
 from .tools import router as tools_router
 from .usage import router as usage_router
 from .webhooks import router as webhooks_router
@@ -53,6 +54,7 @@ __all__ = [
     "sso_router",
     "sso_admin_router",
     "streaming_router",
+    "subscription_router",
     "templates_marketing_router",
     "tools_router",
     "usage_router",

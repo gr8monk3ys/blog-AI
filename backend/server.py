@@ -87,6 +87,7 @@ from app.routes import (
     sso_admin_router,
     sso_router,
     streaming_router,
+    subscription_router,
     templates_marketing_router,
     tools_router,
     usage_router,
@@ -466,6 +467,7 @@ app.include_router(payments_router)
 app.include_router(remix_router)
 app.include_router(seo_router)
 app.include_router(streaming_router)
+app.include_router(subscription_router)
 app.include_router(templates_marketing_router)
 app.include_router(tools_router)
 app.include_router(usage_router)
@@ -520,6 +522,7 @@ api_v1_router.include_router(payments_router)
 api_v1_router.include_router(remix_router)
 api_v1_router.include_router(seo_router)
 api_v1_router.include_router(streaming_router)
+api_v1_router.include_router(subscription_router)
 api_v1_router.include_router(templates_marketing_router)
 api_v1_router.include_router(tools_router)
 api_v1_router.include_router(usage_router)

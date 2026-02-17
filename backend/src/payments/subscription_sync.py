@@ -2,17 +2,20 @@
 Subscription sync service for synchronizing Stripe webhook events to Postgres.
 
 This module bridges Stripe payment events to database state:
-- Checkout completed → Activate subscription tier
-- Subscription updated → Update tier based on price change
-- Subscription deleted → Downgrade to free tier
-- Invoice payment failed → Log warning (don't immediately downgrade)
+- Checkout completed -> Activate subscription tier (resolve from Stripe if needed)
+- Subscription created -> Set tier based on price
+- Subscription updated -> Update tier based on price change, downgrade on inactive
+- Subscription deleted -> Downgrade to free tier
+- Invoice payment failed -> Flag account with grace period
+
+IMPORTANT: All sync operations are idempotent. Duplicate Stripe events
+(same event_id delivered multiple times) are detected and skipped.
 """
 
 import logging
-from datetime import datetime
 from typing import Optional
 
-from src.types.payments import SubscriptionTier as PaymentsTier, WebhookEventType
+from src.types.payments import WebhookEventType
 from src.types.usage import SubscriptionTier as UsageTier
 from src.usage.quota_service import get_quota_service
 from src.db import execute as db_execute, fetchrow as db_fetchrow, is_database_configured
@@ -38,6 +41,7 @@ class SubscriptionSyncService:
     Service for syncing Stripe subscription events to the database.
 
     Handles all webhook events that affect user subscription state.
+    All operations are idempotent -- duplicate event IDs are safely skipped.
     """
 
     def __init__(self):
@@ -47,6 +51,62 @@ class SubscriptionSyncService:
             logger.info("Subscription sync service initialized with Postgres")
         else:
             logger.info("DATABASE_URL not configured - subscription sync will be limited")
+
+    async def _is_event_already_processed(self, event_id: str) -> bool:
+        """
+        Check if a Stripe event has already been processed (idempotency guard).
+
+        Returns True if the event_id exists in the webhook event log.
+        """
+        if not self._use_db or not event_id:
+            return False
+
+        try:
+            row = await db_fetchrow(
+                "SELECT 1 FROM stripe_webhook_events WHERE event_id = $1 LIMIT 1",
+                event_id,
+            )
+            return row is not None
+        except Exception as e:
+            logger.debug(f"Could not check event idempotency: {e}")
+            return False
+
+    async def _record_processed_event(
+        self,
+        event_id: str,
+        event_type: str,
+        user_id: Optional[str],
+        customer_id: Optional[str],
+        subscription_id: Optional[str],
+        sync_result: dict,
+    ) -> None:
+        """
+        Record a processed webhook event for idempotency and auditing.
+        """
+        if not self._use_db or not event_id:
+            return
+
+        try:
+            import json
+
+            await db_execute(
+                """
+                INSERT INTO stripe_webhook_events (
+                    event_id, event_type, user_id, customer_id,
+                    subscription_id, sync_result, processed_at, created_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+                ON CONFLICT (event_id) DO NOTHING
+                """,
+                event_id,
+                event_type,
+                user_id,
+                customer_id,
+                subscription_id,
+                json.dumps(sync_result),
+            )
+        except Exception as e:
+            # Non-fatal: idempotency is best-effort, don't fail the webhook
+            logger.warning(f"Failed to record webhook event {event_id}: {e}")
 
     async def sync_webhook_event(self, webhook_result: dict) -> dict:
         """
@@ -59,7 +119,20 @@ class SubscriptionSyncService:
             Dict with sync status and details.
         """
         event_type = webhook_result.get("event_type")
+        event_id = webhook_result.get("event_id")
         user_id = webhook_result.get("user_id")
+
+        # Idempotency check: skip if we already processed this event
+        if event_id and await self._is_event_already_processed(event_id):
+            logger.info(
+                f"Skipping duplicate webhook event {event_id} ({event_type})"
+            )
+            return {
+                "synced": False,
+                "reason": "duplicate_event",
+                "event_type": event_type,
+                "event_id": event_id,
+            }
 
         if not user_id:
             # Try to look up user_id from customer_id if not in metadata
@@ -72,38 +145,56 @@ class SubscriptionSyncService:
                     f"Cannot sync webhook {event_type}: no user_id found "
                     f"(customer_id: {webhook_result.get('customer_id')})"
                 )
-                return {
+                result = {
                     "synced": False,
                     "reason": "no_user_id",
                     "event_type": event_type,
                 }
+                # Still record the event so we don't retry it indefinitely
+                await self._record_processed_event(
+                    event_id, event_type, None,
+                    webhook_result.get("customer_id"),
+                    webhook_result.get("subscription_id"),
+                    result,
+                )
+                return result
 
         # Route to appropriate handler
         if event_type == WebhookEventType.CHECKOUT_COMPLETED.value:
-            return await self._handle_checkout_completed(user_id, webhook_result)
+            sync_result = await self._handle_checkout_completed(user_id, webhook_result)
 
         elif event_type == WebhookEventType.SUBSCRIPTION_CREATED.value:
-            return await self._handle_subscription_created(user_id, webhook_result)
+            sync_result = await self._handle_subscription_created(user_id, webhook_result)
 
         elif event_type == WebhookEventType.SUBSCRIPTION_UPDATED.value:
-            return await self._handle_subscription_updated(user_id, webhook_result)
+            sync_result = await self._handle_subscription_updated(user_id, webhook_result)
 
         elif event_type == WebhookEventType.SUBSCRIPTION_DELETED.value:
-            return await self._handle_subscription_deleted(user_id, webhook_result)
+            sync_result = await self._handle_subscription_deleted(user_id, webhook_result)
 
         elif event_type == WebhookEventType.INVOICE_PAID.value:
-            return await self._handle_invoice_paid(user_id, webhook_result)
+            sync_result = await self._handle_invoice_paid(user_id, webhook_result)
 
         elif event_type == WebhookEventType.INVOICE_PAYMENT_FAILED.value:
-            return await self._handle_invoice_payment_failed(user_id, webhook_result)
+            sync_result = await self._handle_invoice_payment_failed(user_id, webhook_result)
 
         else:
             logger.debug(f"Unhandled webhook event type: {event_type}")
-            return {
+            sync_result = {
                 "synced": False,
                 "reason": "unhandled_event_type",
                 "event_type": event_type,
             }
+
+        # Record the event for idempotency and auditing
+        await self._record_processed_event(
+            event_id, event_type, user_id,
+            webhook_result.get("customer_id"),
+            webhook_result.get("subscription_id"),
+            sync_result,
+        )
+
+        return sync_result
 
     async def _get_user_id_from_customer(self, customer_id: str) -> Optional[str]:
         """
@@ -133,13 +224,42 @@ class SubscriptionSyncService:
 
         return None
 
+    async def _resolve_tier_from_subscription(self, subscription_id: str) -> Optional[str]:
+        """
+        Resolve the subscription tier by fetching the subscription from Stripe.
+
+        Used when checkout.session.completed fires before subscription.created
+        and we need to determine the tier from the subscription's price ID.
+        """
+        try:
+            import stripe
+            from src.payments.stripe_service import stripe_service
+
+            if not stripe.api_key:
+                return None
+
+            import asyncio
+            subscription = await asyncio.to_thread(
+                stripe.Subscription.retrieve, subscription_id
+            )
+            if subscription and subscription.get("items", {}).get("data"):
+                price_id = subscription["items"]["data"][0]["price"]["id"]
+                tier = stripe_service.get_tier_for_price_id(price_id)
+                return tier.value
+        except Exception as e:
+            logger.warning(f"Could not resolve tier from subscription {subscription_id}: {e}")
+
+        return None
+
     async def _handle_checkout_completed(self, user_id: str, webhook_result: dict) -> dict:
         """
         Handle checkout.session.completed event.
 
-        This is triggered when a user completes the Stripe checkout flow.
-        The subscription tier should already be set by subscription.created,
-        but we record the customer mapping here.
+        This fires when a user completes the Stripe checkout flow. We must:
+        1. Store the customer mapping for future lookups.
+        2. Resolve and activate the subscription tier. This is critical because
+           checkout.session.completed may arrive before subscription.created,
+           and we cannot leave the user on the free tier after they have paid.
         """
         customer_id = webhook_result.get("customer_id")
         subscription_id = webhook_result.get("subscription_id")
@@ -147,6 +267,38 @@ class SubscriptionSyncService:
         # Store customer mapping for future lookups
         if customer_id and self._use_db:
             await self._store_customer_mapping(user_id, customer_id)
+
+        # Resolve the tier from the subscription and activate it.
+        # This ensures the user gets upgraded even if subscription.created
+        # arrives later or is lost.
+        tier_value = None
+        if subscription_id:
+            tier_value = await self._resolve_tier_from_subscription(subscription_id)
+
+        if tier_value and tier_value != "free":
+            new_tier = _map_payments_tier_to_usage_tier(tier_value)
+            quota_service = get_quota_service()
+            await quota_service.set_user_tier(user_id, new_tier)
+
+            # Also store/update subscription mapping
+            if subscription_id and self._use_db:
+                await self._store_subscription_mapping(
+                    user_id, subscription_id, customer_id, new_tier.value
+                )
+
+            logger.info(
+                f"Checkout completed for user {user_id[:8]}... - "
+                f"tier activated: {new_tier.value} "
+                f"(customer: {customer_id}, subscription: {subscription_id})"
+            )
+
+            return {
+                "synced": True,
+                "event_type": "checkout.session.completed",
+                "user_id": user_id,
+                "tier": new_tier.value,
+                "action": "tier_activated_from_checkout",
+            }
 
         logger.info(
             f"Checkout completed for user {user_id[:8]}... "
@@ -198,15 +350,18 @@ class SubscriptionSyncService:
         Handle customer.subscription.updated event.
 
         Update tier if price changed, handle cancellation scheduling.
+        CRITICAL: When the subscription is no longer active, downgrade to free.
+        This prevents users from keeping Pro access after cancellation takes effect.
         """
         tier_value = webhook_result.get("tier", "free")
         status = webhook_result.get("status")
         cancel_at_period_end = webhook_result.get("cancel_at_period_end", False)
 
-        # Only update tier if subscription is active
-        if status in ["active", "trialing"]:
+        quota_service = get_quota_service()
+
+        if status in ("active", "trialing"):
+            # Subscription is active -- sync the tier from the price
             new_tier = _map_payments_tier_to_usage_tier(tier_value)
-            quota_service = get_quota_service()
             await quota_service.set_user_tier(user_id, new_tier)
 
             action = "tier_updated"
@@ -215,9 +370,39 @@ class SubscriptionSyncService:
                 logger.info(
                     f"Subscription will cancel at period end for user {user_id[:8]}..."
                 )
-        else:
+        elif status == "past_due":
+            # Payment failed but Stripe is still retrying.
+            # Keep current tier but flag the account for grace period.
             new_tier = _map_payments_tier_to_usage_tier(tier_value)
-            action = f"subscription_status_{status}"
+            # Do NOT downgrade yet -- Stripe will send subscription.deleted
+            # if all retries fail. But flag the subscription.
+            if self._use_db:
+                subscription_id = webhook_result.get("subscription_id")
+                if subscription_id:
+                    await self._update_subscription_payment_status(
+                        subscription_id, "grace_period"
+                    )
+            action = "grace_period_started"
+            logger.warning(
+                f"Subscription past_due for user {user_id[:8]}... - grace period active"
+            )
+        else:
+            # Subscription is no longer active (canceled, incomplete_expired, unpaid, etc.)
+            # CRITICAL FIX: Downgrade to free tier immediately.
+            new_tier = UsageTier.FREE
+            await quota_service.set_user_tier(user_id, new_tier)
+            action = f"downgraded_to_free_status_{status}"
+            logger.info(
+                f"Subscription status changed to '{status}' for user {user_id[:8]}... "
+                f"- downgraded to FREE"
+            )
+
+        # Update subscription record in database
+        subscription_id = webhook_result.get("subscription_id")
+        if subscription_id and self._use_db:
+            await self._update_subscription_record(
+                subscription_id, new_tier.value, status, cancel_at_period_end
+            )
 
         logger.info(
             f"Subscription updated for user {user_id[:8]}...: "
@@ -238,7 +423,8 @@ class SubscriptionSyncService:
         """
         Handle customer.subscription.deleted event.
 
-        Downgrade user to free tier.
+        Downgrade user to free tier. This is the definitive signal that the
+        subscription has ended (after all retry attempts or immediate cancellation).
         """
         quota_service = get_quota_service()
         await quota_service.set_user_tier(user_id, UsageTier.FREE)
@@ -262,13 +448,17 @@ class SubscriptionSyncService:
         """
         Handle invoice.paid event.
 
-        This confirms payment was successful. Useful for tracking payments
-        but doesn't change subscription state (that's handled by subscription events).
+        Confirms payment was successful. Clear any grace period flags and
+        ensure the user's tier is correct.
         """
         amount_paid = webhook_result.get("amount_paid", 0)
         subscription_id = webhook_result.get("subscription_id")
 
-        # Log payment for analytics (could store in a payments table)
+        # Clear grace period flag if subscription had one
+        if subscription_id and self._use_db:
+            await self._update_subscription_payment_status(subscription_id, "current")
+
+        # Log payment for analytics
         if self._use_db:
             await self._record_payment(
                 user_id,
@@ -293,17 +483,23 @@ class SubscriptionSyncService:
         """
         Handle invoice.payment_failed event.
 
-        Log the failure but don't immediately downgrade - Stripe will retry
-        and send subscription.deleted if all retries fail.
+        Log the failure and flag the account. Do NOT immediately downgrade --
+        Stripe will retry and send subscription.updated (past_due) or
+        subscription.deleted if all retries fail.
         """
         attempt_count = webhook_result.get("attempt_count", 1)
         subscription_id = webhook_result.get("subscription_id")
 
-        # Log the failure (could trigger notification to user)
         logger.warning(
             f"Invoice payment failed for user {user_id[:8]}... "
-            f"(attempt {attempt_count})"
+            f"(attempt {attempt_count}, subscription: {subscription_id})"
         )
+
+        # Flag the subscription for grace period tracking
+        if subscription_id and self._use_db:
+            await self._update_subscription_payment_status(
+                subscription_id, "payment_failed"
+            )
 
         # Record payment failure for tracking
         if self._use_db:
@@ -361,14 +557,16 @@ class SubscriptionSyncService:
                     customer_id,
                     tier,
                     status,
+                    payment_status,
                     created_at,
                     updated_at
-                ) VALUES ($1, $2, $3, $4, 'active', NOW(), NOW())
+                ) VALUES ($1, $2, $3, $4, 'active', 'current', NOW(), NOW())
                 ON CONFLICT (subscription_id) DO UPDATE SET
                     user_id = EXCLUDED.user_id,
                     customer_id = EXCLUDED.customer_id,
                     tier = EXCLUDED.tier,
                     status = EXCLUDED.status,
+                    payment_status = EXCLUDED.payment_status,
                     updated_at = NOW()
                 """,
                 subscription_id,
@@ -378,6 +576,58 @@ class SubscriptionSyncService:
             )
         except Exception as e:
             logger.error(f"Failed to store subscription mapping: {e}")
+
+    async def _update_subscription_record(
+        self,
+        subscription_id: str,
+        tier: str,
+        status: Optional[str],
+        cancel_at_period_end: bool,
+    ) -> None:
+        """Update subscription record with latest state from Stripe."""
+        if not self._use_db:
+            return
+
+        try:
+            await db_execute(
+                """
+                UPDATE stripe_subscriptions
+                SET tier = $2,
+                    status = $3,
+                    cancel_at_period_end = $4,
+                    updated_at = NOW()
+                WHERE subscription_id = $1
+                """,
+                subscription_id,
+                tier,
+                status or "unknown",
+                cancel_at_period_end,
+            )
+        except Exception as e:
+            logger.error(f"Failed to update subscription record: {e}")
+
+    async def _update_subscription_payment_status(
+        self,
+        subscription_id: str,
+        payment_status: str,
+    ) -> None:
+        """Update the payment_status flag on a subscription."""
+        if not self._use_db:
+            return
+
+        try:
+            await db_execute(
+                """
+                UPDATE stripe_subscriptions
+                SET payment_status = $2,
+                    updated_at = NOW()
+                WHERE subscription_id = $1
+                """,
+                subscription_id,
+                payment_status,
+            )
+        except Exception as e:
+            logger.error(f"Failed to update subscription payment status: {e}")
 
     async def _mark_subscription_cancelled(self, subscription_id: str) -> None:
         """Mark a subscription as cancelled in the database."""
@@ -389,6 +639,7 @@ class SubscriptionSyncService:
                 """
                 UPDATE stripe_subscriptions
                 SET status = 'cancelled',
+                    payment_status = 'current',
                     cancelled_at = NOW(),
                     updated_at = NOW()
                 WHERE subscription_id = $1
