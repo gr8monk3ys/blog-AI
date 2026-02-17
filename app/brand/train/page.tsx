@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { API_ENDPOINTS, apiFetch } from '@/lib/api'
 import { useConfirmModal } from '@/hooks/useConfirmModal'
 import ErrorBoundary from '@/components/ErrorBoundary'
+import RequireAuth from '@/components/RequireAuth'
 import {
   ProfileSelector,
   SampleForm,
@@ -324,8 +325,10 @@ function VoiceTrainingPageContent() {
 
 export default function VoiceTrainingPage() {
   return (
-    <ErrorBoundary>
-      <VoiceTrainingPageContent />
-    </ErrorBoundary>
+    <RequireAuth>
+      <ErrorBoundary>
+        <VoiceTrainingPageContent />
+      </ErrorBoundary>
+    </RequireAuth>
   )
 }

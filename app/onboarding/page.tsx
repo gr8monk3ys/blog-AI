@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import OnboardingWizard from '../../components/onboarding/OnboardingWizard'
 import { hasCompletedOnboarding } from '../../lib/onboarding'
+import RequireAuth from '../../components/RequireAuth'
 
 /* -------------------------------------------------------------------------- */
 /*  Clerk user helper                                                          */
@@ -106,35 +107,39 @@ export default function OnboardingPage() {
 
   if (!ready) {
     return (
-      <main className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center gap-3">
-          <div className="h-2.5 w-2.5 rounded-full bg-amber-400 animate-bounce" />
-          <div
-            className="h-2.5 w-2.5 rounded-full bg-amber-500 animate-bounce"
-            style={{ animationDelay: '150ms' }}
-          />
-          <div
-            className="h-2.5 w-2.5 rounded-full bg-amber-600 animate-bounce"
-            style={{ animationDelay: '300ms' }}
-          />
-        </div>
-      </main>
+      <RequireAuth>
+        <main className="min-h-screen flex items-center justify-center">
+          <div className="flex items-center gap-3" role="status" aria-label="Loading">
+            <div className="h-2.5 w-2.5 rounded-full bg-amber-400 animate-bounce" />
+            <div
+              className="h-2.5 w-2.5 rounded-full bg-amber-500 animate-bounce"
+              style={{ animationDelay: '150ms' }}
+            />
+            <div
+              className="h-2.5 w-2.5 rounded-full bg-amber-600 animate-bounce"
+              style={{ animationDelay: '300ms' }}
+            />
+          </div>
+        </main>
+      </RequireAuth>
     )
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-4 py-12 sm:py-16">
-      {/* Skip link for keyboard users */}
-      <a
-        href="#onboarding-wizard"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-lg focus:bg-amber-600 focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white"
-      >
-        Skip to onboarding wizard
-      </a>
+    <RequireAuth>
+      <main className="min-h-screen flex flex-col items-center justify-center px-4 py-12 sm:py-16">
+        {/* Skip link for keyboard users */}
+        <a
+          href="#onboarding-wizard"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-lg focus:bg-amber-600 focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white"
+        >
+          Skip to onboarding wizard
+        </a>
 
-      <div id="onboarding-wizard" className="w-full">
-        <OnboardingWizard initialName={userName} />
-      </div>
-    </main>
+        <div id="onboarding-wizard" className="w-full">
+          <OnboardingWizard initialName={userName} />
+        </div>
+      </main>
+    </RequireAuth>
   )
 }

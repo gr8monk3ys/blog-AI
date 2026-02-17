@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import SiteHeader from '../../components/SiteHeader'
 import SiteFooter from '../../components/SiteFooter'
+import RequireAuth from '../../components/RequireAuth'
 import ToolGrid from '../../components/tools/ToolGrid'
 import { TOOL_CATEGORIES, type ToolCategory } from '../../types/tools'
 
@@ -21,6 +22,7 @@ export default function ToolsPage() {
   }, [searchParams])
 
   return (
+    <RequireAuth>
     <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <SiteHeader />
 
@@ -107,5 +109,6 @@ export default function ToolsPage() {
 
       <SiteFooter />
     </main>
+    </RequireAuth>
   )
 }

@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { motion, AnimatePresence } from 'framer-motion'
 import SiteHeader from '../../components/SiteHeader'
 import SiteFooter from '../../components/SiteFooter'
+import RequireAuth from '../../components/RequireAuth'
 import {
   ArrowUpTrayIcon,
   DocumentTextIcon,
@@ -480,6 +481,7 @@ export default function BulkGenerationPage() {
   }
 
   return (
+    <RequireAuth>
     <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <SiteHeader />
 
@@ -1019,5 +1021,6 @@ export default function BulkGenerationPage() {
 
       <SiteFooter />
     </main>
+    </RequireAuth>
   )
 }

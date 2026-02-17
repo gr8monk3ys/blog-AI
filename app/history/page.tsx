@@ -17,6 +17,7 @@ import HistoryFilters from '../../components/history/HistoryFilters'
 import { historyApi } from '../../lib/history-api'
 import type { GeneratedContentItem, HistoryFilters as HistoryFiltersType } from '../../types/history'
 import { useAuth } from '@clerk/nextjs'
+import RequireAuth from '../../components/RequireAuth'
 
 export default function HistoryPage() {
   const [items, setItems] = useState<GeneratedContentItem[]>([])
@@ -143,6 +144,7 @@ export default function HistoryPage() {
   }, [fetchHistory])
 
   return (
+    <RequireAuth>
     <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <SiteHeader />
 
@@ -369,5 +371,6 @@ export default function HistoryPage() {
 
       <SiteFooter />
     </main>
+    </RequireAuth>
   )
 }

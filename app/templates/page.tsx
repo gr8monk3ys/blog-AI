@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import SiteHeader from '../../components/SiteHeader'
 import SiteFooter from '../../components/SiteFooter'
+import RequireAuth from '../../components/RequireAuth'
 import TemplateGrid from '../../components/templates/TemplateGrid'
 import {
   BookmarkIcon,
@@ -11,6 +12,7 @@ import {
 
 export default function TemplatesPage() {
   return (
+    <RequireAuth>
     <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <SiteHeader />
 
@@ -100,5 +102,6 @@ export default function TemplatesPage() {
 
       <SiteFooter />
     </main>
+    </RequireAuth>
   )
 }

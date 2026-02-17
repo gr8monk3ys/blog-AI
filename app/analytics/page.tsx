@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import SiteHeader from '../../components/SiteHeader'
 import SiteFooter from '../../components/SiteFooter'
+import RequireAuth from '../../components/RequireAuth'
 import {
   SparklesIcon,
   ChartBarIcon,
@@ -76,6 +77,7 @@ export default function AnalyticsPage() {
   }
 
   return (
+    <RequireAuth>
     <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <SiteHeader />
 
@@ -242,5 +244,6 @@ export default function AnalyticsPage() {
 
       <SiteFooter />
     </main>
+    </RequireAuth>
   )
 }
