@@ -64,7 +64,7 @@ def mock_sso_config_saml():
     saml_config.idp.certificate_expiry = None
     saml_config.idp.slo_url = None
 
-    return SSOConfiguration.model_construct(
+    return SSOConfiguration(
         id="sso-config-001",
         organization_id="org-001",
         provider_type=SSOProviderType.SAML,
@@ -74,9 +74,6 @@ def mock_sso_config_saml():
         saml_config=saml_config,
         oidc_config=None,
         allowed_email_domains=[],
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
-        created_by="test-user",
     )
 
 
@@ -91,7 +88,7 @@ def mock_sso_config_oidc():
     oidc_config = MagicMock()
     oidc_config.require_email_verified = False
 
-    return SSOConfiguration.model_construct(
+    return SSOConfiguration(
         id="sso-config-002",
         organization_id="org-002",
         provider_type=SSOProviderType.OIDC,
@@ -101,9 +98,6 @@ def mock_sso_config_oidc():
         saml_config=None,
         oidc_config=oidc_config,
         allowed_email_domains=[],
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
-        created_by="test-user",
     )
 
 
@@ -117,7 +111,7 @@ def mock_sso_config_disabled():
     )
     saml_config = MagicMock()
 
-    return SSOConfiguration.model_construct(
+    return SSOConfiguration(
         id="sso-config-003",
         organization_id="org-003",
         provider_type=SSOProviderType.SAML,
@@ -127,9 +121,6 @@ def mock_sso_config_disabled():
         saml_config=saml_config,
         oidc_config=None,
         allowed_email_domains=[],
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
-        created_by="test-user",
     )
 
 
@@ -240,7 +231,7 @@ class TestSAMLLogin:
             response = client.get("/sso/saml/login/org-missing")
 
         assert response.status_code == 404
-        assert "SSO_NOT_CONFIGURED" in str(response.json().get("detail", ""))
+        assert "SSO_NOT_CONFIGURED" in response.json()["detail"]["error_code"]
 
     def test_saml_login_disabled_returns_403(
         self, client, mock_sso_config_disabled
@@ -252,7 +243,7 @@ class TestSAMLLogin:
             response = client.get("/sso/saml/login/org-003")
 
         assert response.status_code == 403
-        assert "SSO_DISABLED" in str(response.json().get("detail", ""))
+        assert "SSO_DISABLED" in response.json()["detail"]["error_code"]
 
     def test_saml_login_configuration_error_returns_500(
         self, client, mock_sso_config_saml
@@ -273,7 +264,7 @@ class TestSAMLLogin:
             response = client.get("/sso/saml/login/org-001")
 
         assert response.status_code == 500
-        assert "SSO_CONFIG_ERROR" in str(response.json().get("detail", ""))
+        assert "SSO_CONFIG_ERROR" in response.json()["detail"]["error_code"]
 
 
 # =============================================================================
@@ -296,7 +287,7 @@ class TestSAMLACS:
             )
 
         assert response.status_code == 400
-        assert "SAML_MISSING_RESPONSE" in str(response.json().get("detail", ""))
+        assert "SAML_MISSING_RESPONSE" in response.json()["detail"]["error_code"]
 
     def test_saml_acs_invalid_signature_returns_400(
         self, client, mock_sso_config_saml
@@ -320,7 +311,7 @@ class TestSAMLACS:
             )
 
         assert response.status_code == 400
-        assert "SSO_VALIDATION_ERROR" in str(response.json().get("detail", ""))
+        assert "SSO_VALIDATION_ERROR" in response.json()["detail"]["error_code"]
 
     def test_saml_acs_valid_response_creates_session(
         self, client, mock_sso_config_saml, mock_sso_user
@@ -366,7 +357,7 @@ class TestSAMLACS:
             )
 
         assert response.status_code == 400
-        assert "SSO_REPLAY_ERROR" in str(response.json().get("detail", ""))
+        assert "SSO_REPLAY_ERROR" in response.json()["detail"]["error_code"]
 
     def test_saml_acs_auth_failure_returns_401(
         self, client, mock_sso_config_saml
@@ -390,7 +381,7 @@ class TestSAMLACS:
             )
 
         assert response.status_code == 401
-        assert "SSO_AUTH_ERROR" in str(response.json().get("detail", ""))
+        assert "SSO_AUTH_ERROR" in response.json()["detail"]["error_code"]
 
     def test_saml_acs_not_configured_returns_404(self, client):
         """ACS callback returns 404 when SSO is not configured."""
@@ -438,7 +429,7 @@ class TestSAMLACS:
             )
 
         assert response.status_code == 403
-        assert "SSO_DOMAIN_NOT_ALLOWED" in str(response.json().get("detail", ""))
+        assert "SSO_DOMAIN_NOT_ALLOWED" in response.json()["detail"]["error_code"]
 
     def test_saml_acs_session_cookie_attributes(
         self, client, mock_sso_config_saml, mock_sso_user
@@ -551,7 +542,7 @@ class TestOIDCCallback:
         )
 
         assert response.status_code == 401
-        assert "OIDC_ACCESS_DENIED" in str(response.json().get("detail", ""))
+        assert "OIDC_ACCESS_DENIED" in response.json()["detail"]["error_code"]
 
     def test_oidc_callback_invalid_state_returns_400(
         self, client, mock_sso_config_oidc
@@ -567,7 +558,7 @@ class TestOIDCCallback:
             )
 
         assert response.status_code == 400
-        assert "OIDC_SESSION_EXPIRED" in str(response.json().get("detail", ""))
+        assert "OIDC_SESSION_EXPIRED" in response.json()["detail"]["error_code"]
 
     def test_oidc_callback_valid_creates_session(
         self, client, mock_sso_config_oidc, mock_sso_user
@@ -635,7 +626,7 @@ class TestOIDCCallback:
             )
 
         assert response.status_code == 400
-        assert "SSO_REPLAY_ERROR" in str(response.json().get("detail", ""))
+        assert "SSO_REPLAY_ERROR" in response.json()["detail"]["error_code"]
 
     def test_oidc_callback_validation_error_returns_400(
         self, client, mock_sso_config_oidc
@@ -899,12 +890,12 @@ class TestAuthSessionTimeout:
         """Expired auth sessions are cleaned up on access."""
         from app.routes.sso import (
             _get_auth_session,
-            _store_auth_session,
+            _save_auth_session,
             _sso_auth_sessions,
         )
 
         session_id = "test-timeout-session"
-        _store_auth_session(session_id, {"organization_id": "org-001"})
+        _save_auth_session(session_id, {"organization_id": "org-001"})
 
         # Manually set created_at to the past
         _sso_auth_sessions[session_id]["created_at"] = (
@@ -920,12 +911,12 @@ class TestAuthSessionTimeout:
         """Auth sessions within timeout period are returned normally."""
         from app.routes.sso import (
             _get_auth_session,
-            _store_auth_session,
+            _save_auth_session,
             _sso_auth_sessions,
         )
 
         session_id = "test-valid-session"
-        _store_auth_session(session_id, {"organization_id": "org-001"})
+        _save_auth_session(session_id, {"organization_id": "org-001"})
 
         result = _get_auth_session(session_id)
         assert result is not None
