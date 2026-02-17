@@ -29,44 +29,55 @@ test.describe('Content History', () => {
       page.getByText(/get started/i)
     )
 
-    // Either content or empty state should be present
-    const hasContent = await contentItems.count() > 0 || await emptyState.count() > 0
-    expect(hasContent || await page.locator('body').isVisible()).toBeTruthy()
+    // At least one of these must be present
+    const contentCount = await contentItems.count()
+    const emptyCount = await emptyState.count()
+    expect(contentCount + emptyCount).toBeGreaterThan(0)
   })
 
   test('search/filter is present', async ({ page }) => {
-    // Look for search input
+    // Search input may not be present if page shows empty state with no controls
     const searchInput = page.getByPlaceholder(/search/i).or(
       page.getByRole('searchbox')
     ).or(
       page.locator('input[type="search"]')
     )
 
-    // Search may or may not be present
-    if (await searchInput.count() > 0) {
-      await expect(searchInput.first()).toBeVisible()
+    if (\!(await searchInput.first().isVisible({ timeout: 5000 }).catch(() => false))) {
+      test.skip(true, 'Search input not available -- page may be in empty state')
+      return
     }
+
+    await expect(searchInput.first()).toBeVisible()
   })
 
   test('can filter by category', async ({ page }) => {
-    // Look for category filter
+    // Category filter depends on having content history available
     const categoryFilter = page.getByRole('combobox', { name: /category|type/i }).or(
       page.getByRole('button', { name: /blog|book|all/i })
     )
 
-    if (await categoryFilter.count() > 0) {
-      await categoryFilter.first().click()
+    if (\!(await categoryFilter.first().isVisible({ timeout: 5000 }).catch(() => false))) {
+      test.skip(true, 'Category filter not available -- no content history present')
+      return
     }
+
+    await expect(categoryFilter.first()).toBeVisible()
+    await categoryFilter.first().click()
   })
 
   test('favorite button works', async ({ page }) => {
-    // Look for favorite/star buttons
+    // Favorite buttons only exist when content items are present
     const favoriteButton = page.getByRole('button', { name: /favorite|star/i }).or(
       page.locator('button[aria-label*="favorite"]')
     )
 
-    if (await favoriteButton.count() > 0 && await favoriteButton.first().isVisible()) {
-      await favoriteButton.first().click()
+    if (\!(await favoriteButton.first().isVisible({ timeout: 5000 }).catch(() => false))) {
+      test.skip(true, 'Favorite button not available -- no content items present')
+      return
     }
+
+    await expect(favoriteButton.first()).toBeVisible()
+    await favoriteButton.first().click()
   })
 })
