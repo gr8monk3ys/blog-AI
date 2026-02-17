@@ -26,19 +26,18 @@ const getWsProtocol = (apiUrl: string): string => {
   return isProduction() ? `wss://${apiUrl}` : `ws://${apiUrl}`;
 };
 
-// API URLs from environment variables with fallbacks for development
-// In production, these should be set to HTTPS URLs
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
-// Warn at module load time when NEXT_PUBLIC_API_URL is missing in production.
-// This runs once during build/startup so operators see the problem immediately.
-if (!process.env.NEXT_PUBLIC_API_URL && process.env.NODE_ENV === 'production') {
-  console.warn(
-    '[api] WARNING: NEXT_PUBLIC_API_URL is not set. ' +
-    'Falling back to http://localhost:8000 which will not work in production. ' +
-    'Set the NEXT_PUBLIC_API_URL environment variable to your backend URL.'
-  )
-}
+// API URLs from environment variables with fallbacks for development.
+// In production without the env var, warn loudly but fall back to localhost
+// so that `npm run build` still works locally.
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (() => {
+  if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined') {
+    console.error(
+      '[api] NEXT_PUBLIC_API_URL is not set. ' +
+      'API calls will fail. Set it to your backend URL (e.g. https://api.blogai.com).'
+    )
+  }
+  return 'http://localhost:8000'
+})()
 
 // API version - can be overridden via environment variable
 export const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || 'v1';

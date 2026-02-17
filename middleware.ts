@@ -21,6 +21,14 @@ if (isProduction && !clerkEnabled) {
   throw new Error('NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is required in production')
 }
 
+if (!clerkEnabled && !isProduction) {
+  console.warn(
+    '[middleware] WARNING: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is not set. ' +
+    'Authentication is disabled and all routes are publicly accessible. ' +
+    'This is acceptable for local development only.'
+  )
+}
+
 export default clerkEnabled
   ? clerkMiddleware(async (auth, req) => {
       if (isProtectedRoute(req)) {
