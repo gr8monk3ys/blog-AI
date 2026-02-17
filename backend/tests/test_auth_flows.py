@@ -296,12 +296,12 @@ class TestAPIKeyRevocation(unittest.TestCase):
 
 
 # =============================================================================
-# Dev Mode Safety Tests
+# Production Detection Tests
 # =============================================================================
 
 
-class TestDevModeSafety(unittest.TestCase):
-    """Tests for dev mode safety checks to prevent production bypass."""
+class TestIsProduction(unittest.TestCase):
+    """Tests for _is_production() to detect production environments."""
 
     def setUp(self):
         """Set up test fixtures."""
@@ -312,65 +312,40 @@ class TestDevModeSafety(unittest.TestCase):
         os.environ.clear()
         os.environ.update(self.original_env)
 
-    def test_dev_mode_blocked_in_production_sentry_env(self):
-        """DEV_MODE should be blocked when SENTRY_ENVIRONMENT is production."""
+    def test_is_production_true_when_sentry_environment_production(self):
+        """_is_production() should return True when SENTRY_ENVIRONMENT=production."""
         with patch.dict(os.environ, {
-            "DEV_MODE": "true",
             "SENTRY_ENVIRONMENT": "production",
         }, clear=True):
             auth_module = get_auth_module()
-            result = auth_module._is_dev_mode_safe()
-            self.assertFalse(result)
-
-    def test_dev_mode_blocked_with_stripe_live_key(self):
-        """DEV_MODE should be blocked when using Stripe live keys."""
-        with patch.dict(os.environ, {
-            "DEV_MODE": "true",
-            "STRIPE_SECRET_KEY": "sk_live_abcdefghijklmnop",
-        }, clear=True):
-            auth_module = get_auth_module()
-            result = auth_module._is_dev_mode_safe()
-            self.assertFalse(result)
-
-    def test_dev_mode_blocked_with_https_redirect(self):
-        """DEV_MODE should be blocked when HTTPS redirect is enabled."""
-        with patch.dict(os.environ, {
-            "DEV_MODE": "true",
-            "HTTPS_REDIRECT_ENABLED": "true",
-        }, clear=True):
-            auth_module = get_auth_module()
-            result = auth_module._is_dev_mode_safe()
-            self.assertFalse(result)
-
-    def test_dev_mode_blocked_with_production_origins(self):
-        """DEV_MODE should be blocked with non-localhost allowed origins."""
-        with patch.dict(os.environ, {
-            "DEV_MODE": "true",
-            "ALLOWED_ORIGINS": "https://myapp.com,http://localhost:3000",
-        }, clear=True):
-            auth_module = get_auth_module()
-            result = auth_module._is_dev_mode_safe()
-            self.assertFalse(result)
-
-    def test_dev_mode_allowed_with_localhost_only(self):
-        """DEV_MODE should be allowed when only localhost origins are set."""
-        with patch.dict(os.environ, {
-            "DEV_MODE": "true",
-            "ALLOWED_ORIGINS": "http://localhost:3000,http://127.0.0.1:8000",
-        }, clear=True):
-            auth_module = get_auth_module()
-            result = auth_module._is_dev_mode_safe()
+            result = auth_module._is_production()
             self.assertTrue(result)
 
-    def test_dev_mode_allowed_with_stripe_test_key(self):
-        """DEV_MODE should be allowed with Stripe test keys."""
+    def test_is_production_true_when_environment_production(self):
+        """_is_production() should return True when ENVIRONMENT=production."""
         with patch.dict(os.environ, {
-            "DEV_MODE": "true",
-            "STRIPE_SECRET_KEY": "sk_test_abcdefghijklmnop",
+            "ENVIRONMENT": "production",
         }, clear=True):
             auth_module = get_auth_module()
-            result = auth_module._is_dev_mode_safe()
+            result = auth_module._is_production()
             self.assertTrue(result)
+
+    def test_is_production_false_when_neither_set(self):
+        """_is_production() should return False when no production indicators are set."""
+        with patch.dict(os.environ, {}, clear=True):
+            auth_module = get_auth_module()
+            result = auth_module._is_production()
+            self.assertFalse(result)
+
+    def test_is_production_false_for_development(self):
+        """_is_production() should return False for development environments."""
+        with patch.dict(os.environ, {
+            "SENTRY_ENVIRONMENT": "development",
+            "ENVIRONMENT": "development",
+        }, clear=True):
+            auth_module = get_auth_module()
+            result = auth_module._is_production()
+            self.assertFalse(result)
 
 
 # =============================================================================
@@ -398,7 +373,7 @@ class TestVerifyAPIKeyDependency(unittest.IsolatedAsyncioTestCase):
 
     async def test_verify_api_key_raises_401_for_missing_key(self):
         """verify_api_key should raise 401 when API key is missing."""
-        with patch.dict(os.environ, {"DEV_MODE": "false"}, clear=True):
+        with patch.dict(os.environ, {}, clear=True):
             auth_module = get_auth_module()
 
             with self.assertRaises(HTTPException) as context:
@@ -409,7 +384,7 @@ class TestVerifyAPIKeyDependency(unittest.IsolatedAsyncioTestCase):
 
     async def test_verify_api_key_raises_401_for_invalid_key(self):
         """verify_api_key should raise 401 for an invalid API key."""
-        with patch.dict(os.environ, {"DEV_MODE": "false"}, clear=True):
+        with patch.dict(os.environ, {}, clear=True):
             auth_module = get_auth_module()
             auth_module.api_key_store = auth_module.APIKeyStore(
                 storage_path=self.temp_storage
@@ -423,7 +398,7 @@ class TestVerifyAPIKeyDependency(unittest.IsolatedAsyncioTestCase):
 
     async def test_verify_api_key_returns_user_id_for_valid_key(self):
         """verify_api_key should return user_id for a valid API key."""
-        with patch.dict(os.environ, {"DEV_MODE": "false"}, clear=True):
+        with patch.dict(os.environ, {}, clear=True):
             auth_module = get_auth_module()
             store = auth_module.APIKeyStore(storage_path=self.temp_storage)
             auth_module.api_key_store = store
@@ -434,26 +409,26 @@ class TestVerifyAPIKeyDependency(unittest.IsolatedAsyncioTestCase):
 
             self.assertEqual(result, user_id)
 
-    async def test_verify_api_key_returns_dev_user_in_safe_dev_mode(self):
-        """verify_api_key should return 'dev_user' in safe dev mode."""
-        with patch.dict(os.environ, {"DEV_MODE": "true"}, clear=True):
+    async def test_verify_api_key_returns_dev_user_with_dev_api_key(self):
+        """verify_api_key should return 'dev_user' when DEV_API_KEY matches."""
+        with patch.dict(os.environ, {"DEV_API_KEY": "test-dev-key"}, clear=True):
             auth_module = get_auth_module()
-            auth_module._dev_mode_warning_logged = False
+            auth_module._dev_api_key_warning_logged = False
 
-            result = await auth_module.verify_api_key(api_key=None)
+            result = await auth_module.verify_api_key(api_key="test-dev-key")
 
             self.assertEqual(result, "dev_user")
 
-    async def test_verify_api_key_requires_key_when_dev_mode_blocked(self):
-        """verify_api_key should require real key when dev mode is blocked."""
+    async def test_verify_api_key_blocks_dev_api_key_in_production(self):
+        """verify_api_key should block DEV_API_KEY when in production."""
         with patch.dict(os.environ, {
-            "DEV_MODE": "true",
-            "STRIPE_SECRET_KEY": "sk_live_production_key",
+            "DEV_API_KEY": "test-dev-key",
+            "SENTRY_ENVIRONMENT": "production",
         }, clear=True):
             auth_module = get_auth_module()
 
             with self.assertRaises(HTTPException) as context:
-                await auth_module.verify_api_key(api_key=None)
+                await auth_module.verify_api_key(api_key="test-dev-key")
 
             self.assertEqual(context.exception.status_code, 401)
 

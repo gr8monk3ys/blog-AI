@@ -237,10 +237,9 @@ class TestWebSocketAuthentication:
         auth_msg = json.dumps({'type': 'auth', 'api_key': 'valid-key-123'})
         ws = self._make_mock_ws(receive_text_side_effect=[auth_msg])
 
-        with patch.dict(os.environ, {'DEV_MODE': 'false'}, clear=False):
-            with patch('app.routes.websocket.api_key_store') as mock_store:
-                mock_store.verify_key.return_value = 'user-abc'
-                result = await authenticate(ws)
+        with patch('app.routes.websocket.api_key_store') as mock_store:
+            mock_store.verify_key.return_value = 'user-abc'
+            result = await authenticate(ws)
 
         assert result == 'user-abc'
         ws.accept.assert_awaited_once()
@@ -267,9 +266,8 @@ class TestWebSocketAuthentication:
 
         ws.receive_text = _timeout_receive
 
-        with patch.dict(os.environ, {'DEV_MODE': 'false'}, clear=False):
-            with patch('app.routes.websocket.api_key_store'):
-                result = await authenticate(ws)
+        with patch('app.routes.websocket.api_key_store'):
+            result = await authenticate(ws)
 
         assert result is None
         ws.close.assert_awaited_once()
@@ -285,9 +283,8 @@ class TestWebSocketAuthentication:
         bad_msg = json.dumps({'type': 'subscribe', 'api_key': 'some-key'})
         ws = self._make_mock_ws(receive_text_side_effect=[bad_msg])
 
-        with patch.dict(os.environ, {'DEV_MODE': 'false'}, clear=False):
-            with patch('app.routes.websocket.api_key_store'):
-                result = await authenticate(ws)
+        with patch('app.routes.websocket.api_key_store'):
+            result = await authenticate(ws)
 
         assert result is None
         ws.close.assert_awaited_once()
@@ -304,9 +301,8 @@ class TestWebSocketAuthentication:
         bad_msg = json.dumps({'type': 'auth'})
         ws = self._make_mock_ws(receive_text_side_effect=[bad_msg])
 
-        with patch.dict(os.environ, {'DEV_MODE': 'false'}, clear=False):
-            with patch('app.routes.websocket.api_key_store'):
-                result = await authenticate(ws)
+        with patch('app.routes.websocket.api_key_store'):
+            result = await authenticate(ws)
 
         assert result is None
         ws.close.assert_awaited_once()
@@ -318,9 +314,8 @@ class TestWebSocketAuthentication:
         bad_msg = json.dumps({'type': 'auth', 'api_key': ''})
         ws = self._make_mock_ws(receive_text_side_effect=[bad_msg])
 
-        with patch.dict(os.environ, {'DEV_MODE': 'false'}, clear=False):
-            with patch('app.routes.websocket.api_key_store'):
-                result = await authenticate(ws)
+        with patch('app.routes.websocket.api_key_store'):
+            result = await authenticate(ws)
 
         assert result is None
         ws.close.assert_awaited_once()
@@ -334,10 +329,9 @@ class TestWebSocketAuthentication:
         auth_msg = json.dumps({'type': 'auth', 'api_key': 'bad-key-999'})
         ws = self._make_mock_ws(receive_text_side_effect=[auth_msg])
 
-        with patch.dict(os.environ, {'DEV_MODE': 'false'}, clear=False):
-            with patch('app.routes.websocket.api_key_store') as mock_store:
-                mock_store.verify_key.return_value = None
-                result = await authenticate(ws)
+        with patch('app.routes.websocket.api_key_store') as mock_store:
+            mock_store.verify_key.return_value = None
+            result = await authenticate(ws)
 
         assert result is None
         ws.send_json.assert_awaited()
@@ -353,19 +347,18 @@ class TestWebSocketAuthentication:
         authenticate = self._get_authenticate()
         ws = self._make_mock_ws(receive_text_side_effect=['not valid json {{{'])
 
-        with patch.dict(os.environ, {'DEV_MODE': 'false'}, clear=False):
-            with patch('app.routes.websocket.api_key_store'):
-                result = await authenticate(ws)
+        with patch('app.routes.websocket.api_key_store'):
+            result = await authenticate(ws)
 
         assert result is None
         ws.close.assert_awaited_once()
 
-    # -- Dev mode bypass -----------------------------------------------------
+    # -- Dev API key bypass --------------------------------------------------
 
     @pytest.mark.asyncio
-    async def test_dev_mode_bypass_returns_dev_user(self):
+    async def test_dev_api_key_bypass_returns_dev_user(self):
         """
-        When DEV_MODE is enabled and no production indicators are present,
+        When DEV_API_KEY is set and not in production,
         authentication should be bypassed and return 'dev_user'.
         """
         authenticate = self._get_authenticate()
@@ -373,11 +366,8 @@ class TestWebSocketAuthentication:
         ws.accept = AsyncMock()
 
         env_overrides = {
-            'DEV_MODE': 'true',
+            'DEV_API_KEY': 'test-dev-key',
             'SENTRY_ENVIRONMENT': 'development',
-            'HTTPS_REDIRECT_ENABLED': 'false',
-            'STRIPE_SECRET_KEY': 'sk_test_fake',
-            'ALLOWED_ORIGINS': 'http://localhost:3000',
         }
         with patch.dict(os.environ, env_overrides, clear=False):
             result = await authenticate(ws)
@@ -386,9 +376,9 @@ class TestWebSocketAuthentication:
         ws.accept.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_dev_mode_blocked_in_production_environment(self):
+    async def test_dev_api_key_blocked_in_production_environment(self):
         """
-        DEV_MODE should be blocked when production indicators are present
+        DEV_API_KEY should be blocked when production indicators are present
         (e.g., SENTRY_ENVIRONMENT=production), requiring real authentication.
         """
         authenticate = self._get_authenticate()
@@ -403,7 +393,7 @@ class TestWebSocketAuthentication:
         ws.receive_text = _timeout
 
         env_overrides = {
-            'DEV_MODE': 'true',
+            'DEV_API_KEY': 'test-dev-key',
             'SENTRY_ENVIRONMENT': 'production',
         }
         with patch.dict(os.environ, env_overrides, clear=False):
