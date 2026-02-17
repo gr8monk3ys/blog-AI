@@ -42,7 +42,7 @@ jobs:
           pip install -r requirements.txt pytest pytest-asyncio pytest-cov
 
       - name: Run tests
-        run: pytest --cov=src --cov=app --cov-report=xml --cov-report=term-missing --cov-fail-under=60
+        run: pytest --cov=src --cov=app --cov-report=xml --cov-report=term-missing --cov-fail-under=70
         env:
           DEV_MODE: "true"
           OPENAI_API_KEY: "test"
@@ -144,6 +144,17 @@ jobs:
           tags: blog-ai:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  secrets-scan:
+    name: Secrets Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   security-scan:
     name: Security Scan
