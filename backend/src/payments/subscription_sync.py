@@ -12,13 +12,15 @@ IMPORTANT: All sync operations are idempotent. Duplicate Stripe events
 (same event_id delivered multiple times) are detected and skipped.
 """
 
+import asyncio
 import logging
-from typing import Optional
+import time
+from typing import Any, Optional
 
 from src.types.payments import WebhookEventType
 from src.types.usage import SubscriptionTier as UsageTier
 from src.usage.quota_service import get_quota_service
-from src.db import execute as db_execute, fetchrow as db_fetchrow, is_database_configured
+from src.db import execute as db_execute, fetch as db_fetch, fetchrow as db_fetchrow, is_database_configured
 
 logger = logging.getLogger(__name__)
 
@@ -195,6 +197,248 @@ class SubscriptionSyncService:
         )
 
         return sync_result
+
+    async def reconcile_subscriptions(
+        self,
+        skip_manual_overrides: bool = True,
+        dry_run: bool = False,
+    ) -> dict:
+        """
+        Compare Stripe subscription status with database tiers.
+
+        Queries all users with a paid tier, looks up their Stripe subscription,
+        and downgrades or corrects any mismatches (e.g. a cancelled subscription
+        still showing as Pro in the database because a webhook was missed).
+
+        Args:
+            skip_manual_overrides: If True, skip users that have no
+                stripe_subscription_id (they were manually upgraded).
+            dry_run: If True, detect mismatches but do not apply fixes.
+
+        Returns:
+            Summary dict with checked, mismatches_found, fixed, errors, details.
+        """
+        if not self._use_db:
+            return {
+                "checked": 0,
+                "mismatches_found": 0,
+                "fixed": 0,
+                "errors": 0,
+                "details": [],
+                "error": "Database not configured",
+            }
+
+        summary: dict[str, Any] = {
+            "checked": 0,
+            "mismatches_found": 0,
+            "fixed": 0,
+            "errors": 0,
+            "details": [],
+        }
+
+        try:
+            # 1. Query all users with a paid tier
+            rows = await db_fetch(
+                """
+                SELECT
+                    uq.user_id,
+                    uq.tier,
+                    sc.customer_id,
+                    ss.subscription_id
+                FROM user_quotas uq
+                LEFT JOIN stripe_customers sc ON sc.user_id = uq.user_id
+                LEFT JOIN stripe_subscriptions ss
+                    ON ss.user_id = uq.user_id
+                    AND ss.status NOT IN ('cancelled')
+                WHERE uq.tier != 'free'
+                ORDER BY uq.user_id
+                """
+            )
+
+            if not rows:
+                logger.info("Reconciliation: no paid users found")
+                return summary
+
+            import stripe
+            from src.payments.stripe_service import stripe_service
+
+            if not stripe_service.is_configured:
+                logger.warning("Reconciliation aborted: Stripe not configured")
+                summary["error"] = "Stripe not configured"
+                return summary
+
+            # Rate-limit bucket: max 10 Stripe API calls per second
+            _RATE_LIMIT = 10
+            _call_timestamps: list[float] = []
+
+            async def _rate_limited_stripe_call(coro):
+                """Enforce max 10 Stripe API calls per second."""
+                now = time.monotonic()
+                # Remove timestamps older than 1 second
+                while _call_timestamps and _call_timestamps[0] < now - 1.0:
+                    _call_timestamps.pop(0)
+                if len(_call_timestamps) >= _RATE_LIMIT:
+                    sleep_for = 1.0 - (now - _call_timestamps[0])
+                    if sleep_for > 0:
+                        await asyncio.sleep(sleep_for)
+                _call_timestamps.append(time.monotonic())
+                return await coro
+
+            quota_service = get_quota_service()
+
+            # 2. Check each user against Stripe
+            for row in rows:
+                user_id = str(row["user_id"])
+                db_tier = str(row["tier"])
+                customer_id = row["customer_id"]
+                subscription_id = row["subscription_id"]
+
+                summary["checked"] += 1
+
+                # Skip manually upgraded users if flag is set
+                if skip_manual_overrides and not subscription_id and not customer_id:
+                    logger.debug(
+                        f"Reconciliation: skipping manually upgraded user "
+                        f"{user_id[:8]}... (tier={db_tier})"
+                    )
+                    continue
+
+                # If no customer_id, we cannot look them up in Stripe
+                if not customer_id:
+                    logger.debug(
+                        f"Reconciliation: no Stripe customer for user "
+                        f"{user_id[:8]}... - skipping"
+                    )
+                    continue
+
+                try:
+                    # 3. Look up subscription status in Stripe
+                    status_result = await _rate_limited_stripe_call(
+                        asyncio.to_thread(
+                            stripe.Subscription.list,
+                            customer=customer_id,
+                            status="all",
+                            limit=1,
+                        )
+                    )
+
+                    subscriptions = status_result
+                    if not subscriptions.data:
+                        # No subscription in Stripe but user has paid tier
+                        if db_tier != "free":
+                            summary["mismatches_found"] += 1
+                            detail = {
+                                "user_id": user_id,
+                                "customer_id": customer_id,
+                                "db_tier": db_tier,
+                                "stripe_status": "no_subscription",
+                                "action": "downgrade_to_free",
+                            }
+                            if not dry_run:
+                                await quota_service.set_user_tier(
+                                    user_id, UsageTier.FREE
+                                )
+                                summary["fixed"] += 1
+                                detail["applied"] = True
+                            else:
+                                detail["applied"] = False
+                            summary["details"].append(detail)
+                            logger.info(
+                                f"Reconciliation: user {user_id[:8]}... "
+                                f"has no Stripe subscription but DB tier={db_tier} "
+                                f"-> {'downgraded' if not dry_run else 'would downgrade'} to free"
+                            )
+                        continue
+
+                    sub = subscriptions.data[0]
+                    stripe_status = sub.status
+                    price_id = sub["items"]["data"][0]["price"]["id"]
+                    stripe_tier = stripe_service.get_tier_for_price_id(price_id).value
+
+                    # 4a. Stripe says canceled/expired -> downgrade to free
+                    if stripe_status in (
+                        "canceled",
+                        "incomplete_expired",
+                        "unpaid",
+                    ):
+                        if db_tier != "free":
+                            summary["mismatches_found"] += 1
+                            detail = {
+                                "user_id": user_id,
+                                "customer_id": customer_id,
+                                "db_tier": db_tier,
+                                "stripe_status": stripe_status,
+                                "action": "downgrade_to_free",
+                            }
+                            if not dry_run:
+                                await quota_service.set_user_tier(
+                                    user_id, UsageTier.FREE
+                                )
+                                summary["fixed"] += 1
+                                detail["applied"] = True
+                            else:
+                                detail["applied"] = False
+                            summary["details"].append(detail)
+                            logger.info(
+                                f"Reconciliation: user {user_id[:8]}... "
+                                f"Stripe status={stripe_status} but DB tier={db_tier} "
+                                f"-> {'downgraded' if not dry_run else 'would downgrade'} to free"
+                            )
+
+                    # 4b. Stripe says active but tier doesn't match -> update to match
+                    elif stripe_status in ("active", "trialing"):
+                        if db_tier != stripe_tier:
+                            summary["mismatches_found"] += 1
+                            new_tier = _map_payments_tier_to_usage_tier(stripe_tier)
+                            detail = {
+                                "user_id": user_id,
+                                "customer_id": customer_id,
+                                "db_tier": db_tier,
+                                "stripe_tier": stripe_tier,
+                                "stripe_status": stripe_status,
+                                "action": f"update_tier_to_{stripe_tier}",
+                            }
+                            if not dry_run:
+                                await quota_service.set_user_tier(user_id, new_tier)
+                                summary["fixed"] += 1
+                                detail["applied"] = True
+                            else:
+                                detail["applied"] = False
+                            summary["details"].append(detail)
+                            logger.info(
+                                f"Reconciliation: user {user_id[:8]}... "
+                                f"Stripe tier={stripe_tier} but DB tier={db_tier} "
+                                f"-> {'updated' if not dry_run else 'would update'} to {stripe_tier}"
+                            )
+
+                    # 4c. past_due -- leave alone, Stripe is still retrying
+                    elif stripe_status == "past_due":
+                        logger.debug(
+                            f"Reconciliation: user {user_id[:8]}... "
+                            f"is past_due - leaving tier={db_tier} unchanged"
+                        )
+
+                except Exception as e:
+                    summary["errors"] += 1
+                    summary["details"].append({
+                        "user_id": user_id,
+                        "error": str(e),
+                    })
+                    logger.error(
+                        f"Reconciliation error for user {user_id[:8]}...: {e}"
+                    )
+
+        except Exception as e:
+            logger.error(f"Reconciliation failed: {e}")
+            summary["errors"] += 1
+            summary["error"] = str(e)
+
+        logger.info(
+            f"Reconciliation complete: checked={summary['checked']}, "
+            f"mismatches={summary['mismatches_found']}, "
+            f"fixed={summary['fixed']}, errors={summary['errors']}"
+        )
+        return summary
 
     async def _get_user_id_from_customer(self, customer_id: str) -> Optional[str]:
         """
