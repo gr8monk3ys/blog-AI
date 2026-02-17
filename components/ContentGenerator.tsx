@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Switch } from '@headlessui/react';
 import { PencilIcon, LightBulbIcon, DocumentTextIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
@@ -33,8 +33,12 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
 
   const { checkUsage } = useUsageCheck();
 
+  const hasUserSelection = useRef(false)
+
   useEffect(() => {
-    setProviderType(defaultProvider)
+    if (!hasUserSelection.current && defaultProvider) {
+      setProviderType(defaultProvider)
+    }
   }, [defaultProvider])
 
   // Mock blog post data for development or when server is not available
@@ -278,7 +282,10 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
             <select
               id="provider"
               value={providerType}
-              onChange={(e) => setProviderType(e.target.value as LlmProviderType)}
+              onChange={(e) => {
+                hasUserSelection.current = true
+                setProviderType(e.target.value as LlmProviderType)
+              }}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
               disabled={(availableProviders || []).length <= 1}
             >

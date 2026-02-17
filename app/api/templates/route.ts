@@ -166,10 +166,17 @@ export async function GET(request: NextRequest) {
  * Create a new template
  */
 export async function POST(request: NextRequest) {
+  let body: Record<string, unknown>
   try {
-    const body = await request.json()
+    body = await request.json()
+  } catch {
+    return NextResponse.json(
+      { success: false, error: 'Invalid JSON' },
+      { status: 400 }
+    )
+  }
 
-    // Validate required fields
+  try {
     if (!body.name || !body.toolId || !body.category) {
       return NextResponse.json(
         { success: false, error: 'Name, toolId, and category are required' },

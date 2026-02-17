@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Switch } from '@headlessui/react';
 import { BookOpenIcon, LightBulbIcon, PencilIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline';
 import { BookGenerationOptions } from '../types/book';
@@ -30,8 +30,12 @@ export default function BookGenerator({ conversationId, setContent, setLoading }
   const [providerType, setProviderType] = useState<LlmProviderType>('openai')
   const [error, setError] = useState<string | null>(null);
 
+  const hasUserSelection = useRef(false)
+
   useEffect(() => {
-    setProviderType(defaultProvider)
+    if (!hasUserSelection.current && defaultProvider) {
+      setProviderType(defaultProvider)
+    }
   }, [defaultProvider])
 
   // Mock book data for development or when server is not available
@@ -267,7 +271,10 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
             <select
               id="provider"
               value={providerType}
-              onChange={(e) => setProviderType(e.target.value as LlmProviderType)}
+              onChange={(e) => {
+                hasUserSelection.current = true
+                setProviderType(e.target.value as LlmProviderType)
+              }}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
               disabled={(availableProviders || []).length <= 1}
             >

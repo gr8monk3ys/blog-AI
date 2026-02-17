@@ -119,7 +119,7 @@ export default function Home() {
   const [latestBlogs, setLatestBlogs] = useState(DEFAULT_LATEST_BLOGS)
 
   useEffect(() => {
-    let isMounted = true
+    const controller = new AbortController()
 
     const loadTools = async () => {
       try {
@@ -129,18 +129,19 @@ export default function Home() {
         ])
 
         const frontendTools = toFrontendTools(toolsResponse.tools || [])
-        if (isMounted && frontendTools.length > 0) {
+        if (!controller.signal.aborted && frontendTools.length > 0) {
           setTools(frontendTools)
         }
 
         const categoriesFromApi = normalizeCategoryStats(categoriesResponse)
-        if (isMounted && categoriesFromApi.length > 0) {
+        if (!controller.signal.aborted && categoriesFromApi.length > 0) {
           setToolCategories(categoriesFromApi)
-        } else if (isMounted && frontendTools.length > 0) {
+        } else if (!controller.signal.aborted && frontendTools.length > 0) {
           setToolCategories(buildCategoryStatsFromTools(frontendTools))
         }
-      } catch {
-        if (isMounted) {
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return
+        if (!controller.signal.aborted) {
           setTools(SAMPLE_TOOLS)
           setToolCategories(buildCategoryStatsFromTools(SAMPLE_TOOLS))
         }
@@ -150,16 +151,16 @@ export default function Home() {
     loadTools()
 
     return () => {
-      isMounted = false
+      controller.abort()
     }
   }, [])
 
   useEffect(() => {
-    let isMounted = true
+    const controller = new AbortController()
 
     const loadBlogs = async () => {
       try {
-        const response = await fetch('/api/blog?limit=3')
+        const response = await fetch('/api/blog?limit=3', { signal: controller.signal })
         if (!response.ok) return
         const data = await response.json()
         if (!Array.isArray(data?.data)) return
@@ -176,18 +177,18 @@ export default function Home() {
           href: `/blog/${post.slug}`,
         }))
 
-        if (isMounted && normalized.length > 0) {
+        if (!controller.signal.aborted && normalized.length > 0) {
           setLatestBlogs(normalized)
         }
-      } catch {
-        // keep fallback
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return
       }
     }
 
     loadBlogs()
 
     return () => {
-      isMounted = false
+      controller.abort()
     }
   }, [])
 
