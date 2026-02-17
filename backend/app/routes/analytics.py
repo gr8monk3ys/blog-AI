@@ -20,6 +20,7 @@ from pydantic import BaseModel
 from src.db import fetch as db_fetch, fetchrow as db_fetchrow, is_database_configured
 from src.organizations import AuthorizationContext
 
+from ..dependencies.database import require_database
 from ..dependencies.organization import get_optional_organization_context
 
 logger = logging.getLogger(__name__)
@@ -189,6 +190,7 @@ def get_mock_categories() -> list[CategoryBreakdown]:
 @router.get("/overview", response_model=OverviewResponse)
 async def get_overview(
     range: str = Query("30d", pattern="^(7d|30d|90d|all)$"),
+    _db: None = Depends(require_database("analytics")),
     auth_ctx: AuthorizationContext = Depends(get_optional_organization_context),
 ):
     """
@@ -198,6 +200,7 @@ async def get_overview(
     tools used, active today, and popular tool.
 
     Authorization: Requires content.view permission.
+    Requires: DATABASE_URL (returns 503 if not configured).
     """
     # Scope to org only if the user is actually a member; otherwise fall back to user scope.
     scope_id = (
@@ -206,9 +209,6 @@ async def get_overview(
         else auth_ctx.user_id
     )
     logger.info(f"Analytics overview requested by user: {auth_ctx.user_id}, org: {auth_ctx.organization_id}, range: {range}")
-
-    if not is_database_configured():
-        return get_mock_overview()
 
     try:
         start, end = get_time_range_dates(range)
@@ -332,6 +332,7 @@ async def get_overview(
 async def get_tool_usage(
     range: str = Query("30d", pattern="^(7d|30d|90d|all)$"),
     limit: int = Query(10, ge=1, le=50),
+    _db: None = Depends(require_database("analytics")),
     auth_ctx: AuthorizationContext = Depends(get_optional_organization_context),
 ):
     """
@@ -340,6 +341,7 @@ async def get_tool_usage(
     Returns usage counts for each tool, sorted by popularity.
 
     Authorization: Requires content.view permission.
+    Requires: DATABASE_URL (returns 503 if not configured).
     """
     scope_id = (
         auth_ctx.organization_id
@@ -347,9 +349,6 @@ async def get_tool_usage(
         else auth_ctx.user_id
     )
     logger.info(f"Tool usage requested by user: {auth_ctx.user_id}, org: {auth_ctx.organization_id}, range: {range}")
-
-    if not is_database_configured():
-        return get_mock_tool_usage()[:limit]
 
     try:
         start, end = get_time_range_dates(range)
@@ -403,6 +402,7 @@ async def get_tool_usage(
 @router.get("/timeline", response_model=list[TimelineDataPoint])
 async def get_timeline(
     range: str = Query("30d", pattern="^(7d|30d|90d|all)$"),
+    _db: None = Depends(require_database("analytics")),
     auth_ctx: AuthorizationContext = Depends(get_optional_organization_context),
 ):
     """
@@ -411,6 +411,7 @@ async def get_timeline(
     Returns daily generation counts over the specified time range.
 
     Authorization: Requires content.view permission.
+    Requires: DATABASE_URL (returns 503 if not configured).
     """
     scope_id = (
         auth_ctx.organization_id
@@ -418,9 +419,6 @@ async def get_timeline(
         else auth_ctx.user_id
     )
     logger.info(f"Timeline data requested by user: {auth_ctx.user_id}, org: {auth_ctx.organization_id}, range: {range}")
-
-    if not is_database_configured():
-        return get_mock_timeline(range)
 
     try:
         # We want a stable number of points for charting (7/30/90), including today.
@@ -486,6 +484,7 @@ async def get_timeline(
 @router.get("/categories", response_model=list[CategoryBreakdown])
 async def get_category_breakdown(
     range: str = Query("30d", pattern="^(7d|30d|90d|all)$"),
+    _db: None = Depends(require_database("analytics")),
     auth_ctx: AuthorizationContext = Depends(get_optional_organization_context),
 ):
     """
@@ -494,6 +493,7 @@ async def get_category_breakdown(
     Returns generation counts grouped by tool category.
 
     Authorization: Requires content.view permission.
+    Requires: DATABASE_URL (returns 503 if not configured).
     """
     scope_id = (
         auth_ctx.organization_id
@@ -501,9 +501,6 @@ async def get_category_breakdown(
         else auth_ctx.user_id
     )
     logger.info(f"Category breakdown requested by user: {auth_ctx.user_id}, org: {auth_ctx.organization_id}, range: {range}")
-
-    if not is_database_configured():
-        return get_mock_categories()
 
     try:
         start, end = get_time_range_dates(range)
