@@ -22,26 +22,17 @@ from ..websocket import manager
 logger = logging.getLogger(__name__)
 
 
-def _is_dev_mode_active() -> bool:
-    """Check if DEV_MODE is active and safe to use."""
-    dev_mode_requested = os.environ.get("DEV_MODE", "false").lower() == "true"
-    if not dev_mode_requested:
+def _is_dev_api_key_active() -> bool:
+    """Check if DEV_API_KEY is configured and safe to use (non-production only)."""
+    dev_api_key = os.environ.get("DEV_API_KEY")
+    if not dev_api_key:
         return False
 
-    # Check production indicators (same as api_key.py)
+    # Block in production
     if os.environ.get("SENTRY_ENVIRONMENT", "").lower() == "production":
         return False
-    if os.environ.get("HTTPS_REDIRECT_ENABLED", "false").lower() == "true":
+    if os.environ.get("ENVIRONMENT", "").lower() == "production":
         return False
-    stripe_key = os.environ.get("STRIPE_SECRET_KEY", "")
-    if stripe_key.startswith("sk_live_"):
-        return False
-    allowed_origins = os.environ.get("ALLOWED_ORIGINS", "")
-    if allowed_origins:
-        for origin in allowed_origins.split(","):
-            origin = origin.strip().lower()
-            if origin and "localhost" not in origin and "127.0.0.1" not in origin:
-                return False
     return True
 
 
@@ -69,8 +60,8 @@ async def authenticate_websocket(
     # Accept the connection so the client can send the auth message
     await websocket.accept()
 
-    # Check DEV_MODE first
-    if _is_dev_mode_active():
+    # Check DEV_API_KEY first (non-production only)
+    if _is_dev_api_key_active():
         return "dev_user"
 
     try:
