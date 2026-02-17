@@ -5,18 +5,49 @@ import Link from 'next/link'
 import { SparklesIcon, Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
 
-const navLinks = [
-  { href: '/tool-directory', label: 'Directory' },
-  { href: '/tools', label: 'Tools' },
-  { href: '/templates', label: 'Templates' },
-  { href: '/blog', label: 'Blog' },
-  { href: '/pricing', label: 'Pricing' },
-  { href: '/history', label: 'History' },
+interface NavLink {
+  href: string
+  label: string
+  authRequired: boolean
+}
+
+const navLinks: NavLink[] = [
+  { href: '/tool-directory', label: 'Directory', authRequired: false },
+  { href: '/tools', label: 'Tools', authRequired: true },
+  { href: '/templates', label: 'Templates', authRequired: true },
+  { href: '/blog', label: 'Blog', authRequired: false },
+  { href: '/pricing', label: 'Pricing', authRequired: false },
+  { href: '/history', label: 'History', authRequired: true },
 ]
 
-export default function SiteHeader() {
+const publicLinks = navLinks.filter((link) => !link.authRequired)
+const authLinks = navLinks.filter((link) => link.authRequired)
+
+export default function SiteHeader(): React.ReactElement {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const isClerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+
+  const renderNavLink = (link: NavLink): React.ReactElement => (
+    <Link
+      key={link.href}
+      href={link.href}
+      className="hover:text-amber-600 transition-colors"
+    >
+      {link.label}
+    </Link>
+  )
+
+  const renderMobileNavLink = (link: NavLink): React.ReactElement => (
+    <li key={link.href}>
+      <Link
+        href={link.href}
+        className="block rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600 transition-colors"
+        onClick={() => setMobileMenuOpen(false)}
+      >
+        {link.label}
+      </Link>
+    </li>
+  )
 
   return (
     <header className="sticky top-0 z-20 bg-white border-b border-gray-200">
@@ -27,15 +58,16 @@ export default function SiteHeader() {
             <span className="font-semibold text-gray-900">Blog AI</span>
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm text-gray-700">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="hover:text-amber-600 transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
+            {isClerkConfigured ? (
+              <>
+                {publicLinks.map(renderNavLink)}
+                <SignedIn>
+                  {authLinks.map(renderNavLink)}
+                </SignedIn>
+              </>
+            ) : (
+              navLinks.map(renderNavLink)
+            )}
           </nav>
           <div className="flex items-center gap-3 text-sm">
             {isClerkConfigured ? (
@@ -84,17 +116,16 @@ export default function SiteHeader() {
           className="md:hidden border-t border-gray-200 bg-white"
         >
           <ul className="space-y-1 px-4 py-3">
-            {navLinks.map((link) => (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  className="block rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600 transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
+            {isClerkConfigured ? (
+              <>
+                {publicLinks.map(renderMobileNavLink)}
+                <SignedIn>
+                  {authLinks.map(renderMobileNavLink)}
+                </SignedIn>
+              </>
+            ) : (
+              navLinks.map(renderMobileNavLink)
+            )}
           </ul>
         </nav>
       )}

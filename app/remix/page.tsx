@@ -5,6 +5,7 @@ import { AnimatePresence } from 'framer-motion'
 import { API_ENDPOINTS, apiFetch } from '@/lib/api'
 import { useLlmConfig } from '@/hooks/useLlmConfig'
 import ErrorBoundary from '@/components/ErrorBoundary'
+import RequireAuth from '@/components/RequireAuth'
 import BrandVoiceSelector from '@/components/brand/BrandVoiceSelector'
 import {
   SourceContentForm,
@@ -312,8 +313,10 @@ function RemixPageContent() {
 
 export default function RemixPage() {
   return (
-    <ErrorBoundary>
-      <RemixPageContent />
-    </ErrorBoundary>
+    <RequireAuth>
+      <ErrorBoundary>
+        <RemixPageContent />
+      </ErrorBoundary>
+    </RequireAuth>
   )
 }

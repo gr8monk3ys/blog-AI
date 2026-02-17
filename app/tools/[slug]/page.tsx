@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { TOOL_CATEGORIES, SAMPLE_TOOLS } from '../../../types/tools'
+import RequireAuth from '../../../components/RequireAuth'
 import type { TemplateCategory } from '../../../types/templates'
 import type { ExportFormat } from '../../../components/ExportMenu'
 import type { ContentVariation } from '../../../components/tools/VariationCompare'
@@ -505,97 +506,99 @@ export default function ToolPage() {
   ).slice(0, 3)
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Toast notification for export */}
-      <ToastNotification toast={exportToast} />
+    <RequireAuth>
+      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        {/* Toast notification for export */}
+        <ToastNotification toast={exportToast} />
 
-      {/* Header */}
-      <ToolPageHeader />
+        {/* Header */}
+        <ToolPageHeader />
 
-      {/* Tool Header */}
-      <ToolHeaderSection tool={tool} categoryInfo={categoryInfo} />
+        {/* Tool Header */}
+        <ToolHeaderSection tool={tool} categoryInfo={categoryInfo} />
 
-      {/* Main Content */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Input Form with Output */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="lg:col-span-2"
-          >
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <ToolInputForm
-                tool={tool}
-                inputText={inputText}
-                onInputTextChange={setInputText}
-                tone={tone}
-                onToneChange={setTone}
-                useResearch={useResearch}
-                onUseResearchChange={setUseResearch}
-                generateVariations={generateVariations}
-                onGenerateVariationsChange={setGenerateVariations}
-                variationCount={variationCount}
-                onVariationCountChange={setVariationCount}
-                keywords={keywords}
-                onKeywordsChange={setKeywords}
-                providerType={providerType}
-                availableProviders={availableProviders}
-                onProviderTypeChange={setProviderType}
-                brandVoiceEnabled={brandVoiceEnabled}
-                onBrandVoiceEnabledChange={setBrandVoiceEnabled}
-                selectedBrandProfile={selectedBrandProfile}
-                onSelectedBrandProfileChange={setSelectedBrandProfile}
-                loading={loading}
-                onSubmit={handleSubmit}
-              />
+        {/* Main Content */}
+        <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Input Form with Output */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="lg:col-span-2"
+            >
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <ToolInputForm
+                  tool={tool}
+                  inputText={inputText}
+                  onInputTextChange={setInputText}
+                  tone={tone}
+                  onToneChange={setTone}
+                  useResearch={useResearch}
+                  onUseResearchChange={setUseResearch}
+                  generateVariations={generateVariations}
+                  onGenerateVariationsChange={setGenerateVariations}
+                  variationCount={variationCount}
+                  onVariationCountChange={setVariationCount}
+                  keywords={keywords}
+                  onKeywordsChange={setKeywords}
+                  providerType={providerType}
+                  availableProviders={availableProviders}
+                  onProviderTypeChange={setProviderType}
+                  brandVoiceEnabled={brandVoiceEnabled}
+                  onBrandVoiceEnabledChange={setBrandVoiceEnabled}
+                  selectedBrandProfile={selectedBrandProfile}
+                  onSelectedBrandProfileChange={setSelectedBrandProfile}
+                  loading={loading}
+                  onSubmit={handleSubmit}
+                />
 
-              {/* Output section */}
-              <ToolOutput
-                tool={tool}
-                inputText={inputText}
-                output={output}
-                variations={variations}
-                selectedVariation={selectedVariation}
-                onVariationSelect={handleVariationSelect}
-                contentScore={contentScore}
-                scoringLoading={scoringLoading}
-                plagiarismResult={plagiarismResult}
-                plagiarismLoading={plagiarismLoading}
-                plagiarismError={plagiarismError}
-                onPlagiarismCheck={runPlagiarismCheck}
-                savedContentId={savedContentId}
-                isFavorite={isFavorite}
-                onFavoriteToggle={setIsFavorite}
-                copied={copied}
-                onCopy={handleCopy}
-                onExportComplete={handleExportComplete}
-                onSaveTemplateClick={() => setShowSaveTemplateModal(true)}
-                loading={loading}
-              />
-            </div>
-          </motion.div>
+                {/* Output section */}
+                <ToolOutput
+                  tool={tool}
+                  inputText={inputText}
+                  output={output}
+                  variations={variations}
+                  selectedVariation={selectedVariation}
+                  onVariationSelect={handleVariationSelect}
+                  contentScore={contentScore}
+                  scoringLoading={scoringLoading}
+                  plagiarismResult={plagiarismResult}
+                  plagiarismLoading={plagiarismLoading}
+                  plagiarismError={plagiarismError}
+                  onPlagiarismCheck={runPlagiarismCheck}
+                  savedContentId={savedContentId}
+                  isFavorite={isFavorite}
+                  onFavoriteToggle={setIsFavorite}
+                  copied={copied}
+                  onCopy={handleCopy}
+                  onExportComplete={handleExportComplete}
+                  onSaveTemplateClick={() => setShowSaveTemplateModal(true)}
+                  loading={loading}
+                />
+              </div>
+            </motion.div>
 
-          {/* Sidebar */}
-          <ToolSidebar relatedTools={relatedTools} />
-        </div>
-      </section>
+            {/* Sidebar */}
+            <ToolSidebar relatedTools={relatedTools} />
+          </div>
+        </section>
 
-      {/* Save Template Modal */}
-      <SaveTemplateModal
-        isOpen={showSaveTemplateModal}
-        onClose={() => setShowSaveTemplateModal(false)}
-        onSave={handleSaveTemplate}
-        toolId={tool.slug}
-        toolName={tool.name}
-        presetInputs={{
-          topic: inputText,
-          tone,
-          useResearch,
-          keywords: parseKeywords(keywords),
-        }}
-      />
-    </main>
+        {/* Save Template Modal */}
+        <SaveTemplateModal
+          isOpen={showSaveTemplateModal}
+          onClose={() => setShowSaveTemplateModal(false)}
+          onSave={handleSaveTemplate}
+          toolId={tool.slug}
+          toolName={tool.name}
+          presetInputs={{
+            topic: inputText,
+            tone,
+            useResearch,
+            keywords: parseKeywords(keywords),
+          }}
+        />
+      </main>
+    </RequireAuth>
   )
 }

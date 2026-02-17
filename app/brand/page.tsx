@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import SiteHeader from '../../components/SiteHeader'
+import RequireAuth from '../../components/RequireAuth'
 import SiteFooter from '../../components/SiteFooter'
 import BrandProfileCard from '../../components/brand/BrandProfileCard'
 import BrandProfileForm, { BrandProfileFormData } from '../../components/brand/BrandProfileForm'
@@ -164,6 +165,7 @@ export default function BrandPage() {
   }
 
   return (
+    <RequireAuth>
     <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Confirm Modal */}
       <ConfirmModalComponent />
@@ -397,5 +399,6 @@ export default function BrandPage() {
 
       <SiteFooter />
     </main>
+    </RequireAuth>
   )
 }
