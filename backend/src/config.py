@@ -17,7 +17,9 @@ Usage:
         ...
 """
 
+import logging
 import os
+import sys
 from functools import lru_cache
 from typing import List, Literal, Optional, Set
 
@@ -316,9 +318,9 @@ class SecuritySettings(BaseSettings):
         default="development",
         description="Deployment environment",
     )
-    dev_mode: bool = Field(
-        default=False,
-        description="Enable development mode (disables some security checks)",
+    dev_api_key: Optional[str] = Field(
+        default=None,
+        description="Development API key for local testing (blocked in production)",
     )
 
     # CORS
@@ -671,8 +673,8 @@ class Settings(BaseSettings):
 
     @property
     def is_dev_mode(self) -> bool:
-        """Check if development mode is enabled."""
-        return self.security.dev_mode
+        """Check if a development API key is configured."""
+        return bool(self.security.dev_api_key)
 
     # ==========================================================================
     # Configuration Summary
@@ -703,6 +705,89 @@ class Settings(BaseSettings):
             "allowed_origins": self.security.origins_list,
             "log_level": self.logging.log_level,
         }
+
+
+    def validate_production_config(self) -> None:
+        """
+        Validate configuration for production readiness.
+
+        In production, required services must be configured or the app
+        refuses to start.  In development, missing vars are logged as
+        warnings so developers can iterate quickly.
+        """
+        _logger = logging.getLogger(__name__)
+
+        is_prod = (
+            self.security.environment == 'production'
+            or os.environ.get('SENTRY_ENVIRONMENT', '').lower() == 'production'
+            or os.environ.get('ENVIRONMENT', '').lower() == 'production'
+            or os.environ.get('PYTHON_ENV', '').lower() == 'production'
+        )
+
+        errors: list[str] = []
+        warnings: list[str] = []
+
+        # --- LLM provider ---
+        if not self.llm.has_any_provider:
+            msg = (
+                'No LLM provider API key set. '
+                'Set at least one of OPENAI_API_KEY, ANTHROPIC_API_KEY, or GEMINI_API_KEY.'
+            )
+            if is_prod:
+                errors.append(msg)
+            else:
+                _logger.warning(msg)
+
+        # --- Database ---
+        if not self.database.is_configured:
+            msg = 'DATABASE_URL is not set. Database features will be unavailable.'
+            if is_prod:
+                errors.append(msg)
+            else:
+                _logger.warning(msg)
+
+        # --- ALLOWED_ORIGINS ---
+        origins = self.security.origins_list
+        if not origins:
+            msg = 'ALLOWED_ORIGINS is empty. CORS will reject all cross-origin requests.'
+            if is_prod:
+                errors.append(msg)
+            else:
+                _logger.warning(msg)
+        elif is_prod:
+            has_localhost = any(
+                'localhost' in o or '127.0.0.1' in o for o in origins
+            )
+            if has_localhost:
+                errors.append(
+                    'ALLOWED_ORIGINS contains localhost entries in production. '
+                    'Remove localhost/127.0.0.1 origins for production deployments.'
+                )
+
+        # --- Stripe (warn only) ---
+        if not self.stripe.stripe_secret_key:
+            msg = 'STRIPE_SECRET_KEY is not set. Revenue features will be disabled.'
+            if is_prod:
+                _logger.warning(msg)
+            else:
+                _logger.warning(msg)
+        if not self.stripe.stripe_webhook_secret:
+            msg = 'STRIPE_WEBHOOK_SECRET is not set. Webhook verification will be disabled.'
+            if is_prod:
+                _logger.warning(msg)
+            else:
+                _logger.warning(msg)
+
+        # --- Fail hard in production ---
+        if is_prod and errors:
+            for err in errors:
+                _logger.critical('PRODUCTION CONFIG ERROR: %s', err)
+            _logger.critical(
+                'Application cannot start due to %d configuration error(s). '
+                'Fix the above issues and restart.',
+                len(errors),
+            )
+            sys.exit(1)
 
 
 # =============================================================================

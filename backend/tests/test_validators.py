@@ -11,7 +11,7 @@ import unittest
 from unittest.mock import patch
 
 # Set environment before imports
-os.environ["DEV_MODE"] = "true"
+os.environ["DEV_API_KEY"] = "test-key"
 os.environ["RATE_LIMIT_ENABLED"] = "false"
 os.environ["ENVIRONMENT"] = "development"
 

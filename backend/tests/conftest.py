@@ -14,7 +14,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 # Environment setup before any imports
-os.environ["DEV_MODE"] = "true"
+os.environ["DEV_API_KEY"] = "test-key"
 os.environ["RATE_LIMIT_ENABLED"] = "false"
 os.environ["ENVIRONMENT"] = "development"
 os.environ["LOG_LEVEL"] = "WARNING"

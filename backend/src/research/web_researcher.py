@@ -161,7 +161,7 @@ def conduct_web_research(
     """
     options = options or SearchOptions()
     cache = get_research_cache()
-    cache_enabled = os.environ.get("DEV_MODE", "false").lower() != "true"
+    cache_enabled = not bool(os.environ.get("DEV_API_KEY"))
 
     try:
         # Convert keywords list to a string for searching

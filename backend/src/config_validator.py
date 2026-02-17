@@ -115,10 +115,10 @@ def validate_security_config(settings: Settings, result: ValidationResult) -> No
 
     if security.is_production:
         # Production-specific checks
-        if security.dev_mode:
+        if security.dev_api_key:
             result.add_error(
-                "DEV_MODE=true is not allowed in production environment. "
-                "Set DEV_MODE=false for production deployment."
+                "DEV_API_KEY is set in production environment. "
+                "Remove DEV_API_KEY for production deployment."
             )
 
         if not security.https_redirect_enabled:
@@ -148,9 +148,9 @@ def validate_security_config(settings: Settings, result: ValidationResult) -> No
 
     else:
         # Development-specific info
-        if security.dev_mode:
+        if security.dev_api_key:
             result.add_info(
-                "DEV_MODE is enabled. API key authentication may be bypassed."
+                "DEV_API_KEY is set. Use it as X-API-Key header for local testing."
             )
 
 
@@ -348,7 +348,7 @@ def log_config_summary(settings: Optional[Settings] = None) -> None:
     logger.info("Blog AI Configuration Summary")
     logger.info("=" * 60)
     logger.info(f"Environment: {summary['environment']}")
-    logger.info(f"Dev Mode: {summary['dev_mode']}")
+    logger.info(f"Dev API Key: {'set' if summary.get('dev_mode') else 'not set'}")
     logger.info(f"Log Level: {summary['log_level']}")
     logger.info("-" * 60)
     logger.info("Features:")
