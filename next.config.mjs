@@ -7,6 +7,40 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const isDev = process.env.NODE_ENV === 'development'
 
+// =============================================================================
+// Build-time environment validation for production deployments
+// Only enforced in CI/Vercel (not local `npm run build`)
+// =============================================================================
+const isDeployBuild = process.env.CI === 'true' || process.env.VERCEL === '1'
+
+if (process.env.NODE_ENV === 'production' && isDeployBuild) {
+  if (!process.env.NEXT_PUBLIC_API_URL) {
+    throw new Error(
+      'NEXT_PUBLIC_API_URL is required in production. ' +
+      'Set it to your backend API URL (e.g. https://api.blogai.com).'
+    )
+  }
+  if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+    throw new Error(
+      'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is required in production. ' +
+      'Set it to your Clerk publishable key for authentication.'
+    )
+  }
+  if (process.env.NEXT_PUBLIC_API_URL.includes('localhost')) {
+    console.warn(
+      '[next.config] WARNING: NEXT_PUBLIC_API_URL contains "localhost". ' +
+      'This is likely incorrect for a production build.'
+    )
+  }
+} else if (process.env.NODE_ENV === 'production') {
+  if (!process.env.NEXT_PUBLIC_API_URL) {
+    console.warn('[next.config] WARNING: NEXT_PUBLIC_API_URL not set. API calls will fall back to localhost:8000.')
+  }
+  if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+    console.warn('[next.config] WARNING: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY not set. Auth will be disabled.')
+  }
+}
+
 // Bundle analyzer - only loaded when ANALYZE env var is set
 const withBundleAnalyzer =
   process.env.ANALYZE === 'true'

@@ -6,6 +6,7 @@ This is the main entry point that assembles the modular components
 from the app package.
 """
 
+import asyncio
 import logging
 import sys
 import os
@@ -43,6 +44,8 @@ try:
     settings: Settings = get_settings()
     validation_result = validate_config(settings, fail_on_error=True)
     log_config_summary(settings)
+    # Validate production-critical configuration (exits if production and missing)
+    settings.validate_production_config()
 except ConfigurationError as e:
     logger.critical(f"Configuration validation failed: {e}")
     logger.critical("Application cannot start due to configuration errors.")
@@ -215,7 +218,24 @@ def is_sentry_initialized() -> bool:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Handle startup/shutdown for shared resources."""
+    # Start background reconciliation scheduler
+    reconciliation_task = None
+    try:
+        from src.payments.reconciliation_scheduler import start_reconciliation_scheduler
+        reconciliation_task = asyncio.create_task(start_reconciliation_scheduler())
+        logger.info("Subscription reconciliation scheduler registered")
+    except Exception as e:
+        logger.warning("Failed to start reconciliation scheduler: %s", e)
+
     yield
+
+    # Cancel the reconciliation task on shutdown
+    if reconciliation_task and not reconciliation_task.done():
+        reconciliation_task.cancel()
+        try:
+            await reconciliation_task
+        except asyncio.CancelledError:
+            pass
     try:
         close_llm_clients()
     except Exception as e:
@@ -350,9 +370,31 @@ rate_limit_settings = settings.rate_limit
 logging_settings = settings.logging
 
 # CORS middleware with hardened configuration
+# In production, strip any localhost/127.0.0.1 origins and refuse to start if
+# no valid origins remain.
+_cors_origins = list(security_settings.origins_list)
+if _is_production:
+    _local_origins = [
+        o for o in _cors_origins
+        if 'localhost' in o or '127.0.0.1' in o
+    ]
+    if _local_origins:
+        logger.critical(
+            'CORS SECURITY: Removing localhost origins in production: %s',
+            _local_origins,
+        )
+        _cors_origins = [o for o in _cors_origins if o not in _local_origins]
+    if not _cors_origins:
+        logger.critical(
+            'CORS SECURITY: No valid ALLOWED_ORIGINS remain after removing '
+            'localhost entries. Set ALLOWED_ORIGINS to your production domain(s). '
+            'Application cannot start.'
+        )
+        sys.exit(1)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=security_settings.origins_list,
+    allow_origins=_cors_origins,
     allow_credentials=True,
     # Restrict to necessary HTTP methods only
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
