@@ -83,6 +83,9 @@ class ErrorCode(str, Enum):
     LLM_PROVIDER_ERROR = "LLM_PROVIDER_ERROR"
     WEBHOOK_ERROR = "WEBHOOK_ERROR"
 
+    # Service availability errors (503)
+    SERVICE_UNAVAILABLE = "SERVICE_UNAVAILABLE"
+
     # Database errors (500)
     DATABASE_ERROR = "DATABASE_ERROR"
     CONNECTION_ERROR = "CONNECTION_ERROR"

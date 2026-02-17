@@ -369,6 +369,67 @@ def log_config_summary(settings: Optional[Settings] = None) -> None:
     logger.info(f"  Allowed Origins: {len(summary['allowed_origins'])} configured")
     logger.info("=" * 60)
 
+    # Startup feature availability banner
+    log_feature_availability_banner(settings)
+
+
+def log_feature_availability_banner(settings: Optional[Settings] = None) -> None:
+    """
+    Log a startup banner that clearly shows which product features are
+    available and which are unavailable (with the reason why).
+
+    This gives operators an immediate picture of the system's capability
+    when they look at startup logs.
+    """
+    if settings is None:
+        settings = get_settings()
+
+    db_ok = settings.is_database_configured
+    stripe_ok = settings.is_stripe_configured
+    has_llm = settings.has_llm_provider
+    has_research = settings.has_research_api
+    redis_ok = settings.is_redis_configured
+
+    # Each entry: (feature_name, is_available, reason_if_unavailable)
+    features = [
+        ("Content Generation", has_llm, "Set OPENAI_API_KEY, ANTHROPIC_API_KEY, or GEMINI_API_KEY"),
+        ("Brand Profiles", db_ok, "Set DATABASE_URL"),
+        ("Conversation History", db_ok, "Set DATABASE_URL"),
+        ("Analytics Dashboard", db_ok, "Set DATABASE_URL"),
+        ("Payments / Subscriptions", stripe_ok, "Set STRIPE_SECRET_KEY"),
+        ("Web Research", has_research, "Set SERP_API_KEY or TAVILY_API_KEY"),
+        ("Redis Cache / Queues", redis_ok, "Set REDIS_URL"),
+    ]
+
+    available = [(name, reason) for name, ok, reason in features if ok]
+    unavailable = [(name, reason) for name, ok, reason in features if not ok]
+
+    logger.info("")
+    logger.info("=" * 60)
+    logger.info("  FEATURE AVAILABILITY")
+    logger.info("=" * 60)
+
+    if available:
+        logger.info("")
+        logger.info("  AVAILABLE:")
+        for name, _ in available:
+            logger.info(f"    [OK]  {name}")
+
+    if unavailable:
+        logger.info("")
+        logger.info("  UNAVAILABLE:")
+        for name, reason in unavailable:
+            logger.warning(f"    [--]  {name}  ->  {reason}")
+
+    logger.info("")
+    logger.info(
+        "  %d of %d features available",
+        len(available),
+        len(features),
+    )
+    logger.info("=" * 60)
+    logger.info("")
+
 
 def startup_validation() -> Settings:
     """

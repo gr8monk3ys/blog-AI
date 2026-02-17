@@ -33,6 +33,11 @@ from app.dependencies.organization import (
     require_role,
 )
 
+from app.dependencies.database import (
+    require_database,
+    require_stripe,
+)
+
 from app.dependencies.authorization import (
     # Auth context types
     OrganizationAuthContext,
@@ -99,4 +104,7 @@ __all__ = [
     "require_admin",
     # Audit helpers
     "log_authorized_action",
+    # Database / service availability guards
+    "require_database",
+    "require_stripe",
 ]
