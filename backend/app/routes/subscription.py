@@ -20,7 +20,6 @@ from src.types.usage import get_tier_config
 from src.usage.quota_service import get_quota_service
 
 from ..auth import verify_api_key
-from ..middleware.quota_check import require_business_tier
 
 logger = logging.getLogger(__name__)
 
@@ -144,72 +143,6 @@ async def get_subscription_status_with_usage(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
                 "error": "Failed to retrieve subscription status",
-                "success": False,
-            },
-        )
-
-
-@router.post(
-    "/reconcile",
-    summary="Reconcile subscriptions with Stripe",
-    description="""
-Compares all paid-tier users in the database against their actual Stripe
-subscription status and fixes mismatches. This catches cases where a Stripe
-webhook was missed (e.g. cancellation event lost) and a user retained a
-higher tier than they should have.
-
-**Requires Business tier (admin only).**
-
-Query parameters:
-- `skip_manual_overrides` - Skip users with no Stripe subscription ID (default: true)
-- `dry_run` - Detect mismatches without applying fixes (default: false)
-""",
-    responses={
-        200: {"description": "Reconciliation summary"},
-        403: {"description": "Insufficient tier"},
-        500: {"description": "Internal server error"},
-    },
-)
-async def reconcile_subscriptions(
-    skip_manual_overrides: bool = True,
-    dry_run: bool = False,
-    user_id: str = Depends(require_business_tier),
-) -> Dict:
-    """
-    Trigger a reconciliation of Stripe subscriptions against the database.
-
-    Scans all users with paid tiers, verifies their Stripe subscription
-    status, and corrects any mismatches found.
-
-    Args:
-        skip_manual_overrides: If True, skip users without a Stripe subscription
-            (they were manually upgraded and should not be touched).
-        dry_run: If True, report mismatches without applying fixes.
-        user_id: Authenticated user ID (must be Business tier).
-
-    Returns:
-        Summary of reconciliation results.
-    """
-    try:
-        from src.payments.subscription_sync import get_sync_service
-
-        sync_service = get_sync_service()
-        result = await sync_service.reconcile_subscriptions(
-            skip_manual_overrides=skip_manual_overrides,
-            dry_run=dry_run,
-        )
-
-        return {
-            "success": True,
-            **result,
-        }
-
-    except Exception as e:
-        logger.error(f"Reconciliation endpoint error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "error": "Failed to run subscription reconciliation",
                 "success": False,
             },
         )
