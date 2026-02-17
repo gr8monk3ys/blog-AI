@@ -35,6 +35,7 @@ from src.types.images import (
 from ..dependencies.organization import get_optional_organization_context
 from ..dependencies import require_content_creation
 from ..error_handlers import sanitize_error_message
+from ..middleware import require_pro_tier
 
 logger = logging.getLogger(__name__)
 
@@ -91,6 +92,7 @@ class ErrorResponse(BaseModel):
 )
 async def generate_image(
     request: ImageGenerationRequest,
+    _tier: str = Depends(require_pro_tier),
     auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ):
     """
@@ -189,6 +191,7 @@ async def generate_image(
 )
 async def generate_blog_images(
     request: BlogImageGenerationRequest,
+    _tier: str = Depends(require_pro_tier),
     auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ):
     """

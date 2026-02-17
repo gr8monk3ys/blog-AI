@@ -36,7 +36,7 @@ from src.types.providers import ProviderType
 
 from ..auth import api_key_store, verify_api_key
 from ..error_handlers import sanitize_error_message
-from ..middleware import increment_usage_for_operation, require_quota
+from ..middleware import increment_usage_for_operation, require_pro_tier, require_quota
 from src.usage.quota_service import get_usage_stats
 
 logger = logging.getLogger(__name__)
@@ -247,7 +247,7 @@ Supports multiple generation types:
 )
 async def extension_generate(
     request: ExtensionGenerateRequest,
-    user_id: str = Depends(require_quota),
+    user_id: str = Depends(require_pro_tier),
 ):
     """
     Generate content for the Chrome extension.

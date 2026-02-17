@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from ..auth import verify_api_key
 from ..error_handlers import sanitize_error_message
+from ..middleware import require_pro_tier
 
 
 # =============================================================================
@@ -457,7 +458,7 @@ async def delete_sample(
 @router.post("/train", response_model=TrainVoiceResponse)
 async def train_voice(
     request: TrainVoiceRequest,
-    user_id: str = Depends(verify_api_key),
+    user_id: str = Depends(require_pro_tier),
 ):
     """
     Train a voice fingerprint from samples.

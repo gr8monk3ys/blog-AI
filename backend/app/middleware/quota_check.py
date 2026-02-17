@@ -225,14 +225,12 @@ def create_quota_check_for_tier(min_tier: SubscriptionTier):
     ]
 
     async def check_tier_and_quota(user_id: str = Depends(verify_api_key)) -> str:
-        """Check that user has required tier and quota."""
-        # First check quota (which also validates tier)
-        try:
-            await service_check_quota(user_id)
-        except QuotaExceeded as e:
-            raise QuotaCheckError(e.to_error_response())
+        """Check that user has required tier and quota.
 
-        # Then check tier level
+        Tier is checked BEFORE quota so that we never decrement quota
+        for a user who cannot access the feature at all.
+        """
+        # First check tier level (no point decrementing quota if tier is wrong)
         stats = await service_get_usage_stats(user_id)
         user_tier_index = tier_order.index(stats.tier) if stats.tier in tier_order else 0
         min_tier_index = tier_order.index(min_tier) if min_tier in tier_order else 0
@@ -243,13 +241,19 @@ def create_quota_check_for_tier(min_tier: SubscriptionTier):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail={
-                    "error": f"This feature requires {min_config.name} tier or higher",
+                    "error": f"This feature requires a {min_config.name} plan",
                     "error_code": "TIER_REQUIRED",
                     "current_tier": stats.tier.value,
                     "required_tier": min_tier.value,
                     "upgrade_url": "/pricing",
                 },
             )
+
+        # Then check quota
+        try:
+            await service_check_quota(user_id)
+        except QuotaExceeded as e:
+            raise QuotaCheckError(e.to_error_response())
 
         return user_id
 

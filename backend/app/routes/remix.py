@@ -30,7 +30,7 @@ from src.types.remix import (
 from ..auth import verify_api_key
 from ..dependencies import require_content_access, require_content_creation
 from ..error_handlers import sanitize_error_message
-from ..middleware import increment_usage_for_operation, require_quota
+from ..middleware import increment_usage_for_operation, require_pro_tier, require_quota
 
 
 router = APIRouter(prefix="/remix", tags=["Content Remix"])
@@ -223,6 +223,7 @@ async def preview_remix(request: PreviewRequestAPI):
 @router.post("/transform", response_model=RemixResponse)
 async def transform_content(
     request: RemixRequestAPI,
+    _tier: str = Depends(require_pro_tier),
     auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ):
     """
@@ -296,6 +297,7 @@ async def transform_content(
 async def transform_single_format(
     format_id: str,
     request: RemixRequestAPI,
+    _tier: str = Depends(require_pro_tier),
     auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ):
     """
@@ -322,6 +324,7 @@ async def transform_single_format(
 @router.post("/batch")
 async def batch_transform(
     requests: List[RemixRequestAPI],
+    _tier: str = Depends(require_pro_tier),
     auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ):
     """

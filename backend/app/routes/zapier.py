@@ -40,7 +40,7 @@ from src.webhooks import webhook_service, webhook_storage
 
 from ..auth import verify_api_key
 from ..error_handlers import sanitize_error_message
-from ..middleware import increment_usage_for_operation, require_quota
+from ..middleware import increment_usage_for_operation, require_pro_tier, require_quota
 
 logger = logging.getLogger(__name__)
 
@@ -506,7 +506,7 @@ The result will be sent to the configured webhook URL when complete.
 async def zapier_generate(
     request: ZapierGenerateRequest,
     background_tasks: BackgroundTasks,
-    user_id: str = Depends(require_quota),
+    user_id: str = Depends(require_pro_tier),
 ) -> ZapierGenerateResponse:
     """
     Generate content via Zapier action.
