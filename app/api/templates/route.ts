@@ -185,7 +185,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate slug from name
-    const slug = generateSlug(body.name)
+    const slug = generateSlug(body.name as string)
 
     const sql = getSqlOrNull()
 

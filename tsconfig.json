@@ -41,6 +41,9 @@
   "exclude": [
     "node_modules",
     "vitest.config.ts",
+    "tests",
+    "__tests__",
+    "e2e",
     "backend",
     "frontend_legacy",
     "supabase"

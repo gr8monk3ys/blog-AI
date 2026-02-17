@@ -7,7 +7,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: ['./tests/setup.ts'],
+    setupFiles: ['./tests/setup.tsx'],
     testTimeout: 10000,
     include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     // Keep Playwright E2E tests and any dependency test suites out of Vitest's collection.
@@ -18,7 +18,7 @@ export default defineConfig({
       exclude: [
         'node_modules/',
         '.next/',
-        'tests/setup.ts',
+        'tests/setup.tsx',
         '**/*.d.ts',
         '**/*.config.*',
         '**/types/**',
