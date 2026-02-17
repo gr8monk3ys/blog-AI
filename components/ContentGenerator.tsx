@@ -4,7 +4,7 @@ import { Switch } from '@headlessui/react';
 import { PencilIcon, LightBulbIcon, DocumentTextIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { BlogGenerationOptions } from '../types/blog';
 import { BlogGenerationResponse, ContentGenerationResponse } from '../types/content';
-import { API_ENDPOINTS, getDefaultHeaders, checkServerConnection } from '../lib/api';
+import { API_ENDPOINTS, ApiError, getDefaultHeaders, checkServerConnection, apiFetchWithRetry } from '../lib/api';
 import { useUsageCheck } from './UsageIndicator';
 import BrandVoiceSelector from './brand/BrandVoiceSelector'
 import type { BrandProfile } from '../types/brand'
@@ -29,6 +29,10 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
   const { availableProviders, defaultProvider } = useLlmConfig()
   const [providerType, setProviderType] = useState<LlmProviderType>('openai')
   const [error, setError] = useState<string | null>(null);
+  const [errorKind, setErrorKind] = useState<
+    'auth' | 'forbidden' | 'rate-limit' | 'unavailable' | 'offline' | 'limit' | 'generic'
+  >('generic');
+  const [retryAfterSeconds, setRetryAfterSeconds] = useState<number | null>(null);
   const [limitReached, setLimitReached] = useState(false);
 
   const { checkUsage } = useUsageCheck();
@@ -124,6 +128,8 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setErrorKind('generic');
+    setRetryAfterSeconds(null);
     setLimitReached(false);
 
     try {
@@ -137,6 +143,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
       const hasUsage = await checkUsage();
       if (!hasUsage) {
         setLimitReached(true);
+        setErrorKind('limit');
         setError('You have reached your usage limit. Upgrade your plan to continue generating content.');
         setLoading(false);
         return;
@@ -144,11 +151,12 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
 
       // Check if server is running
       const isServerConnected = await checkServerConnection();
-      
+
       if (!isServerConnected) {
         // In production, never fall back to mock output.
         if (process.env.NODE_ENV === 'production') {
-          throw new Error('Backend unavailable. Please try again later.');
+          setErrorKind('offline')
+          throw new Error('Unable to connect to the server. Please check your connection and try again.');
         }
 
         // Use mock data in development if server is not running
@@ -158,56 +166,68 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
         }, 3000); // Simulate generation delay
         return;
       }
-      
-      // Server is running, make the real request
-      const response = await fetch(API_ENDPOINTS.generateBlog, {
-        method: 'POST',
-        headers: await getDefaultHeaders(),
-        body: JSON.stringify({
-          topic,
-          keywords: keywords.split(',').map(k => k.trim()).filter(k => k),
-          tone,
-          research: useResearch,
-          provider_type: providerType,
-          proofread,
-          humanize,
-          conversation_id: conversationId,
-          ...(brandVoiceEnabled && selectedBrandProfile?.id
-            ? { brand_profile_id: selectedBrandProfile.id }
-            : {}),
-        }),
-      });
 
-      if (!response.ok) {
-        const errorData: Record<string, unknown> = await response.json().catch(() => ({}));
-        const detail = errorData?.detail
-        const message =
-          typeof detail === 'string'
-            ? detail
-            : detail && typeof detail === 'object' && typeof (detail as Record<string, unknown>).error === 'string'
-            ? (detail as Record<string, unknown>).error as string
-            : typeof errorData?.error === 'string'
-            ? errorData.error as string
-            : `Server error: ${response.status}`
-        const err = new Error(message) as Error & { status?: number }
-        err.status = response.status
-        throw err
-      }
+      // Server is running, make the real request with retry for transient failures
+      const data = await apiFetchWithRetry<BlogGenerationResponse>(
+        API_ENDPOINTS.generateBlog,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            topic,
+            keywords: keywords.split(',').map(k => k.trim()).filter(k => k),
+            tone,
+            research: useResearch,
+            provider_type: providerType,
+            proofread,
+            humanize,
+            conversation_id: conversationId,
+            ...(brandVoiceEnabled && selectedBrandProfile?.id
+              ? { brand_profile_id: selectedBrandProfile.id }
+              : {}),
+          }),
+        }
+      );
 
-      const data = await response.json();
       if (!data.success) {
-        throw new Error(data.detail || 'Failed to generate content');
+        throw new Error((data as unknown as Record<string, unknown>).detail as string || 'Failed to generate content');
       }
       setContent(data);
     } catch (err) {
       console.error('Error generating content:', err);
-      const status = (err as Error & { status?: number })?.status
-      if (status === 401 || status === 403) {
-        setError('Sign in required to generate content.')
+      const status = err instanceof ApiError ? err.status : undefined
+
+      if (status === 401) {
+        setErrorKind('auth')
+        setError('Please sign in to generate content.')
+      } else if (status === 403) {
+        setErrorKind('forbidden')
+        setError('This feature requires a Pro plan.')
       } else if (status === 429) {
-        setLimitReached(true)
-        setError('You have reached your usage limit. Upgrade your plan to continue generating content.')
+        setErrorKind('rate-limit')
+        // Try to parse Retry-After header from the error data
+        const retryData = err instanceof ApiError ? err.data : undefined
+        const retryAfter =
+          retryData && typeof retryData === 'object'
+            ? (retryData as Record<string, unknown>).retry_after
+            : undefined
+        const seconds = typeof retryAfter === 'number' ? retryAfter : null
+        setRetryAfterSeconds(seconds)
+        setError(
+          seconds
+            ? `You have hit the rate limit. Please wait ${seconds} seconds before trying again.`
+            : 'You have hit the rate limit. Please wait a moment before trying again.'
+        )
+      } else if (status === 503) {
+        setErrorKind('unavailable')
+        setError('The generation service is temporarily unavailable. Please try again in a moment.')
+      } else if (
+        err instanceof TypeError &&
+        err.message.toLowerCase().includes('fetch')
+      ) {
+        setErrorKind('offline')
+        setError('Unable to connect to the server. Please check your connection and try again.')
       } else {
+        setErrorKind('generic')
         setError(err instanceof Error ? err.message : 'Failed to generate content. Please try again.')
       }
     } finally {
@@ -374,15 +394,65 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
         </div>
 
         {error && (
-          <div className={`${limitReached ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200'} border text-sm px-4 py-3 rounded-lg`}>
+          <div
+            className={`${
+              errorKind === 'limit' || errorKind === 'rate-limit'
+                ? 'bg-amber-50 border-amber-200'
+                : 'bg-red-50 border-red-200'
+            } border text-sm px-4 py-3 rounded-lg`}
+            role="alert"
+          >
             <div className="flex items-start gap-3">
-              <ExclamationTriangleIcon className={`h-5 w-5 flex-shrink-0 ${limitReached ? 'text-amber-500' : 'text-red-500'}`} />
+              <ExclamationTriangleIcon
+                className={`h-5 w-5 flex-shrink-0 ${
+                  errorKind === 'limit' || errorKind === 'rate-limit'
+                    ? 'text-amber-500'
+                    : 'text-red-500'
+                }`}
+              />
               <div className="flex-1">
-                <p className={`font-medium ${limitReached ? 'text-amber-800' : 'text-red-700'}`}>
-                  {limitReached ? 'Usage Limit Reached' : 'Error'}
+                <p
+                  className={`font-medium ${
+                    errorKind === 'limit' || errorKind === 'rate-limit'
+                      ? 'text-amber-800'
+                      : 'text-red-700'
+                  }`}
+                >
+                  {errorKind === 'limit'
+                    ? 'Usage Limit Reached'
+                    : errorKind === 'rate-limit'
+                      ? 'Rate Limit'
+                      : errorKind === 'auth'
+                        ? 'Authentication Required'
+                        : errorKind === 'forbidden'
+                          ? 'Upgrade Required'
+                          : errorKind === 'unavailable'
+                            ? 'Service Unavailable'
+                            : errorKind === 'offline'
+                              ? 'Connection Error'
+                              : 'Error'}
                 </p>
-                <p className={limitReached ? 'text-amber-700' : 'text-red-700'}>{error}</p>
-                {limitReached && (
+                <p
+                  className={
+                    errorKind === 'limit' || errorKind === 'rate-limit'
+                      ? 'text-amber-700'
+                      : 'text-red-700'
+                  }
+                >
+                  {error}
+                </p>
+
+                {/* Contextual action links */}
+                {errorKind === 'auth' && (
+                  <Link
+                    href="/sign-in"
+                    className="inline-flex items-center mt-2 text-sm font-medium text-red-600 hover:text-red-700"
+                  >
+                    Sign in
+                    <span className="ml-1">&rarr;</span>
+                  </Link>
+                )}
+                {(errorKind === 'forbidden' || errorKind === 'limit') && (
                   <Link
                     href="/pricing"
                     className="inline-flex items-center mt-2 text-sm font-medium text-amber-600 hover:text-amber-700"
@@ -391,7 +461,20 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
                     <span className="ml-1">&rarr;</span>
                   </Link>
                 )}
-                {!limitReached && (
+                {(errorKind === 'unavailable' || errorKind === 'offline') && (
+                  <button
+                    type="submit"
+                    className="mt-2 text-xs bg-red-100 hover:bg-red-200 px-2 py-1 rounded transition-colors"
+                  >
+                    Retry
+                  </button>
+                )}
+                {errorKind === 'rate-limit' && retryAfterSeconds && (
+                  <p className="mt-1 text-xs text-amber-600">
+                    Try again in {retryAfterSeconds}s
+                  </p>
+                )}
+                {errorKind === 'generic' && (
                   <button
                     type="button"
                     onClick={() => setError(null)}
