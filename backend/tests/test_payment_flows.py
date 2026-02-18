@@ -921,7 +921,8 @@ class TestCheckoutSessionModels:
 
         assert response.success is True
         assert response.session_id == "cs_test123"
-        assert "checkout.stripe.com" in response.url
+        from urllib.parse import urlparse
+        assert urlparse(response.url).hostname == "checkout.stripe.com"
 
 
 # =============================================================================
@@ -951,7 +952,8 @@ class TestPortalSessionModels:
         )
 
         assert response.success is True
-        assert "billing.stripe.com" in response.url
+        from urllib.parse import urlparse
+        assert urlparse(response.url).hostname == "billing.stripe.com"
 
 
 if __name__ == "__main__":

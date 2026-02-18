@@ -9,12 +9,9 @@ pydantic>=2.5.2,<3.0.0
 pydantic-settings>=2.1.0
 python-dotenv>=1.0.0
 
-# Image generation (Stability AI uses REST API via httpx, no SDK needed)
+# Image generation
+stability-sdk>=0.8.0
 Pillow>=12.1.1
-
-# Transitive dependency pins (Dependabot security alerts)
-starlette>=0.47.2  # CVE: DoS via multipart/form-data (transitive via fastapi)
-protobuf>=5.29.6  # CVE: JSON recursion depth bypass (transitive via google-generativeai)
 
 # Backend server
 fastapi>=0.115.0,<1.0.0
@@ -51,3 +48,5 @@ sentry-sdk[fastapi]>=1.40.0
 # black>=24.3.0
 # isort>=7.0.0
 # mypy>=1.5.1
+protobuf>=5.29.6
+starlette>=0.47.2

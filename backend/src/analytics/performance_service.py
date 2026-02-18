@@ -88,7 +88,7 @@ class PerformanceService:
     def _get_cache_key(self, prefix: str, *args: Any) -> str:
         """Generate a cache key from prefix and arguments."""
         key_data = f"{prefix}:{':'.join(str(a) for a in args)}"
-        return hashlib.md5(key_data.encode()).hexdigest()
+        return hashlib.sha256(key_data.encode()).hexdigest()
 
     async def _get_cached(self, key: str) -> Optional[Any]:
         """Get a cached value if available."""
