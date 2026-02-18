@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@clerk/nextjs'
 import { motion } from 'framer-motion'
 import SiteHeader from '../../components/SiteHeader'
 import SiteFooter from '../../components/SiteFooter'
@@ -11,123 +13,97 @@ import {
   SparklesIcon,
   RocketLaunchIcon,
   BuildingOffice2Icon,
+  PencilSquareIcon,
 } from '@heroicons/react/24/outline'
-import { UsageTier, AllTiersResponse, TIER_DISPLAY } from '../../types/usage'
+import { UsageTier, TIER_DISPLAY } from '../../types/usage'
 import { API_ENDPOINTS, getDefaultHeaders } from '../../lib/api'
 
 type BillingCycle = 'monthly' | 'yearly'
 
-interface PricingTier {
+interface PublicPricingTier {
   id: UsageTier
   name: string
-  description: string
+  description?: string
   price_monthly: number
   price_yearly: number
-  daily_limit: number
-  monthly_limit: number
+  daily_limit?: number
+  monthly_limit?: number
+  generations_per_month?: number
   features: string[]
-  notIncluded: string[]
-  popular?: boolean
-  icon: React.ElementType
+  stripe_price_id_monthly?: string
+  stripe_price_id_yearly?: string
 }
 
-const PRICING_TIERS: PricingTier[] = [
-  {
-    id: 'free',
-    name: 'Free',
-    description: 'Perfect for trying out Blog AI',
-    price_monthly: 0,
-    price_yearly: 0,
-    daily_limit: 10,
-    monthly_limit: 100,
-    features: [
-      '10 generations per day',
-      '100 generations per month',
-      'Blog post generation',
-      'Basic AI tools',
-      'Standard quality',
-    ],
-    notIncluded: [
-      'Book generation',
-      'Bulk generation',
-      'Web research',
-      'Priority support',
-      'API access',
-    ],
-    icon: SparklesIcon,
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    description: 'For content creators and marketers',
-    price_monthly: 29,
-    price_yearly: 290,
-    daily_limit: 100,
-    monthly_limit: 2000,
-    features: [
-      '100 generations per day',
-      '2,000 generations per month',
-      'Blog post generation',
-      'Book generation',
-      'Bulk generation (up to 50)',
-      'All AI tools',
-      'Web research mode',
-      'Priority support',
-      'Higher quality outputs',
-    ],
-    notIncluded: [
-      'API access',
-      'Custom integrations',
-      'Dedicated support',
-    ],
-    popular: true,
-    icon: RocketLaunchIcon,
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    description: 'For teams and businesses',
-    price_monthly: 99,
-    price_yearly: 990,
-    daily_limit: -1,
-    monthly_limit: -1,
-    features: [
-      'Unlimited generations',
-      'Everything in Pro',
-      'Full API access',
-      'Custom integrations',
-      'Dedicated support',
-      'Team collaboration',
-      'Advanced analytics',
-      'Custom models',
-      'SLA guarantee',
-    ],
-    notIncluded: [],
-    icon: BuildingOffice2Icon,
-  },
-]
+const TIER_ORDER: UsageTier[] = ['free', 'starter', 'pro', 'business']
+
+const TIER_ICONS: Record<UsageTier, React.ElementType> = {
+  free: SparklesIcon,
+  starter: PencilSquareIcon,
+  pro: RocketLaunchIcon,
+  business: BuildingOffice2Icon,
+}
+
+function sortTiers(a: PublicPricingTier, b: PublicPricingTier) {
+  return TIER_ORDER.indexOf(a.id) - TIER_ORDER.indexOf(b.id)
+}
 
 export default function PricingPage() {
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly')
   const [currentTier, setCurrentTier] = useState<UsageTier | null>(null)
+  const [tiers, setTiers] = useState<PublicPricingTier[]>([])
   const [loading, setLoading] = useState(true)
   const [upgrading, setUpgrading] = useState<UsageTier | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
+  const router = useRouter()
+  const { isSignedIn } = useAuth()
+
   useEffect(() => {
+    fetchPricing()
     fetchCurrentTier()
+
+    // Handle Stripe redirect states
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      const checkout = url.searchParams.get('checkout')
+      if (checkout === 'success') setSuccess('Subscription updated successfully.')
+      if (checkout === 'cancelled') setError('Checkout cancelled.')
+    }
   }, [])
+
+  const fetchPricing = async () => {
+    try {
+      const response = await fetch(API_ENDPOINTS.payments.pricing, {
+        headers: await getDefaultHeaders(),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to load pricing')
+      }
+
+      const data = await response.json()
+      if (data?.success && Array.isArray(data?.tiers)) {
+        // We don’t sell the Business/Agency tier yet (no seats/invites/etc).
+        const filtered = (data.tiers as PublicPricingTier[])
+          .filter((t) => t.id !== 'business')
+          .sort(sortTiers)
+        setTiers(filtered)
+      }
+    } catch (err) {
+      console.error('Error fetching pricing:', err)
+    }
+  }
 
   const fetchCurrentTier = async () => {
     try {
-      const response = await fetch(API_ENDPOINTS.usage.tiers, {
-        headers: getDefaultHeaders(),
+      const response = await fetch(API_ENDPOINTS.usage.stats, {
+        headers: await getDefaultHeaders(),
       })
 
       if (response.ok) {
-        const data: AllTiersResponse = await response.json()
-        setCurrentTier(data.current_tier)
+        const data = await response.json()
+        if (data?.tier) setCurrentTier(data.tier)
       }
     } catch (err) {
       console.error('Error fetching current tier:', err)
@@ -137,22 +113,6 @@ export default function PricingPage() {
   }
 
 
-  const getStripePriceId = (tier: UsageTier, cycle: BillingCycle) => {
-    const mapping = {
-      pro: {
-        monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY,
-        yearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_YEARLY,
-      },
-      enterprise: {
-        monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ENTERPRISE_MONTHLY,
-        yearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ENTERPRISE_YEARLY,
-      },
-    } as const
-
-    if (tier === 'free') return null
-    return mapping[tier]?.[cycle] || null
-  }
-
   const handleUpgrade = async (tier: UsageTier) => {
     if (tier === currentTier) return
 
@@ -161,44 +121,72 @@ export default function PricingPage() {
     setSuccess(null)
 
     try {
-      const stripePriceId = getStripePriceId(tier, billingCycle)
-      if (stripePriceId && typeof window !== 'undefined') {
-        const checkoutResponse = await fetch(API_ENDPOINTS.payments.checkout, {
+      if (!isSignedIn) {
+        router.push('/sign-in?redirect_url=/pricing')
+        return
+      }
+
+      const tierData = tiers.find((t) => t.id === tier)
+      if (!tierData) throw new Error('Unknown tier')
+
+      // Downgrades/cancellations are handled in the Stripe customer portal.
+      if (tier === 'free' && currentTier && currentTier !== 'free') {
+        const portalResponse = await fetch(API_ENDPOINTS.payments.portal, {
           method: 'POST',
-          headers: getDefaultHeaders(),
+          headers: await getDefaultHeaders(),
           body: JSON.stringify({
-            price_id: stripePriceId,
-            success_url: `${window.location.origin}/pricing?checkout=success`,
-            cancel_url: `${window.location.origin}/pricing?checkout=cancelled`,
+            return_url: typeof window !== 'undefined' ? window.location.href : '',
           }),
         })
 
-        if (!checkoutResponse.ok) {
-          const checkoutData = await checkoutResponse.json().catch(() => ({}))
-          throw new Error(checkoutData.detail?.error || checkoutData.error || 'Failed to create checkout session')
+        if (!portalResponse.ok) {
+          const portalData = await portalResponse.json().catch(() => ({}))
+          throw new Error(portalData.detail?.error || portalData.error || 'Failed to open billing portal')
         }
 
-        const checkoutData = await checkoutResponse.json()
-        if (checkoutData.url) {
-          window.location.assign(checkoutData.url)
+        const portalData = await portalResponse.json()
+        if (portalData.url && typeof window !== 'undefined') {
+          window.location.assign(portalData.url)
           return
         }
+        return
       }
 
-      const response = await fetch(API_ENDPOINTS.usage.upgrade, {
+      const stripePriceId =
+        billingCycle === 'monthly'
+          ? tierData.stripe_price_id_monthly
+          : tierData.stripe_price_id_yearly
+
+      if (!stripePriceId) {
+        throw new Error(
+          billingCycle === 'yearly'
+            ? 'Yearly billing is not available for this plan yet.'
+            : 'This plan is not available for checkout yet.'
+        )
+      }
+
+      const checkoutResponse = await fetch(API_ENDPOINTS.payments.checkout, {
         method: 'POST',
-        headers: getDefaultHeaders(),
-        body: JSON.stringify({ tier }),
+        headers: await getDefaultHeaders(),
+        body: JSON.stringify({
+          price_id: stripePriceId,
+          success_url: `${window.location.origin}/pricing?checkout=success`,
+          cancel_url: `${window.location.origin}/pricing?checkout=cancelled`,
+        }),
       })
 
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.detail || 'Failed to upgrade')
+      if (!checkoutResponse.ok) {
+        const checkoutData = await checkoutResponse.json().catch(() => ({}))
+        throw new Error(checkoutData.detail?.error || checkoutData.error || 'Failed to create checkout session')
       }
 
-      await response.json()
-      setCurrentTier(tier)
-      setSuccess(`Successfully upgraded to ${PRICING_TIERS.find((t) => t.id === tier)?.name}!`)
+      const checkoutData = await checkoutResponse.json()
+      if (checkoutData.url && typeof window !== 'undefined') {
+        window.location.assign(checkoutData.url)
+        return
+      }
+
+      throw new Error('Failed to create checkout session')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to upgrade. Please try again.')
     } finally {
@@ -210,19 +198,16 @@ export default function PricingPage() {
     if (loading) return 'Loading...'
     if (upgrading === tier) return 'Processing...'
     if (tier === currentTier) return 'Current Plan'
-    if (tier === 'free' && currentTier !== 'free') return 'Downgrade'
-    return tier === 'enterprise' ? 'Checkout' : 'Upgrade'
+    if (tier === 'free' && currentTier && currentTier !== 'free') return 'Manage in Portal'
+    return tier === 'free' ? 'Get Started' : 'Checkout'
   }
 
   const getButtonStyle = (tier: UsageTier) => {
     if (tier === currentTier) {
       return 'bg-gray-100 text-gray-500 cursor-default'
     }
-    if (tier === 'pro') {
+    if (tier === 'starter' || tier === 'pro') {
       return 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white'
-    }
-    if (tier === 'enterprise') {
-      return 'bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white'
     }
     return 'border border-gray-300 text-gray-700 hover:bg-gray-50'
   }
@@ -300,12 +285,13 @@ export default function PricingPage() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {PRICING_TIERS.map((tier, index) => {
-            const Icon = tier.icon
+          {tiers.map((tier, index) => {
+            const Icon = TIER_ICONS[tier.id]
             const price = billingCycle === 'monthly' ? tier.price_monthly : tier.price_yearly
             const perMonth = billingCycle === 'yearly' && tier.price_yearly > 0
               ? Math.round(tier.price_yearly / 12)
               : tier.price_monthly
+            const isPopular = tier.id === 'pro'
 
             return (
               <motion.div
@@ -314,7 +300,7 @@ export default function PricingPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className={`relative bg-white rounded-2xl shadow-lg border-2 ${
-                  tier.popular
+                  isPopular
                     ? 'border-amber-500'
                     : tier.id === currentTier
                     ? 'border-green-500'
@@ -322,7 +308,7 @@ export default function PricingPage() {
                 }`}
               >
                 {/* Popular badge */}
-                {tier.popular && (
+                {isPopular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                     <span className="bg-gradient-to-r from-amber-500 to-amber-600 text-white text-sm font-medium px-4 py-1 rounded-full">
                       Most Popular
@@ -345,11 +331,11 @@ export default function PricingPage() {
                     <div className={`p-2 rounded-lg ${TIER_DISPLAY[tier.id].bgColor}`}>
                       <Icon className={`w-6 h-6 ${TIER_DISPLAY[tier.id].color}`} />
                     </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900">{tier.name}</h3>
-                      <p className="text-sm text-gray-500">{tier.description}</p>
-                    </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">{tier.name}</h3>
+                    <p className="text-sm text-gray-500">{tier.description || ''}</p>
                   </div>
+                </div>
 
                   {/* Price */}
                   <div className="mb-6">
@@ -371,13 +357,19 @@ export default function PricingPage() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Daily limit</span>
                       <span className="font-semibold text-gray-900">
-                        {tier.daily_limit === -1 ? 'Unlimited' : tier.daily_limit}
+                        {tier.daily_limit === -1 ? 'Unlimited' : (tier.daily_limit ?? '—')}
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-sm mt-2">
                       <span className="text-gray-600">Monthly limit</span>
                       <span className="font-semibold text-gray-900">
-                        {tier.monthly_limit === -1 ? 'Unlimited' : tier.monthly_limit.toLocaleString()}
+                        {tier.monthly_limit === -1
+                          ? 'Unlimited'
+                          : typeof tier.monthly_limit === 'number'
+                          ? tier.monthly_limit.toLocaleString()
+                          : typeof tier.generations_per_month === 'number'
+                          ? tier.generations_per_month.toLocaleString()
+                          : '—'}
                       </span>
                     </div>
                   </div>
@@ -404,22 +396,6 @@ export default function PricingPage() {
                         </li>
                       ))}
                     </ul>
-
-                    {tier.notIncluded.length > 0 && (
-                      <>
-                        <h4 className="text-sm font-semibold text-gray-400 mt-6 mb-4">
-                          Not included
-                        </h4>
-                        <ul className="space-y-3">
-                          {tier.notIncluded.map((feature, i) => (
-                            <li key={i} className="flex items-start gap-3">
-                              <XMarkIcon className="w-5 h-5 text-gray-300 flex-shrink-0" />
-                              <span className="text-sm text-gray-400">{feature}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </>
-                    )}
                   </div>
                 </div>
               </motion.div>
@@ -447,7 +423,7 @@ export default function PricingPage() {
                     <th className="text-left py-4 pr-8 text-sm font-semibold text-gray-900">
                       Feature
                     </th>
-                    {PRICING_TIERS.map((tier) => (
+                    {tiers.map((tier) => (
                       <th
                         key={tier.id}
                         className={`text-center py-4 px-4 text-sm font-semibold ${TIER_DISPLAY[tier.id].color}`}
@@ -459,16 +435,13 @@ export default function PricingPage() {
                 </thead>
                 <tbody>
                   {[
-                    { name: 'Blog generation', free: true, pro: true, enterprise: true },
-                    { name: 'Book generation', free: false, pro: true, enterprise: true },
-                    { name: 'Bulk generation', free: false, pro: true, enterprise: true },
-                    { name: 'Web research', free: false, pro: true, enterprise: true },
-                    { name: 'All AI tools', free: false, pro: true, enterprise: true },
-                    { name: 'API access', free: false, pro: false, enterprise: true },
-                    { name: 'Custom integrations', free: false, pro: false, enterprise: true },
-                    { name: 'Priority support', free: false, pro: true, enterprise: true },
-                    { name: 'Dedicated support', free: false, pro: false, enterprise: true },
-                    { name: 'Team collaboration', free: false, pro: false, enterprise: true },
+                    { name: 'Blog generation', free: true, starter: true, pro: true },
+                    { name: 'Book generation', free: false, starter: true, pro: true },
+                    { name: 'Export formats', free: false, starter: true, pro: true },
+                    { name: 'Research mode', free: false, starter: true, pro: true },
+                    { name: 'Bulk generation', free: false, starter: false, pro: true },
+                    { name: 'Brand voice training', free: false, starter: false, pro: true },
+                    { name: 'Priority support', free: false, starter: true, pro: true },
                   ].map((feature, i) => (
                     <tr key={i} className="border-b border-gray-100">
                       <td className="py-4 pr-8 text-sm text-gray-600">{feature.name}</td>
@@ -480,14 +453,14 @@ export default function PricingPage() {
                         )}
                       </td>
                       <td className="py-4 px-4 text-center">
-                        {feature.pro ? (
+                        {feature.starter ? (
                           <CheckIcon className="w-5 h-5 text-green-500 mx-auto" />
                         ) : (
                           <XMarkIcon className="w-5 h-5 text-gray-300 mx-auto" />
                         )}
                       </td>
                       <td className="py-4 px-4 text-center">
-                        {feature.enterprise ? (
+                        {feature.pro ? (
                           <CheckIcon className="w-5 h-5 text-green-500 mx-auto" />
                         ) : (
                           <XMarkIcon className="w-5 h-5 text-gray-300 mx-auto" />
@@ -534,7 +507,7 @@ export default function PricingPage() {
                 },
                 {
                   q: 'What payment methods do you accept?',
-                  a: 'We accept all major credit cards, including Visa, Mastercard, American Express, and Discover. For Enterprise plans, we also offer invoicing.',
+                  a: 'We accept all major credit cards, including Visa, Mastercard, American Express, and Discover.',
                 },
               ].map((faq, i) => (
                 <div key={i} className="bg-white rounded-xl border border-gray-200 p-6">

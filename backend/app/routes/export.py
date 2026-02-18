@@ -27,9 +27,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel, Field
 
-from src.organizations import AuthorizationContext
-from ..auth import verify_api_key
-from ..dependencies import require_content_access, require_content_publish
+from src.organizations import AuthorizationContext, Permission
+from ..dependencies.organization import get_optional_organization_context
 
 
 def sanitize_html_content(text: str) -> str:
@@ -125,11 +124,30 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/export", tags=["export"])
 
 
+def _require_permission_if_org(auth_ctx: AuthorizationContext, permission: Permission) -> None:
+    """
+    Export endpoints transform user-provided content and don't read org-owned
+    resources. Only enforce org permissions when an org context is provided.
+    """
+    if not auth_ctx.organization_id:
+        return
+    if not auth_ctx.is_org_member:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not a member of this organization",
+        )
+    if not auth_ctx.has_permission(permission):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Missing permission: {permission.value}",
+        )
+
+
 class ExportRequest(BaseModel):
     """Request model for export endpoints."""
 
     title: str = Field(..., min_length=1, max_length=500)
-    content: str = Field(..., min_length=1)
+    content: str = Field(..., min_length=1, max_length=500000)
     content_type: str = Field(default="blog", pattern=r"^(blog|book|tool)$")
     metadata: Optional[Dict] = Field(default=None)
 
@@ -678,7 +696,7 @@ def generate_pdf_content(content: str, title: str, metadata: Optional[Dict] = No
 @router.post("/markdown")
 async def export_markdown(
     request: ExportRequest,
-    auth_ctx: AuthorizationContext = Depends(require_content_access),
+    auth_ctx: AuthorizationContext = Depends(get_optional_organization_context),
 ):
     """
     Export content as markdown file.
@@ -690,6 +708,8 @@ async def export_markdown(
     logger.info(f"Exporting markdown for: {request.title[:50]}")
 
     try:
+        _require_permission_if_org(auth_ctx, Permission.CONTENT_VIEW)
+
         # Build markdown content with metadata header
         md_content = f"# {request.title}\n\n"
 
@@ -733,7 +753,7 @@ async def export_markdown(
 @router.post("/html")
 async def export_html(
     request: ExportRequest,
-    auth_ctx: AuthorizationContext = Depends(require_content_access),
+    auth_ctx: AuthorizationContext = Depends(get_optional_organization_context),
 ):
     """
     Export content as styled HTML file.
@@ -745,6 +765,8 @@ async def export_html(
     logger.info(f"Exporting HTML for: {request.title[:50]}")
 
     try:
+        _require_permission_if_org(auth_ctx, Permission.CONTENT_VIEW)
+
         html_content = markdown_to_html(
             request.content, request.title, request.metadata
         )
@@ -775,7 +797,7 @@ async def export_html(
 @router.post("/text")
 async def export_text(
     request: ExportRequest,
-    auth_ctx: AuthorizationContext = Depends(require_content_access),
+    auth_ctx: AuthorizationContext = Depends(get_optional_organization_context),
 ):
     """
     Export content as plain text file.
@@ -787,6 +809,8 @@ async def export_text(
     logger.info(f"Exporting plain text for: {request.title[:50]}")
 
     try:
+        _require_permission_if_org(auth_ctx, Permission.CONTENT_VIEW)
+
         text_content = f"{request.title}\n{'=' * len(request.title)}\n\n"
 
         if request.metadata:
@@ -829,7 +853,7 @@ async def export_text(
 @router.post("/pdf")
 async def export_pdf(
     request: ExportRequest,
-    auth_ctx: AuthorizationContext = Depends(require_content_access),
+    auth_ctx: AuthorizationContext = Depends(get_optional_organization_context),
 ):
     """
     Export content as PDF file.
@@ -841,6 +865,8 @@ async def export_pdf(
     logger.info(f"Exporting PDF for: {request.title[:50]}")
 
     try:
+        _require_permission_if_org(auth_ctx, Permission.CONTENT_VIEW)
+
         # Try to use weasyprint if available
         try:
             from weasyprint import HTML
@@ -899,7 +925,7 @@ async def export_pdf(
 @router.post("/wordpress", response_model=PublishResponse)
 async def export_wordpress(
     request: ExportRequest,
-    auth_ctx: AuthorizationContext = Depends(require_content_publish),
+    auth_ctx: AuthorizationContext = Depends(get_optional_organization_context),
 ):
     """
     Export content as WordPress Gutenberg block format.
@@ -911,6 +937,8 @@ async def export_wordpress(
     logger.info(f"Exporting WordPress format for: {request.title[:50]}")
 
     try:
+        _require_permission_if_org(auth_ctx, Permission.CONTENT_PUBLISH)
+
         wordpress_content = content_to_wordpress_blocks(request.content, request.title)
 
         return PublishResponse(
@@ -935,7 +963,7 @@ async def export_wordpress(
 @router.post("/medium", response_model=PublishResponse)
 async def export_medium(
     request: ExportRequest,
-    auth_ctx: AuthorizationContext = Depends(require_content_publish),
+    auth_ctx: AuthorizationContext = Depends(get_optional_organization_context),
 ):
     """
     Export content as Medium-compatible HTML.
@@ -947,6 +975,8 @@ async def export_medium(
     logger.info(f"Exporting Medium format for: {request.title[:50]}")
 
     try:
+        _require_permission_if_org(auth_ctx, Permission.CONTENT_PUBLISH)
+
         medium_content = content_to_medium_html(request.content, request.title)
 
         return PublishResponse(

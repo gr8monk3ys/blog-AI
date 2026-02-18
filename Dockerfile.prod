@@ -27,7 +27,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # -----------------------------------------------------------------------------
 # Stage 2: Frontend Builder
 # -----------------------------------------------------------------------------
-FROM node:20-alpine AS frontend-builder
+FROM node:20-bookworm-slim AS frontend-builder
 
 WORKDIR /build
 
@@ -35,14 +35,14 @@ WORKDIR /build
 COPY package.json package-lock.json* bun.lockb* ./
 
 # Use npm ci for reproducible builds (falls back to install if no lockfile)
-RUN npm ci --only=production 2>/dev/null || npm install --only=production
+RUN npm ci 2>/dev/null || npm install
 
 # Copy all frontend source files
 COPY app/ ./app/
 COPY components/ ./components/
 COPY public/ ./public/
 COPY lib/ ./lib/
-COPY tailwind.config.js next.config.mjs tsconfig.json ./
+COPY tailwind.config.js postcss.config.js next.config.mjs tsconfig.json ./
 
 # Set production environment for build optimization
 ENV NODE_ENV=production

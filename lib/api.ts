@@ -26,9 +26,18 @@ const getWsProtocol = (apiUrl: string): string => {
   return isProduction() ? `wss://${apiUrl}` : `ws://${apiUrl}`;
 };
 
-// API URLs from environment variables with fallbacks for development
-// In production, these should be set to HTTPS URLs
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// API URLs from environment variables with fallbacks for development.
+// In production without the env var, warn loudly but fall back to localhost
+// so that `npm run build` still works locally.
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (() => {
+  if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined') {
+    console.error(
+      '[api] NEXT_PUBLIC_API_URL is not set. ' +
+      'API calls will fail. Set it to your backend URL (e.g. https://api.blogai.com).'
+    )
+  }
+  return 'http://localhost:8000'
+})()
 
 // API version - can be overridden via environment variable
 export const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || 'v1';
@@ -56,6 +65,9 @@ export const API_ENDPOINTS = {
     stats: `${API_V1_BASE_URL}/tools/stats`,
     get: (toolId: string) => `${API_V1_BASE_URL}/tools/${toolId}`,
     execute: (toolId: string) => `${API_V1_BASE_URL}/tools/${toolId}/execute`,
+    score: (toolId: string) => `${API_V1_BASE_URL}/tools/${toolId}/score`,
+    scoreGeneric: `${API_V1_BASE_URL}/tools/score`,
+    variations: (toolId: string) => `${API_V1_BASE_URL}/tools/${toolId}/variations`,
     validate: (toolId: string) => `${API_V1_BASE_URL}/tools/${toolId}/validate`,
     byCategory: (category: string) => `${API_V1_BASE_URL}/tools/category/${category}`,
   },
@@ -69,6 +81,7 @@ export const API_ENDPOINTS = {
   // Enhanced batch generation endpoints (Tier 1)
   batch: {
     // Job management
+    create: `${API_V1_BASE_URL}/batch`,
     list: `${API_V1_BASE_URL}/batch/jobs`,
     status: (jobId: string) => `${API_V1_BASE_URL}/batch/${jobId}`,
     results: (jobId: string) => `${API_V1_BASE_URL}/batch/${jobId}/results`,
@@ -83,19 +96,23 @@ export const API_ENDPOINTS = {
   },
   // Usage tracking endpoints
   usage: {
-    stats: `${API_V1_BASE_URL}/usage/stats`,
-    check: `${API_V1_BASE_URL}/usage/check`,
-    tiers: `${API_V1_BASE_URL}/usage/tiers`,
-    tier: (tierName: string) => `${API_V1_BASE_URL}/usage/tier/${tierName}`,
-    upgrade: `${API_V1_BASE_URL}/usage/upgrade`,
-    features: `${API_V1_BASE_URL}/usage/features`,
+    // Quota-based subscription system (source of truth for SaaS billing/limits)
+    stats: `${API_V1_BASE_URL}/usage/quota/stats`,
+    check: `${API_V1_BASE_URL}/usage/quota/check`,
+    tiers: `${API_V1_BASE_URL}/usage/quota/tiers`,
+    breakdown: `${API_V1_BASE_URL}/usage/quota/breakdown`,
+  },
+
+  // Non-sensitive runtime config
+  config: {
+    llm: `${API_V1_BASE_URL}/config/llm`,
   },
 
   // Payments / Stripe endpoints
   payments: {
     checkout: `${API_BASE_URL}/api/payments/create-checkout-session`,
     portal: `${API_BASE_URL}/api/payments/create-portal-session`,
-    pricing: `${API_BASE_URL}/api/payments/pricing-tiers`,
+    pricing: `${API_BASE_URL}/api/payments/pricing`,
   },
   // Templates API endpoints
   templates: {
@@ -125,6 +142,11 @@ export const API_ENDPOINTS = {
     transformFormat: (formatId: string) => `${API_V1_BASE_URL}/remix/transform/${formatId}`,
     batch: `${API_V1_BASE_URL}/remix/batch`,
   },
+  // Content quality endpoints
+  content: {
+    checkPlagiarism: `${API_V1_BASE_URL}/content/check-plagiarism`,
+    plagiarismQuota: `${API_V1_BASE_URL}/content/plagiarism/quota`,
+  },
   // Brand Voice Training API endpoints
   brandVoice: {
     analyze: `${API_V1_BASE_URL}/brand-voice/analyze`,
@@ -136,6 +158,11 @@ export const API_ENDPOINTS = {
     score: `${API_V1_BASE_URL}/brand-voice/score`,
     status: (profileId: string) => `${API_V1_BASE_URL}/brand-voice/status/${profileId}`,
   },
+  // Content feedback endpoints
+  feedback: {
+    submit: '/api/feedback',
+    stats: (contentId: string) => `/api/feedback?content_id=${encodeURIComponent(contentId)}`,
+  },
   // Content editing endpoints
   editSection: `${API_BASE_URL}/edit-section`,
   saveBook: `${API_BASE_URL}/save-book`,
@@ -143,15 +170,25 @@ export const API_ENDPOINTS = {
 } as const;
 
 // Default headers for API requests
-export const getDefaultHeaders = (): HeadersInit => {
+export const getDefaultHeaders = async (): Promise<HeadersInit> => {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
   };
 
-  // Add API key if available
-  const apiKey = process.env.NEXT_PUBLIC_API_KEY;
-  if (apiKey) {
-    headers['X-API-Key'] = apiKey;
+  // In the cloud SaaS, clients authenticate with Clerk session JWTs.
+  // We attach the current session token as `Authorization: Bearer ...` so the
+  // backend (Railway) can verify it.
+  if (typeof window !== 'undefined') {
+    try {
+      // Clerk injects a global `window.Clerk` when configured.
+      const clerk = (window as any)?.Clerk
+      if (clerk?.session?.getToken) {
+        const token = await clerk.session.getToken()
+        if (token) headers['Authorization'] = `Bearer ${token}`
+      }
+    } catch {
+      // Ignore auth header if Clerk is not configured or session is unavailable.
+    }
   }
 
   return headers;
@@ -167,7 +204,7 @@ export const checkServerConnection = async (): Promise<boolean> => {
 
     const response = await fetch(API_ENDPOINTS.root, {
       signal: controller.signal,
-      headers: getDefaultHeaders(),
+      headers: await getDefaultHeaders(),
     });
 
     clearTimeout(timeoutId);
@@ -181,22 +218,122 @@ export const checkServerConnection = async (): Promise<boolean> => {
 /**
  * Generic API fetch wrapper with error handling
  */
+export class ApiError extends Error {
+  status: number
+  data: unknown
+
+  constructor(message: string, status: number, data: unknown) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+    this.data = data
+  }
+}
+
+function extractErrorMessage(errorData: unknown, status: number): string {
+  if (typeof errorData === 'string') return errorData
+
+  if (errorData && typeof errorData === 'object') {
+    const obj: any = errorData
+    const detail = obj?.detail
+
+    // FastAPI HTTPException: { detail: "..." }
+    if (typeof detail === 'string') return detail
+
+    // FastAPI validation errors: { detail: [{ msg: "..." }, ...] }
+    if (Array.isArray(detail) && detail.length > 0) {
+      const first = detail[0]
+      if (first && typeof first === 'object' && typeof (first as any).msg === 'string') {
+        return String((first as any).msg)
+      }
+    }
+
+    // QuotaExceededError is returned as { detail: { error: "..." } }
+    if (detail && typeof detail === 'object') {
+      if (typeof (detail as any).error === 'string') return String((detail as any).error)
+      if (typeof (detail as any).message === 'string') return String((detail as any).message)
+    }
+
+    // Custom JSON errors: { error: "..." } or { message: "..." }
+    if (typeof obj?.error === 'string') return String(obj.error)
+    if (typeof obj?.message === 'string') return String(obj.message)
+  }
+
+  return `HTTP error! status: ${status}`
+}
+
 export const apiFetch = async <T>(
   url: string,
   options: RequestInit = {}
 ): Promise<T> => {
+  const defaultHeaders = await getDefaultHeaders()
   const response = await fetch(url, {
     ...options,
     headers: {
-      ...getDefaultHeaders(),
+      ...defaultHeaders,
       ...options.headers,
     },
   });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    const message = extractErrorMessage(errorData, response.status)
+    throw new ApiError(message, response.status, errorData)
   }
 
   return response.json();
+};
+
+/**
+ * HTTP status codes that are safe to retry (server/gateway issues).
+ * Client errors (4xx) are NOT retried since the request itself is wrong.
+ */
+const RETRYABLE_STATUS_CODES = new Set([502, 503, 504])
+
+/**
+ * Check if an error is a network-level failure (e.g. DNS, connection refused).
+ */
+function isNetworkError(err: unknown): boolean {
+  return err instanceof TypeError && err.message.toLowerCase().includes('fetch')
+}
+
+/**
+ * API fetch wrapper with exponential backoff retry for transient failures.
+ *
+ * Retries up to `maxRetries` times on 502, 503, 504, and network errors.
+ * Does NOT retry on 4xx client errors (400, 401, 403, 404, 429, etc.).
+ *
+ * Use this for long-running generation endpoints where transient gateway
+ * failures are expected.
+ */
+export const apiFetchWithRetry = async <T>(
+  url: string,
+  options: RequestInit = {},
+  maxRetries = 3
+): Promise<T> => {
+  let lastError: unknown
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await apiFetch<T>(url, options)
+    } catch (err) {
+      lastError = err
+
+      // Only retry on retryable status codes or network errors
+      const isRetryable =
+        (err instanceof ApiError && RETRYABLE_STATUS_CODES.has(err.status)) ||
+        isNetworkError(err)
+
+      if (!isRetryable || attempt >= maxRetries) {
+        throw err
+      }
+
+      // Exponential backoff: 1s, 2s, 4s
+      const delayMs = 1000 * Math.pow(2, attempt)
+      await new Promise((resolve) => setTimeout(resolve, delayMs))
+    }
+  }
+
+  // This is unreachable but satisfies TypeScript
+  throw lastError
 };

@@ -4,6 +4,7 @@ Production-grade rate limiting with tier-based limits and dual backend support.
 This module provides:
 1. A sliding window rate limiter with tier-based limits (FastAPI dependency)
 2. IP-based rate limiting middleware (Starlette middleware)
+3. Generation-specific per-user rate limiting (FastAPI dependency)
 
 Features:
 - Enforces per-minute and per-hour limits based on user subscription tier
@@ -13,8 +14,19 @@ Features:
 - Integrates with the existing quota service for tier detection
 - IP-based rate limiting middleware for unauthenticated endpoint protection
 - Separate limits for general vs generation (expensive LLM) endpoints
+- Per-user generation rate limits that run BEFORE expensive LLM calls
 
-Usage (Dependency-based for authenticated routes):
+Usage (Generation rate limit dependency for generation endpoints):
+    @router.post("/generate-blog")
+    async def generate_blog(
+        request: Request,
+        user_id: str = Depends(verify_api_key),
+    ):
+        # Check generation rate limit before LLM call
+        await check_generation_rate_limit(user_id)
+        ...
+
+Usage (General dependency-based for authenticated routes):
     @router.post("/generate-blog")
     async def generate_blog(
         request: Request,
@@ -87,6 +99,67 @@ TIER_RATE_LIMITS: Dict[SubscriptionTier, TierRateLimits] = {
 
 # Default limits for unknown tiers
 DEFAULT_RATE_LIMITS = TierRateLimits(per_minute=10, per_hour=100)
+
+
+def _load_generation_tier_limits() -> Dict[SubscriptionTier, TierRateLimits]:
+    """
+    Load generation-specific per-user rate limits from environment variables.
+
+    These limits apply specifically to content generation endpoints (blog, book,
+    etc.) and are enforced per-user rather than per-IP. They are intentionally
+    tighter than the general request rate limits because generation endpoints
+    trigger expensive LLM calls.
+
+    Environment variables (with defaults):
+        RATE_LIMIT_GEN_FREE_PER_MINUTE=5
+        RATE_LIMIT_GEN_FREE_PER_HOUR=30
+        RATE_LIMIT_GEN_STARTER_PER_MINUTE=10
+        RATE_LIMIT_GEN_STARTER_PER_HOUR=100
+        RATE_LIMIT_GEN_PRO_PER_MINUTE=20
+        RATE_LIMIT_GEN_PRO_PER_HOUR=200
+        RATE_LIMIT_GEN_BUSINESS_PER_MINUTE=60
+        RATE_LIMIT_GEN_BUSINESS_PER_HOUR=600
+
+    Returns:
+        Dictionary mapping subscription tiers to their generation rate limits.
+    """
+    def _env_int(key: str, default: int) -> int:
+        """Read an integer from environment with fallback."""
+        try:
+            return int(os.environ.get(key, default))
+        except (ValueError, TypeError):
+            logger.warning(
+                f"Invalid value for {key}, using default {default}"
+            )
+            return default
+
+    return {
+        SubscriptionTier.FREE: TierRateLimits(
+            per_minute=_env_int("RATE_LIMIT_GEN_FREE_PER_MINUTE", 5),
+            per_hour=_env_int("RATE_LIMIT_GEN_FREE_PER_HOUR", 30),
+        ),
+        SubscriptionTier.STARTER: TierRateLimits(
+            per_minute=_env_int("RATE_LIMIT_GEN_STARTER_PER_MINUTE", 10),
+            per_hour=_env_int("RATE_LIMIT_GEN_STARTER_PER_HOUR", 100),
+        ),
+        SubscriptionTier.PRO: TierRateLimits(
+            per_minute=_env_int("RATE_LIMIT_GEN_PRO_PER_MINUTE", 20),
+            per_hour=_env_int("RATE_LIMIT_GEN_PRO_PER_HOUR", 200),
+        ),
+        SubscriptionTier.BUSINESS: TierRateLimits(
+            per_minute=_env_int("RATE_LIMIT_GEN_BUSINESS_PER_MINUTE", 60),
+            per_hour=_env_int("RATE_LIMIT_GEN_BUSINESS_PER_HOUR", 600),
+        ),
+    }
+
+
+# Generation-specific per-user rate limits (loaded once at module import)
+GENERATION_TIER_RATE_LIMITS: Dict[SubscriptionTier, TierRateLimits] = (
+    _load_generation_tier_limits()
+)
+
+# Default generation limits for unknown tiers (same as FREE)
+DEFAULT_GENERATION_RATE_LIMITS = TierRateLimits(per_minute=5, per_hour=30)
 
 
 @dataclass
@@ -958,3 +1031,220 @@ async def get_rate_limit_status(
         tier = SubscriptionTier.FREE
 
     return await limiter.get_current_usage(user_id, tier)
+
+
+# =============================================================================
+# Per-User Generation Rate Limiting
+# =============================================================================
+
+
+class GenerationRateLimiter:
+    """
+    Rate limiter specifically for content generation endpoints.
+
+    Uses a separate set of tier-based limits that are tighter than general
+    request rate limits, because generation endpoints trigger expensive LLM
+    calls. Keys are prefixed with "gen:" to keep buckets separate from the
+    general rate limiter.
+
+    Shares the same backend infrastructure (Redis with in-memory fallback)
+    as the general RateLimiter.
+    """
+
+    def __init__(
+        self,
+        backend: Optional[RateLimitBackend] = None,
+        redis_url: Optional[str] = None,
+    ):
+        """
+        Initialize the generation rate limiter.
+
+        Args:
+            backend: Optional backend override for testing.
+            redis_url: Optional Redis URL. Falls back to REDIS_URL env var.
+        """
+        self._backend: Optional[RateLimitBackend] = backend
+        self._fallback_backend: Optional[InMemoryBackend] = None
+
+        if self._backend is None:
+            self._init_backend(redis_url)
+
+    def _init_backend(self, redis_url: Optional[str] = None) -> None:
+        """Initialize the appropriate backend."""
+        url = redis_url or os.environ.get("REDIS_URL")
+
+        if url:
+            try:
+                self._backend = RedisBackend(url, key_prefix="gen_ratelimit:")
+                logger.info("Generation rate limiter using Redis backend")
+            except Exception as e:
+                logger.warning(
+                    f"Failed to init Redis backend for generation rate limiter: {e}, "
+                    "using in-memory"
+                )
+                self._backend = InMemoryBackend()
+        else:
+            self._backend = InMemoryBackend()
+            logger.info("Generation rate limiter using in-memory backend")
+
+        self._fallback_backend = InMemoryBackend()
+
+    async def _check_window(
+        self,
+        user_id: str,
+        window_name: str,
+        window_seconds: int,
+        limit: int,
+    ) -> RateLimitResult:
+        """
+        Check generation rate limit for a specific time window.
+
+        Args:
+            user_id: The user identifier.
+            window_name: Window identifier (e.g., "minute", "hour").
+            window_seconds: Window size in seconds.
+            limit: Maximum generation requests allowed in window.
+
+        Returns:
+            RateLimitResult with current status.
+        """
+        now = time.time()
+        key = f"gen:{user_id}:{window_name}"
+
+        try:
+            count, oldest = await self._backend.record_request(key, now, window_seconds)
+        except Exception as e:
+            logger.warning(f"Generation rate limit backend error, using fallback: {e}")
+            count, oldest = await self._fallback_backend.record_request(
+                key, now, window_seconds
+            )
+
+        remaining = max(0, limit - count)
+        reset_at = int(oldest + window_seconds)
+
+        if count > limit:
+            retry_after = max(1, reset_at - int(now))
+            return RateLimitResult(
+                allowed=False,
+                limit=limit,
+                remaining=0,
+                reset_at=reset_at,
+                window=window_name,
+                retry_after=retry_after,
+            )
+
+        return RateLimitResult(
+            allowed=True,
+            limit=limit,
+            remaining=remaining,
+            reset_at=reset_at,
+            window=window_name,
+        )
+
+    async def check_rate_limit(
+        self,
+        user_id: str,
+        tier: SubscriptionTier,
+    ) -> RateLimitResult:
+        """
+        Check generation rate limits for a user based on their tier.
+
+        Checks both per-minute and per-hour generation limits, returning
+        the most restrictive result.
+
+        Args:
+            user_id: The user identifier.
+            tier: The user's subscription tier.
+
+        Returns:
+            RateLimitResult. If allowed is False, includes retry_after.
+        """
+        limits = GENERATION_TIER_RATE_LIMITS.get(tier, DEFAULT_GENERATION_RATE_LIMITS)
+
+        # Check per-minute limit first (more likely to be hit)
+        minute_result = await self._check_window(
+            user_id=user_id,
+            window_name="minute",
+            window_seconds=60,
+            limit=limits.per_minute,
+        )
+
+        if not minute_result.allowed:
+            return minute_result
+
+        # Check per-hour limit
+        hour_result = await self._check_window(
+            user_id=user_id,
+            window_name="hour",
+            window_seconds=3600,
+            limit=limits.per_hour,
+        )
+
+        if not hour_result.allowed:
+            return hour_result
+
+        # Return minute result (has more relevant remaining/reset info)
+        return minute_result
+
+
+_generation_rate_limiter: Optional[GenerationRateLimiter] = None
+
+
+def get_generation_rate_limiter() -> GenerationRateLimiter:
+    """Get the singleton generation rate limiter instance."""
+    global _generation_rate_limiter
+    if _generation_rate_limiter is None:
+        _generation_rate_limiter = GenerationRateLimiter()
+    return _generation_rate_limiter
+
+
+async def check_generation_rate_limit(user_id: str) -> None:
+    """
+    Check per-user generation rate limit before an expensive LLM call.
+
+    This function is designed to be called directly from generation endpoint
+    handlers after the user has been authenticated but before any LLM work
+    begins. It uses generation-specific tier limits that are tighter than
+    the general request rate limits.
+
+    Rate limits by tier (configurable via environment variables):
+        Free:     5 generations/minute,  30/hour
+        Starter: 10 generations/minute, 100/hour
+        Pro:     20 generations/minute, 200/hour
+        Business: 60 generations/minute, 600/hour
+
+    Args:
+        user_id: The authenticated user ID.
+
+    Raises:
+        HTTPException: 429 Too Many Requests with standard rate limit
+            headers (X-RateLimit-Limit, X-RateLimit-Remaining,
+            X-RateLimit-Reset, Retry-After) when the limit is exceeded.
+    """
+    limiter = get_generation_rate_limiter()
+    quota_service = get_quota_service()
+
+    # Resolve user tier
+    try:
+        usage_stats = await quota_service.get_usage_stats(user_id)
+        tier = usage_stats.tier
+    except Exception as e:
+        logger.warning(f"Failed to get user tier for generation rate limit, using FREE: {e}")
+        tier = SubscriptionTier.FREE
+
+    # Check generation-specific rate limit
+    result = await limiter.check_rate_limit(user_id, tier)
+
+    if not result.allowed:
+        limits = GENERATION_TIER_RATE_LIMITS.get(tier, DEFAULT_GENERATION_RATE_LIMITS)
+        logger.warning(
+            f"Generation rate limit exceeded for user {user_id[:8]}... "
+            f"(tier={tier.value}): {result.limit} per {result.window}, "
+            f"retry_after={result.retry_after}s"
+        )
+        raise RateLimitException(result, tier, limits)
+
+    logger.debug(
+        f"Generation rate limit check passed for {user_id[:8]}...: "
+        f"{result.remaining}/{result.limit} remaining ({result.window})"
+    )

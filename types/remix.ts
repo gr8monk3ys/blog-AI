@@ -167,6 +167,7 @@ export interface RemixResponse {
 export interface RemixPreviewRequest {
   source_content: Record<string, unknown>
   target_format: ContentFormatId
+  provider?: string
 }
 
 // Preview response

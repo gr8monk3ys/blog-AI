@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import Toast, { ToastVariant, ToastProps } from '../components/ui/Toast'
+import Toast, { ToastVariant } from '../components/ui/Toast'
 
 export interface ToastOptions {
   message: string

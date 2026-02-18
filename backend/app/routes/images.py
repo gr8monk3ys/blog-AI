@@ -17,7 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from src.images import ImageGenerationError, ImageGenerator
-from src.organizations import AuthorizationContext
+from src.organizations import AuthorizationContext, Permission
 from src.types.images import (
     AvailableStyles,
     BlogImageGenerationRequest,
@@ -32,9 +32,10 @@ from src.types.images import (
     ImageType,
 )
 
-from ..auth import verify_api_key
-from ..dependencies import require_content_access, require_content_creation
+from ..dependencies.organization import get_optional_organization_context
+from ..dependencies import require_content_creation
 from ..error_handlers import sanitize_error_message
+from ..middleware import require_pro_tier
 
 logger = logging.getLogger(__name__)
 
@@ -91,6 +92,7 @@ class ErrorResponse(BaseModel):
 )
 async def generate_image(
     request: ImageGenerationRequest,
+    _tier: str = Depends(require_pro_tier),
     auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ):
     """
@@ -189,6 +191,7 @@ async def generate_image(
 )
 async def generate_blog_images(
     request: BlogImageGenerationRequest,
+    _tier: str = Depends(require_pro_tier),
     auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ):
     """
@@ -269,7 +272,7 @@ async def generate_blog_images(
     },
 )
 async def get_available_styles(
-    auth_ctx: AuthorizationContext = Depends(require_content_access),
+    auth_ctx: AuthorizationContext = Depends(get_optional_organization_context),
 ):
     """
     Get available image styles and sizes.
@@ -283,6 +286,13 @@ async def get_available_styles(
     Authorization: Requires content.view permission.
     """
     logger.debug(f"Styles request from user: {auth_ctx.user_id}, org: {auth_ctx.organization_id}")
+
+    # Only enforce org RBAC when an org context is provided.
+    if auth_ctx.organization_id and not auth_ctx.has_permission(Permission.CONTENT_VIEW):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Missing permission: content.view",
+        )
 
     styles = [
         ImageStyleInfo(

@@ -1,524 +1,490 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useRef } from 'react'
 import Link from 'next/link'
-import { v4 as uuidv4 } from 'uuid'
-import { Tab } from '@headlessui/react'
-import {
-  SparklesIcon,
-  MagnifyingGlassIcon,
-  DocumentDuplicateIcon,
-  NewspaperIcon,
-  BuildingOffice2Icon,
-  EnvelopeIcon,
-  ChatBubbleLeftRightIcon,
-  PlayCircleIcon,
-  PencilSquareIcon,
-} from '@heroicons/react/24/outline'
-import ContentGenerator from '../components/ContentGenerator'
-import BookGenerator from '../components/BookGenerator'
-import ContentViewer from '../components/ContentViewer'
+import { motion, useInView } from 'framer-motion'
+import { SignedIn, SignedOut } from '@clerk/nextjs'
 import SiteHeader from '../components/SiteHeader'
 import SiteFooter from '../components/SiteFooter'
-import { ContentGenerationResponse } from '../types/content'
 import {
-  SAMPLE_TOOLS,
-  TOOL_CATEGORIES,
-  type Tool,
-  type ToolCategory,
-} from '../types/tools'
-import { toolsApi, toFrontendTools } from '../lib/tools-api'
+  SparklesIcon,
+  DocumentTextIcon,
+  MagnifyingGlassIcon,
+  CpuChipIcon,
+  ArrowRightIcon,
+  CheckIcon,
+  UserGroupIcon,
+  PencilSquareIcon,
+  RocketLaunchIcon,
+  GlobeAltIcon,
+} from '@heroicons/react/24/outline'
 
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(' ')
+// ---------------------------------------------------------------------------
+// Animation helpers
+// ---------------------------------------------------------------------------
+
+const FADE_UP = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0 },
 }
 
-const CATEGORY_ORDER: ToolCategory[] = [
-  'blog',
-  'seo',
-  'email',
-  'social-media',
-  'business',
-  'naming',
-  'video',
-  'rewriting',
-]
-
-type IconType = React.ComponentType<React.SVGProps<SVGSVGElement>>
-
-const CATEGORY_ICONS: Record<ToolCategory, IconType> = {
-  blog: NewspaperIcon,
-  seo: MagnifyingGlassIcon,
-  email: EnvelopeIcon,
-  'social-media': ChatBubbleLeftRightIcon,
-  business: BuildingOffice2Icon,
-  naming: SparklesIcon,
-  video: PlayCircleIcon,
-  rewriting: PencilSquareIcon,
+const FADE_IN = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1 },
 }
 
-interface CategoryCard {
-  id: ToolCategory | 'templates'
-  name: string
-  count?: number
-  href: string
-  icon: IconType
+const STAGGER_CONTAINER = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.12 },
+  },
 }
 
-const DEFAULT_LATEST_BLOGS = [
-  {
-    title: 'How AI is changing content strategy for startups',
-    date: 'February 1, 2026',
-    excerpt:
-      'A practical look at how smaller teams use AI to scale research, ideation, and distribution.',
-    href: '/history',
-  },
-  {
-    title: 'A field guide to SEO at scale: templates, tools, and workflows',
-    date: 'January 27, 2026',
-    excerpt:
-      'Build repeatable templates that unlock long-tail traffic and reduce editorial overhead.',
-    href: '/history',
-  },
-  {
-    title: 'The content ops stack: a lean blueprint for 2026',
-    date: 'January 19, 2026',
-    excerpt:
-      'From briefs to distribution, a lightweight system to keep quality high at volume.',
-    href: '/history',
-  },
-]
+interface RevealSectionProps {
+  children: React.ReactNode
+  className?: string
+}
 
-const faqs = [
-  {
-    q: 'How do I generate a blog post?',
-    a: 'Pick a topic, add keywords, and choose a tone. The generator will draft a structured post with sections and FAQs.',
-  },
-  {
-    q: 'Can I scale content with templates?',
-    a: 'Yes. Templates let you standardize structure so you can publish faster without sacrificing quality.',
-  },
-  {
-    q: 'Do tools help with SEO?',
-    a: 'The tool library focuses on metadata, headings, and content planning to support search visibility.',
-  },
-  {
-    q: 'Is this free to use?',
-    a: 'A free tier is available, with usage limits. You can upgrade for higher output.',
-  },
-]
+function RevealSection({ children, className = '' }: RevealSectionProps) {
+  const ref = useRef<HTMLDivElement>(null)
+  const isInView = useInView(ref, { once: true, margin: '-60px' })
 
-export default function Home() {
-  const [conversationId] = useState(uuidv4())
-  const [content, setContent] = useState<ContentGenerationResponse | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [tools, setTools] = useState<Tool[]>(SAMPLE_TOOLS)
-  const [toolCategories, setToolCategories] = useState<
-    Array<{ id: ToolCategory; name: string; count: number }>
-  >(() => buildCategoryStatsFromTools(SAMPLE_TOOLS))
-  const [latestBlogs, setLatestBlogs] = useState(DEFAULT_LATEST_BLOGS)
-
-  useEffect(() => {
-    let isMounted = true
-
-    const loadTools = async () => {
-      try {
-        const [categoriesResponse, toolsResponse] = await Promise.all([
-          toolsApi.listCategories(),
-          toolsApi.listTools({ limit: 200, include_premium: true, include_beta: true }),
-        ])
-
-        const frontendTools = toFrontendTools(toolsResponse.tools || [])
-        if (isMounted && frontendTools.length > 0) {
-          setTools(frontendTools)
-        }
-
-        const categoriesFromApi = normalizeCategoryStats(categoriesResponse)
-        if (isMounted && categoriesFromApi.length > 0) {
-          setToolCategories(categoriesFromApi)
-        } else if (isMounted && frontendTools.length > 0) {
-          setToolCategories(buildCategoryStatsFromTools(frontendTools))
-        }
-      } catch {
-        if (isMounted) {
-          setTools(SAMPLE_TOOLS)
-          setToolCategories(buildCategoryStatsFromTools(SAMPLE_TOOLS))
-        }
-      }
-    }
-
-    loadTools()
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
-
-  useEffect(() => {
-    let isMounted = true
-
-    const loadBlogs = async () => {
-      try {
-        const response = await fetch('/api/blog?limit=3')
-        if (!response.ok) return
-        const data = await response.json()
-        if (!Array.isArray(data?.data)) return
-
-        const normalized = data.data.map((post: {
-          title: string
-          date: string
-          excerpt: string
-          slug: string
-        }) => ({
-          title: post.title,
-          date: formatDisplayDate(post.date),
-          excerpt: post.excerpt,
-          href: `/blog/${post.slug}`,
-        }))
-
-        if (isMounted && normalized.length > 0) {
-          setLatestBlogs(normalized)
-        }
-      } catch {
-        // keep fallback
-      }
-    }
-
-    loadBlogs()
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
-
-  const categoryCards = useMemo<CategoryCard[]>(() => {
-    const cards: CategoryCard[] = toolCategories.map((category) => ({
-      id: category.id,
-      name: category.name,
-      count: category.count,
-      href: `/tools/category/${category.id}`,
-      icon: CATEGORY_ICONS[category.id],
-    }))
-
-    cards.push({
-      id: 'templates',
-      name: 'Templates',
-      href: '/templates',
-      icon: DocumentDuplicateIcon,
-    })
-
-    return cards
-  }, [toolCategories])
-
-  const popularTools = useMemo(
-    () =>
-      [...tools]
-        .sort((a, b) => {
-          if (a.isPopular && !b.isPopular) return -1
-          if (!a.isPopular && b.isPopular) return 1
-          if (a.isNew && !b.isNew) return -1
-          if (!a.isNew && b.isNew) return 1
-          return a.name.localeCompare(b.name)
-        })
-        .slice(0, 12)
-        .map((tool) => ({
-          title: tool.name,
-          href: `/tools/${tool.slug}`,
-        })),
-    [tools]
+  return (
+    <motion.div
+      ref={ref}
+      initial="hidden"
+      animate={isInView ? 'visible' : 'hidden'}
+      variants={FADE_UP}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+      className={className}
+    >
+      {children}
+    </motion.div>
   )
+}
 
-  const toolCount = tools.length
-  const categoryCount = toolCategories.length
+// ---------------------------------------------------------------------------
+// Data
+// ---------------------------------------------------------------------------
+
+interface Feature {
+  icon: React.ElementType
+  title: string
+  description: string
+}
+
+const FEATURES: Feature[] = [
+  {
+    icon: SparklesIcon,
+    title: 'Brand Voice Training',
+    description:
+      'Feed in your existing content and define your tone, vocabulary, and style. Every piece of generated content sounds authentically like you -- not like a chatbot.',
+  },
+  {
+    icon: DocumentTextIcon,
+    title: 'Blog and Book Generation',
+    description:
+      'Go from topic to a structured, publish-ready blog post or full-length book draft in minutes. Section outlines, FAQs, and chapters are all handled automatically.',
+  },
+  {
+    icon: MagnifyingGlassIcon,
+    title: 'SEO-Optimized Content',
+    description:
+      'Built-in keyword targeting, meta descriptions, heading structure, and readability scoring. Your content is ready to rank from the moment it is generated.',
+  },
+  {
+    icon: CpuChipIcon,
+    title: 'Multi-Provider AI',
+    description:
+      'Choose from GPT-4, Claude, or Gemini for every generation. Switch providers freely or let Blog AI pick the best model for the task at hand.',
+  },
+]
+
+interface Step {
+  number: string
+  title: string
+  description: string
+  icon: React.ElementType
+}
+
+const STEPS: Step[] = [
+  {
+    number: '01',
+    title: 'Train Your Voice',
+    description:
+      'Create a brand profile with your tone, vocabulary, and example content. The AI learns what makes your writing yours.',
+    icon: PencilSquareIcon,
+  },
+  {
+    number: '02',
+    title: 'Generate Content',
+    description:
+      'Pick a topic, add keywords, and hit generate. Get structured blog posts, books, or marketing copy in minutes.',
+    icon: RocketLaunchIcon,
+  },
+  {
+    number: '03',
+    title: 'Publish Everywhere',
+    description:
+      'Export to WordPress, GitHub, or Medium. Your content is formatted, optimized, and ready to go live.',
+    icon: GlobeAltIcon,
+  },
+]
+
+interface PricingTier {
+  name: string
+  price: string
+  period: string
+  description: string
+  features: string[]
+  cta: string
+  href: string
+  highlighted: boolean
+}
+
+const PRICING_TIERS: PricingTier[] = [
+  {
+    name: 'Free',
+    price: '$0',
+    period: '/month',
+    description: 'For individuals getting started with AI content.',
+    features: [
+      'Blog post generation',
+      'Basic SEO optimization',
+      '5 generations per day',
+      'Community support',
+    ],
+    cta: 'Start Free',
+    href: '/sign-up',
+    highlighted: false,
+  },
+  {
+    name: 'Pro',
+    price: '$29',
+    period: '/month',
+    description: 'For creators and marketers who publish regularly.',
+    features: [
+      'Everything in Free',
+      'Book generation',
+      'Brand voice training',
+      'Bulk generation',
+      'Research mode',
+      'Export to WordPress and Medium',
+      'Priority support',
+    ],
+    cta: 'Start Pro Trial',
+    href: '/pricing',
+    highlighted: true,
+  },
+  {
+    name: 'Business',
+    price: '$99',
+    period: '/month',
+    description: 'For teams and agencies managing multiple brands.',
+    features: [
+      'Everything in Pro',
+      'Unlimited generations',
+      'Multiple brand profiles',
+      'Team collaboration',
+      'API access',
+      'Dedicated account manager',
+    ],
+    cta: 'Contact Sales',
+    href: '/pricing',
+    highlighted: false,
+  },
+]
+
+interface Stat {
+  value: string
+  label: string
+}
+
+const SOCIAL_STATS: Stat[] = [
+  { value: '12,000+', label: 'articles generated' },
+  { value: '2,400+', label: 'active creators' },
+  { value: '98%', label: 'satisfaction rate' },
+  { value: '3', label: 'AI providers supported' },
+]
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
+
+export default function Home(): React.ReactElement {
+  const isClerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 
   return (
     <main className="min-h-screen">
       <SiteHeader />
 
-      {/* Hero */}
+      {/* ----------------------------------------------------------------- */}
+      {/* Hero Section                                                      */}
+      {/* ----------------------------------------------------------------- */}
       <section className="relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
-          <div className="grid grid-cols-1 lg:grid-cols-[1.1fr,0.9fr] gap-10 items-center">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100/70 text-amber-800 text-xs font-medium">
-                <NewspaperIcon className="w-4 h-4" />
-                New: 100+ templates rolling out in 2026
-              </div>
-              <h1 className="mt-4 text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-gray-900 font-serif">
-                Build a content engine with calculators, blogs, and AI tools.
-              </h1>
-              <p className="mt-4 text-lg text-gray-600 max-w-xl">
-                Create hundreds of targeted pages with structured tools, templates, and automated content.
-                Discover popular topics, generate drafts, and publish faster.
-              </p>
-              <div className="mt-6">
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="flex items-center gap-2 w-full sm:max-w-md glass-card rounded-lg px-3 py-2">
-                    <MagnifyingGlassIcon className="w-5 h-5 text-amber-500" />
-                    <input
-                      type="text"
-                      placeholder="Search tools, templates, or topics"
-                      className="w-full text-sm bg-transparent focus:outline-none"
-                    />
-                  </div>
-                  <Link
-                    href="/tools"
-                    className="inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors"
-                  >
-                    Explore Library
-                  </Link>
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2 text-xs text-gray-600">
-                  <span className="uppercase tracking-wide text-gray-400">Trending</span>
-                  {['SEO', 'Marketing', 'Fitness', 'Finance', 'Travel', 'Ecommerce'].map((tag) => (
-                    <Link
-                      key={tag}
-                      href="/tools"
-                      className="px-2.5 py-1 rounded-full bg-amber-50/80 hover:bg-amber-100 hover:text-amber-800 transition-colors"
-                    >
-                      {tag}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-                <div className="mt-8 grid grid-cols-3 gap-4 max-w-lg">
-                  <div>
-                  <div className="text-2xl font-semibold text-gray-900">
-                    {toolCount > 0 ? `${toolCount}+` : '300+'}
-                  </div>
-                  <div className="text-xs text-gray-500">Tool pages</div>
-                  </div>
-                  <div>
-                  <div className="text-2xl font-semibold text-gray-900">8k+</div>
-                  <div className="text-xs text-gray-500">Articles generated</div>
-                  </div>
-                  <div>
-                  <div className="text-2xl font-semibold text-gray-900">
-                    {categoryCount > 0 ? `${categoryCount}+` : '8+'}
-                  </div>
-                  <div className="text-xs text-gray-500">Categories</div>
-                  </div>
-                </div>
-            </div>
+        {/* Subtle background gradient orbs */}
+        <div
+          className="pointer-events-none absolute -top-40 -right-40 h-[600px] w-[600px] rounded-full opacity-[0.07]"
+          style={{ background: 'radial-gradient(circle, rgb(217 119 6) 0%, transparent 70%)' }}
+          aria-hidden="true"
+        />
+        <div
+          className="pointer-events-none absolute -bottom-60 -left-40 h-[500px] w-[500px] rounded-full opacity-[0.05]"
+          style={{ background: 'radial-gradient(circle, rgb(217 119 6) 0%, transparent 70%)' }}
+          aria-hidden="true"
+        />
 
-            <div className="glass-card rounded-2xl p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <SparklesIcon className="w-5 h-5 text-amber-600" />
-                <p className="text-sm font-semibold text-gray-900">Quick Generator</p>
-              </div>
-              <p className="text-sm text-gray-600 mb-4">
-                Generate a blog post or book draft in minutes. Use this to seed your content pipeline.
-              </p>
-              <div className="flex flex-col gap-2">
-                <Link
-                  href="#generator"
-                  className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors"
-                >
-                  Open Generator
-                </Link>
-                <Link
-                  href="/tools"
-                  className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-amber-800 bg-amber-50/70 border border-amber-100 hover:bg-amber-100 rounded-lg transition-colors"
-                >
-                  Browse all tools
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-36">
+          <div className="max-w-3xl mx-auto text-center">
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={STAGGER_CONTAINER}
+            >
+              {/* Badge */}
+              <motion.div variants={FADE_UP} transition={{ duration: 0.5 }}>
+                <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-100/70 text-amber-800 text-xs font-medium tracking-wide">
+                  <SparklesIcon className="w-3.5 h-3.5" aria-hidden="true" />
+                  Now with Brand Voice Training
+                </span>
+              </motion.div>
 
-      {/* Categories */}
-      <section className="bg-white/70 border-y border-amber-100/60 backdrop-blur">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-semibold text-gray-900 font-serif">Browse Categories</h2>
-            <Link href="/tools" className="text-sm text-amber-600 hover:text-amber-700">View all tools</Link>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {categoryCards.map((category) => (
-              <Link
-                key={category.name}
-                href={category.href}
-                className="group glass-card rounded-xl p-4 transition-all hover:shadow-lg"
+              {/* Headline */}
+              <motion.h1
+                variants={FADE_UP}
+                transition={{ duration: 0.5 }}
+                className="mt-6 text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-gray-900 font-serif leading-[1.1]"
               >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-amber-100/70 text-amber-700">
-                    <category.icon className="w-5 h-5" />
-                  </div>
-                  <div className="text-sm font-medium text-gray-900 group-hover:text-amber-800">
-                    {category.name}
-                  </div>
-                  {category.count !== undefined && (
-                    <div className="ml-auto text-xs text-amber-700">
-                      {category.count}
-                    </div>
-                  )}
-                </div>
-              </Link>
-            ))}
+                AI-Powered Content That{' '}
+                <span className="text-amber-600">Sounds Like You</span>
+              </motion.h1>
+
+              {/* Subheading */}
+              <motion.p
+                variants={FADE_UP}
+                transition={{ duration: 0.5 }}
+                className="mt-6 text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed"
+              >
+                Train the AI on your brand voice, generate blog posts and books in minutes,
+                and publish SEO-optimized content that your audience actually wants to read.
+              </motion.p>
+
+              {/* CTAs */}
+              <motion.div
+                variants={FADE_UP}
+                transition={{ duration: 0.5 }}
+                className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
+              >
+                {isClerkConfigured ? (
+                  <>
+                    <SignedOut>
+                      <Link
+                        href="/sign-up"
+                        className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors shadow-sm shadow-amber-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                      >
+                        Start Creating for Free
+                        <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
+                      </Link>
+                      <Link
+                        href="/tools"
+                        className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-gray-700 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                      >
+                        Explore Tools
+                      </Link>
+                    </SignedOut>
+                    <SignedIn>
+                      <Link
+                        href="/tools"
+                        className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors shadow-sm shadow-amber-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                      >
+                        Go to Dashboard
+                        <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
+                      </Link>
+                      <Link
+                        href="/brand"
+                        className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-gray-700 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                      >
+                        Train Your Voice
+                      </Link>
+                    </SignedIn>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/auth"
+                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors shadow-sm shadow-amber-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                    >
+                      Start Creating for Free
+                      <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
+                    </Link>
+                    <Link
+                      href="/tools"
+                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-gray-700 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                    >
+                      Explore Tools
+                    </Link>
+                  </>
+                )}
+              </motion.div>
+
+              {/* Trust indicator */}
+              <motion.p
+                variants={FADE_IN}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="mt-6 text-sm text-gray-400"
+              >
+                No credit card required. Free plan available.
+              </motion.p>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Popular Tools */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr,1.1fr] gap-10">
-          <div>
-            <h2 className="text-2xl font-semibold text-gray-900 font-serif">Most Popular Tools</h2>
-            <p className="mt-2 text-sm text-gray-600 max-w-md">
-              These are the highest-traffic generators across SEO, marketing, and growth.
-            </p>
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {popularTools.map((tool) => (
-                <Link
-                  key={tool.title}
-                  href={tool.href}
-                  className="flex items-center justify-between px-4 py-3 glass-card rounded-lg hover:shadow-md transition-all"
-                >
-                  <span className="text-sm text-gray-900">{tool.title}</span>
-                  <span className="text-xs text-amber-700">Open</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-          <div className="glass-card rounded-2xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <NewspaperIcon className="w-5 h-5 text-amber-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Latest from the Blog</h3>
-            </div>
-            <div className="space-y-4">
-              {latestBlogs.map((post) => (
-                <Link key={post.title} href={post.href} className="block group">
-                  <div className="text-xs text-gray-500">{post.date}</div>
-                  <div className="text-sm font-medium text-gray-900 group-hover:text-amber-800">
-                    {post.title}
-                  </div>
-                  <div className="text-xs text-gray-600 mt-1">{post.excerpt}</div>
-                </Link>
-              ))}
-            </div>
-            <div className="mt-6">
-              <Link href="/blog" className="text-sm text-amber-700 hover:text-amber-800">
-                View all posts
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Generator */}
-      <section id="generator" className="bg-gradient-to-b from-white/90 to-amber-50/40 border-y border-amber-100/60">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-semibold text-gray-900 font-serif">Generate Content Fast</h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Use structured prompts and templates to produce consistent, SEO-ready drafts.
-            </p>
-          </div>
-          <div className="glass-card rounded-2xl p-6">
-            <Tab.Group>
-              <Tab.List className="flex space-x-1 rounded-xl bg-amber-100/60 p-1 mb-6">
-                <Tab
-                  className={({ selected }) =>
-                    classNames(
-                      'w-full rounded-lg py-3 text-sm font-medium leading-5 transition-all',
-                      'ring-white ring-opacity-60 ring-offset-2 ring-offset-amber-300 focus:outline-none focus:ring-2',
-                      selected
-                        ? 'bg-white shadow-sm text-amber-800'
-                        : 'text-amber-700 hover:bg-white/[0.12] hover:text-amber-800'
-                    )
-                  }
-                >
-                  Blog Post
-                </Tab>
-                <Tab
-                  className={({ selected }) =>
-                    classNames(
-                      'w-full rounded-lg py-3 text-sm font-medium leading-5 transition-all',
-                      'ring-white ring-opacity-60 ring-offset-2 ring-offset-amber-300 focus:outline-none focus:ring-2',
-                      selected
-                        ? 'bg-white shadow-sm text-amber-800'
-                        : 'text-amber-700 hover:bg-white/[0.12] hover:text-amber-800'
-                    )
-                  }
-                >
-                  Book
-                </Tab>
-              </Tab.List>
-              <Tab.Panels>
-                <Tab.Panel>
-                  <ContentGenerator
-                    conversationId={conversationId}
-                    setContent={setContent}
-                    setLoading={setLoading}
-                  />
-                </Tab.Panel>
-                <Tab.Panel>
-                  <BookGenerator
-                    conversationId={conversationId}
-                    setContent={setContent}
-                    setLoading={setLoading}
-                  />
-                </Tab.Panel>
-              </Tab.Panels>
-            </Tab.Group>
-          </div>
-
-          {loading && (
-            <div className="mt-8 text-center glass-card rounded-xl p-10">
-              <div className="flex justify-center items-center space-x-2">
-                <div className="h-3 w-3 bg-amber-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="h-3 w-3 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="h-3 w-3 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+      {/* ----------------------------------------------------------------- */}
+      {/* Social Proof Bar                                                  */}
+      {/* ----------------------------------------------------------------- */}
+      <section className="border-y border-amber-100/60 bg-white/60 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <RevealSection>
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-2 text-sm font-medium text-gray-500">
+                <UserGroupIcon className="w-5 h-5 text-amber-500" aria-hidden="true" />
+                Trusted by creators, marketers, and agencies worldwide
               </div>
-              <p className="mt-6 text-gray-600 font-medium">Generating your content...</p>
-              <p className="text-xs text-gray-500 mt-2">This may take a few moments</p>
             </div>
-          )}
-
-          {content && !loading && (
-            <div className="glass-card rounded-xl p-6 mt-8">
-              <ContentViewer content={content} />
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* SEO + FAQ */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-[1.1fr,0.9fr] gap-10">
-          <div>
-            <h2 className="text-2xl font-semibold text-gray-900 font-serif">Build a Scalable Content Library</h2>
-            <p className="mt-3 text-sm text-gray-600">
-              Blog AI helps you create a repeatable content system. Start with a calculator or tool page,
-              generate supporting blogs, and connect them with internal links. This approach unlocks long-tail
-              traffic and builds topical authority over time.
-            </p>
-            <p className="mt-3 text-sm text-gray-600">
-              Use templates to standardize structure, keep quality consistent, and publish at scale. The more
-              pages you publish around a topic, the more search visibility you earn.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/tools" className="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg">
-                Explore all tools
-              </Link>
-              <Link href="/templates" className="px-4 py-2 text-sm font-medium text-amber-800 bg-amber-50/70 border border-amber-100 hover:bg-amber-100 rounded-lg">
-                View templates
-              </Link>
-            </div>
-          </div>
-          <div className="glass-card rounded-2xl p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">FAQs</h3>
-            <div className="space-y-4">
-              {faqs.map((faq) => (
-                <div key={faq.q}>
-                  <div className="text-sm font-medium text-gray-900">{faq.q}</div>
-                  <div className="text-sm text-gray-600 mt-1">{faq.a}</div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
+              {SOCIAL_STATS.map((stat) => (
+                <div key={stat.label} className="text-center">
+                  <div className="text-2xl sm:text-3xl font-semibold text-gray-900">
+                    {stat.value}
+                  </div>
+                  <div className="mt-1 text-sm text-gray-500">{stat.label}</div>
                 </div>
               ))}
             </div>
-          </div>
+          </RevealSection>
+        </div>
+      </section>
+
+      {/* ----------------------------------------------------------------- */}
+      {/* Feature Grid                                                      */}
+      {/* ----------------------------------------------------------------- */}
+      <section className="py-20 sm:py-28">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <RevealSection className="text-center max-w-2xl mx-auto mb-16">
+            <h2 className="text-3xl sm:text-4xl font-semibold text-gray-900 font-serif">
+              Everything you need to create content at scale
+            </h2>
+            <p className="mt-4 text-lg text-gray-600">
+              From brand voice training to multi-platform publishing, Blog AI handles
+              the entire content pipeline.
+            </p>
+          </RevealSection>
+
+          <FeatureGrid />
+        </div>
+      </section>
+
+      {/* ----------------------------------------------------------------- */}
+      {/* How It Works                                                      */}
+      {/* ----------------------------------------------------------------- */}
+      <section className="py-20 sm:py-28 bg-white/70 border-y border-amber-100/60">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <RevealSection className="text-center max-w-2xl mx-auto mb-16">
+            <h2 className="text-3xl sm:text-4xl font-semibold text-gray-900 font-serif">
+              Three steps to content that converts
+            </h2>
+            <p className="mt-4 text-lg text-gray-600">
+              Stop spending hours writing from scratch. Train your voice once, then generate
+              and publish endlessly.
+            </p>
+          </RevealSection>
+
+          <StepsSection />
+        </div>
+      </section>
+
+      {/* ----------------------------------------------------------------- */}
+      {/* Pricing Preview                                                   */}
+      {/* ----------------------------------------------------------------- */}
+      <section className="py-20 sm:py-28">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <RevealSection className="text-center max-w-2xl mx-auto mb-16">
+            <h2 className="text-3xl sm:text-4xl font-semibold text-gray-900 font-serif">
+              Plans that grow with you
+            </h2>
+            <p className="mt-4 text-lg text-gray-600">
+              Start free and upgrade as your content needs expand. Every plan includes
+              core AI generation features.
+            </p>
+          </RevealSection>
+
+          <PricingGrid />
+
+          <RevealSection className="text-center mt-10">
+            <Link
+              href="/pricing"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-600 hover:text-amber-700 transition-colors"
+            >
+              Compare all features in detail
+              <ArrowRightIcon className="w-3.5 h-3.5" aria-hidden="true" />
+            </Link>
+          </RevealSection>
+        </div>
+      </section>
+
+      {/* ----------------------------------------------------------------- */}
+      {/* Final CTA                                                         */}
+      {/* ----------------------------------------------------------------- */}
+      <section className="bg-gradient-to-r from-amber-600 to-amber-700">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24 text-center">
+          <RevealSection>
+            <h2 className="text-3xl sm:text-4xl font-semibold text-white font-serif">
+              Your content engine starts here
+            </h2>
+            <p className="mt-4 text-lg text-amber-100 max-w-xl mx-auto">
+              Join thousands of creators who write faster, rank higher, and stay on-brand
+              with Blog AI.
+            </p>
+            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+              {isClerkConfigured ? (
+                <>
+                  <SignedOut>
+                    <Link
+                      href="/sign-up"
+                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-amber-700 bg-white hover:bg-amber-50 rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-600"
+                    >
+                      Start Creating for Free
+                      <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
+                    </Link>
+                  </SignedOut>
+                  <SignedIn>
+                    <Link
+                      href="/tools"
+                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-amber-700 bg-white hover:bg-amber-50 rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-600"
+                    >
+                      Go to Dashboard
+                      <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
+                    </Link>
+                  </SignedIn>
+                </>
+              ) : (
+                <Link
+                  href="/auth"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-amber-700 bg-white hover:bg-amber-50 rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-600"
+                >
+                  Start Creating for Free
+                  <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
+                </Link>
+              )}
+              <Link
+                href="/pricing"
+                className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white border border-white/30 hover:bg-white/10 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-600"
+              >
+                View Pricing
+              </Link>
+            </div>
+          </RevealSection>
         </div>
       </section>
 
@@ -527,59 +493,160 @@ export default function Home() {
   )
 }
 
-function formatDisplayDate(dateValue: string): string {
-  const parsed = new Date(dateValue)
-  if (Number.isNaN(parsed.getTime())) return dateValue
-  return parsed.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
-}
+// ---------------------------------------------------------------------------
+// Section Components
+// ---------------------------------------------------------------------------
 
-function buildCategoryStatsFromTools(tools: Tool[]): Array<{
-  id: ToolCategory
-  name: string
-  count: number
-}> {
-  const counts: Record<ToolCategory, number> = CATEGORY_ORDER.reduce(
-    (acc, category) => {
-      acc[category] = 0
-      return acc
-    },
-    {} as Record<ToolCategory, number>
+function FeatureGrid(): React.ReactElement {
+  const ref = useRef<HTMLDivElement>(null)
+  const isInView = useInView(ref, { once: true, margin: '-60px' })
+
+  return (
+    <motion.div
+      ref={ref}
+      initial="hidden"
+      animate={isInView ? 'visible' : 'hidden'}
+      variants={STAGGER_CONTAINER}
+      className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8"
+    >
+      {FEATURES.map((feature) => {
+        const Icon = feature.icon
+        return (
+          <motion.div
+            key={feature.title}
+            variants={FADE_UP}
+            transition={{ duration: 0.5 }}
+            className="glass-card rounded-2xl p-8 hover:shadow-lg transition-shadow"
+          >
+            <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-amber-100/80 text-amber-700 mb-5">
+              <Icon className="w-5 h-5" aria-hidden="true" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              {feature.title}
+            </h3>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              {feature.description}
+            </p>
+          </motion.div>
+        )
+      })}
+    </motion.div>
   )
-
-  tools.forEach((tool) => {
-    counts[tool.category] = (counts[tool.category] || 0) + 1
-  })
-
-  return CATEGORY_ORDER.map((category) => ({
-    id: category,
-    name: TOOL_CATEGORIES[category].name,
-    count: counts[category] || 0,
-  }))
 }
 
-function normalizeCategoryStats(
-  categories: Array<{ id: string; tool_count?: number }>
-): Array<{ id: ToolCategory; name: string; count: number }> {
-  if (!Array.isArray(categories)) return []
+function StepsSection(): React.ReactElement {
+  const ref = useRef<HTMLDivElement>(null)
+  const isInView = useInView(ref, { once: true, margin: '-60px' })
 
-  const categoryMap = new Map<ToolCategory, number>()
+  return (
+    <motion.div
+      ref={ref}
+      initial="hidden"
+      animate={isInView ? 'visible' : 'hidden'}
+      variants={STAGGER_CONTAINER}
+      className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12"
+    >
+      {STEPS.map((step, index) => {
+        const Icon = step.icon
+        return (
+          <motion.div
+            key={step.number}
+            variants={FADE_UP}
+            transition={{ duration: 0.5 }}
+            className="relative text-center"
+          >
+            {/* Connector line between steps on desktop */}
+            {index < STEPS.length - 1 && (
+              <div
+                className="hidden md:block absolute top-10 left-[calc(50%+32px)] w-[calc(100%-64px)] h-px bg-amber-200"
+                aria-hidden="true"
+              />
+            )}
 
-  categories.forEach((category) => {
-    if (category.id in TOOL_CATEGORIES) {
-      const id = category.id as ToolCategory
-      categoryMap.set(id, category.tool_count ?? 0)
-    }
-  })
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-amber-50 border border-amber-100 mb-6">
+              <Icon className="w-8 h-8 text-amber-600" aria-hidden="true" />
+            </div>
+            <div className="text-xs font-medium text-amber-600 uppercase tracking-wider mb-2">
+              Step {step.number}
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-3">
+              {step.title}
+            </h3>
+            <p className="text-sm text-gray-600 leading-relaxed max-w-xs mx-auto">
+              {step.description}
+            </p>
+          </motion.div>
+        )
+      })}
+    </motion.div>
+  )
+}
 
-  if (categoryMap.size === 0) return []
+function PricingGrid(): React.ReactElement {
+  const ref = useRef<HTMLDivElement>(null)
+  const isInView = useInView(ref, { once: true, margin: '-60px' })
 
-  return CATEGORY_ORDER.map((category) => ({
-    id: category,
-    name: TOOL_CATEGORIES[category].name,
-    count: categoryMap.get(category) ?? 0,
-  }))
+  return (
+    <motion.div
+      ref={ref}
+      initial="hidden"
+      animate={isInView ? 'visible' : 'hidden'}
+      variants={STAGGER_CONTAINER}
+      className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8"
+    >
+      {PRICING_TIERS.map((tier) => (
+        <motion.div
+          key={tier.name}
+          variants={FADE_UP}
+          transition={{ duration: 0.5 }}
+          className={`relative rounded-2xl p-8 transition-shadow ${
+            tier.highlighted
+              ? 'bg-white border-2 border-amber-500 shadow-lg shadow-amber-500/10'
+              : 'glass-card'
+          }`}
+        >
+          {tier.highlighted && (
+            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+              <span className="inline-flex items-center px-3.5 py-1 bg-amber-600 text-white text-xs font-medium rounded-full">
+                Most Popular
+              </span>
+            </div>
+          )}
+
+          <h3 className="text-lg font-semibold text-gray-900">{tier.name}</h3>
+          <p className="mt-1 text-sm text-gray-500">{tier.description}</p>
+
+          <div className="mt-6 flex items-baseline gap-1">
+            <span className="text-4xl font-semibold text-gray-900">
+              {tier.price}
+            </span>
+            <span className="text-sm text-gray-500">{tier.period}</span>
+          </div>
+
+          <Link
+            href={tier.href}
+            className={`mt-6 block w-full py-3 px-4 text-center text-sm font-medium rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ${
+              tier.highlighted
+                ? 'bg-amber-600 text-white hover:bg-amber-700'
+                : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+            }`}
+          >
+            {tier.cta}
+          </Link>
+
+          <ul className="mt-8 space-y-3" role="list">
+            {tier.features.map((feature) => (
+              <li key={feature} className="flex items-start gap-3 text-sm text-gray-600">
+                <CheckIcon
+                  className="w-5 h-5 text-amber-500 flex-shrink-0 mt-px"
+                  aria-hidden="true"
+                />
+                {feature}
+              </li>
+            ))}
+          </ul>
+        </motion.div>
+      ))}
+    </motion.div>
+  )
 }

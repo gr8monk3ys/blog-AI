@@ -17,7 +17,9 @@ Usage:
         ...
 """
 
+import logging
 import os
+import sys
 from functools import lru_cache
 from typing import List, Literal, Optional, Set
 
@@ -125,12 +127,12 @@ class LLMSettings(BaseSettings):
 
 
 # =============================================================================
-# Database Settings (Supabase)
+# Database Settings (Postgres / Neon)
 # =============================================================================
 
 
 class DatabaseSettings(BaseSettings):
-    """Configuration for Supabase database."""
+    """Configuration for Postgres database (Neon or any managed Postgres)."""
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -138,29 +140,30 @@ class DatabaseSettings(BaseSettings):
         extra="ignore",
     )
 
-    supabase_url: Optional[str] = Field(
+    # Use DATABASE_URL in serverless environments (Vercel) and prefer
+    # DATABASE_URL_DIRECT for long-lived backends (Railway) when available.
+    database_url: Optional[SecretStr] = Field(
         default=None,
-        description="Supabase project URL",
+        description="Postgres connection string (pooled is fine for serverless)",
     )
-    supabase_key: Optional[SecretStr] = Field(
+    database_url_direct: Optional[SecretStr] = Field(
         default=None,
-        description="Supabase anon/public key",
-    )
-    supabase_service_role_key: Optional[SecretStr] = Field(
-        default=None,
-        alias="supabase_service_key",
-        description="Supabase service role key (for admin operations)",
+        description="Direct Postgres connection string (recommended for long-lived backends)",
     )
 
     @property
     def is_configured(self) -> bool:
-        """Check if Supabase is properly configured."""
-        return bool(self.supabase_url and (self.supabase_key or self.supabase_service_role_key))
+        """Check if a Postgres connection is configured."""
+        return bool(self.database_url_direct or self.database_url)
 
     @property
-    def has_service_role(self) -> bool:
-        """Check if service role key is available."""
-        return bool(self.supabase_url and self.supabase_service_role_key)
+    def effective_url(self) -> Optional[str]:
+        """Return the preferred connection URL without exposing secrets in logs."""
+        if self.database_url_direct:
+            return self.database_url_direct.get_secret_value()
+        if self.database_url:
+            return self.database_url.get_secret_value()
+        return None
 
 
 # =============================================================================
@@ -315,9 +318,9 @@ class SecuritySettings(BaseSettings):
         default="development",
         description="Deployment environment",
     )
-    dev_mode: bool = Field(
-        default=False,
-        description="Enable development mode (disables some security checks)",
+    dev_api_key: Optional[str] = Field(
+        default=None,
+        description="Development API key for local testing (blocked in production)",
     )
 
     # CORS
@@ -417,6 +420,48 @@ class RateLimitSettings(BaseSettings):
         default=10,
         ge=1,
         description="Generation endpoints: requests per minute per IP",
+    )
+
+    # Per-user generation rate limits by tier (per minute)
+    rate_limit_gen_free_per_minute: int = Field(
+        default=5,
+        ge=1,
+        description="Free tier: generation requests per minute per user",
+    )
+    rate_limit_gen_free_per_hour: int = Field(
+        default=30,
+        ge=1,
+        description="Free tier: generation requests per hour per user",
+    )
+    rate_limit_gen_starter_per_minute: int = Field(
+        default=10,
+        ge=1,
+        description="Starter tier: generation requests per minute per user",
+    )
+    rate_limit_gen_starter_per_hour: int = Field(
+        default=100,
+        ge=1,
+        description="Starter tier: generation requests per hour per user",
+    )
+    rate_limit_gen_pro_per_minute: int = Field(
+        default=20,
+        ge=1,
+        description="Pro tier: generation requests per minute per user",
+    )
+    rate_limit_gen_pro_per_hour: int = Field(
+        default=200,
+        ge=1,
+        description="Pro tier: generation requests per hour per user",
+    )
+    rate_limit_gen_business_per_minute: int = Field(
+        default=60,
+        ge=1,
+        description="Business tier: generation requests per minute per user",
+    )
+    rate_limit_gen_business_per_hour: int = Field(
+        default=600,
+        ge=1,
+        description="Business tier: generation requests per hour per user",
     )
 
 
@@ -593,7 +638,12 @@ class Settings(BaseSettings):
 
     @property
     def is_supabase_configured(self) -> bool:
-        """Check if Supabase database is available."""
+        """Deprecated: kept for backward compatibility."""
+        return self.database.is_configured
+
+    @property
+    def is_database_configured(self) -> bool:
+        """Check if the Postgres database is available."""
         return self.database.is_configured
 
     @property
@@ -623,8 +673,8 @@ class Settings(BaseSettings):
 
     @property
     def is_dev_mode(self) -> bool:
-        """Check if development mode is enabled."""
-        return self.security.dev_mode
+        """Check if a development API key is configured."""
+        return bool(self.security.dev_api_key)
 
     # ==========================================================================
     # Configuration Summary
@@ -642,7 +692,7 @@ class Settings(BaseSettings):
             "dev_mode": self.is_dev_mode,
             "llm_providers": self.llm.available_providers,
             "default_llm_provider": self.llm.default_provider,
-            "supabase_configured": self.is_supabase_configured,
+            "database_configured": self.is_database_configured,
             "stripe_configured": self.is_stripe_configured,
             "stripe_webhooks_enabled": self.stripe.has_webhook_secret,
             "sentry_configured": self.is_sentry_configured,
@@ -655,6 +705,89 @@ class Settings(BaseSettings):
             "allowed_origins": self.security.origins_list,
             "log_level": self.logging.log_level,
         }
+
+
+    def validate_production_config(self) -> None:
+        """
+        Validate configuration for production readiness.
+
+        In production, required services must be configured or the app
+        refuses to start.  In development, missing vars are logged as
+        warnings so developers can iterate quickly.
+        """
+        _logger = logging.getLogger(__name__)
+
+        is_prod = (
+            self.security.environment == 'production'
+            or os.environ.get('SENTRY_ENVIRONMENT', '').lower() == 'production'
+            or os.environ.get('ENVIRONMENT', '').lower() == 'production'
+            or os.environ.get('PYTHON_ENV', '').lower() == 'production'
+        )
+
+        errors: list[str] = []
+        warnings: list[str] = []
+
+        # --- LLM provider ---
+        if not self.llm.has_any_provider:
+            msg = (
+                'No LLM provider API key set. '
+                'Set at least one of OPENAI_API_KEY, ANTHROPIC_API_KEY, or GEMINI_API_KEY.'
+            )
+            if is_prod:
+                errors.append(msg)
+            else:
+                _logger.warning(msg)
+
+        # --- Database ---
+        if not self.database.is_configured:
+            msg = 'DATABASE_URL is not set. Database features will be unavailable.'
+            if is_prod:
+                errors.append(msg)
+            else:
+                _logger.warning(msg)
+
+        # --- ALLOWED_ORIGINS ---
+        origins = self.security.origins_list
+        if not origins:
+            msg = 'ALLOWED_ORIGINS is empty. CORS will reject all cross-origin requests.'
+            if is_prod:
+                errors.append(msg)
+            else:
+                _logger.warning(msg)
+        elif is_prod:
+            has_localhost = any(
+                'localhost' in o or '127.0.0.1' in o for o in origins
+            )
+            if has_localhost:
+                errors.append(
+                    'ALLOWED_ORIGINS contains localhost entries in production. '
+                    'Remove localhost/127.0.0.1 origins for production deployments.'
+                )
+
+        # --- Stripe (warn only) ---
+        if not self.stripe.stripe_secret_key:
+            msg = 'STRIPE_SECRET_KEY is not set. Revenue features will be disabled.'
+            if is_prod:
+                _logger.warning(msg)
+            else:
+                _logger.warning(msg)
+        if not self.stripe.stripe_webhook_secret:
+            msg = 'STRIPE_WEBHOOK_SECRET is not set. Webhook verification will be disabled.'
+            if is_prod:
+                _logger.warning(msg)
+            else:
+                _logger.warning(msg)
+
+        # --- Fail hard in production ---
+        if is_prod and errors:
+            for err in errors:
+                _logger.critical('PRODUCTION CONFIG ERROR: %s', err)
+            _logger.critical(
+                'Application cannot start due to %d configuration error(s). '
+                'Fix the above issues and restart.',
+                len(errors),
+            )
+            sys.exit(1)
 
 
 # =============================================================================

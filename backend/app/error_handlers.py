@@ -210,10 +210,36 @@ def format_pydantic_errors(errors: List[Dict[str, Any]]) -> List[Dict[str, str]]
     return formatted[:10]
 
 
+def safe_pydantic_detail(errors: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Create a safe `detail` payload compatible with FastAPI/Starlette expectations.
+
+    Some clients (and tests) expect `detail` to be a list of error objects with
+    a `loc` field. We avoid returning raw inputs/ctx to reduce risk of leaking
+    sensitive request data.
+    """
+    safe: List[Dict[str, Any]] = []
+    for error in errors:
+        loc = error.get("loc", [])
+        msg = error.get("msg", "Invalid value")
+        typ = error.get("type", "")
+
+        safe.append(
+            {
+                "loc": list(loc) if isinstance(loc, (list, tuple)) else loc,
+                "msg": sanitize_error_message(str(msg)),
+                "type": str(typ),
+            }
+        )
+
+    return safe[:10]
+
+
 def create_error_response(
     status_code: int,
     error: str,
     error_code: str,
+    detail: Optional[Any] = None,
     details: Optional[Dict[str, Any]] = None,
     headers: Optional[Dict[str, str]] = None,
 ) -> JSONResponse:
@@ -230,9 +256,14 @@ def create_error_response(
     Returns:
         JSONResponse with consistent error format.
     """
+    sanitized_error = sanitize_error_message(error)
     content = {
         "success": False,
-        "error": sanitize_error_message(error),
+        # Keep our explicit `error` field for consistency across clients.
+        "error": sanitized_error,
+        # Also include FastAPI-style `detail` for compatibility with existing clients/tests.
+        # For validation errors, this may be a structured list/dict.
+        "detail": detail if detail is not None else sanitized_error,
         "error_code": error_code,
     }
 
@@ -355,7 +386,9 @@ async def validation_exception_handler(
     Converts validation errors into a clean, user-friendly format
     without exposing internal validation details.
     """
-    errors = format_pydantic_errors(exc.errors())
+    raw_errors = exc.errors()
+    errors = format_pydantic_errors(raw_errors)
+    detail = safe_pydantic_detail(raw_errors)
 
     logger.warning(
         f"Validation error on {request.method} {request.url.path}: "
@@ -372,6 +405,7 @@ async def validation_exception_handler(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         error=error_message,
         error_code=ErrorCode.VALIDATION_ERROR.value,
+        detail=detail,
         details={"errors": errors},
     )
 
@@ -383,7 +417,9 @@ async def pydantic_validation_handler(
     """
     Handle direct Pydantic ValidationError (not wrapped by FastAPI).
     """
-    errors = format_pydantic_errors(exc.errors())
+    raw_errors = exc.errors()
+    errors = format_pydantic_errors(raw_errors)
+    detail = safe_pydantic_detail(raw_errors)
 
     logger.warning(
         f"Pydantic validation error on {request.method} {request.url.path}: "
@@ -399,6 +435,7 @@ async def pydantic_validation_handler(
         status_code=status.HTTP_400_BAD_REQUEST,
         error=error_message,
         error_code=ErrorCode.VALIDATION_ERROR.value,
+        detail=detail,
         details={"errors": errors},
     )
 

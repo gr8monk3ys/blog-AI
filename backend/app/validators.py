@@ -19,7 +19,7 @@ import socket
 from typing import List, Optional, Set, Tuple
 from urllib.parse import urlparse
 
-import bleach
+import nh3
 
 # =============================================================================
 # Constants
@@ -467,17 +467,12 @@ def sanitize_html_content(content: str, strip_all_tags: bool = False) -> str:
         return content
 
     if strip_all_tags:
-        # Remove all HTML tags using bleach
-        content = bleach.clean(content, tags=[], strip=True)
+        content = nh3.clean(content, tags=set())
     else:
-        # Use bleach with whitelist of allowed tags
-        # This properly handles all edge cases that regex cannot
-        content = bleach.clean(
+        content = nh3.clean(
             content,
             tags=ALLOWED_HTML_TAGS,
             attributes=ALLOWED_HTML_ATTRIBUTES,
-            strip=True,
-            strip_comments=True,
         )
 
     return content.strip()

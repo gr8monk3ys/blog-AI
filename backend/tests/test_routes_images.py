@@ -12,7 +12,7 @@ from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 # Set environment before imports
-os.environ["DEV_MODE"] = "true"
+os.environ["DEV_API_KEY"] = "test-key"
 os.environ["RATE_LIMIT_ENABLED"] = "false"
 os.environ["ENVIRONMENT"] = "development"
 os.environ["OPENAI_API_KEY"] = "sk-test-mock-key-for-unit-tests-only"

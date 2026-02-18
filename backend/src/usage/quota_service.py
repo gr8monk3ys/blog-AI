@@ -1,19 +1,18 @@
 """
 Usage quota service for tracking and enforcing subscription-based limits.
 
-This module provides Supabase-backed quota management with:
+This module provides Postgres-backed quota management with:
 - check_quota: Verify if user has remaining quota
 - increment_usage: Record usage after successful generation
 - get_usage_stats: Get current period statistics
 - reset_monthly_quotas: Scheduled job to reset quotas
 
-Falls back to file-based storage when Supabase is not configured.
+Falls back to file-based storage when DATABASE_URL is not configured.
 """
 
-import asyncio
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from src.types.usage import (
@@ -26,6 +25,7 @@ from src.types.usage import (
     get_tier_config,
     TIER_CONFIGS,
 )
+from src.db import execute as db_execute, fetch as db_fetch, fetchrow as db_fetchrow, is_database_configured
 
 logger = logging.getLogger(__name__)
 
@@ -63,33 +63,24 @@ class QuotaService:
     """
     Service for managing user quotas and usage tracking.
 
-    Uses Supabase for persistent storage when available,
-    falls back to the existing file-based limiter otherwise.
+    Uses Postgres for persistent storage when available, falls back to the
+    existing file-based limiter otherwise.
     """
 
     def __init__(self):
         """Initialize the quota service."""
-        self._supabase_client = None
-        self._use_supabase = False
-        self._init_supabase()
-
-    def _init_supabase(self) -> None:
-        """Initialize Supabase client if configured."""
-        supabase_url = os.environ.get("SUPABASE_URL")
-        supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
-
-        if supabase_url and supabase_key:
-            try:
-                from supabase import create_client, Client
-                self._supabase_client: Client = create_client(supabase_url, supabase_key)
-                self._use_supabase = True
-                logger.info("Quota service initialized with Supabase")
-            except ImportError:
-                logger.warning("Supabase package not installed, using file-based storage")
-            except Exception as e:
-                logger.error(f"Failed to initialize Supabase: {e}")
+        self._use_db = is_database_configured()
+        if self._use_db:
+            logger.info("Quota service initialized with Postgres")
         else:
-            logger.info("Supabase not configured, using file-based storage")
+            logger.info("DATABASE_URL not configured, using file-based storage")
+
+    @staticmethod
+    def _as_utc(dt: datetime) -> datetime:
+        """Attach UTC tzinfo to naive datetimes for timestamptz parameters."""
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc)
 
     def _get_period_bounds(self, reference_date: Optional[datetime] = None) -> tuple[datetime, datetime]:
         """
@@ -126,68 +117,74 @@ class QuotaService:
         """
         period_start, period_end = self._get_period_bounds()
 
-        if self._use_supabase and self._supabase_client:
+        if self._use_db:
             try:
-                # Try to get existing quota (run sync Supabase call in thread pool)
-                response = await asyncio.to_thread(
-                    lambda: self._supabase_client.table("user_quotas").select("*").eq(
-                        "user_id", user_id
-                    ).execute()
+                row = await db_fetchrow(
+                    """
+                    SELECT id, user_id, tier, period_start, period_end, created_at, updated_at
+                    FROM user_quotas
+                    WHERE user_id = $1
+                    """,
+                    user_id,
                 )
 
-                if response.data and len(response.data) > 0:
-                    row = response.data[0]
+                if row:
                     quota = UserQuota(
-                        id=row["id"],
+                        id=str(row["id"]) if row["id"] else None,
                         user_id=row["user_id"],
                         tier=SubscriptionTier(row["tier"]),
-                        period_start=datetime.fromisoformat(row["period_start"].replace("Z", "+00:00")).replace(tzinfo=None),
-                        period_end=datetime.fromisoformat(row["period_end"].replace("Z", "+00:00")).replace(tzinfo=None),
-                        created_at=datetime.fromisoformat(row["created_at"].replace("Z", "+00:00")).replace(tzinfo=None) if row.get("created_at") else None,
-                        updated_at=datetime.fromisoformat(row["updated_at"].replace("Z", "+00:00")).replace(tzinfo=None) if row.get("updated_at") else None,
+                        period_start=row["period_start"].replace(tzinfo=None),
+                        period_end=row["period_end"].replace(tzinfo=None),
+                        created_at=row["created_at"].replace(tzinfo=None) if row["created_at"] else None,
+                        updated_at=row["updated_at"].replace(tzinfo=None) if row["updated_at"] else None,
                     )
 
                     # Check if period needs reset
                     if datetime.utcnow() >= quota.period_end:
-                        # Reset to new period (run sync Supabase call in thread pool)
                         new_start, new_end = self._get_period_bounds()
-                        await asyncio.to_thread(
-                            lambda: self._supabase_client.table("user_quotas").update({
-                                "period_start": new_start.isoformat(),
-                                "period_end": new_end.isoformat(),
-                                "updated_at": datetime.utcnow().isoformat(),
-                            }).eq("id", row["id"]).execute()
+                        await db_execute(
+                            """
+                            UPDATE user_quotas
+                            SET period_start = $2,
+                                period_end = $3,
+                                updated_at = NOW()
+                            WHERE user_id = $1
+                            """,
+                            user_id,
+                            self._as_utc(new_start),
+                            self._as_utc(new_end),
                         )
                         quota.period_start = new_start
                         quota.period_end = new_end
 
                     return quota
 
-                # Create new quota for user (run sync Supabase call in thread pool)
-                new_quota = {
-                    "user_id": user_id,
-                    "tier": SubscriptionTier.FREE.value,
-                    "period_start": period_start.isoformat(),
-                    "period_end": period_end.isoformat(),
-                    "created_at": datetime.utcnow().isoformat(),
-                    "updated_at": datetime.utcnow().isoformat(),
-                }
-                response = await asyncio.to_thread(
-                    lambda: self._supabase_client.table("user_quotas").insert(new_quota).execute()
+                # Create new quota for user
+                row = await db_fetchrow(
+                    """
+                    INSERT INTO user_quotas (user_id, tier, period_start, period_end, created_at, updated_at)
+                    VALUES ($1, $2, $3, $4, NOW(), NOW())
+                    RETURNING id, user_id, tier, period_start, period_end, created_at, updated_at
+                    """,
+                    user_id,
+                    SubscriptionTier.FREE.value,
+                    self._as_utc(period_start),
+                    self._as_utc(period_end),
                 )
 
-                if response.data and len(response.data) > 0:
-                    row = response.data[0]
+                if row:
                     return UserQuota(
-                        id=row["id"],
-                        user_id=user_id,
-                        tier=SubscriptionTier.FREE,
-                        period_start=period_start,
-                        period_end=period_end,
+                        id=str(row["id"]) if row["id"] else None,
+                        user_id=row["user_id"],
+                        tier=SubscriptionTier(row["tier"]),
+                        period_start=row["period_start"].replace(tzinfo=None),
+                        period_end=row["period_end"].replace(tzinfo=None),
+                        created_at=row["created_at"].replace(tzinfo=None) if row["created_at"] else None,
+                        updated_at=row["updated_at"].replace(tzinfo=None) if row["updated_at"] else None,
                     )
 
             except Exception as e:
-                logger.error(f"Supabase error getting user quota: {e}")
+                logger.error(f"Database error getting user quota: {e}")
 
         # Fallback: return default FREE quota
         return UserQuota(
@@ -208,28 +205,27 @@ class QuotaService:
 
         Returns (count, tokens_used).
         """
-        if self._use_supabase and self._supabase_client:
+        if self._use_db:
             try:
-                # Query usage records (run sync Supabase call in thread pool)
-                response = await asyncio.to_thread(
-                    lambda: self._supabase_client.table("usage_records").select(
-                        "id, tokens_used"
-                    ).eq("user_id", user_id).gte(
-                        "timestamp", period_start.isoformat()
-                    ).lt(
-                        "timestamp", period_end.isoformat()
-                    ).execute()
+                row = await db_fetchrow(
+                    """
+                    SELECT
+                        COUNT(*)::int AS count,
+                        COALESCE(SUM(tokens_used), 0)::int AS tokens_used
+                    FROM usage_records
+                    WHERE user_id = $1
+                      AND timestamp >= $2
+                      AND timestamp < $3
+                    """,
+                    user_id,
+                    self._as_utc(period_start),
+                    self._as_utc(period_end),
                 )
-
-                if response.data:
-                    count = len(response.data)
-                    tokens = sum(row.get("tokens_used", 0) for row in response.data)
-                    return count, tokens
-
-                return 0, 0
-
+                if not row:
+                    return 0, 0
+                return int(row["count"] or 0), int(row["tokens_used"] or 0)
             except Exception as e:
-                logger.error(f"Supabase error getting usage count: {e}")
+                logger.error(f"Database error getting usage count: {e}")
                 return 0, 0
 
         # Fallback: use file-based limiter
@@ -325,24 +321,24 @@ class QuotaService:
         """
         timestamp = datetime.utcnow()
 
-        if self._use_supabase and self._supabase_client:
+        if self._use_db:
             try:
-                record = {
-                    "user_id": user_id,
-                    "operation_type": operation_type,
-                    "tokens_used": tokens_used,
-                    "timestamp": timestamp.isoformat(),
-                    "metadata": metadata,
-                }
-                # Insert usage record (run sync Supabase call in thread pool)
-                await asyncio.to_thread(
-                    lambda: self._supabase_client.table("usage_records").insert(record).execute()
+                await db_execute(
+                    """
+                    INSERT INTO usage_records (user_id, operation_type, tokens_used, timestamp, metadata, created_at)
+                    VALUES ($1, $2, $3, $4, $5, NOW())
+                    """,
+                    user_id,
+                    operation_type,
+                    int(tokens_used or 0),
+                    self._as_utc(timestamp),
+                    metadata,
                 )
-                logger.info(f"Usage recorded for user {user_id[:8]}...: {operation_type}")
-
+                logger.info(
+                    f"Usage recorded for user {user_id[:8]}...: {operation_type}"
+                )
             except Exception as e:
-                logger.error(f"Supabase error recording usage: {e}")
-
+                logger.error(f"Database error recording usage: {e}")
         else:
             # Fallback: use file-based limiter
             from src.usage.limiter import usage_limiter
@@ -419,29 +415,34 @@ class QuotaService:
         """
         quota = await self._get_user_quota(user_id)
 
-        if self._use_supabase and self._supabase_client:
+        if self._use_db:
             try:
-                # Update user tier (run sync Supabase call in thread pool)
-                await asyncio.to_thread(
-                    lambda: self._supabase_client.table("user_quotas").update({
-                        "tier": tier.value,
-                        "updated_at": datetime.utcnow().isoformat(),
-                    }).eq("user_id", user_id).execute()
+                await db_execute(
+                    """
+                    INSERT INTO user_quotas (user_id, tier, period_start, period_end, created_at, updated_at)
+                    VALUES ($1, $2, $3, $4, NOW(), NOW())
+                    ON CONFLICT (user_id) DO UPDATE SET
+                        tier = EXCLUDED.tier,
+                        updated_at = NOW()
+                    """,
+                    user_id,
+                    tier.value,
+                    self._as_utc(quota.period_start),
+                    self._as_utc(quota.period_end),
                 )
-                logger.info(f"Updated tier for user {user_id[:8]}... to {tier.value}")
-
+                logger.info(
+                    f"Updated tier for user {user_id[:8]}... to {tier.value}"
+                )
             except Exception as e:
-                logger.error(f"Supabase error updating tier: {e}")
-
+                logger.error(f"Database error updating tier: {e}")
         else:
             # Fallback: use file-based limiter
             from src.usage.limiter import usage_limiter, UsageTier
-            # Map to legacy tier if possible
             tier_mapping = {
                 SubscriptionTier.FREE: UsageTier.FREE,
-                SubscriptionTier.STARTER: UsageTier.FREE,  # Map to closest
+                SubscriptionTier.STARTER: UsageTier.STARTER,
                 SubscriptionTier.PRO: UsageTier.PRO,
-                SubscriptionTier.BUSINESS: UsageTier.ENTERPRISE,
+                SubscriptionTier.BUSINESS: UsageTier.BUSINESS,
             }
             usage_limiter.set_user_tier(user_id, tier_mapping.get(tier, UsageTier.FREE))
 
@@ -460,36 +461,25 @@ class QuotaService:
         """
         reset_count = 0
 
-        if self._use_supabase and self._supabase_client:
+        if self._use_db:
             try:
-                now = datetime.utcnow()
                 new_start, new_end = self._get_period_bounds()
-
-                # Find expired quotas (run sync Supabase call in thread pool)
-                response = await asyncio.to_thread(
-                    lambda: self._supabase_client.table("user_quotas").select(
-                        "id"
-                    ).lt("period_end", now.isoformat()).execute()
+                rows = await db_fetch(
+                    """
+                    UPDATE user_quotas
+                    SET period_start = $1,
+                        period_end = $2,
+                        updated_at = NOW()
+                    WHERE period_end < NOW()
+                    RETURNING user_id
+                    """,
+                    self._as_utc(new_start),
+                    self._as_utc(new_end),
                 )
-
-                if response.data:
-                    ids_to_reset = [row["id"] for row in response.data]
-
-                    for quota_id in ids_to_reset:
-                        # Update each expired quota (run sync Supabase call in thread pool)
-                        await asyncio.to_thread(
-                            lambda qid=quota_id: self._supabase_client.table("user_quotas").update({
-                                "period_start": new_start.isoformat(),
-                                "period_end": new_end.isoformat(),
-                                "updated_at": now.isoformat(),
-                            }).eq("id", qid).execute()
-                        )
-                        reset_count += 1
-
+                reset_count = len(rows or [])
                 logger.info(f"Reset {reset_count} user quotas for new period")
-
             except Exception as e:
-                logger.error(f"Supabase error resetting quotas: {e}")
+                logger.error(f"Database error resetting quotas: {e}")
 
         return reset_count
 
@@ -525,30 +515,33 @@ class QuotaService:
             "total": 0,
         }
 
-        if self._use_supabase and self._supabase_client:
+        if self._use_db:
             try:
-                # Query usage breakdown (run sync Supabase call in thread pool)
-                response = await asyncio.to_thread(
-                    lambda: self._supabase_client.table("usage_records").select(
-                        "operation_type"
-                    ).eq("user_id", user_id).gte(
-                        "timestamp", period_start.isoformat()
-                    ).lt(
-                        "timestamp", period_end.isoformat()
-                    ).execute()
+                rows = await db_fetch(
+                    """
+                    SELECT operation_type, COUNT(*)::int AS count
+                    FROM usage_records
+                    WHERE user_id = $1
+                      AND timestamp >= $2
+                      AND timestamp < $3
+                    GROUP BY operation_type
+                    """,
+                    user_id,
+                    self._as_utc(period_start),
+                    self._as_utc(period_end),
                 )
 
-                if response.data:
-                    for row in response.data:
-                        op_type = row.get("operation_type", "other")
-                        if op_type in breakdown:
-                            breakdown[op_type] += 1
-                        else:
-                            breakdown["other"] += 1
-                        breakdown["total"] += 1
+                for row in rows or []:
+                    op_type = str(row["operation_type"] or "other")
+                    count = int(row["count"] or 0)
+                    if op_type in breakdown:
+                        breakdown[op_type] += count
+                    else:
+                        breakdown["other"] += count
+                    breakdown["total"] += count
 
             except Exception as e:
-                logger.error(f"Supabase error getting usage breakdown: {e}")
+                logger.error(f"Database error getting usage breakdown: {e}")
 
         return breakdown
 

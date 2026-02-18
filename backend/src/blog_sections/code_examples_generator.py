@@ -36,20 +36,25 @@ def generate_code_example(
         CodeExamplesGenerationError: If an error occurs during code example generation.
     """
     try:
-        # Create prompt for code example generation
-        prompt = f"""
-        Generate a code example in {language} that demonstrates the following:
-        
-        {description}
-        
-        Requirements:
-        - The code should be well-commented and follow best practices for {language}.
-        - Include only the code, no explanations outside of comments.
-        - The code should be complete and runnable.
-        - Use modern syntax and conventions for {language}.
-        
-        Return only the code example, nothing else.
-        """
+        # PROMPT DESIGN: Code examples need to be production-quality, not toy snippets.
+        # We push for realistic patterns, clear comments, and runnable completeness.
+        prompt = f"""Write a {language} code example that demonstrates:
+
+{description}
+
+REQUIREMENTS:
+- Write PRODUCTION-QUALITY code, not a minimal toy example.
+- Follow current {language} best practices and idiomatic patterns.
+- Use modern syntax (latest stable version conventions).
+- Include concise, useful comments that explain WHY, not WHAT.
+  BAD: "// declare a variable"
+  GOOD: "// Cache the result to avoid redundant API calls"
+- The code must be complete and runnable as-is (include necessary imports).
+- Use realistic variable/function names, not foo/bar/baz.
+- Include basic error handling where appropriate.
+- Keep it focused: demonstrate the concept without unnecessary boilerplate.
+
+Do NOT include markdown code fences (```). Return ONLY the raw code."""
 
         # Generate code example
         code = generate_text(prompt, provider, options)
@@ -137,22 +142,31 @@ def generate_code_examples_for_topic(
         CodeExamplesGenerationError: If an error occurs during code examples generation.
     """
     try:
-        # Create prompt for code examples descriptions
-        prompt = f"""
-        Generate code example descriptions for the topic "{topic}" in the following programming languages: {', '.join(languages)}.
-        
-        For each language, provide a brief description of what the code example should demonstrate related to the topic.
-        
-        Return your response in the following format:
-        
-        Language: [language 1]
-        Description: [description 1]
-        
-        Language: [language 2]
-        Description: [description 2]
-        
-        And so on.
-        """
+        # PROMPT DESIGN: Description generation for topic-based code examples.
+        # We push for practical, distinct demonstrations per language rather than
+        # the same concept translated N times.
+        prompt = f"""For the topic "{topic}", describe one code example per language.
+
+Languages: {', '.join(languages)}
+
+RULES:
+- Each example should demonstrate a DIFFERENT practical aspect of "{topic}"
+  that plays to that language's strengths. Don't just repeat the same logic
+  in each language.
+- Descriptions should be specific and actionable (1-2 sentences).
+  BAD: "Demonstrate how to use {topic} in Python"
+  GOOD: "Build a retry decorator with exponential backoff for API calls"
+- Focus on real-world use cases, not textbook exercises.
+
+FORMAT (follow exactly):
+
+Language: [language]
+Description: [specific, actionable description]
+
+Language: [language]
+Description: [specific, actionable description]
+
+Return ONLY the Language/Description pairs."""
 
         # Generate code examples descriptions
         descriptions_text = generate_text(prompt, provider, options)

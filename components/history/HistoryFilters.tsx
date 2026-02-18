@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   MagnifyingGlassIcon,
@@ -28,13 +28,16 @@ export default function HistoryFilters({
 }: HistoryFiltersProps) {
   const searchInputRef = useRef<HTMLInputElement>(null)
 
-  const categories: Array<{ id: ToolCategory | 'all'; name: string }> = [
-    { id: 'all', name: 'All' },
-    ...Object.values(TOOL_CATEGORIES).map((cat) => ({
-      id: cat.id,
-      name: cat.name,
-    })),
-  ]
+  const categories: Array<{ id: ToolCategory | 'all'; name: string }> = useMemo(
+    () => [
+      { id: 'all', name: 'All' },
+      ...Object.values(TOOL_CATEGORIES).map((cat) => ({
+        id: cat.id,
+        name: cat.name,
+      })),
+    ],
+    []
+  )
 
   const handleSearchChange = useCallback(
     (value: string) => {

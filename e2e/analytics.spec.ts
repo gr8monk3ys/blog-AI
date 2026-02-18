@@ -27,32 +27,40 @@ test.describe('Analytics Dashboard', () => {
       page.getByText(/get started/i)
     )
 
-    // Either stats or empty state should be visible
-    const hasContent = await statsCards.count() > 0 || await emptyState.count() > 0
-    expect(hasContent || await page.locator('body').isVisible()).toBeTruthy()
+    // At least one of these must be present
+    const statsCount = await statsCards.count()
+    const emptyCount = await emptyState.count()
+    expect(statsCount + emptyCount).toBeGreaterThan(0)
   })
 
   test('time range filter is present', async ({ page }) => {
-    // Look for time range selector
+    // Time range filter depends on having analytics data available
     const timeFilter = page.getByRole('combobox').or(
       page.getByRole('button', { name: /7.*day|30.*day|all/i })
     ).or(
       page.locator('select')
     )
 
-    // Time filter may or may not be present depending on if there's data
-    if (await timeFilter.count() > 0) {
-      await expect(timeFilter.first()).toBeVisible()
+    if (\!(await timeFilter.first().isVisible({ timeout: 5000 }).catch(() => false))) {
+      test.skip(true, 'Time range filter not available -- no analytics data present')
+      return
     }
+
+    await expect(timeFilter.first()).toBeVisible()
   })
 
   test('can change time range', async ({ page }) => {
-    // Look for time range buttons
+    // Time range buttons depend on having analytics data available
     const timeRangeButtons = page.getByRole('button').filter({ hasText: /day|week|month|all/i })
 
-    if (await timeRangeButtons.count() > 0) {
-      // Click the first time range button
-      await timeRangeButtons.first().click()
+    if (\!(await timeRangeButtons.first().isVisible({ timeout: 5000 }).catch(() => false))) {
+      test.skip(true, 'Time range buttons not available -- no analytics data present')
+      return
     }
+
+    // Click the first time range button and verify it responds
+    const firstButton = timeRangeButtons.first()
+    await expect(firstButton).toBeVisible()
+    await firstButton.click()
   })
 })

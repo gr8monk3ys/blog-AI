@@ -8,6 +8,17 @@ from typing import Any, Dict, List, Literal, Optional
 
 
 @dataclass
+class SourceCitation:
+    """A source reference used for research/citations."""
+
+    id: int
+    title: str
+    url: str
+    snippet: str = ""
+    provider: str = ""
+
+
+@dataclass
 class SubTopic:
     """A subtopic within a section."""
 
@@ -33,6 +44,7 @@ class BlogPost:
     date: str = field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d"))
     image: str = "/images/blog/default.jpg"
     tags: List[str] = field(default_factory=lambda: ["AI", "technology"])
+    sources: List[SourceCitation] = field(default_factory=list)
 
 
 @dataclass
@@ -61,6 +73,7 @@ class Book:
     output_file: str = "book.docx"
     tags: List[str] = field(default_factory=list)
     date: str = field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d"))
+    sources: List[SourceCitation] = field(default_factory=list)
 
 
 @dataclass

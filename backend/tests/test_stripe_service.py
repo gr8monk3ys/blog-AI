@@ -18,28 +18,14 @@ from unittest.mock import MagicMock, patch
 # Add the project root to the path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-# Mock stripe module before importing stripe_service
-mock_stripe = MagicMock()
-mock_stripe.api_key = None
-mock_stripe.Customer = MagicMock()
-mock_stripe.Subscription = MagicMock()
-mock_stripe.checkout = MagicMock()
-mock_stripe.billing_portal = MagicMock()
-mock_stripe.Webhook = MagicMock()
+from .stripe_mock import (
+    MockSignatureVerificationError,
+    MockStripeError,
+    install_mock_stripe,
+    mock_stripe,
+)
 
-# Create proper exception classes
-class MockSignatureVerificationError(Exception):
-    pass
-
-class MockStripeError(Exception):
-    pass
-
-mock_stripe.error = MagicMock()
-mock_stripe.error.SignatureVerificationError = MockSignatureVerificationError
-mock_stripe.error.StripeError = MockStripeError
-
-sys.modules["stripe"] = mock_stripe
-sys.modules["stripe.error"] = mock_stripe.error
+install_mock_stripe()
 
 # Now import the module after mocking stripe
 from src.payments.stripe_service import (

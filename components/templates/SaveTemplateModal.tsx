@@ -26,7 +26,7 @@ export default function SaveTemplateModal({
   isOpen,
   onClose,
   onSave,
-  toolId,
+  toolId: _toolId,
   toolName,
   presetInputs,
 }: SaveTemplateModalProps) {

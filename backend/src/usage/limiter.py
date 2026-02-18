@@ -11,7 +11,7 @@ import json
 import logging
 import os
 from dataclasses import dataclass, field
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -20,10 +20,11 @@ logger = logging.getLogger(__name__)
 
 
 class UsageTier(str, Enum):
-    """Available usage tiers."""
+    """Available usage tiers (aligned with subscription tiers)."""
     FREE = "free"
+    STARTER = "starter"
     PRO = "pro"
-    ENTERPRISE = "enterprise"
+    BUSINESS = "business"
 
 
 @dataclass
@@ -42,8 +43,8 @@ class TierConfig:
 TIER_CONFIGS: Dict[UsageTier, TierConfig] = {
     UsageTier.FREE: TierConfig(
         name="Free",
-        daily_limit=10,
-        monthly_limit=100,
+        daily_limit=2,
+        monthly_limit=5,
         features_enabled=[
             "blog_generation",
             "basic_tools",
@@ -52,39 +53,57 @@ TIER_CONFIGS: Dict[UsageTier, TierConfig] = {
         price_yearly=0.0,
         description="Perfect for trying out Blog AI",
     ),
+    UsageTier.STARTER: TierConfig(
+        name="Starter",
+        daily_limit=10,
+        monthly_limit=50,
+        features_enabled=[
+            "blog_generation",
+            "book_generation",
+            "basic_tools",
+            "export_formats",
+        ],
+        price_monthly=19.0,
+        price_yearly=190.0,
+        description="For individuals getting started with content creation",
+    ),
     UsageTier.PRO: TierConfig(
         name="Pro",
-        daily_limit=100,
-        monthly_limit=2000,
+        daily_limit=50,
+        monthly_limit=200,
         features_enabled=[
             "blog_generation",
             "book_generation",
             "bulk_generation",
             "all_tools",
             "research_mode",
+            "brand_voice",
+            "remix",
             "priority_support",
         ],
-        price_monthly=29.0,
-        price_yearly=290.0,
-        description="For content creators and marketers",
+        price_monthly=49.0,
+        price_yearly=490.0,
+        description="For content creators and marketers and serious writers",
     ),
-    UsageTier.ENTERPRISE: TierConfig(
-        name="Enterprise",
-        daily_limit=-1,  # Unlimited
-        monthly_limit=-1,  # Unlimited
+    UsageTier.BUSINESS: TierConfig(
+        name="Business",
+        daily_limit=-1,  # Unlimited daily
+        monthly_limit=1000,
         features_enabled=[
             "blog_generation",
             "book_generation",
             "bulk_generation",
+            "batch_processing",
             "all_tools",
             "research_mode",
             "priority_support",
             "api_access",
             "custom_integrations",
             "dedicated_support",
+            "team_collaboration",
         ],
-        price_monthly=99.0,
-        price_yearly=990.0,
+        price_monthly=149.0,
+        price_yearly=1490.0,
         description="For teams and businesses",
     ),
 }
@@ -172,15 +191,31 @@ class UsageLimiter:
             try:
                 with open(tiers_file, "r") as f:
                     data = json.load(f)
-                    self._user_tiers = {
-                        k: UsageTier(v) for k, v in data.items()
-                    }
+                    self._user_tiers = {k: self._parse_tier(v) for k, v in data.items()}
                 logger.info(f"Loaded {len(self._user_tiers)} user tier assignments")
             except (json.JSONDecodeError, IOError) as e:
                 logger.error(f"Error loading user tiers: {e}")
                 self._user_tiers = {}
         else:
             self._user_tiers = {}
+
+    @staticmethod
+    def _parse_tier(value: Any) -> UsageTier:
+        """
+        Parse a stored tier value into the canonical UsageTier.
+
+        Supports legacy values (e.g. "enterprise") by mapping them to the
+        closest supported tier ("business").
+        """
+        if value is None:
+            return UsageTier.FREE
+        raw = str(value).lower().strip()
+        if raw == "enterprise":
+            return UsageTier.BUSINESS
+        try:
+            return UsageTier(raw)
+        except ValueError:
+            return UsageTier.FREE
 
     def _save_user_tiers(self) -> None:
         """Save user tier assignments to disk."""
@@ -288,10 +323,7 @@ class UsageLimiter:
         """
         tier = self.get_user_tier(user_hash)
         config = TIER_CONFIGS[tier]
-
-        # Enterprise has unlimited usage
-        if config.daily_limit == -1:
-            return -1
+        daily_unlimited = config.daily_limit == -1
 
         today = self._get_current_date()
         year_month = self._get_current_year_month()
@@ -305,24 +337,24 @@ class UsageLimiter:
         monthly_count = sum(r.generation_count for r in monthly_usage.values())
 
         # Check daily limit
-        if daily_count >= config.daily_limit:
+        if not daily_unlimited and daily_count >= config.daily_limit:
             raise UsageLimitExceeded(
                 f"Daily limit of {config.daily_limit} generations reached. "
-                f"Upgrade to Pro for {TIER_CONFIGS[UsageTier.PRO].daily_limit} daily generations.",
+                "Upgrade your plan for higher limits.",
                 tier,
                 "daily"
             )
 
         # Check monthly limit
-        if monthly_count >= config.monthly_limit:
+        if config.monthly_limit != -1 and monthly_count >= config.monthly_limit:
             raise UsageLimitExceeded(
                 f"Monthly limit of {config.monthly_limit} generations reached. "
-                f"Upgrade to Pro for {TIER_CONFIGS[UsageTier.PRO].monthly_limit} monthly generations.",
+                "Upgrade your plan for higher limits.",
                 tier,
                 "monthly"
             )
 
-        return config.daily_limit - daily_count
+        return -1 if daily_unlimited else (config.daily_limit - daily_count)
 
     def increment_usage(
         self,
@@ -417,13 +449,12 @@ class UsageLimiter:
         )
 
         # Calculate reset times
-        tomorrow = date.today()
-        reset_daily = f"{tomorrow.year}-{tomorrow.month:02d}-{tomorrow.day + 1:02d}T00:00:00Z"
-        next_month = date.today().replace(day=1)
-        if next_month.month == 12:
-            reset_monthly = f"{next_month.year + 1}-01-01T00:00:00Z"
-        else:
-            reset_monthly = f"{next_month.year}-{next_month.month + 1:02d}-01T00:00:00Z"
+        tomorrow = date.today() + timedelta(days=1)
+        reset_daily = f"{tomorrow.year}-{tomorrow.month:02d}-{tomorrow.day:02d}T00:00:00Z"
+
+        first_of_this_month = date.today().replace(day=1)
+        first_of_next_month = (first_of_this_month + timedelta(days=32)).replace(day=1)
+        reset_monthly = f"{first_of_next_month.year}-{first_of_next_month.month:02d}-01T00:00:00Z"
 
         return UsageStats(
             user_hash=user_hash,

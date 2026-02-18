@@ -311,11 +311,11 @@ POSTMORTEM: [Link to doc]
 - Errors with `DATABASE_ERROR` code in logs
 
 **Steps:**
-1. Check Supabase dashboard for outages
-2. Verify `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set
+1. Check Neon status dashboard for outages
+2. Verify `DATABASE_URL` / `DATABASE_URL_DIRECT` are set
 3. Check connection pool exhaustion in logs
 4. Restart affected pods if pool is stuck
-5. Escalate to Supabase support if issue persists
+5. Escalate to Neon support if issue persists
 
 **Rollback:** Not applicable (external service)
 
@@ -417,7 +417,7 @@ curl http://localhost:8000/health/cache | jq
 
 ```bash
 # Test database failure (development only)
-# Temporarily unset SUPABASE_URL
+# Temporarily unset DATABASE_URL
 
 # Test high latency
 # Add artificial delay in LLM calls

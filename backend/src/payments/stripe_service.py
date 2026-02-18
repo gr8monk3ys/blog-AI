@@ -15,11 +15,19 @@ from functools import partial
 from typing import Optional
 
 import stripe
-from stripe import Webhook
-from stripe.error import SignatureVerificationError, StripeError
+
+# Stripe's Python SDK has changed where errors live across major versions.
+# - Older versions: `stripe.error` is an importable module.
+# - Newer versions (e.g. stripe>=14): errors are exposed at top-level and
+#   `stripe.error` is an attribute pointing at `stripe._error` (not importable).
+try:  # pragma: no cover - depends on installed Stripe version
+    from stripe.error import SignatureVerificationError, StripeError  # type: ignore
+except Exception:  # pragma: no cover
+    from stripe import SignatureVerificationError, StripeError  # type: ignore
 
 from src.types.payments import (
     PRICING_TIERS,
+    SubscriptionInterval,
     SubscriptionStatus,
     SubscriptionTier,
     WebhookEventType,
@@ -40,10 +48,24 @@ class StripeService:
         """Initialize Stripe with API key from environment."""
         self._api_key = os.environ.get("STRIPE_SECRET_KEY")
         self._webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
+        # Support both legacy single-ID env vars (STRIPE_PRICE_ID_*) and
+        # per-interval env vars (STRIPE_PRICE_ID_*_{MONTHLY|YEARLY}).
         self._price_ids = {
-            SubscriptionTier.STARTER: os.environ.get("STRIPE_PRICE_ID_STARTER"),
-            SubscriptionTier.PRO: os.environ.get("STRIPE_PRICE_ID_PRO"),
-            SubscriptionTier.BUSINESS: os.environ.get("STRIPE_PRICE_ID_BUSINESS"),
+            SubscriptionTier.STARTER: {
+                SubscriptionInterval.MONTH.value: os.environ.get("STRIPE_PRICE_ID_STARTER_MONTHLY")
+                or os.environ.get("STRIPE_PRICE_ID_STARTER"),
+                SubscriptionInterval.YEAR.value: os.environ.get("STRIPE_PRICE_ID_STARTER_YEARLY"),
+            },
+            SubscriptionTier.PRO: {
+                SubscriptionInterval.MONTH.value: os.environ.get("STRIPE_PRICE_ID_PRO_MONTHLY")
+                or os.environ.get("STRIPE_PRICE_ID_PRO"),
+                SubscriptionInterval.YEAR.value: os.environ.get("STRIPE_PRICE_ID_PRO_YEARLY"),
+            },
+            SubscriptionTier.BUSINESS: {
+                SubscriptionInterval.MONTH.value: os.environ.get("STRIPE_PRICE_ID_BUSINESS_MONTHLY")
+                or os.environ.get("STRIPE_PRICE_ID_BUSINESS"),
+                SubscriptionInterval.YEAR.value: os.environ.get("STRIPE_PRICE_ID_BUSINESS_YEARLY"),
+            },
         }
 
         if self._api_key:
@@ -65,15 +87,46 @@ class StripeService:
             )
 
     def get_price_id_for_tier(self, tier: SubscriptionTier) -> Optional[str]:
-        """Get the Stripe price ID for a subscription tier."""
-        return self._price_ids.get(tier)
+        """Get the Stripe price ID for a subscription tier (monthly by default)."""
+        ids = self._price_ids.get(tier) or {}
+        return ids.get(SubscriptionInterval.MONTH.value)
+
+    def get_price_id_for_tier_interval(
+        self,
+        tier: SubscriptionTier,
+        interval: SubscriptionInterval,
+    ) -> Optional[str]:
+        """Get the Stripe price ID for a subscription tier + billing interval."""
+        ids = self._price_ids.get(tier) or {}
+        return ids.get(interval.value)
+
+    def get_price_ids_for_tier(self, tier: SubscriptionTier) -> dict[str, Optional[str]]:
+        """Get both monthly/yearly Stripe price IDs for a tier."""
+        ids = self._price_ids.get(tier) or {}
+        return {
+            SubscriptionInterval.MONTH.value: ids.get(SubscriptionInterval.MONTH.value),
+            SubscriptionInterval.YEAR.value: ids.get(SubscriptionInterval.YEAR.value),
+        }
 
     def get_tier_for_price_id(self, price_id: str) -> SubscriptionTier:
         """Get the subscription tier for a Stripe price ID."""
-        for tier, pid in self._price_ids.items():
-            if pid == price_id:
-                return tier
+        if not price_id:
+            return SubscriptionTier.FREE
+        for tier, ids in self._price_ids.items():
+            for pid in ids.values():
+                if pid and pid == price_id:
+                    return tier
         return SubscriptionTier.FREE
+
+    def is_configured_price_id(self, price_id: str) -> bool:
+        """Return True when the price_id is one of the configured plan price IDs."""
+        if not price_id:
+            return False
+        for ids in self._price_ids.values():
+            for pid in ids.values():
+                if pid and pid == price_id:
+                    return True
+        return False
 
     async def get_or_create_customer(
         self,
@@ -325,7 +378,7 @@ class StripeService:
             )
 
         try:
-            event = Webhook.construct_event(
+            event = stripe.Webhook.construct_event(
                 payload,
                 sig_header,
                 self._webhook_secret,

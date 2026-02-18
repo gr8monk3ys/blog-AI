@@ -2,7 +2,7 @@
 Tests for the subscription sync service.
 
 This module tests the SubscriptionSyncService which handles syncing
-Stripe webhook events to Supabase database state.
+Stripe webhook events to Postgres database state.
 """
 
 import os
@@ -14,20 +14,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 # Add the src directory to the path so we can import the modules
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-# Mock stripe module before any imports that might use it
-mock_stripe = MagicMock()
-mock_stripe.api_key = None
-mock_stripe.Customer = MagicMock()
-mock_stripe.error = MagicMock()
-mock_stripe.error.SignatureVerificationError = Exception
-mock_stripe.error.StripeError = Exception
-sys.modules["stripe"] = mock_stripe
-sys.modules["stripe.error"] = mock_stripe.error
+# Mock stripe module before any imports that might use it (shared across tests).
+from .stripe_mock import install_mock_stripe, mock_stripe
 
-# Mock supabase module
-mock_supabase = MagicMock()
-mock_supabase.create_client = MagicMock()
-sys.modules["supabase"] = mock_supabase
+install_mock_stripe()
 
 from src.types.payments import WebhookEventType
 from src.types.usage import SubscriptionTier
@@ -35,6 +25,8 @@ from src.types.usage import SubscriptionTier
 
 def get_sync_module():
     """Get the subscription_sync module with proper cleanup."""
+    # Ensure Stripe mock is installed even if other modules modified sys.modules.
+    install_mock_stripe()
     # Clear any cached module to ensure fresh import
     if "src.payments.subscription_sync" in sys.modules:
         del sys.modules["src.payments.subscription_sync"]
@@ -95,25 +87,19 @@ class TestTierMapping(unittest.TestCase):
 class TestSubscriptionSyncServiceInit(unittest.TestCase):
     """Tests for SubscriptionSyncService initialization."""
 
-    def test_init_without_supabase_config(self):
-        """Service initializes without Supabase when not configured."""
+    def test_init_without_db_config(self):
+        """Service initializes without DB when not configured."""
         with patch.dict(os.environ, {}, clear=True):
             sync_module = get_sync_module()
             service = sync_module.SubscriptionSyncService()
-            self.assertIsNone(service._supabase_client)
+            self.assertFalse(service._use_db)
 
-    def test_init_with_supabase_config(self):
-        """Service initializes with Supabase when configured."""
-        mock_client = MagicMock()
-        mock_supabase.create_client.return_value = mock_client
-
-        with patch.dict(os.environ, {
-            "SUPABASE_URL": "https://test.supabase.co",
-            "SUPABASE_SERVICE_ROLE_KEY": "test-key"
-        }, clear=True):
+    def test_init_with_db_config(self):
+        """Service initializes with DB when configured."""
+        with patch.dict(os.environ, {"DATABASE_URL": "postgresql://test:test@localhost:5432/test"}, clear=True):
             sync_module = get_sync_module()
             service = sync_module.SubscriptionSyncService()
-            self.assertEqual(service._supabase_client, mock_client)
+            self.assertTrue(service._use_db)
 
 
 class TestSyncWebhookEventRouting(unittest.IsolatedAsyncioTestCase):
@@ -127,7 +113,7 @@ class TestSyncWebhookEventRouting(unittest.IsolatedAsyncioTestCase):
     async def test_route_checkout_completed(self, mock_get_quota):
         """Checkout completed event routes to correct handler."""
         service = self.sync_module.SubscriptionSyncService()
-        service._supabase_client = MagicMock()
+        service._use_db = True
         service._store_customer_mapping = AsyncMock()
 
         webhook_result = {
@@ -151,7 +137,6 @@ class TestSyncWebhookEventRouting(unittest.IsolatedAsyncioTestCase):
         mock_get_quota.return_value = mock_quota_service
 
         service = self.sync_module.SubscriptionSyncService()
-        service._supabase_client = MagicMock()
         service._store_subscription_mapping = AsyncMock()
 
         webhook_result = {
@@ -202,7 +187,7 @@ class TestSyncWebhookEventRouting(unittest.IsolatedAsyncioTestCase):
         mock_get_quota.return_value = mock_quota_service
 
         service = self.sync_module.SubscriptionSyncService()
-        service._supabase_client = MagicMock()
+        service._use_db = True
         service._mark_subscription_cancelled = AsyncMock()
 
         webhook_result = {
@@ -224,7 +209,7 @@ class TestSyncWebhookEventRouting(unittest.IsolatedAsyncioTestCase):
     async def test_route_invoice_paid(self):
         """Invoice paid event routes to correct handler."""
         service = self.sync_module.SubscriptionSyncService()
-        service._supabase_client = MagicMock()
+        service._use_db = True
         service._record_payment = AsyncMock()
 
         webhook_result = {
@@ -245,7 +230,7 @@ class TestSyncWebhookEventRouting(unittest.IsolatedAsyncioTestCase):
     async def test_route_invoice_payment_failed(self):
         """Invoice payment failed event routes to correct handler."""
         service = self.sync_module.SubscriptionSyncService()
-        service._supabase_client = MagicMock()
+        service._use_db = True
         service._record_payment_failure = AsyncMock()
 
         webhook_result = {
@@ -301,48 +286,37 @@ class TestNoUserIdFallback(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(result["synced"])
         self.assertEqual(result["reason"], "no_user_id")
 
-    async def test_lookup_user_from_supabase_customer_mapping(self):
-        """User ID is looked up from Supabase customer mapping."""
+    async def test_lookup_user_from_db_customer_mapping(self):
+        """User ID is looked up from database customer mapping."""
         service = self.sync_module.SubscriptionSyncService()
+        service._use_db = True
 
-        # Mock Supabase client with customer mapping
-        mock_response = MagicMock()
-        mock_response.data = [{"user_id": "user-from-db"}]
-
-        mock_client = MagicMock()
-        mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_response
-        service._supabase_client = mock_client
-
-        result = await service._get_user_id_from_customer("cus_test123")
+        with patch("src.payments.subscription_sync.db_fetchrow", new=AsyncMock(return_value={"user_id": "user-from-db"})) as mock_db_fetchrow:
+            result = await service._get_user_id_from_customer("cus_test123")
 
         self.assertEqual(result, "user-from-db")
-        mock_client.table.assert_called_once_with("stripe_customers")
+        self.assertTrue(mock_db_fetchrow.await_count >= 1)
 
     async def test_lookup_user_from_stripe_when_no_db_mapping(self):
         """User ID falls back to Stripe customer metadata when no DB mapping."""
         service = self.sync_module.SubscriptionSyncService()
+        service._use_db = True
 
-        # Mock Supabase returning no results
-        mock_response = MagicMock()
-        mock_response.data = []
+        # Mock DB returning no mapping
+        with patch("src.payments.subscription_sync.db_fetchrow", new=AsyncMock(return_value=None)):
+            # Mock Stripe customer lookup
+            mock_customer = {"metadata": {"user_id": "user-from-stripe"}}
+            mock_stripe.Customer.retrieve.return_value = mock_customer
+            mock_stripe.api_key = "test_key"
 
-        mock_client = MagicMock()
-        mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_response
-        service._supabase_client = mock_client
-
-        # Mock Stripe customer lookup
-        mock_customer = {"metadata": {"user_id": "user-from-stripe"}}
-        mock_stripe.Customer.retrieve.return_value = mock_customer
-        mock_stripe.api_key = "test_key"
-
-        result = await service._get_user_id_from_customer("cus_test123")
+            result = await service._get_user_id_from_customer("cus_test123")
 
         self.assertEqual(result, "user-from-stripe")
 
-    async def test_no_supabase_client_falls_back_to_stripe(self):
-        """Without Supabase client, falls back to Stripe lookup."""
+    async def test_db_disabled_falls_back_to_stripe(self):
+        """Without DB configured, falls back to Stripe lookup."""
         service = self.sync_module.SubscriptionSyncService()
-        service._supabase_client = None
+        service._use_db = False
 
         mock_customer = {"metadata": {"user_id": "user-from-stripe"}}
         mock_stripe.Customer.retrieve.return_value = mock_customer
@@ -355,17 +329,14 @@ class TestNoUserIdFallback(unittest.IsolatedAsyncioTestCase):
     async def test_returns_none_when_lookup_fails(self):
         """Returns None when all lookup methods fail."""
         service = self.sync_module.SubscriptionSyncService()
-
-        # Mock Supabase raising exception
-        mock_client = MagicMock()
-        mock_client.table.return_value.select.return_value.eq.return_value.execute.side_effect = Exception("DB error")
-        service._supabase_client = mock_client
+        service._use_db = True
 
         # Mock Stripe also failing
         mock_stripe.Customer.retrieve.side_effect = Exception("Stripe error")
         mock_stripe.api_key = "test_key"
 
-        result = await service._get_user_id_from_customer("cus_test123")
+        with patch("src.payments.subscription_sync.db_fetchrow", new=AsyncMock(side_effect=Exception("DB error"))):
+            result = await service._get_user_id_from_customer("cus_test123")
 
         self.assertIsNone(result)
 
@@ -380,7 +351,7 @@ class TestCheckoutCompletedHandler(unittest.IsolatedAsyncioTestCase):
     async def test_stores_customer_mapping(self):
         """Handler stores customer mapping in database."""
         service = self.sync_module.SubscriptionSyncService()
-        service._supabase_client = MagicMock()
+        service._use_db = True
         service._store_customer_mapping = AsyncMock()
 
         webhook_result = {
@@ -397,7 +368,7 @@ class TestCheckoutCompletedHandler(unittest.IsolatedAsyncioTestCase):
     async def test_skips_mapping_without_customer_id(self):
         """Handler skips mapping storage when customer_id is missing."""
         service = self.sync_module.SubscriptionSyncService()
-        service._supabase_client = MagicMock()
+        service._use_db = True
         service._store_customer_mapping = AsyncMock()
 
         webhook_result = {
@@ -409,10 +380,10 @@ class TestCheckoutCompletedHandler(unittest.IsolatedAsyncioTestCase):
         service._store_customer_mapping.assert_not_called()
         self.assertTrue(result["synced"])
 
-    async def test_skips_mapping_without_supabase(self):
-        """Handler skips mapping storage when Supabase not configured."""
+    async def test_skips_mapping_without_db(self):
+        """Handler skips mapping storage when DB not configured."""
         service = self.sync_module.SubscriptionSyncService()
-        service._supabase_client = None
+        service._use_db = False
         service._store_customer_mapping = AsyncMock()
 
         webhook_result = {
@@ -440,7 +411,6 @@ class TestSubscriptionCreatedHandler(unittest.IsolatedAsyncioTestCase):
         mock_get_quota.return_value = mock_quota_service
 
         service = self.sync_module.SubscriptionSyncService()
-        service._supabase_client = MagicMock()
         service._store_subscription_mapping = AsyncMock()
 
         webhook_result = {
@@ -464,7 +434,6 @@ class TestSubscriptionCreatedHandler(unittest.IsolatedAsyncioTestCase):
         mock_get_quota.return_value = mock_quota_service
 
         service = self.sync_module.SubscriptionSyncService()
-        service._supabase_client = None
 
         webhook_result = {
             "subscription_id": "sub_test123",
@@ -479,12 +448,12 @@ class TestSubscriptionCreatedHandler(unittest.IsolatedAsyncioTestCase):
 
     @patch("src.payments.subscription_sync.get_quota_service")
     async def test_stores_subscription_mapping(self, mock_get_quota):
-        """Handler stores subscription mapping when Supabase configured."""
+        """Handler stores subscription mapping when DB configured."""
         mock_quota_service = AsyncMock()
         mock_get_quota.return_value = mock_quota_service
 
         service = self.sync_module.SubscriptionSyncService()
-        service._supabase_client = MagicMock()
+        service._use_db = True
         service._store_subscription_mapping = AsyncMock()
 
         webhook_result = {
@@ -604,7 +573,7 @@ class TestSubscriptionDeletedHandler(unittest.IsolatedAsyncioTestCase):
         mock_get_quota.return_value = mock_quota_service
 
         service = self.sync_module.SubscriptionSyncService()
-        service._supabase_client = MagicMock()
+        service._use_db = True
         service._mark_subscription_cancelled = AsyncMock()
 
         webhook_result = {
@@ -626,7 +595,7 @@ class TestSubscriptionDeletedHandler(unittest.IsolatedAsyncioTestCase):
         mock_get_quota.return_value = mock_quota_service
 
         service = self.sync_module.SubscriptionSyncService()
-        service._supabase_client = MagicMock()
+        service._use_db = True
         service._mark_subscription_cancelled = AsyncMock()
 
         webhook_result = {
@@ -648,7 +617,7 @@ class TestInvoicePaidHandler(unittest.IsolatedAsyncioTestCase):
     async def test_records_payment(self):
         """Handler records payment in database."""
         service = self.sync_module.SubscriptionSyncService()
-        service._supabase_client = MagicMock()
+        service._use_db = True
         service._record_payment = AsyncMock()
 
         webhook_result = {
@@ -665,7 +634,7 @@ class TestInvoicePaidHandler(unittest.IsolatedAsyncioTestCase):
     async def test_defaults_amount_to_zero(self):
         """Handler defaults amount_paid to zero when not provided."""
         service = self.sync_module.SubscriptionSyncService()
-        service._supabase_client = MagicMock()
+        service._use_db = True
         service._record_payment = AsyncMock()
 
         webhook_result = {
@@ -688,7 +657,7 @@ class TestInvoicePaymentFailedHandler(unittest.IsolatedAsyncioTestCase):
     async def test_records_payment_failure(self):
         """Handler records payment failure in database."""
         service = self.sync_module.SubscriptionSyncService()
-        service._supabase_client = MagicMock()
+        service._use_db = True
         service._record_payment_failure = AsyncMock()
 
         webhook_result = {
@@ -707,7 +676,7 @@ class TestInvoicePaymentFailedHandler(unittest.IsolatedAsyncioTestCase):
     async def test_defaults_attempt_count_to_one(self):
         """Handler defaults attempt_count to 1 when not provided."""
         service = self.sync_module.SubscriptionSyncService()
-        service._supabase_client = MagicMock()
+        service._use_db = True
         service._record_payment_failure = AsyncMock()
 
         webhook_result = {
@@ -723,119 +692,102 @@ class TestInvoicePaymentFailedHandler(unittest.IsolatedAsyncioTestCase):
 
 
 class TestDatabaseOperations(unittest.IsolatedAsyncioTestCase):
-    """Tests for database storage operations."""
+    """Tests for database storage operations (Postgres)."""
 
     def setUp(self):
         """Set up test fixtures."""
         self.sync_module = get_sync_module()
 
-    async def test_store_customer_mapping_upserts(self):
-        """_store_customer_mapping uses upsert to handle existing mappings."""
+    async def test_store_customer_mapping_executes_upsert(self):
+        """_store_customer_mapping writes an upsert to stripe_customers."""
         service = self.sync_module.SubscriptionSyncService()
+        service._use_db = True
 
-        mock_client = MagicMock()
-        mock_client.table.return_value.upsert.return_value.execute.return_value = MagicMock()
-        service._supabase_client = mock_client
+        with patch("src.payments.subscription_sync.db_execute", new=AsyncMock()) as mock_db_execute:
+            await service._store_customer_mapping("user-123", "cus_test123")
 
-        await service._store_customer_mapping("user-123", "cus_test123")
-
-        mock_client.table.assert_called_once_with("stripe_customers")
-        call_args = mock_client.table.return_value.upsert.call_args
-        self.assertEqual(call_args[0][0]["user_id"], "user-123")
-        self.assertEqual(call_args[0][0]["customer_id"], "cus_test123")
-        self.assertIn("updated_at", call_args[0][0])
-        self.assertEqual(call_args[1]["on_conflict"], "user_id")
+        self.assertTrue(mock_db_execute.await_count >= 1)
+        sql = mock_db_execute.await_args.args[0]
+        self.assertIn("stripe_customers", sql)
+        self.assertIn("user-123", mock_db_execute.await_args.args)
+        self.assertIn("cus_test123", mock_db_execute.await_args.args)
 
     async def test_store_customer_mapping_handles_error(self):
         """_store_customer_mapping handles database errors gracefully."""
         service = self.sync_module.SubscriptionSyncService()
+        service._use_db = True
 
-        mock_client = MagicMock()
-        mock_client.table.return_value.upsert.return_value.execute.side_effect = Exception("DB error")
-        service._supabase_client = mock_client
+        with patch("src.payments.subscription_sync.db_execute", new=AsyncMock(side_effect=Exception("DB error"))):
+            # Should not raise
+            await service._store_customer_mapping("user-123", "cus_test123")
 
-        # Should not raise
-        await service._store_customer_mapping("user-123", "cus_test123")
-
-    async def test_store_customer_mapping_skips_without_client(self):
-        """_store_customer_mapping does nothing without Supabase client."""
+    async def test_store_customer_mapping_skips_without_db(self):
+        """_store_customer_mapping does nothing when DB is disabled."""
         service = self.sync_module.SubscriptionSyncService()
-        service._supabase_client = None
+        service._use_db = False
 
-        # Should not raise
-        await service._store_customer_mapping("user-123", "cus_test123")
+        with patch("src.payments.subscription_sync.db_execute", new=AsyncMock()) as mock_db_execute:
+            await service._store_customer_mapping("user-123", "cus_test123")
+            mock_db_execute.assert_not_awaited()
 
-    async def test_store_subscription_mapping_upserts(self):
-        """_store_subscription_mapping uses upsert for subscriptions."""
+    async def test_store_subscription_mapping_executes_upsert(self):
+        """_store_subscription_mapping writes an upsert to stripe_subscriptions."""
         service = self.sync_module.SubscriptionSyncService()
+        service._use_db = True
 
-        mock_client = MagicMock()
-        mock_client.table.return_value.upsert.return_value.execute.return_value = MagicMock()
-        service._supabase_client = mock_client
+        with patch("src.payments.subscription_sync.db_execute", new=AsyncMock()) as mock_db_execute:
+            await service._store_subscription_mapping(
+                "user-123", "sub_test123", "cus_test123", "pro"
+            )
 
-        await service._store_subscription_mapping(
-            "user-123", "sub_test123", "cus_test123", "pro"
-        )
-
-        mock_client.table.assert_called_once_with("stripe_subscriptions")
-        call_args = mock_client.table.return_value.upsert.call_args
-        self.assertEqual(call_args[0][0]["subscription_id"], "sub_test123")
-        self.assertEqual(call_args[0][0]["user_id"], "user-123")
-        self.assertEqual(call_args[0][0]["customer_id"], "cus_test123")
-        self.assertEqual(call_args[0][0]["tier"], "pro")
-        self.assertEqual(call_args[0][0]["status"], "active")
-        self.assertEqual(call_args[1]["on_conflict"], "subscription_id")
+        self.assertTrue(mock_db_execute.await_count >= 1)
+        sql = mock_db_execute.await_args.args[0]
+        self.assertIn("stripe_subscriptions", sql)
+        self.assertIn("sub_test123", mock_db_execute.await_args.args)
+        self.assertIn("user-123", mock_db_execute.await_args.args)
 
     async def test_mark_subscription_cancelled_updates_status(self):
         """_mark_subscription_cancelled updates subscription status."""
         service = self.sync_module.SubscriptionSyncService()
+        service._use_db = True
 
-        mock_client = MagicMock()
-        mock_client.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock()
-        service._supabase_client = mock_client
+        with patch("src.payments.subscription_sync.db_execute", new=AsyncMock()) as mock_db_execute:
+            await service._mark_subscription_cancelled("sub_test123")
 
-        await service._mark_subscription_cancelled("sub_test123")
-
-        mock_client.table.assert_called_once_with("stripe_subscriptions")
-        call_args = mock_client.table.return_value.update.call_args
-        self.assertEqual(call_args[0][0]["status"], "cancelled")
-        self.assertIn("cancelled_at", call_args[0][0])
-        self.assertIn("updated_at", call_args[0][0])
+        self.assertTrue(mock_db_execute.await_count >= 1)
+        sql = mock_db_execute.await_args.args[0]
+        self.assertIn("stripe_subscriptions", sql)
+        self.assertIn("sub_test123", mock_db_execute.await_args.args)
 
     async def test_record_payment_inserts_payment(self):
         """_record_payment inserts payment record."""
         service = self.sync_module.SubscriptionSyncService()
+        service._use_db = True
 
-        mock_client = MagicMock()
-        mock_client.table.return_value.insert.return_value.execute.return_value = MagicMock()
-        service._supabase_client = mock_client
+        with patch("src.payments.subscription_sync.db_execute", new=AsyncMock()) as mock_db_execute:
+            await service._record_payment("user-123", "sub_test123", 4900)
 
-        await service._record_payment("user-123", "sub_test123", 4900)
-
-        mock_client.table.assert_called_once_with("payments")
-        call_args = mock_client.table.return_value.insert.call_args
-        self.assertEqual(call_args[0][0]["user_id"], "user-123")
-        self.assertEqual(call_args[0][0]["subscription_id"], "sub_test123")
-        self.assertEqual(call_args[0][0]["amount_cents"], 4900)
-        self.assertEqual(call_args[0][0]["status"], "paid")
-        self.assertIn("paid_at", call_args[0][0])
+        self.assertTrue(mock_db_execute.await_count >= 1)
+        sql = mock_db_execute.await_args.args[0]
+        self.assertIn("payments", sql)
+        self.assertIn("user-123", mock_db_execute.await_args.args)
+        self.assertIn("sub_test123", mock_db_execute.await_args.args)
+        self.assertIn(4900, mock_db_execute.await_args.args)
 
     async def test_record_payment_failure_inserts_failure(self):
         """_record_payment_failure inserts failure record."""
         service = self.sync_module.SubscriptionSyncService()
+        service._use_db = True
 
-        mock_client = MagicMock()
-        mock_client.table.return_value.insert.return_value.execute.return_value = MagicMock()
-        service._supabase_client = mock_client
+        with patch("src.payments.subscription_sync.db_execute", new=AsyncMock()) as mock_db_execute:
+            await service._record_payment_failure("user-123", "sub_test123", 2)
 
-        await service._record_payment_failure("user-123", "sub_test123", 2)
-
-        mock_client.table.assert_called_once_with("payment_failures")
-        call_args = mock_client.table.return_value.insert.call_args
-        self.assertEqual(call_args[0][0]["user_id"], "user-123")
-        self.assertEqual(call_args[0][0]["subscription_id"], "sub_test123")
-        self.assertEqual(call_args[0][0]["attempt_count"], 2)
-        self.assertIn("failed_at", call_args[0][0])
+        self.assertTrue(mock_db_execute.await_count >= 1)
+        sql = mock_db_execute.await_args.args[0]
+        self.assertIn("payment_failures", sql)
+        self.assertIn("user-123", mock_db_execute.await_args.args)
+        self.assertIn("sub_test123", mock_db_execute.await_args.args)
+        self.assertIn(2, mock_db_execute.await_args.args)
 
 
 class TestDatabaseUnavailable(unittest.IsolatedAsyncioTestCase):
@@ -848,65 +800,55 @@ class TestDatabaseUnavailable(unittest.IsolatedAsyncioTestCase):
     async def test_store_customer_mapping_logs_error(self):
         """Database error during customer mapping storage is logged."""
         service = self.sync_module.SubscriptionSyncService()
-
-        mock_client = MagicMock()
-        mock_client.table.return_value.upsert.return_value.execute.side_effect = Exception("Connection failed")
-        service._supabase_client = mock_client
+        service._use_db = True
 
         with patch.object(self.sync_module, "logger") as mock_logger:
-            await service._store_customer_mapping("user-123", "cus_test123")
+            with patch("src.payments.subscription_sync.db_execute", new=AsyncMock(side_effect=Exception("Connection failed"))):
+                await service._store_customer_mapping("user-123", "cus_test123")
             mock_logger.error.assert_called_once()
             self.assertIn("Failed to store customer mapping", mock_logger.error.call_args[0][0])
 
     async def test_store_subscription_mapping_logs_error(self):
         """Database error during subscription mapping storage is logged."""
         service = self.sync_module.SubscriptionSyncService()
-
-        mock_client = MagicMock()
-        mock_client.table.return_value.upsert.return_value.execute.side_effect = Exception("Connection failed")
-        service._supabase_client = mock_client
+        service._use_db = True
 
         with patch.object(self.sync_module, "logger") as mock_logger:
-            await service._store_subscription_mapping("user-123", "sub_test", "cus_test", "pro")
+            with patch("src.payments.subscription_sync.db_execute", new=AsyncMock(side_effect=Exception("Connection failed"))):
+                await service._store_subscription_mapping("user-123", "sub_test", "cus_test", "pro")
             mock_logger.error.assert_called_once()
             self.assertIn("Failed to store subscription mapping", mock_logger.error.call_args[0][0])
 
     async def test_mark_subscription_cancelled_logs_error(self):
         """Database error during subscription cancellation is logged."""
         service = self.sync_module.SubscriptionSyncService()
-
-        mock_client = MagicMock()
-        mock_client.table.return_value.update.return_value.eq.return_value.execute.side_effect = Exception("Connection failed")
-        service._supabase_client = mock_client
+        service._use_db = True
 
         with patch.object(self.sync_module, "logger") as mock_logger:
-            await service._mark_subscription_cancelled("sub_test123")
+            with patch("src.payments.subscription_sync.db_execute", new=AsyncMock(side_effect=Exception("Connection failed"))):
+                await service._mark_subscription_cancelled("sub_test123")
             mock_logger.error.assert_called_once()
             self.assertIn("Failed to mark subscription cancelled", mock_logger.error.call_args[0][0])
 
     async def test_record_payment_logs_error(self):
         """Database error during payment recording is logged."""
         service = self.sync_module.SubscriptionSyncService()
-
-        mock_client = MagicMock()
-        mock_client.table.return_value.insert.return_value.execute.side_effect = Exception("Connection failed")
-        service._supabase_client = mock_client
+        service._use_db = True
 
         with patch.object(self.sync_module, "logger") as mock_logger:
-            await service._record_payment("user-123", "sub_test123", 4900)
+            with patch("src.payments.subscription_sync.db_execute", new=AsyncMock(side_effect=Exception("Connection failed"))):
+                await service._record_payment("user-123", "sub_test123", 4900)
             mock_logger.error.assert_called_once()
             self.assertIn("Failed to record payment", mock_logger.error.call_args[0][0])
 
     async def test_record_payment_failure_logs_error(self):
         """Database error during payment failure recording is logged."""
         service = self.sync_module.SubscriptionSyncService()
-
-        mock_client = MagicMock()
-        mock_client.table.return_value.insert.return_value.execute.side_effect = Exception("Connection failed")
-        service._supabase_client = mock_client
+        service._use_db = True
 
         with patch.object(self.sync_module, "logger") as mock_logger:
-            await service._record_payment_failure("user-123", "sub_test123", 2)
+            with patch("src.payments.subscription_sync.db_execute", new=AsyncMock(side_effect=Exception("Connection failed"))):
+                await service._record_payment_failure("user-123", "sub_test123", 2)
             mock_logger.error.assert_called_once()
             self.assertIn("Failed to record payment failure", mock_logger.error.call_args[0][0])
 

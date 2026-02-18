@@ -9,6 +9,8 @@ from typing import Any, Dict, List, Optional
 
 import requests
 
+HTTP_REQUEST_TIMEOUT = 30
+
 from ..types.integrations import (
     IntegrationResult,
     WordPressCategory,
@@ -76,6 +78,7 @@ def upload_post(
             f"{credentials.site_url}/wp-json/wp/v2/posts",
             headers=headers,
             json=post_data,
+            timeout=HTTP_REQUEST_TIMEOUT,
         )
 
         # Check response
@@ -130,7 +133,9 @@ def get_categories(credentials: WordPressCredentials) -> List[WordPressCategory]
 
         # Get categories
         response = requests.get(
-            f"{credentials.site_url}/wp-json/wp/v2/categories", headers=headers
+            f"{credentials.site_url}/wp-json/wp/v2/categories",
+            headers=headers,
+            timeout=HTTP_REQUEST_TIMEOUT,
         )
 
         # Check response
@@ -188,7 +193,9 @@ def get_tags(credentials: WordPressCredentials) -> List[WordPressTag]:
 
         # Get tags
         response = requests.get(
-            f"{credentials.site_url}/wp-json/wp/v2/tags", headers=headers
+            f"{credentials.site_url}/wp-json/wp/v2/tags",
+            headers=headers,
+            timeout=HTTP_REQUEST_TIMEOUT,
         )
 
         # Check response
@@ -255,6 +262,7 @@ def create_category(
             f"{credentials.site_url}/wp-json/wp/v2/categories",
             headers=headers,
             json=category_data,
+            timeout=HTTP_REQUEST_TIMEOUT,
         )
 
         # Check response
@@ -315,7 +323,10 @@ def create_tag(
 
         # Create tag
         response = requests.post(
-            f"{credentials.site_url}/wp-json/wp/v2/tags", headers=headers, json=tag_data
+            f"{credentials.site_url}/wp-json/wp/v2/tags",
+            headers=headers,
+            json=tag_data,
+            timeout=HTTP_REQUEST_TIMEOUT,
         )
 
         # Check response
@@ -375,7 +386,10 @@ def upload_image(
         files = {"file": (filename, image_data)}
 
         response = requests.post(
-            f"{credentials.site_url}/wp-json/wp/v2/media", headers=headers, files=files
+            f"{credentials.site_url}/wp-json/wp/v2/media",
+            headers=headers,
+            files=files,
+            timeout=HTTP_REQUEST_TIMEOUT,
         )
 
         # Check response
@@ -435,6 +449,7 @@ def update_image_alt_text(
             f"{credentials.site_url}/wp-json/wp/v2/media/{image_id}",
             headers=headers,
             json={"alt_text": alt_text},
+            timeout=HTTP_REQUEST_TIMEOUT,
         )
 
         # Check response

@@ -6,6 +6,7 @@ This is the main entry point that assembles the modular components
 from the app package.
 """
 
+import asyncio
 import logging
 import sys
 import os
@@ -43,6 +44,8 @@ try:
     settings: Settings = get_settings()
     validation_result = validate_config(settings, fail_on_error=True)
     log_config_summary(settings)
+    # Validate production-critical configuration (exits if production and missing)
+    settings.validate_production_config()
 except ConfigurationError as e:
     logger.critical(f"Configuration validation failed: {e}")
     logger.critical("Application cannot start due to configuration errors.")
@@ -71,28 +74,45 @@ from app.routes import (
     book_router,
     brand_voice_router,
     bulk_router,
+    chat_router,
+    config_router,
     content_router,
     conversations_router,
     export_router,
     extension_router,
     health_router,
     images_router,
-    knowledge_router,
     organizations_router,
     payments_router,
-    performance_router,
     remix_router,
+    seo_router,
     social_router,
     sso_admin_router,
     sso_router,
     streaming_router,
+    subscription_router,
+    templates_marketing_router,
     tools_router,
     usage_router,
-    versions_router,
     webhooks_router,
     websocket_router,
+    workflows_router,
     zapier_router,
 )
+
+
+def _env_true(name: str, default: bool = False) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in ("1", "true", "yes", "on")
+
+
+# Legacy / Supabase-dependent modules. Keep code in-repo, but disable by default
+# for a Neon-only SaaS until they're migrated.
+ENABLE_KNOWLEDGE_BASE = _env_true("ENABLE_KNOWLEDGE_BASE", default=False)
+ENABLE_PERFORMANCE_ANALYTICS = _env_true("ENABLE_PERFORMANCE_ANALYTICS", default=False)
+ENABLE_CONTENT_VERSIONING = _env_true("ENABLE_CONTENT_VERSIONING", default=False)
 
 # =============================================================================
 # Sentry Error Tracking Configuration
@@ -198,11 +218,34 @@ def is_sentry_initialized() -> bool:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Handle startup/shutdown for shared resources."""
+    # Start background reconciliation scheduler
+    reconciliation_task = None
+    try:
+        from src.payments.reconciliation_scheduler import start_reconciliation_scheduler
+        reconciliation_task = asyncio.create_task(start_reconciliation_scheduler())
+        logger.info("Subscription reconciliation scheduler registered")
+    except Exception as e:
+        logger.warning("Failed to start reconciliation scheduler: %s", e)
+
     yield
+
+    # Cancel the reconciliation task on shutdown
+    if reconciliation_task and not reconciliation_task.done():
+        reconciliation_task.cancel()
+        try:
+            await reconciliation_task
+        except asyncio.CancelledError:
+            pass
     try:
         close_llm_clients()
     except Exception as e:
         logger.warning("Failed to close LLM clients: %s", e)
+    try:
+        from src.db import close_pool
+
+        await close_pool()
+    except Exception as e:
+        logger.warning("Failed to close Postgres pool: %s", e)
     try:
         clear_research_cache()
     except Exception as e:
@@ -212,7 +255,16 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning("Failed to close webhook service client: %s", e)
 
+# Disable OpenAPI/Swagger docs in production to avoid exposing API schema
+_is_production = settings.is_production
+_docs_url = None if _is_production else "/docs"
+_redoc_url = None if _is_production else "/redoc"
+_openapi_url = None if _is_production else "/openapi.json"
+
 app = FastAPI(
+    docs_url=_docs_url,
+    redoc_url=_redoc_url,
+    openapi_url=_openapi_url,
     title="Blog AI API",
     description="""
 ## AI-Powered Content Generation API
@@ -231,11 +283,10 @@ Blog AI provides a comprehensive API for generating high-quality content includi
 
 ### Authentication
 
-All API endpoints require authentication via API key. Include your API key in the `X-API-Key` header:
+All API endpoints require authentication. Supported methods:
 
-```
-X-API-Key: your_api_key_here
-```
+- **Cloud SaaS (recommended):** Clerk session JWT via `Authorization: Bearer <token>`
+- **API / CLI:** API key via `X-API-Key: <key>`
 
 ### Rate Limiting
 
@@ -267,19 +318,23 @@ The API supports versioning via URL path. Current version: `v1`
         {"name": "health", "description": "Health checks and system status"},
         {"name": "blog", "description": "Blog post generation endpoints"},
         {"name": "book", "description": "Book generation endpoints"},
+        {"name": "Chat Assistant", "description": "Conversational content creation and editing"},
         {"name": "Brand Voice Training", "description": "Train and apply custom brand voices"},
         {"name": "Content Remix", "description": "Transform content across formats"},
         {"name": "content", "description": "Content quality and plagiarism detection"},
+        {"name": "seo", "description": "SERP analysis and content optimization"},
         {"name": "Knowledge Base", "description": "Upload documents and search your knowledge base for RAG"},
         {"name": "batch", "description": "Batch processing for bulk content generation"},
         {"name": "images", "description": "AI-powered image generation"},
         {"name": "export", "description": "Export content to various formats"},
+        {"name": "marketing-templates", "description": "Marketing copy template library with 50+ templates"},
         {"name": "tools", "description": "Content generation tools and utilities"},
         {"name": "usage", "description": "Usage tracking and quota management"},
         {"name": "payments", "description": "Subscription and billing management"},
         {"name": "conversations", "description": "Conversation history management"},
         {"name": "social", "description": "Social media scheduling and publishing"},
         {"name": "sso", "description": "Single Sign-On authentication (SAML/OIDC)"},
+        {"name": "Workflows", "description": "Workflow automation for chaining generation steps into reusable pipelines"},
         {"name": "sso-admin", "description": "SSO configuration and administration"},
         {"name": "debug", "description": "Debug and development endpoints"},
     ],
@@ -315,9 +370,31 @@ rate_limit_settings = settings.rate_limit
 logging_settings = settings.logging
 
 # CORS middleware with hardened configuration
+# In production, strip any localhost/127.0.0.1 origins and refuse to start if
+# no valid origins remain.
+_cors_origins = list(security_settings.origins_list)
+if _is_production:
+    _local_origins = [
+        o for o in _cors_origins
+        if 'localhost' in o or '127.0.0.1' in o
+    ]
+    if _local_origins:
+        logger.critical(
+            'CORS SECURITY: Removing localhost origins in production: %s',
+            _local_origins,
+        )
+        _cors_origins = [o for o in _cors_origins if o not in _local_origins]
+    if not _cors_origins:
+        logger.critical(
+            'CORS SECURITY: No valid ALLOWED_ORIGINS remain after removing '
+            'localhost entries. Set ALLOWED_ORIGINS to your production domain(s). '
+            'Application cannot start.'
+        )
+        sys.exit(1)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=security_settings.origins_list,
+    allow_origins=_cors_origins,
     allow_credentials=True,
     # Restrict to necessary HTTP methods only
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -417,29 +494,53 @@ app.include_router(health_router)
 app.include_router(analytics_router)
 app.include_router(batch_router)
 app.include_router(brand_voice_router)
+app.include_router(chat_router)
 app.include_router(content_router)
 app.include_router(conversations_router)
 app.include_router(blog_router)
 app.include_router(book_router)
 app.include_router(bulk_router)
+app.include_router(config_router)
 app.include_router(export_router)
 app.include_router(extension_router)
 app.include_router(images_router)
-app.include_router(knowledge_router)
 app.include_router(organizations_router)
 app.include_router(payments_router)
-app.include_router(performance_router)
 app.include_router(remix_router)
+app.include_router(seo_router)
 app.include_router(streaming_router)
+app.include_router(subscription_router)
+app.include_router(templates_marketing_router)
 app.include_router(tools_router)
 app.include_router(usage_router)
-app.include_router(versions_router)
 app.include_router(webhooks_router)
 app.include_router(websocket_router)
+app.include_router(workflows_router)
 app.include_router(zapier_router)
 app.include_router(social_router)
 app.include_router(sso_router)
 app.include_router(sso_admin_router)
+
+if ENABLE_KNOWLEDGE_BASE:
+    from app.routes.knowledge import router as knowledge_router  # noqa: WPS433
+
+    app.include_router(knowledge_router)
+else:
+    logger.info("Knowledge base routes disabled (ENABLE_KNOWLEDGE_BASE=false)")
+
+if ENABLE_PERFORMANCE_ANALYTICS:
+    from app.routes.performance import router as performance_router  # noqa: WPS433
+
+    app.include_router(performance_router)
+else:
+    logger.info("Performance analytics routes disabled (ENABLE_PERFORMANCE_ANALYTICS=false)")
+
+if ENABLE_CONTENT_VERSIONING:
+    from app.routes.versions import router as versions_router  # noqa: WPS433
+
+    app.include_router(versions_router)
+else:
+    logger.info("Content versioning routes disabled (ENABLE_CONTENT_VERSIONING=false)")
 
 # Create versioned API router
 api_v1_router = APIRouter(prefix="/api/v1", tags=["v1"])
@@ -448,79 +549,86 @@ api_v1_router = APIRouter(prefix="/api/v1", tags=["v1"])
 api_v1_router.include_router(analytics_router)
 api_v1_router.include_router(batch_router)
 api_v1_router.include_router(brand_voice_router)
+api_v1_router.include_router(chat_router)
 api_v1_router.include_router(content_router)
 api_v1_router.include_router(conversations_router)
 api_v1_router.include_router(blog_router)
 api_v1_router.include_router(book_router)
 api_v1_router.include_router(bulk_router)
+api_v1_router.include_router(config_router)
 api_v1_router.include_router(export_router)
 api_v1_router.include_router(extension_router)
 api_v1_router.include_router(images_router)
-api_v1_router.include_router(knowledge_router)
 api_v1_router.include_router(organizations_router)
 api_v1_router.include_router(payments_router)
-api_v1_router.include_router(performance_router)
 api_v1_router.include_router(remix_router)
+api_v1_router.include_router(seo_router)
 api_v1_router.include_router(streaming_router)
+api_v1_router.include_router(subscription_router)
+api_v1_router.include_router(templates_marketing_router)
 api_v1_router.include_router(tools_router)
 api_v1_router.include_router(usage_router)
-api_v1_router.include_router(versions_router)
 api_v1_router.include_router(webhooks_router)
+api_v1_router.include_router(workflows_router)
 api_v1_router.include_router(zapier_router)
 api_v1_router.include_router(social_router)
 api_v1_router.include_router(sso_router)
 api_v1_router.include_router(sso_admin_router)
+
+if ENABLE_KNOWLEDGE_BASE:
+    from app.routes.knowledge import router as knowledge_router  # noqa: WPS433
+
+    api_v1_router.include_router(knowledge_router)
+
+if ENABLE_PERFORMANCE_ANALYTICS:
+    from app.routes.performance import router as performance_router  # noqa: WPS433
+
+    api_v1_router.include_router(performance_router)
+
+if ENABLE_CONTENT_VERSIONING:
+    from app.routes.versions import router as versions_router  # noqa: WPS433
+
+    api_v1_router.include_router(versions_router)
 
 # Include versioned router
 app.include_router(api_v1_router)
 
 
 # =============================================================================
-# Debug Endpoints
+# Debug Endpoints (only registered in non-production environments)
 # =============================================================================
 
+if not settings.is_production:
 
-@app.get("/debug-sentry", tags=["debug"])
-async def trigger_sentry_error():
-    """
-    Debug endpoint to verify Sentry error tracking is working.
+    @app.get("/debug-sentry", tags=["debug"])
+    async def trigger_sentry_error():
+        """
+        Debug endpoint to verify Sentry error tracking is working.
 
-    WARNING: This endpoint intentionally raises an exception.
-    Only use this in development/staging to verify Sentry integration.
-    Should be disabled or protected in production.
-    """
-    if settings.is_production:
+        WARNING: This endpoint intentionally raises an exception.
+        Only available in development/staging environments.
+        """
+        division_by_zero = 1 / 0
+        return {"this": "will never be reached"}
+
+    @app.get("/config-status", tags=["debug"])
+    async def get_config_status():
+        """
+        Get current configuration status (without secrets).
+
+        Only available in non-production environments.
+        """
         return {
-            "error": "Debug endpoint disabled in production",
-            "sentry_configured": is_sentry_initialized(),
+            "success": True,
+            "config": settings.get_config_summary(),
         }
 
-    # This will trigger an error in Sentry
-    division_by_zero = 1 / 0
-    return {"this": "will never be reached"}
-
-
-@app.get("/config-status", tags=["debug"])
-async def get_config_status():
-    """
-    Get current configuration status (without secrets).
-
-    This endpoint returns the configuration summary for debugging
-    and operational visibility.
-    """
-    if settings.is_production and not settings.is_dev_mode:
-        return {
-            "error": "Config status endpoint disabled in production",
-            "environment": settings.security.environment,
-        }
-
-    return {
-        "success": True,
-        "config": settings.get_config_summary(),
-    }
+else:
+    logger.info("Debug endpoints disabled in production environment")
 
 
 if __name__ == "__main__":
     reload_enabled = os.environ.get("UVICORN_RELOAD", "false").lower() == "true"
-    port = int(os.environ.get("BACKEND_PORT", "8000"))
+    # Railway (and many other PaaS) provide `PORT`.
+    port = int(os.environ.get("PORT") or os.environ.get("BACKEND_PORT", "8000"))
     uvicorn.run("server:app", host="0.0.0.0", port=port, reload=reload_enabled)

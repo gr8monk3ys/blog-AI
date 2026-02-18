@@ -11,6 +11,7 @@ import {
   CheckIcon,
   ChevronDownIcon,
 } from '@heroicons/react/24/outline'
+import { getDefaultHeaders } from '../lib/api'
 
 export type ExportFormat = 'markdown' | 'html' | 'text' | 'pdf' | 'clipboard' | 'wordpress' | 'medium'
 
@@ -174,7 +175,7 @@ export default function ExportMenu({
         case 'markdown': {
           const response = await fetch(`${API_BASE_URL}/export/markdown`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: await getDefaultHeaders(),
             body: JSON.stringify({
               title: content.title,
               content: content.content,
@@ -193,7 +194,7 @@ export default function ExportMenu({
         case 'html': {
           const response = await fetch(`${API_BASE_URL}/export/html`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: await getDefaultHeaders(),
             body: JSON.stringify({
               title: content.title,
               content: content.content,
@@ -212,7 +213,7 @@ export default function ExportMenu({
         case 'text': {
           const response = await fetch(`${API_BASE_URL}/export/text`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: await getDefaultHeaders(),
             body: JSON.stringify({
               title: content.title,
               content: content.content,
@@ -231,7 +232,7 @@ export default function ExportMenu({
         case 'pdf': {
           const response = await fetch(`${API_BASE_URL}/export/pdf`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: await getDefaultHeaders(),
             body: JSON.stringify({
               title: content.title,
               content: content.content,
@@ -250,7 +251,7 @@ export default function ExportMenu({
         case 'wordpress': {
           const response = await fetch(`${API_BASE_URL}/export/wordpress`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: await getDefaultHeaders(),
             body: JSON.stringify({
               title: content.title,
               content: content.content,
@@ -272,7 +273,7 @@ export default function ExportMenu({
         case 'medium': {
           const response = await fetch(`${API_BASE_URL}/export/medium`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: await getDefaultHeaders(),
             body: JSON.stringify({
               title: content.title,
               content: content.content,

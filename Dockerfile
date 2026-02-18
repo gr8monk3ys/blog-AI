@@ -24,22 +24,22 @@ COPY .env.example ./
 EXPOSE 8000
 
 # -------------------------------------------
-FROM node:18-alpine AS frontend-build
+FROM node:18-bookworm-slim AS frontend-build
 
 WORKDIR /app
 
 # Copy frontend files
-COPY package.json bun.lockb ./
+COPY package.json package-lock.json* bun.lockb* ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci 2>/dev/null || npm install
 
 # Copy frontend source code
 COPY app/ ./app/
 COPY components/ ./components/
 COPY public/ ./public/
 COPY lib/ ./lib/
-COPY tailwind.config.js next.config.mjs tsconfig.json ./
+COPY tailwind.config.js postcss.config.js next.config.mjs tsconfig.json ./
 
 # Build frontend
 RUN npm run build

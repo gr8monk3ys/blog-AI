@@ -172,7 +172,7 @@ export const INDUSTRIES: { value: Industry; label: string }[] = [
  */
 export const SAMPLE_BRAND_PROFILES: BrandProfile[] = [
   {
-    id: 'bp-1',
+    id: '3f1b1a2c-6e2b-4a2c-9f85-3e2f4e6b9f01',
     name: 'Tech Startup Voice',
     slug: 'tech-startup-voice',
     toneKeywords: ['innovative', 'confident', 'approachable'],
@@ -190,7 +190,7 @@ export const SAMPLE_BRAND_PROFILES: BrandProfile[] = [
     updatedAt: '2024-01-10T08:00:00Z',
   },
   {
-    id: 'bp-2',
+    id: '8c2d1b4e-1c7a-4df5-8a7f-4f76c2f9a2d3',
     name: 'Professional Services',
     slug: 'professional-services',
     toneKeywords: ['professional', 'trustworthy', 'authoritative'],
@@ -208,7 +208,7 @@ export const SAMPLE_BRAND_PROFILES: BrandProfile[] = [
     updatedAt: '2024-01-11T10:30:00Z',
   },
   {
-    id: 'bp-3',
+    id: '5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d',
     name: 'Lifestyle Brand',
     slug: 'lifestyle-brand',
     toneKeywords: ['friendly', 'warm', 'enthusiastic'],

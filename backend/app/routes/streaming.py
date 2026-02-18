@@ -8,7 +8,7 @@ sessions that deliver tokens via WebSocket.
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 
 from src.text_generation import GenerationOptions, StreamEventType, stream_text
@@ -323,7 +323,7 @@ async def stream_via_sse(
     provider: str = Query("openai", description="LLM provider"),
     max_tokens: int = Query(4000, ge=1, le=32000),
     temperature: float = Query(0.7, ge=0.0, le=2.0),
-    api_key: str = Query(..., alias="api_key", description="API key for authentication"),
+    x_api_key: str = Header(..., alias="X-API-Key", description="API key for authentication"),
 ):
     """
     Stream text generation via Server-Sent Events.
@@ -337,7 +337,7 @@ async def stream_via_sse(
         provider: The LLM provider to use.
         max_tokens: Maximum tokens to generate.
         temperature: Generation temperature.
-        api_key: API key for authentication.
+        x_api_key: API key for authentication via X-API-Key header.
 
     Returns:
         Server-Sent Events stream.
@@ -345,7 +345,7 @@ async def stream_via_sse(
     # Verify API key (simplified check for SSE)
     from ..auth.api_key import api_key_store
 
-    user_id = api_key_store.verify_key(api_key)
+    user_id = api_key_store.verify_key(x_api_key)
     if not user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

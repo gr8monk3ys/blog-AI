@@ -14,42 +14,41 @@ test.describe('Navigation', () => {
   test('can navigate to tools page', async ({ page }) => {
     await page.goto('/')
 
-    // Find and click on tools link
+    // Tools link is a core navigation element and must be visible
     const toolsLink = page.getByRole('link', { name: /tools/i })
-    if (await toolsLink.isVisible()) {
-      await toolsLink.click()
-      await expect(page).toHaveURL(/.*tools.*/)
-    }
+    await expect(toolsLink).toBeVisible()
+    await toolsLink.click()
+    await expect(page).toHaveURL(/.*tools.*/)
   })
 
   test('can navigate to history page', async ({ page }) => {
     await page.goto('/')
 
+    // History link is a core navigation element and must be visible
     const historyLink = page.getByRole('link', { name: /history/i })
-    if (await historyLink.isVisible()) {
-      await historyLink.click()
-      await expect(page).toHaveURL(/.*history.*/)
-    }
+    await expect(historyLink).toBeVisible()
+    await historyLink.click()
+    await expect(page).toHaveURL(/.*history.*/)
   })
 
   test('can navigate to analytics page', async ({ page }) => {
     await page.goto('/')
 
+    // Analytics link is a core navigation element and must be visible
     const analyticsLink = page.getByRole('link', { name: /analytics/i })
-    if (await analyticsLink.isVisible()) {
-      await analyticsLink.click()
-      await expect(page).toHaveURL(/.*analytics.*/)
-    }
+    await expect(analyticsLink).toBeVisible()
+    await analyticsLink.click()
+    await expect(page).toHaveURL(/.*analytics.*/)
   })
 
   test('can navigate to brand voice page', async ({ page }) => {
     await page.goto('/')
 
+    // Brand link is a core navigation element and must be visible
     const brandLink = page.getByRole('link', { name: /brand/i })
-    if (await brandLink.isVisible()) {
-      await brandLink.click()
-      await expect(page).toHaveURL(/.*brand.*/)
-    }
+    await expect(brandLink).toBeVisible()
+    await brandLink.click()
+    await expect(page).toHaveURL(/.*brand.*/)
   })
 
   test('404 page shows for invalid routes', async ({ page }) => {

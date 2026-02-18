@@ -10,8 +10,8 @@ import unittest
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
-# Set DEV_MODE before importing the app
-os.environ["DEV_MODE"] = "true"
+# Set DEV_API_KEY before importing the app
+os.environ["DEV_API_KEY"] = "test-key"
 os.environ["RATE_LIMIT_ENABLED"] = "false"
 
 from fastapi.testclient import TestClient
@@ -284,11 +284,11 @@ class TestWebSocket(unittest.TestCase):
 
 
 class TestAPIKeyAuthentication(unittest.TestCase):
-    """Tests for API key authentication when DEV_MODE is disabled."""
+    """Tests for API key authentication when DEV_API_KEY is not set."""
 
     def setUp(self):
-        """Set up test client with DEV_MODE disabled."""
-        os.environ["DEV_MODE"] = "false"
+        """Set up test client without DEV_API_KEY."""
+        os.environ.pop("DEV_API_KEY", None)
         import importlib
 
         import server
@@ -298,10 +298,10 @@ class TestAPIKeyAuthentication(unittest.TestCase):
 
     def tearDown(self):
         """Reset environment."""
-        os.environ["DEV_MODE"] = "true"
+        os.environ["DEV_API_KEY"] = "test-key"
 
     def test_missing_api_key_returns_401(self):
-        """Missing API key should return 401 when DEV_MODE is false."""
+        """Missing API key should return 401 when no dev key is set."""
         response = self.client.get("/conversations/test")
         self.assertEqual(response.status_code, 401)
 

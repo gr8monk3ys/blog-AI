@@ -42,60 +42,74 @@ def proofread_content(
     try:
         options = options or ProofreadingOptions()
 
-        # Create prompt for proofreading
-        prompt = f"""
-        Proofread the following content and identify any issues:
-        
-        {content}
-        
-        Requirements:
-        """
+        # PROMPT DESIGN: Proofreading prompt. We make the model focus on real errors
+        # rather than subjective rewrites, and we add AI-specific style checks to
+        # catch common AI-generated content patterns.
+        prompt = f"""Proofread this content and identify specific issues.
+
+CONTENT:
+{content}
+
+CHECK FOR:
+"""
 
         if options.check_grammar:
-            prompt += """
-            - Identify any grammar issues, including subject-verb agreement, verb tense, pronoun usage, etc.
-            """
+            prompt += """GRAMMAR:
+- Subject-verb agreement errors
+- Incorrect verb tenses or tense inconsistencies within a paragraph
+- Dangling or misplaced modifiers
+- Pronoun-antecedent disagreement
+- Run-on sentences or comma splices
+- Incorrect use of who/whom, that/which, affect/effect, etc.
+"""
 
         if options.check_spelling:
-            prompt += """
-            - Identify any spelling errors or typos.
-            """
+            prompt += """SPELLING:
+- Misspelled words and typos
+- Confused homophones (their/there/they're, its/it's, your/you're)
+- Inconsistent spelling of the same term
+"""
 
         if options.check_style:
-            prompt += """
-            - Identify any style issues, including passive voice, wordiness, jargon, etc.
-            """
+            prompt += """STYLE:
+- Overuse of passive voice (flag when active voice would be clearer)
+- Wordiness: phrases that can be shortened ("in order to" -> "to", "due to the fact that" -> "because")
+- AI-generated filler phrases: "it's important to note that", "it's worth mentioning that",
+  "in today's fast-paced world", "in the ever-evolving landscape"
+- Overuse of weak intensifiers: "very", "really", "extremely", "incredibly"
+- Repetitive sentence structures (e.g., three Subject-Verb-Object sentences in a row)
+- Overuse of AI-favored words: "delve", "leverage", "robust", "seamless", "utilize",
+  "comprehensive", "multifaceted", "aforementioned"
+"""
 
         if options.check_plagiarism:
-            prompt += """
-            - Identify any potential plagiarism issues, including direct copying, paraphrasing without attribution, etc.
-            """
+            prompt += """PLAGIARISM:
+- Phrases that appear to be directly copied from common sources without attribution
+- Suspiciously formal or encyclopedic passages that contrast with the surrounding tone
+"""
 
         prompt += """
-        For each issue, provide:
-        1. The type of issue (grammar, spelling, style, plagiarism)
-        2. The problematic text
-        3. The line and character position
-        4. A suggested correction
-        
-        Return your analysis in the following format:
-        
-        Issue 1:
-        Type: [type]
-        Text: [problematic text]
-        Position: Line [line number], Character [character position]
-        Suggestion: [suggested correction]
-        
-        Issue 2:
-        Type: [type]
-        Text: [problematic text]
-        Position: Line [line number], Character [character position]
-        Suggestion: [suggested correction]
-        
-        And so on.
-        
-        If there are no issues, return "No issues found."
-        """
+FOR EACH ISSUE, report exactly:
+
+Issue 1:
+Type: [grammar|spelling|style|plagiarism]
+Text: [exact problematic text from the content]
+Position: Line [line number], Character [character position]
+Suggestion: [specific correction or improvement]
+
+Issue 2:
+Type: ...
+Text: ...
+Position: ...
+Suggestion: ...
+
+RULES:
+- Only flag REAL issues, not subjective preferences.
+- Be precise: quote the exact problematic text.
+- Provide a specific fix, not a vague suggestion like "consider rewording."
+- If there are no issues, return exactly: "No issues found."
+
+Return ONLY the issue list in the format above."""
 
         # Generate proofreading results
         proofreading_text = generate_text(prompt, provider, generation_options)
@@ -228,28 +242,33 @@ def generate_corrected_text(
         ProofreadingError: If an error occurs during correction.
     """
     try:
-        # Create prompt for correction
-        prompt = f"""
-        Correct the following content based on the identified issues:
-        
-        Content:
-        {content}
-        
-        Issues:
-        """
+        # PROMPT DESIGN: Corrected text generation. We emphasize surgical fixes --
+        # apply the corrections without rewriting surrounding content.
+        prompt = f"""Apply these corrections to the content below. Fix ONLY the identified issues.
+
+ORIGINAL CONTENT:
+{content}
+
+ISSUES TO FIX:
+"""
 
         for i, issue in enumerate(issues):
-            prompt += f"""
-            Issue {i+1}:
-            Type: {issue.type}
-            Text: {issue.text}
-            Position: Line {issue.position["line"]}, Character {issue.position["character"]}
-            Suggestion: {issue.suggestion or "No suggestion provided"}
-            """
+            prompt += f"""Issue {i+1}:
+Type: {issue.type}
+Text: "{issue.text}"
+Position: Line {issue.position["line"]}, Character {issue.position["character"]}
+Fix: {issue.suggestion or "Apply appropriate correction"}
+"""
 
         prompt += """
-        Return only the corrected content, nothing else.
-        """
+RULES:
+- Apply each fix precisely. Change ONLY the problematic text identified above.
+- Do NOT rephrase, reorganize, or "improve" anything beyond the listed issues.
+- Do NOT add new content or remove existing content.
+- Do NOT change the tone, voice, or style beyond what the fixes require.
+- Preserve all formatting, paragraph breaks, and structure.
+
+Return ONLY the corrected content. No commentary or labels."""
 
         # Generate corrected text
         corrected_text = generate_text(prompt, provider, options)

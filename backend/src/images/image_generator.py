@@ -3,14 +3,22 @@ AI Image Generator for Blog AI.
 
 Supports multiple image generation providers:
 - OpenAI DALL-E 3 (primary)
-- Stability AI (fallback)
+- Stability AI REST API (fallback)
 """
 
 import asyncio
+import base64
 import logging
 import os
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Union
+
+import httpx
+
+try:
+    import openai  # type: ignore
+except ImportError:  # pragma: no cover
+    openai = None  # type: ignore
 
 from ..types.images import (
     BlogImagesResult,
@@ -23,6 +31,9 @@ from ..types.images import (
 from .prompt_generator import PromptGenerator
 
 logger = logging.getLogger(__name__)
+
+# Sentinel to distinguish "not provided" from "explicitly None" when reading env vars.
+_UNSET: object = object()
 
 
 class ImageGenerationError(Exception):
@@ -68,20 +79,31 @@ class ImageGenerator:
     def __init__(
         self,
         provider: str = "openai",
-        openai_api_key: Optional[str] = None,
-        stability_api_key: Optional[str] = None,
+        openai_api_key: Union[str, None, object] = _UNSET,
+        stability_api_key: Union[str, None, object] = _UNSET,
     ):
         """
         Initialize the image generator.
 
         Args:
             provider: The default provider to use ("openai" or "stability").
-            openai_api_key: OpenAI API key. If not provided, reads from environment.
-            stability_api_key: Stability AI API key. If not provided, reads from environment.
+            openai_api_key: OpenAI API key. If omitted, reads from environment.
+                           If explicitly set to None, disables OpenAI.
+            stability_api_key: Stability AI API key. If omitted, reads from environment.
+                               If explicitly set to None, disables Stability.
         """
         self.default_provider = provider
-        self.openai_api_key = openai_api_key or os.environ.get("OPENAI_API_KEY")
-        self.stability_api_key = stability_api_key or os.environ.get("STABILITY_API_KEY")
+
+        if openai_api_key is _UNSET:
+            self.openai_api_key = os.environ.get("OPENAI_API_KEY")
+        else:
+            self.openai_api_key = openai_api_key  # type: ignore[assignment]
+
+        if stability_api_key is _UNSET:
+            self.stability_api_key = os.environ.get("STABILITY_API_KEY")
+        else:
+            self.stability_api_key = stability_api_key  # type: ignore[assignment]
+
         self.prompt_generator = PromptGenerator()
 
         # Validate that at least one provider is configured
@@ -247,7 +269,7 @@ class ImageGenerator:
                 )
             )
         else:
-            tasks.append(asyncio.coroutine(lambda: None)())
+            tasks.append(self._noop())
 
         # Generate social image
         if generate_social:
@@ -262,7 +284,7 @@ class ImageGenerator:
                 )
             )
         else:
-            tasks.append(asyncio.coroutine(lambda: None)())
+            tasks.append(self._noop())
 
         # Generate inline images
         inline_tasks = []
@@ -346,9 +368,7 @@ class ImageGenerator:
                 provider="openai",
             )
 
-        try:
-            import openai
-        except ImportError:
+        if openai is None:
             raise ImageGenerationError(
                 "OpenAI package not installed. Install with 'pip install openai'.",
                 provider="openai",
@@ -367,14 +387,53 @@ class ImageGenerator:
             dalle_style = "vivid" if style == "vivid" else "natural"
             dalle_quality = "hd" if quality == "hd" else "standard"
 
-            response = await client.images.generate(
-                model="dall-e-3",
-                prompt=prompt,
-                size=openai_size,
-                quality=dalle_quality,
-                style=dalle_style,
-                n=1,
-            )
+            try:
+                response = await client.images.generate(
+                    model="dall-e-3",
+                    prompt=prompt,
+                    size=openai_size,
+                    quality=dalle_quality,
+                    style=dalle_style,
+                    n=1,
+                )
+            except Exception as e:
+                def _is_openai_exc(attr: str) -> bool:
+                    exc_cls = getattr(openai, attr, None)
+                    return (
+                        isinstance(exc_cls, type)
+                        and issubclass(exc_cls, Exception)
+                        and isinstance(e, exc_cls)
+                    )
+
+                if _is_openai_exc("AuthenticationError"):
+                    raise ImageGenerationError(
+                        f"OpenAI authentication failed: {e}",
+                        provider="openai",
+                        original_error=e,
+                    )
+                if _is_openai_exc("RateLimitError"):
+                    raise ImageGenerationError(
+                        f"OpenAI rate limit exceeded: {e}",
+                        provider="openai",
+                        original_error=e,
+                    )
+                if _is_openai_exc("BadRequestError"):
+                    raise ImageGenerationError(
+                        f"OpenAI bad request (possibly content policy violation): {e}",
+                        provider="openai",
+                        original_error=e,
+                    )
+                if _is_openai_exc("OpenAIError"):
+                    raise ImageGenerationError(
+                        f"OpenAI error: {e}",
+                        provider="openai",
+                        original_error=e,
+                    )
+                raise ImageGenerationError(
+                    f"OpenAI error: {e}",
+                    provider="openai",
+                    original_error=e,
+                )
 
             # Extract result
             image_data = response.data[0]
@@ -392,26 +451,10 @@ class ImageGenerator:
                     "model": "dall-e-3",
                 },
             )
-
-        except openai.AuthenticationError as e:
-            raise ImageGenerationError(
-                f"OpenAI authentication failed: {e}",
-                provider="openai",
-                original_error=e,
-            )
-        except openai.RateLimitError as e:
-            raise ImageGenerationError(
-                f"OpenAI rate limit exceeded: {e}",
-                provider="openai",
-                original_error=e,
-            )
-        except openai.BadRequestError as e:
-            raise ImageGenerationError(
-                f"OpenAI bad request (possibly content policy violation): {e}",
-                provider="openai",
-                original_error=e,
-            )
-        except openai.OpenAIError as e:
+        except ImageGenerationError:
+            raise
+        except Exception as e:
+            # Client construction or other unexpected failures.
             raise ImageGenerationError(
                 f"OpenAI error: {e}",
                 provider="openai",
@@ -425,7 +468,10 @@ class ImageGenerator:
         negative_prompt: Optional[str] = None,
     ) -> ImageResult:
         """
-        Generate an image using Stability AI.
+        Generate an image using Stability AI REST API.
+
+        Calls the Stable Diffusion XL 1.0 text-to-image endpoint directly
+        via httpx instead of the deprecated stability-sdk gRPC client.
 
         Args:
             prompt: The image prompt.
@@ -433,7 +479,10 @@ class ImageGenerator:
             negative_prompt: What to avoid in the image.
 
         Returns:
-            ImageResult with the generated image.
+            ImageResult with the generated image (base64 data URL).
+
+        Raises:
+            ImageGenerationError: If generation fails or the API key is missing.
         """
         if not self.stability_api_key:
             raise ImageGenerationError(
@@ -441,95 +490,132 @@ class ImageGenerator:
                 provider="stability",
             )
 
-        try:
-            import stability_sdk.interfaces.gooseai.generation.generation_pb2 as generation
-            from stability_sdk import client as stability_client
-        except ImportError:
-            raise ImageGenerationError(
-                "Stability SDK not installed. Install with 'pip install stability-sdk'.",
-                provider="stability",
-            )
+        # Resolve dimensions for the requested size
+        width, height = self.STABILITY_SIZES.get(size, (1024, 1024))
+
+        # Build the request payload
+        text_prompts = [{"text": prompt, "weight": 1.0}]
+        if negative_prompt:
+            text_prompts.append({"text": negative_prompt, "weight": -1.0})
+
+        payload = {
+            "text_prompts": text_prompts,
+            "cfg_scale": 7,
+            "height": height,
+            "width": width,
+            "samples": 1,
+            "steps": 30,
+        }
+
+        api_url = (
+            "https://api.stability.ai/v1/generation/"
+            "stable-diffusion-xl-1024-v1-0/text-to-image"
+        )
 
         try:
-            # Get dimensions for size
-            width, height = self.STABILITY_SIZES.get(size, (1024, 1024))
-
-            # Create stability client
-            stability = stability_client.StabilityInference(
-                key=self.stability_api_key,
-                verbose=False,
-            )
-
-            # Set up prompts
-            prompts = [
-                generation.Prompt(
-                    text=prompt,
-                    parameters=generation.PromptParameters(weight=1.0),
-                )
-            ]
-
-            if negative_prompt:
-                prompts.append(
-                    generation.Prompt(
-                        text=negative_prompt,
-                        parameters=generation.PromptParameters(weight=-1.0),
-                    )
+            async with httpx.AsyncClient(timeout=self.DEFAULT_TIMEOUT) as client:
+                response = await client.post(
+                    api_url,
+                    headers={
+                        "Authorization": f"Bearer {self.stability_api_key}",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json",
+                    },
+                    json=payload,
                 )
 
-            # Run in executor since stability SDK is synchronous
-            loop = asyncio.get_running_loop()
-            answers = await loop.run_in_executor(
-                None,
-                lambda: stability.generate(
-                    prompt=prompts,
-                    width=width,
-                    height=height,
-                    steps=30,
-                    cfg_scale=7.0,
-                    sampler=generation.SAMPLER_K_DPM_2_ANCESTRAL,
-                ),
-            )
+            # Handle HTTP-level errors
+            if response.status_code == 401:
+                raise ImageGenerationError(
+                    "Stability AI authentication failed. Check your STABILITY_API_KEY.",
+                    provider="stability",
+                )
+            if response.status_code == 429:
+                raise ImageGenerationError(
+                    "Stability AI rate limit exceeded. Please try again later.",
+                    provider="stability",
+                )
+            if response.status_code == 400:
+                detail = response.text[:200]
+                raise ImageGenerationError(
+                    f"Stability AI bad request (possibly content policy violation): {detail}",
+                    provider="stability",
+                )
+            if response.status_code != 200:
+                detail = response.text[:200]
+                raise ImageGenerationError(
+                    f"Stability AI error (HTTP {response.status_code}): {detail}",
+                    provider="stability",
+                )
 
-            # Process response
-            for resp in answers:
-                for artifact in resp.artifacts:
-                    if artifact.type == generation.ARTIFACT_IMAGE:
-                        # For now, we would need to upload to storage
-                        # and return a URL. For this implementation,
-                        # we return base64 data URL
-                        import base64
+            data = response.json()
+            artifacts = data.get("artifacts", [])
+            if not artifacts:
+                raise ImageGenerationError(
+                    "No image generated by Stability AI",
+                    provider="stability",
+                )
 
-                        b64_data = base64.b64encode(artifact.binary).decode()
-                        data_url = f"data:image/png;base64,{b64_data}"
+            # The REST API returns base64-encoded PNG images
+            b64_data = artifacts[0].get("base64", "")
+            if not b64_data:
+                raise ImageGenerationError(
+                    "Stability AI returned an empty image payload",
+                    provider="stability",
+                )
 
-                        return ImageResult(
-                            url=data_url,
-                            prompt_used=prompt,
-                            provider="stability",
-                            size=f"{width}x{height}",
-                            style=None,
-                            quality=None,
-                            created_at=datetime.now(),
-                            metadata={
-                                "model": "stable-diffusion-xl",
-                                "steps": 30,
-                                "cfg_scale": 7.0,
-                            },
-                        )
+            finish_reason = artifacts[0].get("finishReason", "")
+            if finish_reason == "CONTENT_FILTERED":
+                logger.warning("Stability AI filtered the generated image for content policy")
+                raise ImageGenerationError(
+                    "Stability AI filtered the image due to content policy. "
+                    "Try a different prompt.",
+                    provider="stability",
+                )
 
-            raise ImageGenerationError(
-                "No image generated by Stability AI",
+            data_url = f"data:image/png;base64,{b64_data}"
+
+            return ImageResult(
+                url=data_url,
+                prompt_used=prompt,
                 provider="stability",
+                size=f"{width}x{height}",
+                style=None,
+                quality=None,
+                created_at=datetime.now(),
+                metadata={
+                    "model": "stable-diffusion-xl-1024-v1-0",
+                    "steps": 30,
+                    "cfg_scale": 7,
+                    "finish_reason": finish_reason,
+                },
             )
 
+        except ImageGenerationError:
+            raise
+        except httpx.TimeoutException as e:
+            raise ImageGenerationError(
+                f"Stability AI request timed out after {self.DEFAULT_TIMEOUT}s",
+                provider="stability",
+                original_error=e,
+            )
+        except httpx.HTTPError as e:
+            raise ImageGenerationError(
+                f"Stability AI HTTP error: {e}",
+                provider="stability",
+                original_error=e,
+            )
         except Exception as e:
-            if isinstance(e, ImageGenerationError):
-                raise
             raise ImageGenerationError(
                 f"Stability AI error: {e}",
                 provider="stability",
                 original_error=e,
             )
+
+    @staticmethod
+    async def _noop() -> None:
+        """No-op coroutine used as a placeholder in asyncio.gather."""
+        return None
 
     async def _generate_featured_image(
         self,

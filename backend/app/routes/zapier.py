@@ -10,11 +10,14 @@ These endpoints follow Zapier's API requirements for triggers and actions.
 """
 
 import asyncio
+import ipaddress
 import logging
+import socket
 import uuid
 from datetime import datetime
 from functools import partial
 from typing import Dict, List, Optional
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 
@@ -37,11 +40,56 @@ from src.webhooks import webhook_service, webhook_storage
 
 from ..auth import verify_api_key
 from ..error_handlers import sanitize_error_message
-from ..middleware import increment_usage_for_operation, require_quota
+from ..middleware import increment_usage_for_operation, require_pro_tier, require_quota
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/zapier", tags=["zapier"])
+
+
+def validate_webhook_url(url: str) -> None:
+    """
+    Validate that a webhook URL is safe to send requests to.
+
+    Rejects URLs targeting private/internal IP ranges to prevent SSRF attacks.
+    Only HTTPS URLs are allowed.
+    """
+    try:
+        parsed = urlparse(url)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid webhook URL format",
+        )
+
+    if parsed.scheme != "https":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Webhook URL must use HTTPS",
+        )
+
+    hostname = parsed.hostname
+    if not hostname:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Webhook URL must include a hostname",
+        )
+
+    try:
+        addr_infos = socket.getaddrinfo(hostname, parsed.port or 443)
+    except socket.gaierror:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not resolve webhook URL hostname",
+        )
+
+    for _family, _, _, _, sockaddr in addr_infos:
+        ip = ipaddress.ip_address(sockaddr[0])
+        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Webhook URL must not target private or internal networks",
+            )
 
 
 # =============================================================================
@@ -258,6 +306,9 @@ async def zapier_subscribe(
             detail=f"Invalid event type: {event_type}",
         )
 
+    # Validate webhook URL to prevent SSRF
+    validate_webhook_url(request.target_url)
+
     # Create subscription
     subscription = WebhookSubscription(
         id=str(uuid.uuid4()),
@@ -377,8 +428,9 @@ async def _generate_content_async(
             },
         )
 
-        # If callback URL provided, send result directly
+        # If callback URL provided, validate and send result directly
         if request.webhook_url:
+            validate_webhook_url(request.webhook_url)
             from src.types.webhooks import WebhookPayload
 
             payload = WebhookPayload(
@@ -454,7 +506,7 @@ The result will be sent to the configured webhook URL when complete.
 async def zapier_generate(
     request: ZapierGenerateRequest,
     background_tasks: BackgroundTasks,
-    user_id: str = Depends(require_quota),
+    user_id: str = Depends(require_pro_tier),
 ) -> ZapierGenerateResponse:
     """
     Generate content via Zapier action.

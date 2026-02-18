@@ -35,6 +35,7 @@ from src.webhooks import webhook_service, webhook_storage
 from ..auth import verify_api_key
 from ..dependencies import require_content_access, require_content_creation
 from ..error_handlers import sanitize_error_message
+from ..validators import validate_url
 
 logger = logging.getLogger(__name__)
 
@@ -105,6 +106,14 @@ async def subscribe_webhook(
     # Use organization_id for scoping if available, fallback to user_id
     scope_id = auth_ctx.organization_id or auth_ctx.user_id
     logger.info(f"Webhook subscription request from user: {auth_ctx.user_id}, org: {auth_ctx.organization_id}")
+
+    # Validate target_url against SSRF attacks
+    is_valid, error_msg = validate_url(request.target_url)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid webhook target URL: {error_msg}",
+        )
 
     try:
         # Check for duplicate subscriptions to same URL for same events
@@ -340,6 +349,13 @@ async def update_webhook(
     # Build updates dict (only non-None values)
     updates = {}
     if request.target_url is not None:
+        # Validate target_url against SSRF attacks
+        is_valid, error_msg = validate_url(request.target_url)
+        if not is_valid:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid webhook target URL: {error_msg}",
+            )
         updates["target_url"] = request.target_url
     if request.event_types is not None:
         updates["event_types"] = request.event_types
@@ -422,6 +438,13 @@ async def test_webhook(
         target_url = subscription.target_url
         secret = subscription.secret
     elif request.target_url:
+        # Validate target_url against SSRF attacks
+        is_valid, error_msg = validate_url(request.target_url)
+        if not is_valid:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid webhook target URL: {error_msg}",
+            )
         # Test direct URL
         target_url = request.target_url
     else:

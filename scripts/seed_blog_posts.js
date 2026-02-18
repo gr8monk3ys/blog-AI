@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { createClient } = require('@supabase/supabase-js');
+const { neon } = require('@neondatabase/serverless');
 
 const BLOG_DIR = path.join(__dirname, '..', 'content', 'blog');
 
@@ -72,15 +72,13 @@ const loadPosts = () => {
 };
 
 async function main() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_KEY;
-
-  if (!url || !key) {
-    console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_KEY');
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    console.error('Missing DATABASE_URL');
     process.exit(1);
   }
 
-  const supabase = createClient(url, key);
+  const sql = neon(url);
   const posts = loadPosts();
 
   if (posts.length === 0) {
@@ -88,13 +86,38 @@ async function main() {
     return;
   }
 
-  const { error } = await supabase.from('blog_posts').upsert(posts, {
-    onConflict: 'slug',
-  });
-
-  if (error) {
-    console.error('Failed to seed blog posts:', error.message);
-    process.exit(1);
+  for (const post of posts) {
+    await sql.query(
+      `
+        INSERT INTO blog_posts (
+          title,
+          slug,
+          excerpt,
+          body,
+          tags,
+          status,
+          published_at,
+          updated_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7, NOW())
+        ON CONFLICT (slug) DO UPDATE SET
+          title = EXCLUDED.title,
+          excerpt = EXCLUDED.excerpt,
+          body = EXCLUDED.body,
+          tags = EXCLUDED.tags,
+          status = EXCLUDED.status,
+          published_at = EXCLUDED.published_at,
+          updated_at = NOW()
+      `,
+      [
+        post.title,
+        post.slug,
+        post.excerpt || null,
+        post.body,
+        Array.isArray(post.tags) ? post.tags : [],
+        post.status || 'published',
+        post.published_at || null,
+      ]
+    );
   }
 
   console.log(`Seeded ${posts.length} blog posts.`);

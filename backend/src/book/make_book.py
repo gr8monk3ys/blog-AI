@@ -5,6 +5,8 @@ Book generation module (public API + CLI).
 import argparse
 import logging
 
+from typing import Optional
+
 from ..post_processing.file_saver import save_book
 from ..post_processing.humanizer import humanize_content
 from ..post_processing.proofreader import proofread_content
@@ -107,10 +109,28 @@ def generate_conclusion_chapter(*args, **kwargs):
     )
 
 
-def generate_book(*args, **kwargs):
+def generate_book(
+    title: str,
+    num_chapters: int = 5,
+    sections_per_chapter: int = 3,
+    keywords=None,
+    tone: str = "informative",
+    brand_voice: Optional[str] = None,
+    provider_type="openai",
+    options=None,
+    concurrent_sections: bool = True,
+):
+    # Explicit signature for a stable public API (tests rely on this).
     return _generate_book(
-        *args,
-        **kwargs,
+        title=title,
+        num_chapters=num_chapters,
+        sections_per_chapter=sections_per_chapter,
+        keywords=keywords,
+        tone=tone,
+        brand_voice=brand_voice,
+        provider_type=provider_type,
+        options=options,
+        concurrent_sections=concurrent_sections,
         provider_factory=create_provider_from_env,
         topic_cluster_generator=generate_topic_clusters,
         chapter_generator=generate_chapter,
@@ -119,10 +139,27 @@ def generate_book(*args, **kwargs):
     )
 
 
-def generate_book_with_research(*args, **kwargs):
+def generate_book_with_research(
+    title: str,
+    num_chapters: int = 5,
+    sections_per_chapter: int = 3,
+    keywords=None,
+    tone: str = "informative",
+    brand_voice: Optional[str] = None,
+    provider_type="openai",
+    options=None,
+    concurrent_sections: bool = True,
+):
     return _generate_book_with_research(
-        *args,
-        **kwargs,
+        title=title,
+        num_chapters=num_chapters,
+        sections_per_chapter=sections_per_chapter,
+        keywords=keywords,
+        tone=tone,
+        brand_voice=brand_voice,
+        provider_type=provider_type,
+        options=options,
+        concurrent_sections=concurrent_sections,
         provider_factory=create_provider_from_env,
         research_func=conduct_web_research,
         topic_cluster_generator=generate_topic_clusters_with_research,

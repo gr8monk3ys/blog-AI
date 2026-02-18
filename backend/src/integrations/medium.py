@@ -8,6 +8,8 @@ from typing import Any, Dict, List, Optional
 
 import requests
 
+HTTP_REQUEST_TIMEOUT = 30
+
 from ..types.integrations import IntegrationResult, MediumCredentials, MediumPostOptions
 
 
@@ -42,7 +44,11 @@ def upload_post(
         }
 
         # Get user ID
-        response = requests.get("https://api.medium.com/v1/me", headers=headers)
+        response = requests.get(
+            "https://api.medium.com/v1/me",
+            headers=headers,
+            timeout=HTTP_REQUEST_TIMEOUT,
+        )
 
         # Check response
         if response.status_code != 200:
@@ -71,6 +77,7 @@ def upload_post(
             f"https://api.medium.com/v1/users/{user_id}/posts",
             headers=headers,
             json=post_data,
+            timeout=HTTP_REQUEST_TIMEOUT,
         )
 
         # Check response
@@ -124,7 +131,11 @@ def get_user_publications(credentials: MediumCredentials) -> List[Dict[str, Any]
         }
 
         # Get user ID
-        response = requests.get("https://api.medium.com/v1/me", headers=headers)
+        response = requests.get(
+            "https://api.medium.com/v1/me",
+            headers=headers,
+            timeout=HTTP_REQUEST_TIMEOUT,
+        )
 
         # Check response
         if response.status_code != 200:
@@ -134,7 +145,9 @@ def get_user_publications(credentials: MediumCredentials) -> List[Dict[str, Any]
 
         # Get publications
         response = requests.get(
-            f"https://api.medium.com/v1/users/{user_id}/publications", headers=headers
+            f"https://api.medium.com/v1/users/{user_id}/publications",
+            headers=headers,
+            timeout=HTTP_REQUEST_TIMEOUT,
         )
 
         # Check response
@@ -182,7 +195,11 @@ def upload_post_to_publication(
         }
 
         # Get user ID
-        response = requests.get("https://api.medium.com/v1/me", headers=headers)
+        response = requests.get(
+            "https://api.medium.com/v1/me",
+            headers=headers,
+            timeout=HTTP_REQUEST_TIMEOUT,
+        )
 
         # Check response
         if response.status_code != 200:
@@ -211,6 +228,7 @@ def upload_post_to_publication(
             f"https://api.medium.com/v1/publications/{publication_id}/posts",
             headers=headers,
             json=post_data,
+            timeout=HTTP_REQUEST_TIMEOUT,
         )
 
         # Check response

@@ -1,4 +1,10 @@
+'use client'
+
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+
+const SUPPORT_EMAIL =
+  process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@blogai.com'
 
 /**
  * Custom 404 Not Found page
@@ -8,6 +14,8 @@ import Link from 'next/link'
  * and maintains accessibility standards.
  */
 export default function NotFound() {
+  const router = useRouter()
+
   return (
     <main
       className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100"
@@ -60,8 +68,9 @@ export default function NotFound() {
             Go back home
           </Link>
 
-          <Link
-            href="javascript:history.back()"
+          <button
+            type="button"
+            onClick={() => router.back()}
             className="inline-flex items-center justify-center rounded-md bg-white px-5 py-2.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600 transition-colors"
           >
             <svg
@@ -79,14 +88,14 @@ export default function NotFound() {
               />
             </svg>
             Go back
-          </Link>
+          </button>
         </nav>
 
         {/* Help Text */}
         <p className="mt-10 text-sm text-gray-500">
           If you believe this is a mistake, please{' '}
           <a
-            href="mailto:support@example.com"
+            href={`mailto:${SUPPORT_EMAIL}`}
             className="text-blue-600 hover:text-blue-500 underline underline-offset-2"
           >
             contact support

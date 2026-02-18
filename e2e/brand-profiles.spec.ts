@@ -29,69 +29,68 @@ test.describe('Brand Profiles', () => {
 
     const createButton = page.getByRole('button', { name: /create|add|new/i })
 
-    // Either profiles, empty state, or create button should be present
-    const hasContent = await profileCards.count() > 0 ||
-      await emptyState.count() > 0 ||
-      await createButton.count() > 0
-    expect(hasContent || await page.locator('body').isVisible()).toBeTruthy()
+    // At least one of these must be present
+    const profileCount = await profileCards.count()
+    const emptyCount = await emptyState.count()
+    const buttonCount = await createButton.count()
+    expect(profileCount + emptyCount + buttonCount).toBeGreaterThan(0)
   })
 
   test('create profile button is present', async ({ page }) => {
+    // The create button is a core UI element on the brand page
     const createButton = page.getByRole('button', { name: /create|add|new/i })
-
-    if (await createButton.count() > 0) {
-      await expect(createButton.first()).toBeVisible()
-    }
+    await expect(createButton.first()).toBeVisible()
   })
 
   test('can open create profile modal', async ({ page }) => {
+    // The create button must be present to open the modal
     const createButton = page.getByRole('button', { name: /create|add|new/i })
+    await expect(createButton.first()).toBeVisible()
+    await createButton.first().click()
 
-    if (await createButton.count() > 0 && await createButton.first().isVisible()) {
-      await createButton.first().click()
+    // Modal or form must appear after clicking create
+    const modal = page.getByRole('dialog').or(
+      page.locator('[role="dialog"]')
+    ).or(
+      page.locator('.modal')
+    )
 
-      // Look for modal or form
-      const modal = page.getByRole('dialog').or(
-        page.locator('[role="dialog"]')
-      ).or(
-        page.locator('.modal')
-      )
+    const form = page.getByRole('form').or(
+      page.locator('form')
+    )
 
-      const form = page.getByRole('form').or(
-        page.locator('form')
-      )
+    // Either modal or form must appear
+    const modalCount = await modal.count()
+    const formCount = await form.count()
+    expect(modalCount + formCount).toBeGreaterThan(0)
 
-      // Either modal or form should appear
-      const hasModalOrForm = await modal.count() > 0 || await form.count() > 0
-
-      // Form elements should be present
-      const nameInput = page.getByLabel(/name/i).or(
-        page.getByPlaceholder(/name/i)
-      )
-
-      if (await nameInput.count() > 0) {
-        await expect(nameInput.first()).toBeVisible()
-      }
-    }
+    // Form name input must be present
+    const nameInput = page.getByLabel(/name/i).or(
+      page.getByPlaceholder(/name/i)
+    )
+    await expect(nameInput.first()).toBeVisible()
   })
 
   test('profile cards are clickable', async ({ page }) => {
+    // Profile cards only exist when profiles have been created
     const profileCards = page.locator('[data-testid="profile-card"]').or(
       page.locator('.profile-card')
     ).or(
-      page.locator('article').first()
+      page.locator('article')
     )
 
-    if (await profileCards.count() > 0) {
-      // Clicking a card should navigate or open details
-      const firstCard = profileCards.first()
-      if (await firstCard.isVisible()) {
-        // Check if it's clickable (has click handler or is a link)
-        const tagName = await firstCard.evaluate(el => el.tagName.toLowerCase())
-        if (tagName === 'a' || tagName === 'button') {
-          await firstCard.click()
-        }
-      }
+    if (\!(await profileCards.first().isVisible({ timeout: 5000 }).catch(() => false))) {
+      test.skip(true, 'No profile cards available -- no profiles have been created')
+      return
+    }
+
+    const firstCard = profileCards.first()
+    await expect(firstCard).toBeVisible()
+
+    // Check if it is clickable (has click handler or is a link)
+    const tagName = await firstCard.evaluate(el => el.tagName.toLowerCase())
+    if (tagName === 'a' || tagName === 'button') {
+      await firstCard.click()
     }
   })
 })

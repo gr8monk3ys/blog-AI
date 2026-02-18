@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { ToolCategory, TOOL_CATEGORIES } from '../../types/tools'
 
@@ -15,13 +15,16 @@ export default function CategoryFilter({
   onCategoryChange,
   toolCounts,
 }: CategoryFilterProps) {
-  const categories: Array<{ id: ToolCategory | 'all'; name: string }> = [
-    { id: 'all', name: 'All Tools' },
-    ...Object.values(TOOL_CATEGORIES).map((cat) => ({
-      id: cat.id,
-      name: cat.name,
-    })),
-  ]
+  const categories: Array<{ id: ToolCategory | 'all'; name: string }> = useMemo(
+    () => [
+      { id: 'all', name: 'All Tools' },
+      ...Object.values(TOOL_CATEGORIES).map((cat) => ({
+        id: cat.id,
+        name: cat.name,
+      })),
+    ],
+    []
+  )
 
   // Refs for keyboard navigation
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([])

@@ -1,5 +1,10 @@
 import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import { ClerkProvider } from '@clerk/nextjs'
+import { Providers } from './providers'
 import './globals.css'
+
+const inter = Inter({ subsets: ['latin'], display: 'swap' })
 
 export const metadata: Metadata = {
   title: 'Blog AI Generator',
@@ -11,10 +16,18 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+
   return (
     <html lang="en">
-      <body className="font-sans">
-        {children}
+      <body className={inter.className}>
+        {publishableKey ? (
+          <ClerkProvider publishableKey={publishableKey}>
+            <Providers>{children}</Providers>
+          </ClerkProvider>
+        ) : (
+          <Providers>{children}</Providers>
+        )}
       </body>
     </html>
   )

@@ -20,6 +20,8 @@ from .validation import (
 
 logger = logging.getLogger(__name__)
 
+ALLOWED_PROVIDERS = {"openai", "anthropic", "gemini"}
+
 
 class BlogGenerationRequest(BaseModel):
     """Request model for blog post generation."""
@@ -28,8 +30,17 @@ class BlogGenerationRequest(BaseModel):
     keywords: List[str] = Field(default=[], max_length=MAX_KEYWORDS_COUNT)
     tone: str = Field(default="informative")
     research: bool = False
-    proofread: bool = True
-    humanize: bool = True
+    provider_type: Optional[str] = Field(
+        default=None,
+        description="LLM provider to use (openai, anthropic, gemini)",
+    )
+    brand_profile_id: Optional[str] = Field(
+        default=None,
+        description="Brand profile UUID to apply a trained brand voice",
+    )
+    # Default to disabled to avoid surprise latency/cost; callers can opt-in.
+    proofread: bool = False
+    humanize: bool = False
     use_knowledge_base: bool = Field(
         default=False,
         description="Whether to search the knowledge base for relevant context"
@@ -65,6 +76,21 @@ class BlogGenerationRequest(BaseModel):
             raise ValueError(f"Tone must be one of: {', '.join(ALLOWED_TONES)}")
         return v.lower()
 
+    @field_validator("provider_type")
+    @classmethod
+    def validate_provider_type(cls, v: Optional[str]) -> Optional[str]:
+        """Validate provider is one of the allowed values."""
+        if v is None:
+            return None
+        v = str(v).strip().lower()
+        if not v:
+            return None
+        if v not in ALLOWED_PROVIDERS:
+            raise ValueError(
+                f"provider_type must be one of: {', '.join(sorted(ALLOWED_PROVIDERS))}"
+            )
+        return v
+
     @field_validator("conversation_id")
     @classmethod
     def validate_conversation_id(cls, v: str) -> str:
@@ -72,6 +98,23 @@ class BlogGenerationRequest(BaseModel):
         # Only allow alphanumeric, hyphens, and underscores
         if not re.match(r"^[a-zA-Z0-9_-]+$", v):
             raise ValueError("Conversation ID contains invalid characters")
+        return v
+
+    @field_validator("brand_profile_id")
+    @classmethod
+    def validate_brand_profile_id(cls, v: Optional[str]) -> Optional[str]:
+        """Validate brand profile ID is a UUID (when provided)."""
+        if v is None:
+            return None
+        v = str(v).strip()
+        if not v:
+            return None
+        if not re.match(
+            r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            v,
+            re.IGNORECASE,
+        ):
+            raise ValueError("Brand profile ID must be a valid UUID")
         return v
 
 
@@ -84,8 +127,17 @@ class BookGenerationRequest(BaseModel):
     keywords: List[str] = Field(default=[], max_length=MAX_KEYWORDS_COUNT)
     tone: str = Field(default="informative")
     research: bool = False
-    proofread: bool = True
-    humanize: bool = True
+    provider_type: Optional[str] = Field(
+        default=None,
+        description="LLM provider to use (openai, anthropic, gemini)",
+    )
+    brand_profile_id: Optional[str] = Field(
+        default=None,
+        description="Brand profile UUID to apply a trained brand voice",
+    )
+    # Default to disabled to avoid surprise latency/cost; callers can opt-in.
+    proofread: bool = False
+    humanize: bool = False
     use_knowledge_base: bool = Field(
         default=False,
         description="Whether to search the knowledge base for relevant context"
@@ -121,12 +173,44 @@ class BookGenerationRequest(BaseModel):
             raise ValueError(f"Tone must be one of: {', '.join(ALLOWED_TONES)}")
         return v.lower()
 
+    @field_validator("provider_type")
+    @classmethod
+    def validate_provider_type(cls, v: Optional[str]) -> Optional[str]:
+        """Validate provider is one of the allowed values."""
+        if v is None:
+            return None
+        v = str(v).strip().lower()
+        if not v:
+            return None
+        if v not in ALLOWED_PROVIDERS:
+            raise ValueError(
+                f"provider_type must be one of: {', '.join(sorted(ALLOWED_PROVIDERS))}"
+            )
+        return v
+
     @field_validator("conversation_id")
     @classmethod
     def validate_conversation_id(cls, v: str) -> str:
         """Validate conversation ID format."""
         if not re.match(r"^[a-zA-Z0-9_-]+$", v):
             raise ValueError("Conversation ID contains invalid characters")
+        return v
+
+    @field_validator("brand_profile_id")
+    @classmethod
+    def validate_brand_profile_id(cls, v: Optional[str]) -> Optional[str]:
+        """Validate brand profile ID is a UUID (when provided)."""
+        if v is None:
+            return None
+        v = str(v).strip()
+        if not v:
+            return None
+        if not re.match(
+            r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            v,
+            re.IGNORECASE,
+        ):
+            raise ValueError("Brand profile ID must be a valid UUID")
         return v
 
 

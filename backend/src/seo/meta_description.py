@@ -40,28 +40,41 @@ def generate_meta_description(
         MetaDescriptionError: If an error occurs during meta description generation.
     """
     try:
-        # Create prompt for meta description generation
-        prompt = f"""
-        Generate a compelling and SEO-friendly meta description for a blog post with the following details:
-        
-        Title: {title}
-        Keywords: {', '.join(keywords)}
-        Tone: {tone}
-        
-        Requirements:
-        - The meta description should be between 150-160 characters.
-        - Include at least one of the main keywords naturally.
-        - Make it compelling and encourage clicks.
-        - Accurately represent the content.
-        - Do not use quotes or special characters.
-        
-        Return only the meta description text, nothing else.
-        """
+        # PROMPT DESIGN: Meta descriptions are ad copy for search results. We optimize
+        # for click-through rate: front-load the value prop, include a keyword, and
+        # create urgency or curiosity -- all within the strict character limit.
+        prompt = f"""Write a meta description for a blog post.
+
+Title: {title}
+Primary keywords: {', '.join(keywords)}
+Tone: {tone}
+
+STRICT RULES:
+- EXACTLY 150-160 characters (this is critical -- count carefully).
+- Front-load the most compelling benefit or hook in the first 70 characters
+  (this is all that shows on mobile).
+- Include at least one primary keyword naturally within the first half.
+- Create a reason to click: promise a specific outcome, ask a question, or
+  hint at something surprising.
+- Do NOT use generic filler like "Learn everything you need to know about..."
+  or "Discover the ultimate guide to..."
+- Do NOT use quotation marks, special characters, or HTML entities.
+- Do NOT use the words: comprehensive, ultimate, robust, leverage, delve.
+- Write in active voice. Use "you" to address the reader directly.
+
+GOOD EXAMPLES:
+- "Python decorators cut boilerplate code by 40%. Here's how to use them in your next project -- with patterns most tutorials skip."
+- "Your CI pipeline shouldn't take 45 minutes. These 7 caching strategies brought ours down to under 5."
+
+BAD EXAMPLES (do NOT write like these):
+- "In this comprehensive guide, we delve into the world of Python decorators and explore their many uses."
+- "Discover everything you need to know about CI/CD pipelines in this ultimate guide."
+
+Return ONLY the meta description text. No quotes, no labels, nothing else."""
 
         if content:
-            # Add a summary of the content to the prompt
             content_summary = content[:500] + "..." if len(content) > 500 else content
-            prompt += f"\n\nContent Summary: {content_summary}"
+            prompt += f"\n\nContent summary (use for accuracy):\n{content_summary}"
 
         # Generate meta description
         description_text = generate_text(prompt, provider, options)
@@ -106,29 +119,33 @@ def generate_multiple_meta_descriptions(
         MetaDescriptionError: If an error occurs during meta description generation.
     """
     try:
-        # Create prompt for meta description generation
-        prompt = f"""
-        Generate {count} compelling and SEO-friendly meta descriptions for a blog post with the following details:
-        
-        Title: {title}
-        Keywords: {', '.join(keywords)}
-        Tone: {tone}
-        
-        Requirements:
-        - Each meta description should be between 150-160 characters.
-        - Include at least one of the main keywords naturally.
-        - Make them compelling and encourage clicks.
-        - Accurately represent the content.
-        - Do not use quotes or special characters.
-        - Each description should be different in approach and wording.
-        
-        Return the meta descriptions as a numbered list, with each description on a new line.
-        """
+        # PROMPT DESIGN: Multiple meta description variants for A/B selection.
+        # Each should take a different angle to give meaningful choice.
+        prompt = f"""Write {count} different meta descriptions for a blog post.
+
+Title: {title}
+Primary keywords: {', '.join(keywords)}
+Tone: {tone}
+
+STRICT RULES FOR EACH:
+- EXACTLY 150-160 characters (count carefully).
+- Include at least one primary keyword naturally.
+- Front-load the most compelling element in the first 70 characters.
+- Each description must use a DIFFERENT angle:
+  1. Benefit-focused (what the reader gains)
+  2. Curiosity/question-based (provoke interest)
+  3. Data/proof-based (lead with a number or result)
+  (Adapt as needed for {count} variants)
+- Do NOT use quotation marks, special characters, or HTML entities.
+- Do NOT use generic phrases like "Learn everything...", "Discover the ultimate..."
+- Do NOT use: comprehensive, ultimate, robust, leverage, delve, seamless.
+- Write in active voice using "you" to address the reader.
+
+Return as a numbered list. One description per line. No extra commentary."""
 
         if content:
-            # Add a summary of the content to the prompt
             content_summary = content[:500] + "..." if len(content) > 500 else content
-            prompt += f"\n\nContent Summary: {content_summary}"
+            prompt += f"\n\nContent summary (use for accuracy):\n{content_summary}"
 
         # Generate meta descriptions
         descriptions_text = generate_text(prompt, provider, options)

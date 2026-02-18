@@ -23,6 +23,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from app.auth import verify_api_key
 from app.dependencies import get_organization_context, require_permission
+from app.middleware import require_business_tier
 from src.auth.sso.oidc_service import OIDCService, OIDCServiceError
 from src.auth.sso.providers import (
     OIDCProvider,
@@ -331,6 +332,7 @@ def _save_sso_config(config: SSOConfiguration) -> None:
 async def configure_saml(
     organization_id: str,
     request: SAMLConfigureRequest,
+    _tier: str = Depends(require_business_tier),
     auth_ctx: AuthorizationContext = Depends(
         require_permission(Permission.ORGANIZATION_UPDATE)
     ),
@@ -467,6 +469,7 @@ async def configure_saml(
 async def configure_oidc(
     organization_id: str,
     request: OIDCConfigureRequest,
+    _tier: str = Depends(require_business_tier),
     auth_ctx: AuthorizationContext = Depends(
         require_permission(Permission.ORGANIZATION_UPDATE)
     ),

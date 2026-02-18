@@ -24,6 +24,7 @@ const elements = {
   // Settings
   defaultTone: document.getElementById('default-tone'),
   defaultLength: document.getElementById('default-length'),
+  defaultProvider: document.getElementById('default-provider'),
   includeResearch: document.getElementById('include-research'),
   enableProofreading: document.getElementById('enable-proofreading'),
 
@@ -41,6 +42,7 @@ const elements = {
 const DEFAULT_SETTINGS = {
   defaultTone: 'professional',
   defaultLength: 'medium',
+  defaultProvider: 'openai',
   includeResearch: false,
   enableProofreading: true,
   apiEndpoint: 'https://api.blogai.com',
@@ -114,6 +116,7 @@ async function loadSettings() {
     // Apply settings to form
     elements.defaultTone.value = currentSettings.defaultTone
     elements.defaultLength.value = currentSettings.defaultLength
+    elements.defaultProvider.value = currentSettings.defaultProvider
     elements.includeResearch.checked = currentSettings.includeResearch
     elements.enableProofreading.checked = currentSettings.enableProofreading
     elements.apiEndpoint.value = currentSettings.apiEndpoint
@@ -241,6 +244,7 @@ async function saveSettings() {
     const settings = {
       defaultTone: elements.defaultTone.value,
       defaultLength: elements.defaultLength.value,
+      defaultProvider: elements.defaultProvider.value,
       includeResearch: elements.includeResearch.checked,
       enableProofreading: elements.enableProofreading.checked,
       apiEndpoint: elements.apiEndpoint.value.trim() || DEFAULT_SETTINGS.apiEndpoint,
@@ -286,6 +290,7 @@ async function resetSettings() {
     // Reload settings into form
     elements.defaultTone.value = DEFAULT_SETTINGS.defaultTone
     elements.defaultLength.value = DEFAULT_SETTINGS.defaultLength
+    elements.defaultProvider.value = DEFAULT_SETTINGS.defaultProvider
     elements.includeResearch.checked = DEFAULT_SETTINGS.includeResearch
     elements.enableProofreading.checked = DEFAULT_SETTINGS.enableProofreading
     elements.apiEndpoint.value = DEFAULT_SETTINGS.apiEndpoint
@@ -318,6 +323,7 @@ async function clearAllData() {
     elements.apiKeyInput.value = ''
     elements.defaultTone.value = DEFAULT_SETTINGS.defaultTone
     elements.defaultLength.value = DEFAULT_SETTINGS.defaultLength
+    elements.defaultProvider.value = DEFAULT_SETTINGS.defaultProvider
     elements.includeResearch.checked = DEFAULT_SETTINGS.includeResearch
     elements.enableProofreading.checked = DEFAULT_SETTINGS.enableProofreading
     elements.apiEndpoint.value = DEFAULT_SETTINGS.apiEndpoint

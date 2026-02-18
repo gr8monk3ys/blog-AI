@@ -347,6 +347,14 @@ class BaseTool(ABC):
             else:
                 full_prompt = prompt
 
+            # Apply brand voice when provided, even if the tool template doesn't
+            # explicitly include a `${brand_voice}` placeholder.
+            brand_voice = str(processed_inputs.get("brand_voice") or "").strip()
+            if brand_voice and "${brand_voice}" not in self.prompt_template:
+                # Keep the injected instruction bounded to avoid runaway prompt size.
+                brand_voice = brand_voice[:2000]
+                full_prompt = f"{full_prompt}\n\nBRAND VOICE SUMMARY (follow strictly):\n{brand_voice}\n"
+
             # Generate text
             logger.info(f"Executing tool '{self.id}' with provider '{provider_type}'")
             output = generate_text(full_prompt, provider, options)
@@ -455,6 +463,11 @@ class BaseTool(ABC):
             # Add system prompt if defined
             if self.system_prompt:
                 base_prompt = f"{self.system_prompt}\n\n{base_prompt}"
+
+            brand_voice = str(processed_inputs.get("brand_voice") or "").strip()
+            if brand_voice and "${brand_voice}" not in self.prompt_template:
+                brand_voice = brand_voice[:2000]
+                base_prompt = f"{base_prompt}\n\nBRAND VOICE SUMMARY (follow strictly):\n{brand_voice}\n"
 
             # Get or create provider
             if provider is None:

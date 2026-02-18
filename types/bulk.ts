@@ -8,6 +8,9 @@ export interface BulkGenerationItem {
   topic: string
   keywords: string[]
   tone: string
+  // Enhanced batch fields (ignored by legacy bulk endpoints)
+  content_type?: string
+  custom_instructions?: string
 }
 
 export interface BulkGenerationRequest {
@@ -42,7 +45,7 @@ export interface BulkGenerationResponse {
 
 export interface BulkGenerationStatus {
   job_id: string
-  status: 'pending' | 'processing' | 'completed' | 'cancelled' | 'failed'
+  status: 'pending' | 'queued' | 'processing' | 'completed' | 'partial' | 'cancelled' | 'failed'
   total_items: number
   completed_items: number
   failed_items: number

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSupabase, isSupabaseConfigured } from '../../../../../lib/supabase'
+import { getSqlOrNull } from '../../../../../lib/db'
+import { requireClerkUserId } from '../../../../../lib/clerk-auth'
 
 interface RouteContext {
   params: Promise<{ id: string }>
@@ -12,38 +13,53 @@ interface RouteContext {
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params
-    const body = await request.json()
-    const userHash = body.userHash
 
-    // If Supabase is not configured, return mock response
-    if (!isSupabaseConfigured()) {
+    const sql = getSqlOrNull()
+
+    // If DB is not configured, return mock response
+    if (!sql) {
       return NextResponse.json({
         success: true,
         message: 'Brand profile set as default',
       })
     }
 
-    const supabase = getSupabase()
-
-    // Manually update default status since RPC might not be available
-    // First, unset all defaults for this user
-    await supabase
-      .from('brand_profiles')
-      .update({ is_default: false } as never)
-      .eq('user_hash', userHash || '')
-      .neq('id', id)
-
-    // Then set this profile as default
-    const { error } = await supabase
-      .from('brand_profiles')
-      .update({ is_default: true } as never)
-      .eq('id', id)
-
-    if (error) {
-      console.error('Error setting default brand profile:', error)
+    let userId: string
+    try {
+      userId = await requireClerkUserId()
+    } catch {
       return NextResponse.json(
-        { success: false, error: 'Failed to set default profile' },
-        { status: 500 }
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const isUuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+    if (!isUuid) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid brand profile id' },
+        { status: 400 }
+      )
+    }
+
+    const results = await sql.transaction((txn) => [
+      txn.query(
+        `UPDATE brand_profiles SET is_default = false, updated_at = NOW() WHERE user_id = $1 AND id <> $2`,
+        [userId, id]
+      ),
+      txn.query(
+        `UPDATE brand_profiles SET is_default = true, updated_at = NOW() WHERE user_id = $1 AND id = $2 RETURNING id`,
+        [userId, id]
+      ),
+    ])
+
+    const updated = results?.[1] as unknown[] | undefined
+
+    if (!updated || updated.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Brand profile not found' },
+        { status: 404 }
       )
     }
 

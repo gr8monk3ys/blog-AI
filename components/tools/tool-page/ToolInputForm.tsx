@@ -7,6 +7,7 @@ import { getInputLabel, getInputPlaceholder } from './utils'
 import { TONE_OPTIONS } from './types'
 import type { Tool } from '../../../types/tools'
 import type { BrandProfile } from '../../../types/brand'
+import type { LlmProviderType } from '../../../types/llm'
 
 interface ToolInputFormProps {
   tool: Tool
@@ -22,6 +23,9 @@ interface ToolInputFormProps {
   onVariationCountChange: (value: number) => void
   keywords: string
   onKeywordsChange: (value: string) => void
+  providerType: LlmProviderType
+  availableProviders: LlmProviderType[]
+  onProviderTypeChange: (value: LlmProviderType) => void
   brandVoiceEnabled: boolean
   onBrandVoiceEnabledChange: (value: boolean) => void
   selectedBrandProfile: BrandProfile | null
@@ -76,6 +80,9 @@ export default function ToolInputForm({
   onVariationCountChange,
   keywords,
   onKeywordsChange,
+  providerType,
+  availableProviders,
+  onProviderTypeChange,
   brandVoiceEnabled,
   onBrandVoiceEnabledChange,
   selectedBrandProfile,
@@ -141,6 +148,9 @@ export default function ToolInputForm({
           onVariationCountChange={onVariationCountChange}
           keywords={keywords}
           onKeywordsChange={onKeywordsChange}
+          providerType={providerType}
+          availableProviders={availableProviders}
+          onProviderTypeChange={onProviderTypeChange}
         />
 
         {/* Brand Voice Selector */}

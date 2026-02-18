@@ -1,63 +1,342 @@
 """
-Health check and root endpoints.
+Health check, readiness, and root endpoints.
+
+Provides:
+- GET /health    -- Comprehensive health check (public, no auth)
+- GET /ready     -- Lightweight readiness probe for container orchestration
+- GET /health/db, /health/stripe, /health/sentry, /health/redis -- Detailed per-service checks (auth required)
+- GET /health/cache, POST /health/cache/cleanup -- Cache management (auth required)
+- GET /          -- Root API information
 """
 
 import logging
 import os
-from datetime import datetime
-from typing import Any, Dict
+import time
+from datetime import datetime, timezone
+from typing import Any, Dict, Optional
 
 import sentry_sdk
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse
 
-from src.storage import redis_client, job_storage
+from app.auth import verify_api_key
+from src.config import Settings, get_settings
+from src.db import get_database_url, is_database_configured, fetchrow as db_fetchrow
+from src.storage import redis_client as _redis_client_instance
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["health"])
 
+# Application version -- single source of truth
+APP_VERSION = "1.0.0"
 
-async def get_database_status() -> Dict[str, Any]:
+# Timestamp recorded when the module loads (proxy for "server started")
+_server_start_time = time.monotonic()
+
+
+# =============================================================================
+# Internal helpers
+# =============================================================================
+
+
+async def _check_database() -> Dict[str, Any]:
+    """Probe Postgres and return status + latency."""
+    if not is_database_configured():
+        return {"status": "disconnected", "latency_ms": None}
+
+    try:
+        start = time.monotonic()
+        row = await db_fetchrow("SELECT 1 AS ok")
+        latency_ms = round((time.monotonic() - start) * 1000, 2)
+        if row:
+            return {"status": "connected", "latency_ms": latency_ms}
+        return {"status": "disconnected", "latency_ms": None}
+    except Exception as exc:
+        logger.warning("Database health probe failed: %s", exc)
+        return {"status": "disconnected", "latency_ms": None}
+
+
+async def _check_redis() -> Dict[str, Any]:
+    """Probe Redis and return status + latency."""
+    redis_url = os.environ.get("REDIS_URL")
+    if not redis_url:
+        return {"status": "disconnected", "latency_ms": None}
+
+    try:
+        client = await _redis_client_instance.get_client()
+        if client is None:
+            return {"status": "disconnected", "latency_ms": None}
+
+        start = time.monotonic()
+        await client.ping()
+        latency_ms = round((time.monotonic() - start) * 1000, 2)
+        return {"status": "connected", "latency_ms": latency_ms}
+    except Exception as exc:
+        logger.warning("Redis health probe failed: %s", exc)
+        return {"status": "disconnected", "latency_ms": None}
+
+
+def _get_llm_providers_status(settings: Settings) -> Dict[str, Any]:
+    """Return configured/model info for each LLM provider without exposing keys."""
+    llm = settings.llm
+    return {
+        "openai": {
+            "configured": bool(llm.openai_api_key),
+            "model": llm.openai_model if llm.openai_api_key else None,
+        },
+        "anthropic": {
+            "configured": bool(llm.anthropic_api_key),
+            "model": llm.anthropic_model if llm.anthropic_api_key else None,
+        },
+        "gemini": {
+            "configured": bool(llm.gemini_api_key),
+            "model": llm.gemini_model if llm.gemini_api_key else None,
+        },
+    }
+
+
+def _get_feature_availability(settings: Settings) -> Dict[str, Any]:
     """
-    Check Supabase database connectivity.
+    Determine which high-level product features are available
+    based on the current configuration.
 
-    Performs a simple query to verify the database is accessible.
+    Each feature entry contains:
+      - available (bool)
+      - note (str | None) -- human-readable reason when unavailable
     """
-    supabase_url = os.environ.get("SUPABASE_URL")
-    supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    db_ok = settings.is_database_configured
+    stripe_ok = settings.is_stripe_configured
+    has_llm = settings.has_llm_provider
 
-    if not supabase_url or not supabase_key:
+    def _feature(available: bool, note: Optional[str] = None) -> Dict[str, Any]:
+        return {"available": available, "note": note}
+
+    return {
+        "content_generation": _feature(
+            has_llm,
+            None if has_llm else "Requires at least one LLM provider API key",
+        ),
+        "brand_profiles": _feature(
+            db_ok,
+            None if db_ok else "Requires DATABASE_URL",
+        ),
+        "conversation_history": _feature(
+            db_ok,
+            None if db_ok else "Requires DATABASE_URL",
+        ),
+        "payments": _feature(
+            stripe_ok,
+            None if stripe_ok else "Requires STRIPE_SECRET_KEY",
+        ),
+        "analytics": _feature(
+            db_ok,
+            None if db_ok else "Requires DATABASE_URL",
+        ),
+        "web_research": _feature(
+            settings.has_research_api,
+            None if settings.has_research_api else "Requires SERP_API_KEY or TAVILY_API_KEY",
+        ),
+    }
+
+
+def _overall_status(
+    db_status: Dict[str, Any],
+    redis_status: Dict[str, Any],
+    settings: Settings,
+) -> str:
+    """
+    Derive the top-level status string.
+
+    - healthy:   All configured services are reachable and at least one LLM is available
+    - degraded:  The server can accept requests but one or more optional services are down
+    - unhealthy: A critical service that is configured is unreachable
+    """
+    has_llm = settings.has_llm_provider
+    if not has_llm:
+        return "unhealthy"
+
+    db_configured = settings.is_database_configured
+    db_connected = db_status.get("status") == "connected"
+
+    # If database is configured but unreachable, the system is degraded
+    if db_configured and not db_connected:
+        return "degraded"
+
+    redis_configured = settings.is_redis_configured
+    redis_connected = redis_status.get("status") == "connected"
+
+    if redis_configured and not redis_connected:
+        return "degraded"
+
+    return "healthy"
+
+
+# =============================================================================
+# Public endpoints (no authentication)
+# =============================================================================
+
+
+@router.get(
+    "/health",
+    summary="Comprehensive system health check",
+    description="""
+Comprehensive health check endpoint for monitoring systems and dashboards.
+
+Returns:
+- Overall system status (healthy / degraded / unhealthy)
+- Per-service connectivity and latency (database, Redis, LLM providers)
+- Feature availability map showing which product features are operational
+
+**Authentication**: Not required. This endpoint is intentionally public
+so that load balancers, uptime monitors, and container orchestrators can
+call it without credentials.
+
+**Security**: No API keys, connection strings, or other secrets are
+included in the response.
+    """,
+    responses={
+        200: {
+            "description": "Health status retrieved",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "status": "healthy",
+                        "version": "1.0.0",
+                        "timestamp": "2026-02-16T12:00:00+00:00",
+                        "services": {
+                            "database": {"status": "connected", "latency_ms": 5.2},
+                            "redis": {"status": "connected", "latency_ms": 1.8},
+                            "llm_providers": {
+                                "openai": {"configured": True, "model": "gpt-4"},
+                                "anthropic": {"configured": False, "model": None},
+                                "gemini": {"configured": False, "model": None},
+                            },
+                        },
+                        "features": {
+                            "content_generation": {"available": True, "note": None},
+                            "brand_profiles": {"available": True, "note": None},
+                            "conversation_history": {"available": True, "note": None},
+                            "payments": {"available": False, "note": "Requires STRIPE_SECRET_KEY"},
+                            "analytics": {"available": True, "note": None},
+                            "web_research": {"available": False, "note": "Requires SERP_API_KEY or TAVILY_API_KEY"},
+                        },
+                    }
+                }
+            },
+        }
+    },
+)
+async def health_check() -> Dict[str, Any]:
+    """
+    Comprehensive health check endpoint.
+
+    Probes database and Redis connectivity, enumerates LLM provider
+    configuration, and reports feature availability.  Does not require
+    authentication so monitoring tools can call it freely.
+    """
+    settings = get_settings()
+
+    db_status = await _check_database()
+    redis_status = await _check_redis()
+    llm_status = _get_llm_providers_status(settings)
+    features = _get_feature_availability(settings)
+    status = _overall_status(db_status, redis_status, settings)
+
+    return {
+        "status": status,
+        "version": APP_VERSION,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "services": {
+            "database": db_status,
+            "redis": redis_status,
+            "llm_providers": llm_status,
+        },
+        "features": features,
+    }
+
+
+@router.get(
+    "/ready",
+    summary="Readiness probe",
+    description="""
+Lightweight readiness probe for container orchestration (Kubernetes, ECS, etc.).
+
+Returns **200** if the server is ready to accept traffic, or **503** if it is not.
+This endpoint performs no external calls (no DB, no Redis) -- it only confirms
+that the Python process has started and at least one LLM provider key is present.
+    """,
+    responses={
+        200: {
+            "description": "Server is ready",
+            "content": {
+                "application/json": {
+                    "example": {"ready": True}
+                }
+            },
+        },
+        503: {
+            "description": "Server is not ready",
+            "content": {
+                "application/json": {
+                    "example": {"ready": False, "reason": "No LLM provider configured"}
+                }
+            },
+        },
+    },
+)
+async def readiness_probe():
+    """
+    Minimal readiness check for container orchestrators.
+
+    No external calls are made.  Returns 200 when the server can accept
+    requests, or 503 when critical configuration is missing.
+    """
+    settings = get_settings()
+
+    if not settings.has_llm_provider:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "ready": False,
+                "reason": "No LLM provider configured",
+            },
+        )
+
+    return {"ready": True}
+
+
+# =============================================================================
+# Detailed per-service health checks (authentication required)
+# =============================================================================
+
+
+async def _get_full_database_status() -> Dict[str, Any]:
+    """
+    Full database status with configuration details.
+    Used by the authenticated /health/db endpoint.
+    """
+    database_url = get_database_url()
+    if not database_url:
         return {
             "configured": False,
             "connected": False,
-            "error": "SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set",
+            "error": "DATABASE_URL not set",
         }
 
     try:
-        from supabase import create_client
-
-        client = create_client(supabase_url, supabase_key)
-
-        # Simple query to verify connection
-        start_time = datetime.now()
-        response = client.table("tier_limits").select("tier").limit(1).execute()
-        latency_ms = (datetime.now() - start_time).total_seconds() * 1000
+        start = time.monotonic()
+        response = await db_fetchrow("SELECT 1 AS ok")
+        latency_ms = round((time.monotonic() - start) * 1000, 2)
 
         return {
             "configured": True,
-            "connected": True,
-            "latency_ms": round(latency_ms, 2),
+            "connected": bool(response),
+            "latency_ms": latency_ms,
             "tables_accessible": True,
         }
-
-    except ImportError:
-        return {
-            "configured": True,
-            "connected": False,
-            "error": "supabase package not installed",
-        }
     except Exception as e:
-        logger.warning(f"Database health check failed: {e}")
+        logger.warning("Database health check failed: %s", e)
         return {
             "configured": True,
             "connected": False,
@@ -65,10 +344,8 @@ async def get_database_status() -> Dict[str, Any]:
         }
 
 
-def get_stripe_status() -> Dict[str, Any]:
-    """
-    Check Stripe configuration and API connectivity.
-    """
+def _get_full_stripe_status() -> Dict[str, Any]:
+    """Full Stripe status with connectivity test."""
     stripe_key = os.environ.get("STRIPE_SECRET_KEY")
     webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
 
@@ -80,7 +357,6 @@ def get_stripe_status() -> Dict[str, Any]:
             "error": "STRIPE_SECRET_KEY not set",
         }
 
-    # Determine mode from key prefix
     if stripe_key.startswith("sk_test_"):
         mode = "test"
     elif stripe_key.startswith("sk_live_"):
@@ -93,19 +369,17 @@ def get_stripe_status() -> Dict[str, Any]:
 
         stripe.api_key = stripe_key
 
-        # Simple API call to verify connection
-        start_time = datetime.now()
+        start = time.monotonic()
         stripe.Account.retrieve()
-        latency_ms = (datetime.now() - start_time).total_seconds() * 1000
+        latency_ms = round((time.monotonic() - start) * 1000, 2)
 
         return {
             "configured": True,
             "connected": True,
             "mode": mode,
             "webhook_configured": bool(webhook_secret),
-            "latency_ms": round(latency_ms, 2),
+            "latency_ms": latency_ms,
         }
-
     except ImportError:
         return {
             "configured": True,
@@ -115,7 +389,7 @@ def get_stripe_status() -> Dict[str, Any]:
             "error": "stripe package not installed",
         }
     except Exception as e:
-        logger.warning(f"Stripe health check failed: {e}")
+        logger.warning("Stripe health check failed: %s", e)
         return {
             "configured": True,
             "connected": False,
@@ -125,12 +399,8 @@ def get_stripe_status() -> Dict[str, Any]:
         }
 
 
-def get_sentry_status() -> Dict[str, Any]:
-    """
-    Get the current Sentry configuration status.
-
-    Returns information about whether Sentry is configured and active.
-    """
+def _get_full_sentry_status() -> Dict[str, Any]:
+    """Full Sentry status."""
     try:
         client = sentry_sdk.get_client()
         dsn = os.environ.get("SENTRY_DSN")
@@ -153,12 +423,8 @@ def get_sentry_status() -> Dict[str, Any]:
         }
 
 
-async def get_redis_status() -> Dict[str, Any]:
-    """
-    Check Redis connectivity and health.
-
-    Returns information about Redis connection status and latency.
-    """
+async def _get_full_redis_status() -> Dict[str, Any]:
+    """Full Redis status with version info."""
     redis_url = os.environ.get("REDIS_URL")
 
     if not redis_url:
@@ -169,29 +435,26 @@ async def get_redis_status() -> Dict[str, Any]:
         }
 
     try:
-        # Check if redis client is available
-        if redis_client is None:
+        client = await _redis_client_instance.get_client()
+        if client is None:
             return {
                 "configured": True,
                 "connected": False,
                 "error": "Redis client not initialized",
             }
 
-        # Ping Redis to verify connection
-        start_time = datetime.now()
-        await redis_client.ping()
-        latency_ms = (datetime.now() - start_time).total_seconds() * 1000
+        start = time.monotonic()
+        await client.ping()
+        latency_ms = round((time.monotonic() - start) * 1000, 2)
 
-        # Get basic info
-        info = await redis_client.info("server")
+        info = await client.info("server")
 
         return {
             "configured": True,
             "connected": True,
-            "latency_ms": round(latency_ms, 2),
+            "latency_ms": latency_ms,
             "version": info.get("redis_version", "unknown"),
         }
-
     except ImportError:
         return {
             "configured": True,
@@ -199,7 +462,7 @@ async def get_redis_status() -> Dict[str, Any]:
             "error": "redis package not installed",
         }
     except Exception as e:
-        logger.warning(f"Redis health check failed: {e}")
+        logger.warning("Redis health check failed: %s", e)
         return {
             "configured": True,
             "connected": False,
@@ -207,110 +470,30 @@ async def get_redis_status() -> Dict[str, Any]:
         }
 
 
-@router.get(
-    "/health",
-    summary="System health check",
-    description="""
-Health check endpoint for monitoring and load balancers.
-
-Returns overall system health including:
-- Database connectivity status
-- Stripe payment service status
-- Sentry error tracking status
-- Redis cache status
-- Service latency metrics
-
-**Authentication**: Not required. This endpoint is public for load balancer health checks.
-    """,
-    responses={
-        200: {
-            "description": "Health status retrieved",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "status": "healthy",
-                        "timestamp": "2024-01-24T12:00:00Z",
-                        "version": "1.0.0",
-                        "environment": "production",
-                        "services": {
-                            "database": {"status": "up", "latency_ms": 5.2},
-                            "stripe": {"status": "up", "mode": "live"},
-                            "sentry": {"status": "up"},
-                            "redis": {"status": "up", "latency_ms": 1.2}
-                        }
-                    }
-                }
-            }
-        }
-    }
-)
-async def health_check() -> Dict[str, Any]:
-    """
-    Health check endpoint for monitoring and load balancers.
-
-    Returns overall system health including all critical services.
-    This is the primary endpoint for load balancer health checks.
-    """
-    db_status = await get_database_status()
-    stripe_status = get_stripe_status()
-    sentry_status = get_sentry_status()
-    redis_status = await get_redis_status()
-
-    # Determine overall health
-    # Critical: database must be connected for core functionality
-    # Non-critical: Stripe (payments can be degraded), Sentry (monitoring), Redis (caching)
-    is_healthy = db_status.get("connected", False) or not db_status.get("configured", False)
-
-    return {
-        "status": "healthy" if is_healthy else "degraded",
-        "timestamp": datetime.now().isoformat(),
-        "version": os.environ.get("SENTRY_RELEASE", "1.0.0"),
-        "environment": os.environ.get("ENVIRONMENT", "development"),
-        "services": {
-            "database": {
-                "status": "up" if db_status.get("connected") else ("unconfigured" if not db_status.get("configured") else "down"),
-                "latency_ms": db_status.get("latency_ms"),
-            },
-            "stripe": {
-                "status": "up" if stripe_status.get("connected") else ("unconfigured" if not stripe_status.get("configured") else "down"),
-                "mode": stripe_status.get("mode"),
-            },
-            "sentry": {
-                "status": "up" if sentry_status.get("active") else ("unconfigured" if not sentry_status.get("configured") else "down"),
-            },
-            "redis": {
-                "status": "up" if redis_status.get("connected") else ("unconfigured" if not redis_status.get("configured") else "down"),
-                "latency_ms": redis_status.get("latency_ms"),
-            },
-        },
-    }
-
-
 @router.get("/health/db")
-async def database_health() -> Dict[str, Any]:
+async def database_health(_: str = Depends(verify_api_key)) -> Dict[str, Any]:
     """
     Detailed database health check.
 
-    Returns comprehensive information about Supabase database connectivity.
+    Returns comprehensive information about Postgres (Neon) connectivity.
     """
-    db_status = await get_database_status()
+    db_status = await _get_full_database_status()
 
     return {
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "database": db_status,
     }
 
 
 @router.get("/health/stripe")
-async def stripe_health() -> Dict[str, Any]:
+async def stripe_health(_: str = Depends(verify_api_key)) -> Dict[str, Any]:
     """
     Detailed Stripe health check.
 
     Returns comprehensive information about Stripe payment configuration.
     """
-    stripe_status = get_stripe_status()
+    stripe_status = _get_full_stripe_status()
 
-    # Add price ID configuration check
     price_ids_configured = {
         "starter": bool(os.environ.get("STRIPE_PRICE_ID_STARTER")),
         "pro": bool(os.environ.get("STRIPE_PRICE_ID_PRO")),
@@ -319,21 +502,20 @@ async def stripe_health() -> Dict[str, Any]:
     stripe_status["price_ids_configured"] = price_ids_configured
 
     return {
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "stripe": stripe_status,
     }
 
 
 @router.get("/health/sentry")
-async def sentry_health() -> Dict[str, Any]:
+async def sentry_health(_: str = Depends(verify_api_key)) -> Dict[str, Any]:
     """
     Detailed Sentry configuration status.
 
     Returns comprehensive information about Sentry error tracking configuration.
     """
-    sentry_status = get_sentry_status()
+    sentry_status = _get_full_sentry_status()
 
-    # Add additional configuration details
     sentry_status["traces_sample_rate"] = float(
         os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.1")
     )
@@ -344,28 +526,28 @@ async def sentry_health() -> Dict[str, Any]:
     sentry_status["server_name"] = os.environ.get("SERVER_NAME", "blog-ai-api")
 
     return {
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "sentry": sentry_status,
     }
 
 
 @router.get("/health/redis")
-async def redis_health() -> Dict[str, Any]:
+async def redis_health(_: str = Depends(verify_api_key)) -> Dict[str, Any]:
     """
     Detailed Redis health check.
 
     Returns comprehensive information about Redis connectivity and status.
     """
-    redis_status = await get_redis_status()
+    redis_status = await _get_full_redis_status()
 
     return {
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "redis": redis_status,
     }
 
 
 @router.get("/health/cache")
-async def cache_stats() -> Dict[str, Any]:
+async def cache_stats(_: str = Depends(verify_api_key)) -> Dict[str, Any]:
     """
     Get cache statistics for monitoring.
 
@@ -377,7 +559,7 @@ async def cache_stats() -> Dict[str, Any]:
     voice_cache = get_voice_analysis_cache()
 
     return {
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "caches": {
             "content_analysis": content_cache.stats,
             "voice_analysis": voice_cache.stats,
@@ -386,7 +568,7 @@ async def cache_stats() -> Dict[str, Any]:
 
 
 @router.post("/health/cache/cleanup")
-async def cleanup_caches() -> Dict[str, Any]:
+async def cleanup_caches(_: str = Depends(verify_api_key)) -> Dict[str, Any]:
     """
     Cleanup expired cache entries.
 
@@ -401,12 +583,17 @@ async def cleanup_caches() -> Dict[str, Any]:
     voice_cleaned = voice_cache.cleanup_expired()
 
     return {
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "cleaned": {
             "content_analysis": content_cleaned,
             "voice_analysis": voice_cleaned,
         },
     }
+
+
+# =============================================================================
+# Root endpoint
+# =============================================================================
 
 
 @router.get(
@@ -424,20 +611,22 @@ async def cleanup_caches() -> Dict[str, Any]:
                         "api_version": "v1",
                         "docs": "/docs",
                         "health": "/health",
-                        "api_base": "/api/v1"
+                        "ready": "/ready",
+                        "api_base": "/api/v1",
                     }
                 }
-            }
+            },
         }
-    }
+    },
 )
 async def root():
     """Root endpoint with API information."""
     return {
         "message": "Welcome to the Blog AI API",
-        "version": "1.0.0",
+        "version": APP_VERSION,
         "api_version": "v1",
         "docs": "/docs",
         "health": "/health",
+        "ready": "/ready",
         "api_base": "/api/v1",
     }

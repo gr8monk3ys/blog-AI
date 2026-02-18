@@ -1,7 +1,6 @@
 'use client'
 
-import { Fragment, useEffect } from 'react'
-import { Transition } from '@headlessui/react'
+import { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   CheckCircleIcon,

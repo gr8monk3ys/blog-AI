@@ -2,7 +2,10 @@
 Type definitions for SEO functionality.
 """
 
+from enum import Enum
 from typing import Any, Dict, List, Literal, Optional
+
+from pydantic import BaseModel, Field
 
 
 class MetaDescription:
@@ -138,3 +141,196 @@ class SEOMetadata:
             title=title, description=meta_description.content
         )
         self.structured_data = structured_data
+
+
+# =============================================================================
+# SERP Analysis and Content Optimization Types (Pydantic)
+# =============================================================================
+
+
+class SuggestionPriority(str, Enum):
+    """Priority level for optimization suggestions."""
+
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+
+
+class SuggestionType(str, Enum):
+    """Type of optimization suggestion."""
+
+    ADD_HEADING = "add_heading"
+    COVER_TOPIC = "cover_topic"
+    ADD_TERM = "add_term"
+    ANSWER_QUESTION = "answer_question"
+    ADJUST_LENGTH = "adjust_length"
+    IMPROVE_STRUCTURE = "improve_structure"
+
+
+class SERPResult(BaseModel):
+    """A single result from the SERP analysis."""
+
+    title: str = Field(..., description="Title of the search result")
+    url: str = Field(..., description="URL of the search result")
+    snippet: str = Field(default="", description="Meta description or snippet")
+    position: int = Field(..., ge=1, description="Ranking position in SERP")
+
+
+class SERPAnalysis(BaseModel):
+    """Complete SERP analysis for a target keyword."""
+
+    keyword: str = Field(..., description="Target keyword analyzed")
+    results: List[SERPResult] = Field(
+        default_factory=list,
+        description="Top SERP results extracted",
+    )
+    common_topics: List[str] = Field(
+        default_factory=list,
+        description="Topics frequently covered by top-ranking pages",
+    )
+    suggested_headings: List[str] = Field(
+        default_factory=list,
+        description="Recommended headings derived from competitor content",
+    )
+    questions_to_answer: List[str] = Field(
+        default_factory=list,
+        description="Questions that top results address or PAA questions",
+    )
+    recommended_word_count: int = Field(
+        default=1500,
+        ge=0,
+        description="Recommended word count based on competitor average",
+    )
+    nlp_terms: List[str] = Field(
+        default_factory=list,
+        description="Semantically related NLP terms to include for topical depth",
+    )
+    people_also_ask: List[str] = Field(
+        default_factory=list,
+        description="People Also Ask questions from the SERP",
+    )
+    related_searches: List[str] = Field(
+        default_factory=list,
+        description="Related search queries from the SERP",
+    )
+
+
+class ContentScore(BaseModel):
+    """Breakdown of content optimization score against SERP data."""
+
+    overall_score: float = Field(
+        ...,
+        ge=0,
+        le=100,
+        description="Overall content optimization score (0-100)",
+    )
+    topic_coverage: float = Field(
+        ...,
+        ge=0,
+        le=100,
+        description="How well the content covers competitor topics",
+    )
+    term_usage: float = Field(
+        ...,
+        ge=0,
+        le=100,
+        description="How well NLP/semantic terms are utilized",
+    )
+    structure_score: float = Field(
+        ...,
+        ge=0,
+        le=100,
+        description="How well the heading structure matches top results",
+    )
+    readability_score: float = Field(
+        ...,
+        ge=0,
+        le=100,
+        description="Readability alignment with top-ranking content",
+    )
+    word_count_score: float = Field(
+        ...,
+        ge=0,
+        le=100,
+        description="How well word count matches the recommended range",
+    )
+
+
+class OptimizationSuggestion(BaseModel):
+    """A single actionable optimization suggestion."""
+
+    type: SuggestionType = Field(..., description="Category of the suggestion")
+    priority: SuggestionPriority = Field(..., description="Urgency of the suggestion")
+    description: str = Field(..., description="Human-readable recommendation")
+    current_value: Optional[str] = Field(
+        None,
+        description="Current state in the content (if applicable)",
+    )
+    recommended_value: Optional[str] = Field(
+        None,
+        description="Recommended target value",
+    )
+
+
+class ContentOptimization(BaseModel):
+    """Full content optimization result scored against SERP data."""
+
+    score: ContentScore = Field(
+        ...,
+        description="Detailed score breakdown",
+    )
+    suggestions: List[OptimizationSuggestion] = Field(
+        default_factory=list,
+        description="Ordered list of optimization suggestions",
+    )
+    missing_topics: List[str] = Field(
+        default_factory=list,
+        description="Topics covered by competitors but missing from content",
+    )
+    missing_terms: List[str] = Field(
+        default_factory=list,
+        description="NLP terms present in top results but absent from content",
+    )
+    covered_topics: List[str] = Field(
+        default_factory=list,
+        description="Topics already well covered in the content",
+    )
+    covered_terms: List[str] = Field(
+        default_factory=list,
+        description="NLP terms already present in the content",
+    )
+
+
+class ContentBrief(BaseModel):
+    """A full content brief generated from SERP analysis."""
+
+    keyword: str = Field(..., description="Target keyword for the brief")
+    recommended_title: str = Field(
+        ...,
+        description="Suggested title based on competitor analysis",
+    )
+    recommended_outline: List[str] = Field(
+        default_factory=list,
+        description="Suggested heading/outline structure",
+    )
+    recommended_word_count: int = Field(
+        default=1500,
+        ge=0,
+        description="Target word count",
+    )
+    terms_to_include: List[str] = Field(
+        default_factory=list,
+        description="NLP terms to weave into the content",
+    )
+    questions_to_answer: List[str] = Field(
+        default_factory=list,
+        description="Questions the content should address",
+    )
+    competitor_insights: str = Field(
+        default="",
+        description="Summary of competitor content strategies",
+    )
+    tone_guidance: str = Field(
+        default="",
+        description="Recommended tone and style based on top results",
+    )

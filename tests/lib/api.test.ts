@@ -39,8 +39,8 @@ describe('API Configuration', () => {
   })
 
   describe('getDefaultHeaders', () => {
-    it('should return Content-Type header', () => {
-      const headers = getDefaultHeaders() as Record<string, string>
+    it('should return Content-Type header', async () => {
+      const headers = (await getDefaultHeaders()) as Record<string, string>
       expect(headers['Content-Type']).toBe('application/json')
     })
   })

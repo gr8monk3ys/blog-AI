@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { getSupabase, isNoRowsError, isSupabaseConfigured } from './supabase'
+import { getSqlOrNull } from './db'
 
 export interface BlogPostMeta {
   title: string
@@ -68,7 +68,7 @@ const buildExcerpt = (body: string, fallbackLength = 160): string => {
 }
 
 export const loadBlogPosts = async (): Promise<BlogPostMeta[]> => {
-  const cmsPosts = await loadBlogPostsFromSupabase()
+  const cmsPosts = await loadBlogPostsFromDb()
   if (cmsPosts.length > 0) {
     return cmsPosts
   }
@@ -101,7 +101,7 @@ export const loadBlogPosts = async (): Promise<BlogPostMeta[]> => {
 }
 
 export const loadBlogPost = async (slug: string): Promise<BlogPost | null> => {
-  const cmsPost = await loadBlogPostFromSupabase(slug)
+  const cmsPost = await loadBlogPostFromDb(slug)
   if (cmsPost) {
     return cmsPost
   }
@@ -129,20 +129,31 @@ export const loadBlogPost = async (slug: string): Promise<BlogPost | null> => {
   }
 }
 
-const loadBlogPostsFromSupabase = async (): Promise<BlogPostMeta[]> => {
-  if (!isSupabaseConfigured()) return []
+const loadBlogPostsFromDb = async (): Promise<BlogPostMeta[]> => {
+  const sql = getSqlOrNull()
+  if (!sql) return []
 
   try {
-    const supabase = getSupabase() as any
-    const { data, error } = await supabase
-      .from('blog_posts')
-      .select('title, slug, excerpt, tags, published_at, updated_at, created_at')
-      .eq('status', 'published')
-      .order('published_at', { ascending: false, nullsFirst: false })
+    const rows = await sql.query(
+      `
+        SELECT
+          title,
+          slug,
+          excerpt,
+          body,
+          tags,
+          published_at,
+          updated_at,
+          created_at
+        FROM blog_posts
+        WHERE status = 'published'
+        ORDER BY published_at DESC NULLS LAST
+      `
+    )
 
-    if (error || !data) return []
+    if (!rows || rows.length === 0) return []
 
-    return (data as any[]).map((post) => ({
+    return (rows as any[]).map((post) => ({
       title: post.title,
       date: post.published_at || post.updated_at || post.created_at,
       excerpt: post.excerpt || '',
@@ -154,27 +165,32 @@ const loadBlogPostsFromSupabase = async (): Promise<BlogPostMeta[]> => {
   }
 }
 
-const loadBlogPostFromSupabase = async (slug: string): Promise<BlogPost | null> => {
-  if (!isSupabaseConfigured()) return null
+const loadBlogPostFromDb = async (slug: string): Promise<BlogPost | null> => {
+  const sql = getSqlOrNull()
+  if (!sql) return null
 
   try {
-    const supabase = getSupabase() as any
-    const { data, error } = await supabase
-      .from('blog_posts')
-      .select(
-        'title, slug, excerpt, body, tags, published_at, updated_at, created_at'
-      )
-      .eq('slug', slug)
-      .eq('status', 'published')
-      .single()
+    const rows = await sql.query(
+      `
+        SELECT
+          title,
+          slug,
+          excerpt,
+          body,
+          tags,
+          published_at,
+          updated_at,
+          created_at
+        FROM blog_posts
+        WHERE slug = $1 AND status = 'published'
+        LIMIT 1
+      `,
+      [slug]
+    )
 
-    if (error) {
-      if (isNoRowsError(error)) return null
-      return null
-    }
+    if (!rows || rows.length === 0) return null
 
-    if (!data) return null
-
+    const data = rows[0] as any
     return {
       title: data.title,
       date: data.published_at || data.updated_at || data.created_at,

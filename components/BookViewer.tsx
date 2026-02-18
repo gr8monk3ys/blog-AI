@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Disclosure } from '@headlessui/react';
 import { ChevronUpIcon } from '@heroicons/react/24/outline';
-import { Book, BookDownloadOptions } from '../types/book';
+import { Book } from '../types/book';
 import { useToast } from '../hooks/useToast';
 import { API_ENDPOINTS, getDefaultHeaders } from '../lib/api';
 
@@ -18,7 +18,7 @@ export default function BookViewer({ book, filePath }: BookViewerProps) {
     try {
       const response = await fetch(API_ENDPOINTS.downloadBook, {
         method: 'POST',
-        headers: getDefaultHeaders(),
+        headers: await getDefaultHeaders(),
         body: JSON.stringify({
           file_path: filePath,
           format: downloadFormat,

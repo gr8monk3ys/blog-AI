@@ -54,9 +54,10 @@ if (SENTRY_DSN) {
 
     // Only capture errors from our domain
     allowUrls: [
-      // Add your production domain here
       /localhost/,
       /127\.0\.0\.1/,
+      /.*\.vercel\.app/,
+      /.*\.netlify\.app/,
     ],
 
     // Remove PII before sending

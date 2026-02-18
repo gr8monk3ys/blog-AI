@@ -115,10 +115,10 @@ def validate_security_config(settings: Settings, result: ValidationResult) -> No
 
     if security.is_production:
         # Production-specific checks
-        if security.dev_mode:
+        if security.dev_api_key:
             result.add_error(
-                "DEV_MODE=true is not allowed in production environment. "
-                "Set DEV_MODE=false for production deployment."
+                "DEV_API_KEY is set in production environment. "
+                "Remove DEV_API_KEY for production deployment."
             )
 
         if not security.https_redirect_enabled:
@@ -148,9 +148,9 @@ def validate_security_config(settings: Settings, result: ValidationResult) -> No
 
     else:
         # Development-specific info
-        if security.dev_mode:
+        if security.dev_api_key:
             result.add_info(
-                "DEV_MODE is enabled. API key authentication may be bypassed."
+                "DEV_API_KEY is set. Use it as X-API-Key header for local testing."
             )
 
 
@@ -160,17 +160,11 @@ def validate_database_config(settings: Settings, result: ValidationResult) -> No
 
     if not db.is_configured:
         result.add_warning(
-            "Supabase is not configured (SUPABASE_URL, SUPABASE_KEY/SUPABASE_SERVICE_KEY). "
-            "Features requiring database storage will use in-memory fallback."
+            "Database is not configured (DATABASE_URL or DATABASE_URL_DIRECT). "
+            "Features requiring persistence may fall back to in-memory or local storage."
         )
     else:
-        result.add_info("Supabase database configured")
-
-        if not db.has_service_role:
-            result.add_warning(
-                "SUPABASE_SERVICE_ROLE_KEY not configured. "
-                "Some admin operations may not be available."
-            )
+        result.add_info("Postgres database configured")
 
 
 def validate_stripe_config(settings: Settings, result: ValidationResult) -> None:
@@ -354,13 +348,13 @@ def log_config_summary(settings: Optional[Settings] = None) -> None:
     logger.info("Blog AI Configuration Summary")
     logger.info("=" * 60)
     logger.info(f"Environment: {summary['environment']}")
-    logger.info(f"Dev Mode: {summary['dev_mode']}")
+    logger.info(f"Dev API Key: {'set' if summary.get('dev_mode') else 'not set'}")
     logger.info(f"Log Level: {summary['log_level']}")
     logger.info("-" * 60)
     logger.info("Features:")
     logger.info(f"  LLM Providers: {', '.join(summary['llm_providers']) or 'None'}")
     logger.info(f"  Default Provider: {summary['default_llm_provider'] or 'None'}")
-    logger.info(f"  Supabase: {'Enabled' if summary['supabase_configured'] else 'Disabled'}")
+    logger.info(f"  Database: {'Enabled' if summary.get('database_configured') else 'Disabled'}")
     logger.info(f"  Stripe Payments: {'Enabled' if summary['stripe_configured'] else 'Disabled'}")
     logger.info(f"  Stripe Webhooks: {'Enabled' if summary['stripe_webhooks_enabled'] else 'Disabled'}")
     logger.info(f"  Sentry Monitoring: {'Enabled' if summary['sentry_configured'] else 'Disabled'}")
@@ -374,6 +368,67 @@ def log_config_summary(settings: Optional[Settings] = None) -> None:
     logger.info(f"  HSTS: {'Enabled' if summary['hsts_enabled'] else 'Disabled'}")
     logger.info(f"  Allowed Origins: {len(summary['allowed_origins'])} configured")
     logger.info("=" * 60)
+
+    # Startup feature availability banner
+    log_feature_availability_banner(settings)
+
+
+def log_feature_availability_banner(settings: Optional[Settings] = None) -> None:
+    """
+    Log a startup banner that clearly shows which product features are
+    available and which are unavailable (with the reason why).
+
+    This gives operators an immediate picture of the system's capability
+    when they look at startup logs.
+    """
+    if settings is None:
+        settings = get_settings()
+
+    db_ok = settings.is_database_configured
+    stripe_ok = settings.is_stripe_configured
+    has_llm = settings.has_llm_provider
+    has_research = settings.has_research_api
+    redis_ok = settings.is_redis_configured
+
+    # Each entry: (feature_name, is_available, reason_if_unavailable)
+    features = [
+        ("Content Generation", has_llm, "Set OPENAI_API_KEY, ANTHROPIC_API_KEY, or GEMINI_API_KEY"),
+        ("Brand Profiles", db_ok, "Set DATABASE_URL"),
+        ("Conversation History", db_ok, "Set DATABASE_URL"),
+        ("Analytics Dashboard", db_ok, "Set DATABASE_URL"),
+        ("Payments / Subscriptions", stripe_ok, "Set STRIPE_SECRET_KEY"),
+        ("Web Research", has_research, "Set SERP_API_KEY or TAVILY_API_KEY"),
+        ("Redis Cache / Queues", redis_ok, "Set REDIS_URL"),
+    ]
+
+    available = [(name, reason) for name, ok, reason in features if ok]
+    unavailable = [(name, reason) for name, ok, reason in features if not ok]
+
+    logger.info("")
+    logger.info("=" * 60)
+    logger.info("  FEATURE AVAILABILITY")
+    logger.info("=" * 60)
+
+    if available:
+        logger.info("")
+        logger.info("  AVAILABLE:")
+        for name, _ in available:
+            logger.info(f"    [OK]  {name}")
+
+    if unavailable:
+        logger.info("")
+        logger.info("  UNAVAILABLE:")
+        for name, reason in unavailable:
+            logger.warning(f"    [--]  {name}  ->  {reason}")
+
+    logger.info("")
+    logger.info(
+        "  %d of %d features available",
+        len(available),
+        len(features),
+    )
+    logger.info("=" * 60)
+    logger.info("")
 
 
 def startup_validation() -> Settings:

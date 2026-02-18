@@ -18,7 +18,7 @@ export interface GeneratedContentItem {
   output: string
   provider: string
   execution_time_ms: number
-  user_hash: string | null
+  user_id: string
   is_favorite: boolean
 }
 

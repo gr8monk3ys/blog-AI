@@ -19,6 +19,7 @@ from src.book.make_book import (
     generate_book_with_research,
     post_process_book,
 )
+from src.brand.storage import get_brand_voice_storage
 from src.organizations import AuthorizationContext
 from src.config import get_settings
 from src.text_generation.core import (
@@ -31,7 +32,12 @@ from src.text_generation.core import (
 from ..auth import verify_api_key
 from ..dependencies import require_content_creation
 from ..error_handlers import sanitize_error_message
-from ..middleware import increment_usage_for_operation, require_quota
+from ..middleware import (
+    check_generation_rate_limit,
+    increment_usage_for_operation,
+    require_pro_tier,
+    require_quota,
+)
 from ..models import BookGenerationRequest
 from ..storage import conversations
 from ..websocket import manager
@@ -122,8 +128,26 @@ async def generate_book_endpoint(
         f"title_length: {len(request.title)}, chapters: {request.num_chapters}"
     )
     try:
+        # Enforce per-user generation rate limit BEFORE any expensive work.
+        # This prevents a single user from overwhelming the LLM backend.
+        await check_generation_rate_limit(user_id)
+
+        # Pro tier features: research mode and brand voice require an upgraded plan.
+        # Check tier BEFORE quota so we never decrement quota for gated features.
+        if request.research or request.brand_profile_id:
+            await require_pro_tier(user_id)
+
+        # Enforce quota before doing any expensive generation work.
+        # We call the dependency directly so we reuse the already-authenticated user_id.
+        await require_quota(user_id)
+
         settings = get_settings()
-        provider_type = settings.llm.default_provider or "openai"
+        provider_type = request.provider_type or settings.llm.default_provider or "openai"
+        if provider_type not in settings.llm.available_providers:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Provider not configured: {provider_type}",
+            )
         # Create generation options
         options = GenerationOptions(
             temperature=0.7,
@@ -132,6 +156,16 @@ async def generate_book_endpoint(
             frequency_penalty=0.0,
             presence_penalty=0.0,
         )
+
+        brand_voice = None
+        if request.brand_profile_id:
+            try:
+                storage = get_brand_voice_storage()
+                fingerprint = await storage.get_fingerprint(user_id, request.brand_profile_id)
+                if fingerprint and fingerprint.voice_summary:
+                    brand_voice = fingerprint.voice_summary
+            except Exception as e:
+                logger.debug("Failed to load brand voice fingerprint: %s", e)
 
         # Generate book (run sync functions in thread pool to avoid blocking)
         if request.research:
@@ -143,6 +177,7 @@ async def generate_book_endpoint(
                     sections_per_chapter=request.sections_per_chapter,
                     keywords=request.keywords,
                     tone=request.tone,
+                    brand_voice=brand_voice,
                     provider_type=provider_type,
                     options=options,
                 )
@@ -156,6 +191,7 @@ async def generate_book_endpoint(
                     sections_per_chapter=request.sections_per_chapter,
                     keywords=request.keywords,
                     tone=request.tone,
+                    brand_voice=brand_voice,
                     provider_type=provider_type,
                     options=options,
                 )
@@ -184,6 +220,23 @@ async def generate_book_endpoint(
             "tags": book.tags,
             "chapters": [],
         }
+
+        sources = []
+        for s in getattr(book, "sources", []) or []:
+            try:
+                sources.append(
+                    {
+                        "id": int(getattr(s, "id", 0) or 0),
+                        "title": str(getattr(s, "title", "") or ""),
+                        "url": str(getattr(s, "url", "") or ""),
+                        "snippet": str(getattr(s, "snippet", "") or ""),
+                        "provider": str(getattr(s, "provider", "") or ""),
+                    }
+                )
+            except Exception:
+                continue
+        if sources:
+            book_data["sources"] = sources
 
         for chapter in book.chapters:
             chapter_data = {
@@ -234,6 +287,7 @@ async def generate_book_endpoint(
                 "title": request.title[:50],
                 "chapters": request.num_chapters,
                 "research": request.research,
+                "provider_type": provider_type,
             },
         )
 
@@ -260,8 +314,19 @@ async def generate_book_endpoint(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate book. Please try again later.",
         )
+    except HTTPException:
+        # Preserve explicit HTTP errors (e.g., quota/auth failures).
+        raise
     except (AttributeError, KeyError, TypeError) as e:
         logger.error(f"Unexpected error generating book: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred. Please try again later.",
+        )
+    except Exception as e:
+        # Defensive catch-all: BaseHTTPMiddleware can surface exceptions as
+        # ExceptionGroups; normalize to a 500 response for clients/tests.
+        logger.error(f"Unhandled error generating book: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred. Please try again later.",

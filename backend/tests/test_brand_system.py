@@ -125,6 +125,8 @@ def sample_fingerprint(
 ):
     """Sample voice fingerprint for testing."""
     return VoiceFingerprint(
+        id="fp-test-1",
+        profile_id="profile-test-1",
         vocabulary_profile=sample_vocabulary_profile,
         sentence_patterns=sample_sentence_patterns,
         tone_distribution=sample_tone_distribution,

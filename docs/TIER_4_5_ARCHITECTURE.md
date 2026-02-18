@@ -2,6 +2,8 @@
 
 This document provides detailed technical architecture for Blog AI's Tier 4 (Competitive Parity) and Tier 5 (Wild Card) features.
 
+Note: Some sections include legacy Supabase-based examples. The cloud SaaS architecture is now Clerk for auth and Neon Postgres for persistence.
+
 ---
 
 ## Table of Contents

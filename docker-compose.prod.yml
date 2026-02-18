@@ -64,7 +64,7 @@ services:
       - RATE_LIMIT_GENERATION=${RATE_LIMIT_GENERATION:-10}
 
       # Redis connection
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
 
       # API Keys (from .env or secrets)
       - OPENAI_API_KEY=${OPENAI_API_KEY}
@@ -80,15 +80,18 @@ services:
       # Stripe payments
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      - STRIPE_PRICE_ID_STARTER=${STRIPE_PRICE_ID_STARTER:-}
       - STRIPE_PRICE_ID_PRO=${STRIPE_PRICE_ID_PRO:-}
-      - STRIPE_PRICE_ID_ENTERPRISE=${STRIPE_PRICE_ID_ENTERPRISE:-}
+      - STRIPE_PRICE_ID_BUSINESS=${STRIPE_PRICE_ID_BUSINESS:-}
+      - STRIPE_PRICE_ID_STARTER_YEARLY=${STRIPE_PRICE_ID_STARTER_YEARLY:-}
+      - STRIPE_PRICE_ID_PRO_YEARLY=${STRIPE_PRICE_ID_PRO_YEARLY:-}
+      - STRIPE_PRICE_ID_BUSINESS_YEARLY=${STRIPE_PRICE_ID_BUSINESS_YEARLY:-}
 
-      # Supabase configuration
-      - SUPABASE_URL=${SUPABASE_URL:-}
-      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
-      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-}
-      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
+      # Database (Neon / Postgres)
+      - DATABASE_URL=${DATABASE_URL:-}
+      - DATABASE_URL_DIRECT=${DATABASE_URL_DIRECT:-}
+      - DATABASE_POOL_MIN_SIZE=${DATABASE_POOL_MIN_SIZE:-1}
+      - DATABASE_POOL_MAX_SIZE=${DATABASE_POOL_MAX_SIZE:-5}
 
       # Sentry error tracking
       - SENTRY_DSN=${SENTRY_DSN:-}
@@ -152,6 +155,7 @@ services:
     # Redis configuration
     command: >
       redis-server
+      --requirepass ${REDIS_PASSWORD}
       --appendonly yes
       --maxmemory 200mb
       --maxmemory-policy allkeys-lru
@@ -160,7 +164,7 @@ services:
 
     # Health check
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
