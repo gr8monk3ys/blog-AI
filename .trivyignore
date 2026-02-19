@@ -1,0 +1,11 @@
+# Accepted-risk vulnerabilities for container scanning. Keep in sync with the
+# audit:runtime allowlist in scripts/audit-runtime.mjs and Phase 0.3 of
+# docs/REMEDIATION_PLAN.md.
+
+# picomatch ReDoS via crafted extglob patterns.
+# Reachable only through build/dev tooling globs (tailwindcss -> chokidar/
+# micromatch, fast-glob) — no production runtime exposure. The patched 2.3.2 is
+# within the parents' ^2 range but can't be forced without clashing with the
+# ^4.x consumers (bun lacks scoped overrides). Revisit when micromatch moves
+# off picomatch 2.x.
+CVE-2026-33671
