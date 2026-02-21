@@ -12,8 +12,12 @@ const isDev = process.env.NODE_ENV === 'development'
 // Only enforced in CI/Vercel (not local `npm run build`)
 // =============================================================================
 const isDeployBuild = process.env.CI === 'true' || process.env.VERCEL === '1'
+const isVercelProductionBuild =
+  process.env.NODE_ENV === 'production' &&
+  isDeployBuild &&
+  process.env.VERCEL_ENV === 'production'
 
-if (process.env.NODE_ENV === 'production' && isDeployBuild) {
+if (isVercelProductionBuild) {
   if (!process.env.NEXT_PUBLIC_API_URL) {
     throw new Error(
       'NEXT_PUBLIC_API_URL is required in production. ' +
