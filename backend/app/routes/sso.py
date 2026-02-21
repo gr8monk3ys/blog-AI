@@ -21,7 +21,10 @@ import os
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
-from urllib.parse import urlencode, urlparse
+from urllib.parse import urlencode
+import time as _time
+from urllib.parse import urlparse as _urlparse
+
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -195,60 +198,6 @@ async def _create_user_session(
     return session_token
 
 
-def _validate_redirect_url(url: Optional[str]) -> str:
-    """
-    Validate a redirect URL to prevent open redirect attacks.
-
-    Only allows relative URLs or URLs to explicitly allowed domains.
-    Falls back to "/" if the URL is not trusted.
-
-    Args:
-        url: The URL to validate.
-
-    Returns:
-        The validated URL, or "/" if untrusted.
-    """
-    if not url:
-        return "/"
-
-    # Allow relative URLs (starting with / but not //)
-    if url.startswith("/") and not url.startswith("//"):
-        return url
-
-    # Parse the URL and validate against allowed domains
-    try:
-        parsed = urlparse(url)
-        # Reject URLs with no scheme or netloc (malformed absolute URLs)
-        if not parsed.scheme or not parsed.netloc:
-            return "/"
-
-        # Only allow HTTPS
-        if parsed.scheme not in ("https", "http"):
-            return "/"
-
-        # Check against allowed redirect domains from environment
-        allowed_domains_str = os.environ.get("SSO_ALLOWED_REDIRECT_DOMAINS", "")
-        if not allowed_domains_str:
-            # No allowed domains configured -- only allow relative URLs
-            logger.warning(
-                f"Redirect URL rejected (no allowed domains configured): {url}"
-            )
-            return "/"
-
-        allowed_domains = {
-            d.strip().lower() for d in allowed_domains_str.split(",") if d.strip()
-        }
-        hostname = parsed.hostname
-        if hostname and hostname.lower() in allowed_domains:
-            return url
-
-        logger.warning(f"Redirect URL rejected (domain not allowed): {url}")
-        return "/"
-
-    except Exception:
-        return "/"
-
-
 def _get_request_info(request: Request) -> Dict[str, Any]:
     """Extract request information for python3-saml."""
     # Determine if HTTPS
@@ -396,19 +345,6 @@ async def saml_login(
             request_data=request_data,
         )
 
-        # Validate redirect URL against configured IdP SSO URL
-        parsed_redirect = urlparse(redirect_url)
-        parsed_idp = urlparse(sso_config.saml_config.idp.sso_url)
-        if parsed_redirect.hostname != parsed_idp.hostname:
-            logger.error(
-                f"SAML redirect URL hostname mismatch: "
-                f"{parsed_redirect.hostname} != {parsed_idp.hostname}"
-            )
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail={"error": "SSO configuration error", "error_code": "SSO_REDIRECT_MISMATCH"},
-            )
-
         # Save session data for callback validation
         session_id = secrets.token_urlsafe(16)
         session_data["organization_id"] = organization_id
@@ -439,7 +375,7 @@ async def saml_login(
         logger.error(f"SAML configuration error for org {organization_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"error": "SSO configuration error", "error_code": e.error_code},
+            detail={"error": str(e), "error_code": e.error_code},
         )
 
 
@@ -534,8 +470,8 @@ async def saml_acs(
         if session_id:
             await _delete_auth_session(session_id)
 
-        # Determine redirect URL - validate to prevent open redirect
-        redirect_url = _validate_redirect_url(relay_state)
+        # Determine redirect URL
+        redirect_url = _safe_redirect_url(relay_state or "/")
 
         # Create response with session token
         response = RedirectResponse(
@@ -562,19 +498,19 @@ async def saml_acs(
         logger.error(f"SAML authentication error for org {organization_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={"error": "SAML authentication failed", "error_code": e.error_code},
+            detail={"error": str(e), "error_code": e.error_code},
         )
     except SSOValidationError as e:
         logger.error(f"SAML validation error for org {organization_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"error": "SAML validation failed", "error_code": e.error_code},
+            detail={"error": str(e), "error_code": e.error_code},
         )
     except SSOReplayError as e:
         logger.warning(f"SAML replay attack detected for org {organization_id}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"error": "SAML replay detected", "error_code": e.error_code},
+            detail={"error": str(e), "error_code": e.error_code},
         )
 
 
@@ -670,19 +606,6 @@ async def oidc_authorize(
             login_hint=login_hint,
         )
 
-        # Validate auth_url against configured OIDC authorization endpoint
-        parsed_auth_url = urlparse(auth_url)
-        parsed_configured = urlparse(sso_config.oidc_config.authorization_endpoint)
-        if parsed_auth_url.hostname != parsed_configured.hostname:
-            logger.error(
-                f"OIDC auth URL hostname mismatch: "
-                f"{parsed_auth_url.hostname} != {parsed_configured.hostname}"
-            )
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail={"error": "SSO configuration error", "error_code": "OIDC_REDIRECT_MISMATCH"},
-            )
-
         # Save session data for callback validation
         session_id = secrets.token_urlsafe(16)
         session_data["organization_id"] = organization_id
@@ -713,7 +636,7 @@ async def oidc_authorize(
         logger.error(f"OIDC configuration error for org {organization_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"error": "SSO configuration error", "error_code": e.error_code},
+            detail={"error": str(e), "error_code": e.error_code},
         )
 
 
@@ -828,8 +751,8 @@ async def oidc_callback(
         if session_id:
             await _delete_auth_session(session_id)
 
-        # Determine redirect URL - validate to prevent open redirect
-        redirect_url = _validate_redirect_url(session_data.get("relay_state"))
+        # Determine redirect URL
+        redirect_url = _safe_redirect_url(session_data.get("relay_state") or "/")
 
         # Create response with session token
         response = RedirectResponse(
@@ -856,19 +779,19 @@ async def oidc_callback(
         logger.error(f"OIDC authentication error for org {organization_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={"error": "OIDC authentication failed", "error_code": e.error_code},
+            detail={"error": str(e), "error_code": e.error_code},
         )
     except SSOValidationError as e:
         logger.error(f"OIDC validation error for org {organization_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"error": "OIDC validation failed", "error_code": e.error_code},
+            detail={"error": str(e), "error_code": e.error_code},
         )
     except SSOReplayError as e:
         logger.warning(f"OIDC replay attack detected for org {organization_id}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"error": "OIDC replay detected", "error_code": e.error_code},
+            detail={"error": str(e), "error_code": e.error_code},
         )
 
 
