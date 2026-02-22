@@ -5,6 +5,11 @@
 htmlcov/
 .nyc_output/
 coverage/
+backend/coverage.xml
+
+# Test artifacts
+playwright-report/
+test-results/
 
 # Run logs
 backend/run_logs/*

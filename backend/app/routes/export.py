@@ -301,7 +301,7 @@ def markdown_to_html(content: str, title: str, metadata: Optional[Dict] = None) 
             meta_html = f'<div class="metadata">{"".join(meta_parts)}</div>'
 
     # Build full HTML document (using sanitized title)
-    html = f"""<!DOCTYPE html>
+    html_doc = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -481,7 +481,7 @@ def markdown_to_html(content: str, title: str, metadata: Optional[Dict] = None) 
 </body>
 </html>"""
 
-    return html
+    return html_doc
 
 
 def content_to_wordpress_blocks(content: str, title: str) -> str:
