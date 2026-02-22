@@ -132,7 +132,6 @@ async def _store_auth_session(session_id: str, data: dict, ttl_seconds: int = 60
     payload.setdefault("created_at", datetime.now(timezone.utc).isoformat())
 
     redis = await _get_redis()
-    persisted = False
     if redis:
         import json as _json
         try:
@@ -141,39 +140,41 @@ async def _store_auth_session(session_id: str, data: dict, ttl_seconds: int = 60
                 ttl_seconds,
                 _json.dumps(payload, default=str),
             )
-            persisted = True
         except Exception:
             pass
 
-    if await db_store_auth_session(session_id, payload, ttl_seconds):
-        persisted = True
+    await db_store_auth_session(session_id, payload, ttl_seconds)
 
-    if not persisted:
-        if len(_sso_auth_sessions) >= _MAX_MEMORY_SESSIONS:
-            oldest = next(iter(_sso_auth_sessions))
-            del _sso_auth_sessions[oldest]
-        _sso_auth_sessions[session_id] = payload
+    # Always keep a copy in the in-memory cache so that reads can fall back
+    # to it when Redis/DB are unavailable, and so that session data is
+    # accessible for timeout enforcement and cleanup.
+    if len(_sso_auth_sessions) >= _MAX_MEMORY_SESSIONS:
+        oldest = next(iter(_sso_auth_sessions))
+        del _sso_auth_sessions[oldest]
+    _sso_auth_sessions[session_id] = payload
 
 
 async def _get_auth_session(session_id: str) -> dict | None:
     if not session_id:
         return None
 
-    redis = await _get_redis()
-    data = None
-    if redis:
-        import json as _json
-        try:
-            raw = await redis.get(f"{_SSO_SESSION_PREFIX}{session_id}")
-            data = _json.loads(raw) if raw else None
-        except Exception:
-            data = None
+    # Check in-memory cache first (always populated by _store_auth_session).
+    data = _sso_auth_sessions.get(session_id)
 
+    # Fall back to Redis if not in memory.
+    if data is None:
+        redis = await _get_redis()
+        if redis:
+            import json as _json
+            try:
+                raw = await redis.get(f"{_SSO_SESSION_PREFIX}{session_id}")
+                data = _json.loads(raw) if raw else None
+            except Exception:
+                data = None
+
+    # Fall back to database.
     if data is None:
         data = await db_get_auth_session(session_id)
-
-    if data is None:
-        data = _sso_auth_sessions.get(session_id)
 
     if not data:
         return None
@@ -222,7 +223,6 @@ async def _delete_user_session(session_id: str) -> None:
 
 async def _store_user_session(session_id: str, session: "SSOSession", ttl_seconds: int = 86400) -> None:
     redis = await _get_redis()
-    persisted = False
     if redis:
         import json as _json
         try:
@@ -231,18 +231,18 @@ async def _store_user_session(session_id: str, session: "SSOSession", ttl_second
                 ttl_seconds,
                 _json.dumps(session.model_dump(mode="json", exclude_none=True), default=str),
             )
-            persisted = True
         except Exception:
             pass
 
-    if await db_store_user_session(session_id, session, ttl_seconds):
-        persisted = True
+    await db_store_user_session(session_id, session, ttl_seconds)
 
-    if not persisted:
-        if len(_sso_user_sessions) >= _MAX_MEMORY_SESSIONS:
-            oldest = next(iter(_sso_user_sessions))
-            del _sso_user_sessions[oldest]
-        _sso_user_sessions[session_id] = session
+    # Always keep a copy in the in-memory cache so that reads can fall back
+    # to it when Redis/DB are unavailable, and so that session data is
+    # accessible for expiry checks and cleanup.
+    if len(_sso_user_sessions) >= _MAX_MEMORY_SESSIONS:
+        oldest = next(iter(_sso_user_sessions))
+        del _sso_user_sessions[oldest]
+    _sso_user_sessions[session_id] = session
 
 
 async def _get_user_session(session_id: str):
