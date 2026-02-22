@@ -43,7 +43,7 @@ jobs:
 
       - name: Run backend smoke tests
         run: |
-          pytest tests/test_feature_smoke.py \
+          pytest tests/test_ci_smoke.py \
             --cov=src \
             --cov=app \
             --cov-report=xml \
