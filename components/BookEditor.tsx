@@ -12,7 +12,7 @@ interface BookEditorProps {
   onSave: (updatedBook: Book) => void;
 }
 
-export default function BookEditor({ book, filePath, onSave }: BookEditorProps) {
+function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
   const { showToast, ToastComponent } = useToast();
   const [editingBook, setEditingBook] = useState<Book>({ ...book });
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -51,17 +51,20 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
   };
 
   const handleAddTag = () => {
-    if (newTag.trim() === '') return;
+    const trimmedTag = newTag.trim();
+    if (trimmedTag === '') return;
     
     const updatedBook = { ...editingBook };
-    updatedBook.tags = [...(updatedBook.tags || []), newTag.trim()];
+    const existingTags = new Set(updatedBook.tags || []);
+    if (existingTags.has(trimmedTag)) return;
+    updatedBook.tags = [...existingTags, trimmedTag];
     setEditingBook(updatedBook);
     setNewTag('');
   };
 
-  const handleRemoveTag = (index: number) => {
+  const handleRemoveTag = (tagToRemove: string) => {
     const updatedBook = { ...editingBook };
-    updatedBook.tags = (updatedBook.tags || []).filter((_, i) => i !== index);
+    updatedBook.tags = (updatedBook.tags || []).filter((tag) => tag !== tagToRemove);
     setEditingBook(updatedBook);
   };
 
@@ -96,8 +99,7 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
                 type="text"
                 value={editingBook.title}
                 onChange={(e) => setEditingBook({ ...editingBook, title: e.target.value })}
-                className="text-3xl font-bold border-b border-amber-500 focus:outline-none"
-                autoFocus
+                className="text-3xl font-bold border-b border-amber-500 focus:outline-none dark:bg-transparent dark:text-gray-100"
               />
               <button
                 onClick={() => setIsEditingTitle(false)}
@@ -107,7 +109,7 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
               </button>
             </div>
           ) : (
-            <h1 className="text-3xl font-bold flex items-center">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
               {editingBook.title}
               <button
                 onClick={() => setIsEditingTitle(true)}
@@ -128,7 +130,7 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
 
       <div className="mb-4">
         <div className="flex items-center mb-2">
-          <span className="text-sm text-gray-500 mr-2">Tags:</span>
+          <span className="text-sm text-gray-500 dark:text-gray-400 mr-2">Tags:</span>
           <button
             onClick={() => setIsEditingTags(!isEditingTags)}
             className="text-gray-400 hover:text-amber-600"
@@ -138,12 +140,12 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
         </div>
         
         <div className="flex flex-wrap">
-          {(editingBook.tags || []).map((tag, index) => (
-            <span key={index} className="inline-flex items-center bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">
+          {Array.from(new Set(editingBook.tags || [])).map((tag) => (
+            <span key={tag} className="inline-flex items-center bg-gray-200 dark:bg-gray-800 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 dark:text-gray-300 mr-2 mb-2">
               {tag}
               {isEditingTags && (
                 <button
-                  onClick={() => handleRemoveTag(index)}
+                  onClick={() => handleRemoveTag(tag)}
                   className="ml-1 text-gray-500 hover:text-red-500"
                 >
                   &times;
@@ -158,7 +160,7 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
                 type="text"
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
-                className="border border-gray-300 rounded-l px-2 py-1 text-sm"
+                className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-l px-2 py-1 text-sm"
                 placeholder="Add tag..."
               />
               <button
@@ -177,7 +179,7 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
           <Disclosure key={chapter.number} defaultOpen={chapterIndex === 0}>
             {({ open }) => (
               <>
-                <Disclosure.Button className="flex justify-between w-full px-4 py-2 text-lg font-medium text-left text-amber-900 bg-amber-100 rounded-lg hover:bg-amber-200 focus:outline-none focus-visible:ring focus-visible:ring-amber-500 focus-visible:ring-opacity-75">
+                <Disclosure.Button className="flex justify-between w-full px-4 py-2 text-lg font-medium text-left text-amber-900 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900/50 focus:outline-none focus-visible:ring focus-visible:ring-amber-500 focus-visible:ring-opacity-75">
                   <div className="flex items-center">
                     <span>{chapter.title}</span>
                     <button
@@ -196,11 +198,11 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
                     } w-5 h-5 text-amber-500`}
                   />
                 </Disclosure.Button>
-                <Disclosure.Panel className="px-4 pt-4 pb-2 text-gray-500">
+                <Disclosure.Panel className="px-4 pt-4 pb-2 text-gray-500 dark:text-gray-400">
                   {chapter.topics.map((topic, topicIndex) => (
                     <div key={topicIndex} className="mb-6">
                       <div className="flex items-center mb-2">
-                        <h3 className="text-lg font-medium text-gray-900">{topic.title}</h3>
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">{topic.title}</h3>
                         <button
                           onClick={() => setIsEditingTopic({ chapterIndex, topicIndex })}
                           className="ml-2 text-gray-400 hover:text-amber-600"
@@ -208,7 +210,7 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
                           <PencilIcon className="h-4 w-4" />
                         </button>
                       </div>
-                      <div className="prose prose-indigo">{topic.content}</div>
+                      <div className="prose prose-indigo dark:prose-invert">{topic.content}</div>
                     </div>
                   ))}
                 </Disclosure.Panel>
@@ -244,10 +246,10 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-gray-900 p-6 text-left align-middle shadow-xl transition-all">
                   <Dialog.Title
                     as="h3"
-                    className="text-lg font-medium leading-6 text-gray-900"
+                    className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100"
                   >
                     Edit Chapter Title
                   </Dialog.Title>
@@ -265,15 +267,14 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
                           }
                         }
                       }}
-                      className="w-full p-2 border border-gray-300 rounded"
-                      autoFocus
+                      className="w-full p-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded"
                     />
                   </div>
 
                   <div className="mt-4 flex justify-end space-x-2">
                     <button
                       type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-gray-200 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-300 focus:outline-none"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-gray-200 dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-700 focus:outline-none"
                       onClick={() => setIsEditingChapter(null)}
                     >
                       Cancel
@@ -326,10 +327,10 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white dark:bg-gray-900 p-6 text-left align-middle shadow-xl transition-all">
                   <Dialog.Title
                     as="h3"
-                    className="text-lg font-medium leading-6 text-gray-900"
+                    className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100"
                   >
                     Edit Content
                   </Dialog.Title>
@@ -340,7 +341,7 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
                       if (!topic) return null;
                       return (
                         <>
-                          <h4 className="text-md font-medium text-gray-700 mb-2">
+                          <h4 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-2">
                             {topic.title}
                           </h4>
                           <textarea
@@ -354,9 +355,8 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
                                 setEditingBook(updatedBook);
                               }
                             }}
-                            className="w-full p-2 border border-gray-300 rounded"
+                            className="w-full p-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded"
                             rows={10}
-                            autoFocus
                           />
                         </>
                       );
@@ -366,7 +366,7 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
                   <div className="mt-4 flex justify-end space-x-2">
                     <button
                       type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-gray-200 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-300 focus:outline-none"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-gray-200 dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-700 focus:outline-none"
                       onClick={() => setIsEditingTopic(null)}
                     >
                       Cancel
@@ -398,12 +398,16 @@ export default function BookEditor({ book, filePath, onSave }: BookEditorProps) 
         </Dialog>
       </Transition>
 
-      <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-        <p className="text-sm text-gray-600">
+      <div className="mt-6 p-4 bg-gray-100 dark:bg-gray-900 rounded-lg">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
           Your book is being edited from: <br />
-          <code className="bg-gray-200 px-2 py-1 rounded">{filePath}</code>
+          <code className="bg-gray-200 dark:bg-gray-800 dark:text-gray-300 px-2 py-1 rounded">{filePath}</code>
         </p>
       </div>
     </div>
   );
+}
+
+export default function BookEditor(props: BookEditorProps) {
+  return useBookEditorView(props)
 }

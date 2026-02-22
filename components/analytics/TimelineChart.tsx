@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import type { TimelineDataPoint } from '../../types/analytics'
 
 interface TimelineChartProps {
@@ -67,21 +67,21 @@ export default function TimelineChart({
   }, [chartData])
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-6">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">{title}</h3>
 
       {loading ? (
         <div className="animate-pulse" style={{ height }}>
-          <div className="h-full bg-gray-100 rounded" />
+          <div className="h-full bg-gray-100 dark:bg-gray-800 rounded" />
         </div>
       ) : data.length === 0 ? (
         <div className="flex items-center justify-center" style={{ height }}>
-          <p className="text-gray-500">No timeline data available</p>
+          <p className="text-gray-500 dark:text-gray-400">No timeline data available</p>
         </div>
       ) : (
         <div className="relative" style={{ height }}>
           {/* Y-axis labels */}
-          <div className="absolute left-0 top-5 bottom-10 w-10 flex flex-col justify-between text-xs text-gray-500">
+          <div className="absolute left-0 top-5 bottom-10 w-10 flex flex-col justify-between text-xs text-gray-500 dark:text-gray-400">
             <span>{chartData.max}</span>
             <span>{Math.round((chartData.max + chartData.min) / 2)}</span>
             <span>{chartData.min}</span>
@@ -116,7 +116,7 @@ export default function TimelineChart({
               />
 
               {/* Area fill */}
-              <motion.path
+              <m.path
                 d={areaPathD}
                 fill="url(#areaGradient)"
                 initial={{ opacity: 0 }}
@@ -125,10 +125,10 @@ export default function TimelineChart({
               />
 
               {/* Line */}
-              <motion.path
+              <m.path
                 d={pathD}
                 fill="none"
-                stroke="#4f46e5"
+                stroke="#d97706"
                 strokeWidth="2"
                 vectorEffect="non-scaling-stroke"
                 strokeLinecap="round"
@@ -140,37 +140,37 @@ export default function TimelineChart({
 
               {/* Data points */}
               {chartData.points.map((point, i) => (
-                <motion.circle
-                  key={i}
+                <m.circle
+                  key={`${point.date}-${point.count}`}
                   cx={`${point.x}%`}
                   cy={point.y}
                   r="3"
-                  fill="#4f46e5"
+                  fill="#d97706"
                   className="hover:r-4 transition-all cursor-pointer"
-                  initial={{ scale: 0 }}
+                  initial={{ scale: 0.95, opacity: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.5 + i * 0.02 }}
                 >
                   <title>
                     {point.label}: {point.count} generations
                   </title>
-                </motion.circle>
+                </m.circle>
               ))}
 
               {/* Gradient definition */}
               <defs>
                 <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="#4f46e5" stopOpacity="0.05" />
+                  <stop offset="0%" stopColor="#d97706" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="#d97706" stopOpacity="0.05" />
                 </linearGradient>
               </defs>
             </svg>
 
             {/* X-axis labels */}
-            <div className="flex justify-between text-xs text-gray-500 mt-2">
+            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
               {data.length <= 7 ? (
-                data.map((d, i) => (
-                  <span key={i} className="text-center">
+                data.map((d) => (
+                  <span key={d.date} className="text-center">
                     {d.label}
                   </span>
                 ))
@@ -186,14 +186,14 @@ export default function TimelineChart({
 
           {/* Hover tooltip area */}
           <div className="absolute inset-0 flex">
-            {chartData.points.map((point, i) => (
+            {chartData.points.map((point) => (
               <div
-                key={i}
+                key={`${point.date}-tooltip`}
                 className="flex-1 group relative"
                 style={{ cursor: 'crosshair' }}
               >
                 <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                  <div className="bg-gray-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap">
+                  <div className="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded px-2 py-1 whitespace-nowrap">
                     <div className="font-medium">{point.label}</div>
                     <div>{point.count} generations</div>
                   </div>

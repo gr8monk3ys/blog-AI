@@ -1,8 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { AnimatePresence, m } from 'framer-motion'
 import Link from 'next/link'
-import { AnimatePresence, motion } from 'framer-motion'
 import {
   SparklesIcon,
   ArrowLeftIcon,
@@ -73,7 +73,7 @@ interface OnboardingWizardProps {
 /*  Component                                                                  */
 /* -------------------------------------------------------------------------- */
 
-export default function OnboardingWizard({
+function useOnboardingWizardView({
   initialName = '',
 }: OnboardingWizardProps) {
   /* ---- state ---- */
@@ -239,13 +239,13 @@ export default function OnboardingWizard({
   const renderWelcome = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-100">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40">
           <SparklesIcon className="h-7 w-7 text-amber-600" aria-hidden="true" />
         </div>
-        <h2 className="mt-4 text-2xl font-semibold text-gray-900 font-serif sm:text-3xl">
+        <h2 className="mt-4 text-2xl font-semibold text-gray-900 dark:text-gray-100 font-serif sm:text-3xl">
           Welcome to Blog AI
         </h2>
-        <p className="mt-2 text-sm text-gray-600 max-w-md mx-auto">
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
           Let us set up your workspace so every piece of content sounds like
           you. This takes about two minutes.
         </p>
@@ -255,7 +255,7 @@ export default function OnboardingWizard({
         <div>
           <label
             htmlFor="onboarding-name"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
             Your name
           </label>
@@ -265,7 +265,7 @@ export default function OnboardingWizard({
             value={formData.name}
             onChange={(e) => updateField('name', e.target.value)}
             placeholder="Jane Smith"
-            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+            className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
             autoComplete="name"
           />
         </div>
@@ -273,10 +273,10 @@ export default function OnboardingWizard({
         <div>
           <label
             htmlFor="onboarding-company"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
             Company or brand
-            <span className="text-gray-400 font-normal"> (optional)</span>
+            <span className="text-gray-400 dark:text-gray-500 font-normal"> (optional)</span>
           </label>
           <input
             id="onboarding-company"
@@ -284,7 +284,7 @@ export default function OnboardingWizard({
             value={formData.company}
             onChange={(e) => updateField('company', e.target.value)}
             placeholder="Acme Inc."
-            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+            className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
             autoComplete="organization"
           />
         </div>
@@ -295,10 +295,10 @@ export default function OnboardingWizard({
   const renderBrandVoice = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-semibold text-gray-900 font-serif sm:text-3xl">
+        <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 font-serif sm:text-3xl">
           Define your brand voice
         </h2>
-        <p className="mt-2 text-sm text-gray-600 max-w-md mx-auto">
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
           Help us understand how you write so generated content matches your
           style from the start.
         </p>
@@ -308,7 +308,7 @@ export default function OnboardingWizard({
       <div className="max-w-sm mx-auto">
         <label
           htmlFor="onboarding-writing-style"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
           Writing style
         </label>
@@ -318,7 +318,7 @@ export default function OnboardingWizard({
           onChange={(e) =>
             updateField('writingStyle', e.target.value as WritingStyle)
           }
-          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+          className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
         >
           {WRITING_STYLES.map((style) => (
             <option key={style.value} value={style.value}>
@@ -330,7 +330,7 @@ export default function OnboardingWizard({
 
       {/* Tone keywords */}
       <div>
-        <p className="text-sm font-medium text-gray-700 mb-2 text-center">
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-center">
           Pick up to {MAX_TONE_KEYWORDS} tone keywords
         </p>
         <div
@@ -357,8 +357,8 @@ export default function OnboardingWizard({
                     selected
                       ? 'bg-amber-600 text-white shadow-sm'
                       : disabled
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : 'bg-gray-100 text-gray-700 hover:bg-amber-50 hover:text-amber-800'
+                        ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-800 dark:hover:text-amber-400'
                   }
                 `}
               >
@@ -371,7 +371,7 @@ export default function OnboardingWizard({
           })}
         </div>
         {formData.toneKeywords.length > 0 && (
-          <p className="mt-2 text-xs text-center text-gray-500">
+          <p className="mt-2 text-xs text-center text-gray-500 dark:text-gray-400">
             {formData.toneKeywords.length}/{MAX_TONE_KEYWORDS} selected
           </p>
         )}
@@ -381,12 +381,12 @@ export default function OnboardingWizard({
       <div className="max-w-lg mx-auto">
         <label
           htmlFor="onboarding-sample"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
           Paste a sample of your writing
-          <span className="text-gray-400 font-normal"> (optional)</span>
+          <span className="text-gray-400 dark:text-gray-500 font-normal"> (optional)</span>
         </label>
-        <p className="text-xs text-gray-500 mb-2">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
           A paragraph or two is enough. We use this to calibrate tone and
           vocabulary.
         </p>
@@ -396,7 +396,7 @@ export default function OnboardingWizard({
           onChange={(e) => updateField('sampleWriting', e.target.value)}
           rows={4}
           placeholder="Paste a paragraph that represents how you write..."
-          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+          className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
         />
       </div>
     </div>
@@ -405,10 +405,10 @@ export default function OnboardingWizard({
   const renderFirstGeneration = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-semibold text-gray-900 font-serif sm:text-3xl">
+        <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 font-serif sm:text-3xl">
           What would you like to create first?
         </h2>
-        <p className="mt-2 text-sm text-gray-600 max-w-md mx-auto">
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
           Choose a content type and we will pre-fill a topic to get you
           started.
         </p>
@@ -447,10 +447,10 @@ export default function OnboardingWizard({
                   />
                 </span>
               )}
-              <p className="text-sm font-semibold text-gray-900">
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 {option.label}
               </p>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 {option.description}
               </p>
             </button>
@@ -462,11 +462,11 @@ export default function OnboardingWizard({
       <div className="max-w-lg mx-auto">
         <label
           htmlFor="onboarding-topic"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
           Suggested topic
         </label>
-        <p className="text-xs text-gray-500 mb-2">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
           You can change this later or start from scratch on the dashboard.
         </p>
         <input
@@ -474,7 +474,7 @@ export default function OnboardingWizard({
           type="text"
           value={formData.topicSuggestion}
           onChange={(e) => updateField('topicSuggestion', e.target.value)}
-          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+          className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
         />
       </div>
     </div>
@@ -483,13 +483,13 @@ export default function OnboardingWizard({
   const renderDone = () => (
     <div className="space-y-8 text-center">
       <div>
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/40">
           <CheckIcon className="h-8 w-8 text-green-600" aria-hidden="true" />
         </div>
-        <h2 className="mt-4 text-2xl font-semibold text-gray-900 font-serif sm:text-3xl">
+        <h2 className="mt-4 text-2xl font-semibold text-gray-900 dark:text-gray-100 font-serif sm:text-3xl">
           You are all set{formData.name ? `, ${formData.name}` : ''}!
         </h2>
-        <p className="mt-2 text-sm text-gray-600 max-w-md mx-auto">
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
           Your workspace is ready. Start creating content that sounds like
           you.
         </p>
@@ -497,7 +497,7 @@ export default function OnboardingWizard({
         {saveError && (
           <div
             role="alert"
-            className="mt-4 mx-auto max-w-sm p-3 rounded-lg bg-red-50 border border-red-100 text-sm text-red-700"
+            className="mt-4 mx-auto max-w-sm p-3 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-100 dark:border-red-800 text-sm text-red-700 dark:text-red-400"
           >
             <p className="font-medium">Could not save brand profile</p>
             <p className="mt-1">{saveError}</p>
@@ -545,7 +545,7 @@ export default function OnboardingWizard({
         </Link>
         <Link
           href="/brand"
-          className="flex items-center justify-center rounded-lg border border-gray-200 bg-white px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+          className="flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-5 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
         >
           Refine Brand Settings
         </Link>
@@ -564,7 +564,7 @@ export default function OnboardingWizard({
   /*  Progress indicator                                                         */
   /* -------------------------------------------------------------------------- */
 
-  const renderProgress = () => (
+  const progressSection = (
     <nav aria-label="Onboarding progress" className="mb-8">
       {/* Desktop: horizontal stepper */}
       <ol className="hidden sm:flex items-center justify-center gap-2">
@@ -585,8 +585,8 @@ export default function OnboardingWizard({
                     isCurrent
                       ? 'bg-amber-600 text-white shadow-sm'
                       : isComplete
-                        ? 'bg-amber-100 text-amber-800 hover:bg-amber-200'
-                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                        ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/60'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                   }
                 `}
               >
@@ -595,7 +595,7 @@ export default function OnboardingWizard({
                 ) : (
                   <span
                     className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold
-                    ${isCurrent ? 'bg-white/20 text-white' : 'bg-white text-gray-500'}
+                    ${isCurrent ? 'bg-white/20 text-white' : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400'}
                   `}
                   >
                     {i + 1}
@@ -605,7 +605,7 @@ export default function OnboardingWizard({
               </button>
               {i < ONBOARDING_STEPS.length - 1 && (
                 <div
-                  className={`h-px w-8 ${isComplete ? 'bg-amber-300' : 'bg-gray-200'}`}
+                  className={`h-px w-8 ${isComplete ? 'bg-amber-300' : 'bg-gray-200 dark:bg-gray-700'}`}
                   aria-hidden="true"
                 />
               )}
@@ -631,15 +631,15 @@ export default function OnboardingWizard({
                     ? 'w-8 bg-amber-600'
                     : i < step
                       ? 'w-2.5 bg-amber-300'
-                      : 'w-2.5 bg-gray-200'
+                      : 'w-2.5 bg-gray-200 dark:bg-gray-700'
                 }
               `}
             />
           ))}
         </div>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           Step {step + 1} of {totalSteps}:{' '}
-          <span className="font-medium text-gray-700">
+          <span className="font-medium text-gray-700 dark:text-gray-300">
             {ONBOARDING_STEPS[step]?.title}
           </span>
         </p>
@@ -654,11 +654,8 @@ export default function OnboardingWizard({
   const isFirstStep = step === 0
   const isLastStep = step === totalSteps - 1
 
-  const renderNavigation = () => {
-    if (isLastStep) return null
-
-    return (
-      <div className="mt-8 flex items-center justify-between">
+  const navigationSection = isLastStep ? null : (
+    <div className="mt-8 flex items-center justify-between">
         <button
           type="button"
           onClick={prev}
@@ -668,8 +665,8 @@ export default function OnboardingWizard({
             focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2
             ${
               isFirstStep
-                ? 'text-gray-300 cursor-not-allowed'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'
             }
           `}
           aria-label="Previous step"
@@ -682,7 +679,7 @@ export default function OnboardingWizard({
           <button
             type="button"
             onClick={next}
-            className="text-sm text-gray-400 hover:text-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 rounded px-2 py-1"
+            className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded px-2 py-1"
           >
             Skip
           </button>
@@ -715,9 +712,8 @@ export default function OnboardingWizard({
             )}
           </button>
         </div>
-      </div>
-    )
-  }
+    </div>
+  )
 
   /* -------------------------------------------------------------------------- */
   /*  Render                                                                     */
@@ -725,7 +721,7 @@ export default function OnboardingWizard({
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      {renderProgress()}
+      {progressSection}
 
       <div
         ref={stepContainerRef}
@@ -735,7 +731,7 @@ export default function OnboardingWizard({
         aria-label={`Step ${step + 1}: ${ONBOARDING_STEPS[step]?.title}`}
       >
         <AnimatePresence mode="wait" custom={direction}>
-          <motion.div
+          <m.div
             key={step}
             custom={direction}
             variants={slideVariants}
@@ -745,11 +741,15 @@ export default function OnboardingWizard({
             transition={{ type: 'tween', ease: 'easeInOut', duration: 0.3 }}
           >
             {STEP_RENDERERS[step]?.()}
-          </motion.div>
+          </m.div>
         </AnimatePresence>
       </div>
 
-      {renderNavigation()}
+      {navigationSection}
     </div>
   )
+}
+
+export default function OnboardingWizard(props: OnboardingWizardProps) {
+  return useOnboardingWizardView(props)
 }

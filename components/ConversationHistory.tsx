@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { API_ENDPOINTS, getDefaultHeaders, checkServerConnection } from '../lib/api';
 
 interface Message {
@@ -49,7 +49,7 @@ interface ConversationHistoryProps {
   conversationId: string;
 }
 
-export default function ConversationHistory({ conversationId }: ConversationHistoryProps) {
+function useConversationHistoryView({ conversationId }: ConversationHistoryProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +73,42 @@ export default function ConversationHistory({ conversationId }: ConversationHist
   // Scroll to bottom of messages
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  const applyIncomingMessage = useCallback((message: Message) => {
+    setMessages((prev) => [...prev, message]);
+    setIsAiTyping(false);
+  }, []);
+
+  const applyTypingState = useCallback((typing: boolean) => {
+    setIsAiTyping(typing);
+  }, []);
+
+  const applyConnectionError = useCallback((message: string) => {
+    setError(message);
+  }, []);
+
+  const applyConversationLoading = useCallback((loading: boolean) => {
+    setIsLoading(loading);
+  }, []);
+
+  const applyServerConnectionState = useCallback((connected: boolean) => {
+    setIsServerConnected(connected);
+  }, []);
+
+  const applyLoadedConversation = useCallback((conversationMessages: Message[]) => {
+    setMessages(conversationMessages);
+    setError(null);
+  }, []);
+
+  const applyMockConversation = useCallback(() => {
+    setMessages(MOCK_MESSAGES);
+    setIsLoading(false);
+  }, []);
+
+  const applyBackendUnavailable = useCallback(() => {
+    setError('Backend unavailable. Please try again later.');
+    setIsLoading(false);
   }, []);
 
   // Group messages by sender - memoized for performance
@@ -112,11 +148,10 @@ export default function ConversationHistory({ conversationId }: ConversationHist
             const message = JSON.parse(event.data);
             if (message.type === 'message') {
               if (isMounted) {
-                setMessages(prev => [...prev, message]);
-                setIsAiTyping(false);
+                applyIncomingMessage(message);
               }
             } else if (message.type === 'typing') {
-              if (isMounted) setIsAiTyping(true);
+              if (isMounted) applyTypingState(true);
             }
           } catch {
             console.error('Failed to parse WebSocket message');
@@ -126,7 +161,7 @@ export default function ConversationHistory({ conversationId }: ConversationHist
         ws.onerror = (error) => {
           if (isMounted) {
             console.error('WebSocket error:', error);
-            setError('Connection error. Messages may not update in real-time.');
+            applyConnectionError('Connection error. Messages may not update in real-time.');
           }
         };
 
@@ -140,25 +175,24 @@ export default function ConversationHistory({ conversationId }: ConversationHist
       } catch (err) {
         console.error('Error setting up WebSocket:', err);
         if (isMounted) {
-          setError('Failed to establish real-time connection.');
+          applyConnectionError('Failed to establish real-time connection.');
         }
         return null;
       }
     };
 
     const initializeConversation = async () => {
-      setIsLoading(true);
+      applyConversationLoading(true);
 
       // Check if server is running
       const isConnected = await checkServerConnection();
-      if (isMounted) setIsServerConnected(isConnected);
+      if (isMounted) applyServerConnectionState(isConnected);
 
 	      if (!isConnected) {
 	        // In production, never show mock conversation history.
 	        if (process.env.NODE_ENV === 'production') {
 	          if (isMounted) {
-	            setError('Backend unavailable. Please try again later.');
-	            setIsLoading(false);
+	            applyBackendUnavailable();
 	          }
 	          return;
 	        }
@@ -166,8 +200,7 @@ export default function ConversationHistory({ conversationId }: ConversationHist
 	        // Use mock data in development if server is not running
 	        setTimeout(() => {
 	          if (isMounted) {
-	            setMessages(MOCK_MESSAGES);
-	            setIsLoading(false);
+	            applyMockConversation();
 	          }
 	        }, 1000); // Simulate loading delay
 	        return;
@@ -176,21 +209,21 @@ export default function ConversationHistory({ conversationId }: ConversationHist
       // Server is running, setup WebSocket connection
       websocket = setupWebSocket(conversationId);
 
-	      // Load conversation history
-	      try {
-	        const conversationMessages = await fetchConversationMessages(conversationId)
-	        if (isMounted) {
-	          setMessages(conversationMessages);
-	          setError(null);
-	        }
-	      } catch (err) {
-	        if (isMounted) {
-	          console.error('Error loading conversation:', err);
-	          setError('Failed to load conversation history. Please try again.');
+      // Load conversation history
+      try {
+        const conversationMessages = await fetchConversationMessages(conversationId);
+
+        if (isMounted) {
+          applyLoadedConversation(conversationMessages);
+        }
+      } catch (err) {
+        if (isMounted) {
+          console.error('Error loading conversation:', err);
+          applyConnectionError('Failed to load conversation history. Please try again.');
         }
       } finally {
         if (isMounted) {
-          setIsLoading(false);
+          applyConversationLoading(false);
         }
       }
     };
@@ -201,7 +234,17 @@ export default function ConversationHistory({ conversationId }: ConversationHist
       isMounted = false;
       if (websocket) websocket.close();
     };
-  }, [conversationId]);
+  }, [
+    applyBackendUnavailable,
+    applyIncomingMessage,
+    applyLoadedConversation,
+    applyMockConversation,
+    conversationId,
+    applyConnectionError,
+    applyConversationLoading,
+    applyServerConnectionState,
+    applyTypingState,
+  ]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -211,13 +254,13 @@ export default function ConversationHistory({ conversationId }: ConversationHist
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-4 px-1">
-        <h2 className="text-xl font-bold text-amber-800">Conversation</h2>
+        <h2 className="text-xl font-bold text-amber-800 dark:text-amber-500">Conversation</h2>
         <div className="flex items-center gap-2">
           <span
             className={`text-xs px-2 py-1 rounded-full border ${
               isServerConnected
-                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                : 'bg-amber-50 text-amber-700 border-amber-200'
+                ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                : 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800'
             }`}
             title={isServerConnected ? 'Live connection' : 'Using mock data'}
           >
@@ -241,7 +284,7 @@ export default function ConversationHistory({ conversationId }: ConversationHist
             </div>
           </div>
         ) : error ? (
-          <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">
+          <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 p-3 rounded-lg text-sm">
             <p className="font-medium">Error</p>
             <p>{error}</p>
             <button 
@@ -252,14 +295,14 @@ export default function ConversationHistory({ conversationId }: ConversationHist
             </button>
           </div>
         ) : messages.length === 0 ? (
-          <div className="text-center py-10 text-gray-500">
+          <div className="text-center py-10 text-gray-500 dark:text-gray-400">
             <p className="text-sm">No messages yet</p>
             <p className="text-xs mt-1">Start a conversation by generating content</p>
           </div>
         ) : (
           <AnimatePresence>
             {groupedMessages.map((group, groupIndex) => (
-              <motion.div
+              <m.div
                 key={groupIndex}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -268,13 +311,13 @@ export default function ConversationHistory({ conversationId }: ConversationHist
               >
                 <div 
                   className={`max-w-[85%] ${
-                    group.role === 'user' 
+                    group.role === 'user'
                       ? 'bg-gradient-to-br from-amber-500 to-amber-600 text-white'
-                      : 'bg-white border border-gray-200 shadow-sm'
+                      : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm'
                   } rounded-2xl overflow-hidden`}
                 >
                   <div className="px-4 py-2 text-xs font-medium border-b border-opacity-10 flex justify-between items-center">
-                    <span className={group.role === 'user' ? 'text-amber-100' : 'text-amber-700'}>
+                    <span className={group.role === 'user' ? 'text-amber-100' : 'text-amber-700 dark:text-amber-500'}>
                       {group.role === 'user' ? 'You' : 'AI Assistant'}
                     </span>
                   </div>
@@ -282,12 +325,12 @@ export default function ConversationHistory({ conversationId }: ConversationHist
                   <div className="space-y-2 p-3">
                     {group.messages.map((message, messageIndex) => (
                       <div key={messageIndex} className="space-y-2">
-                        <div className={`text-sm ${group.role === 'user' ? 'text-white' : 'text-gray-800'}`}>
+                        <div className={`text-sm ${group.role === 'user' ? 'text-white' : 'text-gray-800 dark:text-gray-200'}`}>
                           {message.content}
                         </div>
                         
                         {messageIndex === group.messages.length - 1 && (
-                          <div className={`text-xs ${group.role === 'user' ? 'text-amber-200' : 'text-gray-500'}`}>
+                          <div className={`text-xs ${group.role === 'user' ? 'text-amber-200' : 'text-gray-500 dark:text-gray-400'}`}>
                             {formatTimestamp(message.timestamp)}
                           </div>
                         )}
@@ -295,29 +338,33 @@ export default function ConversationHistory({ conversationId }: ConversationHist
                     ))}
                   </div>
                 </div>
-              </motion.div>
+              </m.div>
             ))}
           </AnimatePresence>
         )}
         
         {isAiTyping && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="flex justify-start"
           >
-            <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm">
               <div className="flex space-x-2">
                 <div className="h-2 w-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
                 <div className="h-2 w-2 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
                 <div className="h-2 w-2 bg-amber-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         )}
         
         <div ref={messagesEndRef} />
       </div>
     </div>
   );
+}
+
+export default function ConversationHistory(props: ConversationHistoryProps) {
+  return useConversationHistoryView(props)
 }

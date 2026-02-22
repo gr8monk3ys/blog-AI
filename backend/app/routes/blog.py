@@ -207,6 +207,28 @@ async def generate_blog(
                 )
             )
 
+        # Attempt image generation (always-on, graceful degradation)
+        try:
+            from src.images.image_generator import ImageGenerator
+            generator = ImageGenerator()
+            full_content = "\n\n".join(
+                subtopic.content or ""
+                for section in blog_post.sections
+                for subtopic in section.subtopics
+            )
+            images_result = await generator.generate_blog_images(
+                content=full_content,
+                title=blog_post.title,
+                keywords=blog_post.tags,
+                generate_featured=True,
+                generate_social=False,
+                inline_count=0,
+            )
+            if images_result.featured_image:
+                blog_post.image = images_result.featured_image.url
+        except Exception as e:
+            logger.warning(f"Image generation failed, using default: {e}")
+
         # Convert blog post to JSON-serializable format
         blog_post_data = {
             "title": blog_post.title,

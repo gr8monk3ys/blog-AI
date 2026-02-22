@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import { v4 as uuidv4 } from 'uuid'
-import { motion, AnimatePresence } from 'framer-motion'
+import { m, AnimatePresence } from 'framer-motion'
 import SiteHeader from '../../components/SiteHeader'
 import SiteFooter from '../../components/SiteFooter'
 import {
@@ -65,6 +65,23 @@ const EXPORT_OPTIONS: { value: ExportFormat; label: string; icon: string }[] = [
   { value: 'zip', label: 'ZIP (all files)', icon: '📦' },
 ]
 
+interface BulkDraftItem extends BulkGenerationItem {
+  localId: string
+}
+
+function createDraftItem(
+  topic = '',
+  keywords: string[] = [],
+  tone = 'informative'
+): BulkDraftItem {
+  return {
+    localId: uuidv4(),
+    topic,
+    keywords,
+    tone,
+  }
+}
+
 function parseCSV(csvText: string): ParsedCSVData {
   const lines = csvText.trim().split('\n')
   const errors: string[] = []
@@ -114,9 +131,9 @@ function parseCSV(csvText: string): ParsedCSVData {
   return { rows, errors, headers }
 }
 
-export default function BulkGenerationPageClient() {
-  const [conversationId] = useState(uuidv4())
-  const [items, setItems] = useState<BulkGenerationItem[]>([])
+function useBulkGenerationPageView() {
+  const [conversationId] = useState(() => uuidv4())
+  const [items, setItems] = useState<BulkDraftItem[]>([])
   const [sharedTone, setSharedTone] = useState('informative')
   const [useResearch, setUseResearch] = useState(false)
   const [proofread, setProofread] = useState(true)
@@ -154,10 +171,7 @@ export default function BulkGenerationPageClient() {
 
   // Add a single item manually
   const addItem = () => {
-    setItems([
-      ...items,
-      { topic: '', keywords: [], tone: sharedTone },
-    ])
+    setItems((prev) => [...prev, createDraftItem('', [], sharedTone)])
   }
 
   // Remove an item
@@ -307,11 +321,13 @@ export default function BulkGenerationPageClient() {
       }
 
       if (rows.length > 0) {
-        const newItems: BulkGenerationItem[] = rows.map((row) => ({
-          topic: row.topic,
-          keywords: row.keywords ? row.keywords.split(';').map((k) => k.trim()) : [],
-          tone: row.tone || sharedTone,
-        }))
+        const newItems: BulkDraftItem[] = rows.map((row) =>
+          createDraftItem(
+            row.topic,
+            row.keywords ? row.keywords.split(';').map((k) => k.trim()) : [],
+            row.tone || sharedTone
+          )
+        )
         setItems((prev) => [...prev, ...newItems])
       }
     }
@@ -480,13 +496,13 @@ export default function BulkGenerationPageClient() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
       <SiteHeader />
 
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-amber-600 to-amber-700 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -497,7 +513,7 @@ export default function BulkGenerationPageClient() {
             <p className="text-amber-100">
               Generate multiple blog posts at once. Upload a CSV or add topics manually.
             </p>
-          </motion.div>
+          </m.div>
         </div>
       </section>
 
@@ -506,18 +522,18 @@ export default function BulkGenerationPageClient() {
           {/* Left Column - Items */}
           <div className="lg:col-span-2 space-y-6">
             {/* CSV Upload */}
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="bg-white rounded-xl border border-gray-200 p-6"
+              className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6"
             >
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                 Upload CSV
               </h2>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-amber-400 transition-colors">
-                <ArrowUpTrayIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-600 mb-2">
+              <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center hover:border-amber-400 dark:hover:border-amber-500 transition-colors">
+                <ArrowUpTrayIcon className="w-8 h-8 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                   Drop a CSV file here, or click to browse
                 </p>
                 <input
@@ -530,7 +546,7 @@ export default function BulkGenerationPageClient() {
                 />
                 <label
                   htmlFor="csv-upload"
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
                 >
                   Select CSV File
                 </label>
@@ -541,17 +557,17 @@ export default function BulkGenerationPageClient() {
                   Download template
                 </button>
               </div>
-            </motion.div>
+            </m.div>
 
             {/* Items List */}
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="bg-white rounded-xl border border-gray-200 p-6"
+              className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6"
             >
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   Topics ({items.length})
                 </h2>
                 <button
@@ -565,8 +581,8 @@ export default function BulkGenerationPageClient() {
               </div>
 
               {items.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <DocumentTextIcon className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <DocumentTextIcon className="w-12 h-12 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
                   <p>No topics added yet.</p>
                   <p className="text-sm">Upload a CSV or add topics manually.</p>
                 </div>
@@ -574,12 +590,12 @@ export default function BulkGenerationPageClient() {
                 <div className="space-y-4 max-h-96 overflow-y-auto">
                   <AnimatePresence>
                     {items.map((item, index) => (
-                      <motion.div
-                        key={index}
+                      <m.div
+                        key={item.localId}
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="border border-gray-200 rounded-lg p-4"
+                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
                       >
                         <div className="flex items-start gap-4">
                           <span className="text-sm font-medium text-gray-500 pt-2">
@@ -592,7 +608,7 @@ export default function BulkGenerationPageClient() {
                               onChange={(e) => updateItem(index, 'topic', e.target.value)}
                               placeholder="Enter topic..."
                               disabled={isProcessing}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
                             />
                             <div className="flex gap-3">
                               <input
@@ -601,13 +617,13 @@ export default function BulkGenerationPageClient() {
                                 onChange={(e) => updateItem(index, 'keywords', e.target.value)}
                                 placeholder="Keywords (comma separated)"
                                 disabled={isProcessing}
-                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100"
+                                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
                               />
                               <select
                                 value={item.tone}
                                 onChange={(e) => updateItem(index, 'tone', e.target.value)}
                                 disabled={isProcessing}
-                                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100"
+                                className="px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
                               >
                                 {TONE_OPTIONS.map((option) => (
                                   <option key={option.value} value={option.value}>
@@ -649,42 +665,43 @@ export default function BulkGenerationPageClient() {
                             </div>
                           </div>
                         )}
-                      </motion.div>
+                      </m.div>
                     ))}
                   </AnimatePresence>
                 </div>
               )}
-            </motion.div>
+            </m.div>
           </div>
 
           {/* Right Column - Settings and Actions */}
           <div className="space-y-6">
             {/* Settings */}
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="bg-white rounded-xl border border-gray-200 p-6"
+              className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6"
             >
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                 Settings
               </h2>
 
               <div className="space-y-4">
                 {/* Provider Strategy */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="provider-strategy" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     <ServerStackIcon className="w-4 h-4 inline mr-1" />
                     Provider Strategy
                   </label>
                   <select
+                    id="provider-strategy"
                     value={providerStrategy}
                     onChange={(e) => {
                       setProviderStrategy(e.target.value as ProviderStrategy)
                       setCostEstimate(null)
                     }}
                     disabled={isProcessing}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
                   >
                     {STRATEGY_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -700,10 +717,11 @@ export default function BulkGenerationPageClient() {
                 {/* Preferred Provider */}
                 {providerStrategy === 'single' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="preferred-provider" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Provider
                     </label>
                     <select
+                      id="preferred-provider"
                       value={preferredProvider}
                       onChange={(e) => {
                         setProviderTouched(true)
@@ -711,7 +729,7 @@ export default function BulkGenerationPageClient() {
                         setCostEstimate(null)
                       }}
                       disabled={isProcessing}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
                     >
                       {availableProviders.map((p) => {
                         const meta = PROVIDER_META[p]
@@ -728,14 +746,15 @@ export default function BulkGenerationPageClient() {
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="default-tone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Default Tone
                   </label>
                   <select
+                    id="default-tone"
                     value={sharedTone}
                     onChange={(e) => setSharedTone(e.target.value)}
                     disabled={isProcessing}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
                   >
                     {TONE_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -746,14 +765,15 @@ export default function BulkGenerationPageClient() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="parallel-limit" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Parallel Generations
                   </label>
                   <select
+                    id="parallel-limit"
                     value={parallelLimit}
                     onChange={(e) => setParallelLimit(Number(e.target.value))}
                     disabled={isProcessing}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
                   >
                     {[1, 2, 3, 5, 10].map((n) => (
                       <option key={n} value={n}>
@@ -772,7 +792,7 @@ export default function BulkGenerationPageClient() {
                       disabled={isProcessing}
                       className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
                     />
-                    <span className="text-sm text-gray-700">Use web research</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Use web research</span>
                   </label>
                   <label className="flex items-center gap-3">
                     <input
@@ -782,7 +802,7 @@ export default function BulkGenerationPageClient() {
                       disabled={isProcessing}
                       className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
                     />
-                    <span className="text-sm text-gray-700">Proofread content</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Proofread content</span>
                   </label>
                   <label className="flex items-center gap-3">
                     <input
@@ -792,28 +812,28 @@ export default function BulkGenerationPageClient() {
                       disabled={isProcessing}
                       className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
                     />
-                    <span className="text-sm text-gray-700">Humanize content</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Humanize content</span>
                   </label>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
 
             {/* Cost Estimate */}
             {costEstimate && items.length > 0 && !isProcessing && (
-              <motion.div
+              <m.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200 p-6"
+                className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border border-green-200 dark:border-green-800 p-6"
               >
                 <div className="flex items-center gap-2 mb-3">
                   <CurrencyDollarIcon className="w-5 h-5 text-green-600" />
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     Cost Estimate
                   </h2>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Estimated Cost</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Estimated Cost</span>
                     <span className="text-lg font-bold text-green-700">
                       ${costEstimate.estimated_cost_usd.toFixed(4)}
                     </span>
@@ -823,47 +843,47 @@ export default function BulkGenerationPageClient() {
                     <span>{Math.round(costEstimate.confidence * 100)}% confidence</span>
                   </div>
                   {costEstimate.provider_recommendations.length > 1 && (
-                    <div className="mt-3 pt-3 border-t border-green-200">
+                    <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-800">
                       <p className="text-xs text-gray-500 mb-2">Provider comparison:</p>
                       <div className="space-y-1">
                         {costEstimate.provider_recommendations.slice(0, 3).map((rec) => (
                           <div key={rec.provider} className="flex items-center justify-between text-xs">
-                            <span className="text-gray-600">{rec.display_name}</span>
-                            <span className="font-medium text-gray-900">${rec.estimated_cost.toFixed(4)}</span>
+                            <span className="text-gray-600 dark:text-gray-400">{rec.display_name}</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">${rec.estimated_cost.toFixed(4)}</span>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
                 </div>
-              </motion.div>
+              </m.div>
             )}
 
             {/* Progress */}
             {status && isProcessing && (
-              <motion.div
+              <m.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-xl border border-gray-200 p-6"
+                className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6"
               >
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                   Progress
                 </h2>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Status</span>
-                    <span className="font-medium capitalize text-gray-900">
+                    <span className="text-gray-600 dark:text-gray-400">Status</span>
+                    <span className="font-medium capitalize text-gray-900 dark:text-gray-100">
                       {status.status}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3">
-                    <motion.div
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                    <m.div
                       initial={{ width: 0 }}
                       animate={{ width: `${status.progress_percentage}%` }}
                       className="bg-amber-500 h-3 rounded-full"
                     />
                   </div>
-                  <div className="flex items-center justify-between text-sm text-gray-600">
+                  <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
                     <span>
                       {status.completed_items} / {status.total_items} completed
                     </span>
@@ -875,13 +895,13 @@ export default function BulkGenerationPageClient() {
                   </div>
                   {/* Provider usage */}
                   {Object.keys(providersUsed).length > 0 && (
-                    <div className="pt-3 border-t border-gray-100">
+                    <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
                       <p className="text-xs text-gray-500 mb-2">Providers used:</p>
                       <div className="flex flex-wrap gap-2">
                         {Object.entries(providersUsed).map(([provider, count]) => (
                           <span
                             key={provider}
-                            className="inline-flex items-center px-2 py-1 bg-gray-100 rounded text-xs text-gray-700"
+                            className="inline-flex items-center px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs text-gray-700 dark:text-gray-300"
                           >
                             {provider}: {count}
                           </span>
@@ -891,22 +911,22 @@ export default function BulkGenerationPageClient() {
                   )}
                   {actualCost > 0 && (
                     <div className="flex items-center justify-between text-sm pt-2">
-                      <span className="text-gray-600">Cost so far</span>
+                      <span className="text-gray-600 dark:text-gray-400">Cost so far</span>
                       <span className="font-medium text-green-600">
                         ${actualCost.toFixed(4)}
                       </span>
                     </div>
                   )}
                 </div>
-              </motion.div>
+              </m.div>
             )}
 
             {/* Actions */}
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
-              className="bg-white rounded-xl border border-gray-200 p-6"
+              className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6"
             >
               <div className="space-y-3">
                 {!canGenerate && (
@@ -941,28 +961,28 @@ export default function BulkGenerationPageClient() {
                   <div className="relative">
                     <button
                       onClick={() => setShowExportMenu(!showExportMenu)}
-                      className="w-full flex items-center justify-center gap-2 py-3 px-4 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                      className="w-full flex items-center justify-center gap-2 py-3 px-4 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                     >
                       <ArrowDownTrayIcon className="w-5 h-5" />
                       Export Results
                     </button>
                     {showExportMenu && (
-                      <motion.div
+                      <m.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden z-10"
+                        className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-10"
                       >
                         {EXPORT_OPTIONS.map((option) => (
                           <button
                             key={option.value}
                             onClick={() => exportResults(option.value)}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm hover:bg-gray-50 transition-colors"
+                            className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors"
                           >
                             <span className="text-lg">{option.icon}</span>
                             <span>{option.label}</span>
                           </button>
                         ))}
-                      </motion.div>
+                      </m.div>
                     )}
                   </div>
                 )}
@@ -992,23 +1012,23 @@ export default function BulkGenerationPageClient() {
                   </button>
                 )}
               </div>
-            </motion.div>
+            </m.div>
 
             {/* Error */}
             {error && (
-              <motion.div
+              <m.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="bg-red-50 border border-red-200 rounded-xl p-4"
+                className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4"
               >
-                <p className="text-sm text-red-700">{error}</p>
+                <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
                 <button
                   onClick={() => setError(null)}
                   className="mt-2 text-xs text-red-600 hover:text-red-800"
                 >
                   Dismiss
                 </button>
-              </motion.div>
+              </m.div>
             )}
 
             {/* Usage indicator */}
@@ -1020,4 +1040,8 @@ export default function BulkGenerationPageClient() {
       <SiteFooter />
     </main>
   )
+}
+
+export default function BulkGenerationPageClient() {
+  return useBulkGenerationPageView()
 }

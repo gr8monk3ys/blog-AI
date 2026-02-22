@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { motion, AnimatePresence } from 'framer-motion'
+import { m, AnimatePresence } from 'framer-motion'
 import {
   ChartBarIcon,
   ArrowUpCircleIcon,
@@ -80,8 +80,8 @@ export default function UsageIndicator({
   if (loading) {
     return (
       <div className="animate-pulse flex items-center gap-2">
-        <div className="h-4 w-4 bg-gray-200 rounded" />
-        <div className="h-4 w-16 bg-gray-200 rounded" />
+        <div className="h-4 w-4 bg-gray-200 dark:bg-gray-700 rounded" />
+        <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
       </div>
     )
   }
@@ -123,7 +123,7 @@ export default function UsageIndicator({
               ? 'bg-red-100 text-red-700 hover:bg-red-200'
               : isNearLimit
               ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
           }`}
         >
           <ChartBarIcon className="h-4 w-4" />
@@ -132,14 +132,14 @@ export default function UsageIndicator({
 
         <AnimatePresence>
           {showDetails && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-50"
+              className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 p-4 z-50"
             >
               <UsageDetails usage={usage} showUpgradePrompt={showUpgradePrompt} />
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>
@@ -148,7 +148,7 @@ export default function UsageIndicator({
 
   // Full version
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4">
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
       <UsageDetails usage={usage} showUpgradePrompt={showUpgradePrompt} />
     </div>
   )
@@ -182,7 +182,7 @@ function UsageDetails({ usage, showUpgradePrompt }: UsageDetailsProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <SparklesIcon className={`h-5 w-5 ${tierDisplay.color}`} />
-          <span className="font-semibold text-gray-900">Usage</span>
+          <span className="font-semibold text-gray-900 dark:text-gray-100">Usage</span>
         </div>
         <span
           className={`px-2 py-0.5 rounded-full text-xs font-medium ${tierDisplay.bgColor} ${tierDisplay.color}`}
@@ -194,18 +194,18 @@ function UsageDetails({ usage, showUpgradePrompt }: UsageDetailsProps) {
       {/* Daily usage */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600">Today</span>
+          <span className="text-gray-600 dark:text-gray-400">Today</span>
           {isDailyUnlimited ? (
-            <span className="font-medium text-gray-900">Unlimited</span>
+            <span className="font-medium text-gray-900 dark:text-gray-100">Unlimited</span>
           ) : (
-            <span className="font-medium text-gray-900">
+            <span className="font-medium text-gray-900 dark:text-gray-100">
               {usage.daily_usage} / {usage.daily_limit}
             </span>
           )}
         </div>
         {!isDailyUnlimited && (
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <motion.div
+          <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2">
+            <m.div
               initial={{ width: 0 }}
               animate={{ width: `${Math.min(dailyPercentUsed, 100)}%` }}
               className={`h-2 rounded-full ${
@@ -223,18 +223,18 @@ function UsageDetails({ usage, showUpgradePrompt }: UsageDetailsProps) {
       {/* Monthly usage */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600">This period</span>
+          <span className="text-gray-600 dark:text-gray-400">This period</span>
           {isMonthlyUnlimited ? (
-            <span className="font-medium text-gray-900">Unlimited</span>
+            <span className="font-medium text-gray-900 dark:text-gray-100">Unlimited</span>
           ) : (
-            <span className="font-medium text-gray-900">
+            <span className="font-medium text-gray-900 dark:text-gray-100">
               {usage.current_usage} / {usage.quota_limit}
             </span>
           )}
         </div>
         {!isMonthlyUnlimited && (
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <motion.div
+          <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2">
+            <m.div
               initial={{ width: 0 }}
               animate={{ width: `${Math.min(monthlyPercentUsed, 100)}%` }}
               className={`h-2 rounded-full ${
@@ -251,11 +251,11 @@ function UsageDetails({ usage, showUpgradePrompt }: UsageDetailsProps) {
 
       {/* Warning message */}
       {isAtLimit && (
-        <div className="flex items-start gap-2 p-3 bg-red-50 rounded-lg border border-red-200">
+        <div className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-800">
           <ExclamationTriangleIcon className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
           <div className="text-sm">
-            <p className="font-medium text-red-800">Limit reached</p>
-            <p className="text-red-600">
+            <p className="font-medium text-red-800 dark:text-red-400">Limit reached</p>
+            <p className="text-red-600 dark:text-red-500">
               Upgrade to continue generating content
             </p>
           </div>
@@ -263,11 +263,11 @@ function UsageDetails({ usage, showUpgradePrompt }: UsageDetailsProps) {
       )}
 
       {isNearLimit && !isAtLimit && (
-        <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-lg border border-amber-200">
+        <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/30 rounded-lg border border-amber-200 dark:border-amber-800">
           <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
           <div className="text-sm">
-            <p className="font-medium text-amber-800">Running low</p>
-            <p className="text-amber-600">
+            <p className="font-medium text-amber-800 dark:text-amber-400">Running low</p>
+            <p className="text-amber-600 dark:text-amber-500">
               {!isDailyUnlimited
                 ? `${usage.daily_remaining} generations remaining today`
                 : !isMonthlyUnlimited
@@ -290,7 +290,7 @@ function UsageDetails({ usage, showUpgradePrompt }: UsageDetailsProps) {
       )}
 
       {/* Reset time */}
-      <p className="text-xs text-gray-500 text-center">
+      <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
         Resets daily at midnight UTC
       </p>
     </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import SiteHeader from '../../components/SiteHeader'
 import SiteFooter from '../../components/SiteFooter'
 import {
@@ -29,7 +29,7 @@ import type {
 } from '../../types/analytics'
 import { TIME_RANGE_OPTIONS } from '../../types/analytics'
 
-export default function AnalyticsPageClient() {
+function useAnalyticsPageView() {
   const [timeRange, setTimeRange] = useState<TimeRangeOption>('30d')
   const [loading, setLoading] = useState(true)
   const [overviewStats, setOverviewStats] = useState<OverviewStats | null>(null)
@@ -37,9 +37,30 @@ export default function AnalyticsPageClient() {
   const [timelineData, setTimelineData] = useState<TimelineDataPoint[]>([])
   const [categoryData, setCategoryData] = useState<CategoryBreakdown[]>([])
 
+  const beginAnalyticsLoad = () => {
+    setLoading(true)
+  }
+
+  const applyAnalyticsPayload = (
+    overview: OverviewStats,
+    tools: ToolUsageStat[],
+    timeline: TimelineDataPoint[],
+    categories: CategoryBreakdown[]
+  ) => {
+    setOverviewStats(overview)
+    setToolUsage(tools)
+    setTimelineData(timeline)
+    setCategoryData(categories)
+    setLoading(false)
+  }
+
+  const finishAnalyticsLoad = () => {
+    setLoading(false)
+  }
+
   useEffect(() => {
     async function fetchData() {
-      setLoading(true)
+      beginAnalyticsLoad()
       try {
         const [overview, tools, timeline, categories] = await Promise.all([
           getOverviewStats(timeRange),
@@ -48,14 +69,10 @@ export default function AnalyticsPageClient() {
           getCategoryBreakdown(timeRange),
         ])
 
-        setOverviewStats(overview)
-        setToolUsage(tools)
-        setTimelineData(timeline)
-        setCategoryData(categories)
+        applyAnalyticsPayload(overview, tools, timeline, categories)
       } catch (error) {
         console.error('Failed to fetch analytics data:', error)
-      } finally {
-        setLoading(false)
+        finishAnalyticsLoad()
       }
     }
 
@@ -76,13 +93,13 @@ export default function AnalyticsPageClient() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
       <SiteHeader />
 
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-amber-600 to-amber-700 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -116,14 +133,14 @@ export default function AnalyticsPageClient() {
                 )}
               </div>
             </div>
-          </motion.div>
+          </m.div>
         </div>
       </section>
 
       {/* Main Content */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Overview Stats */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
@@ -158,10 +175,10 @@ export default function AnalyticsPageClient() {
             subtitle="Per generation"
             loading={loading}
           />
-        </motion.div>
+        </m.div>
 
         {/* Charts Row 1 */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
@@ -179,10 +196,10 @@ export default function AnalyticsPageClient() {
             loading={loading}
             maxBars={6}
           />
-        </motion.div>
+        </m.div>
 
         {/* Charts Row 2 */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
@@ -202,16 +219,16 @@ export default function AnalyticsPageClient() {
             loading={loading}
             size={220}
           />
-        </motion.div>
+        </m.div>
 
         {/* Quick Actions */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
-          className="mt-8 bg-white rounded-xl border border-gray-200 shadow-sm p-6"
+          className="mt-8 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-6"
         >
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Quick Actions
           </h3>
           <div className="flex flex-wrap gap-3">
@@ -223,7 +240,7 @@ export default function AnalyticsPageClient() {
             </Link>
             <Link
               href="/tools"
-              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 shadow-sm transition-all"
+              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm transition-all"
             >
               Browse Tools
             </Link>
@@ -231,16 +248,20 @@ export default function AnalyticsPageClient() {
               onClick={() => {
                 setTimeRange('7d')
               }}
-              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 shadow-sm transition-all"
+              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm transition-all"
             >
               <ClockIcon className="w-4 h-4 mr-2" aria-hidden="true" />
               View Last 7 Days
             </button>
           </div>
-        </motion.div>
+        </m.div>
       </section>
 
       <SiteFooter />
     </main>
   )
+}
+
+export default function AnalyticsPageClient() {
+  return useAnalyticsPageView()
 }

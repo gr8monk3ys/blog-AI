@@ -13,11 +13,11 @@ interface ToolSidebarProps {
  */
 function TipsCard() {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-      <h3 className="text-sm font-semibold text-gray-900 mb-3">
+    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-5">
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
         Tips for best results
       </h3>
-      <ul className="space-y-2 text-sm text-gray-600">
+      <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
         <li className="flex items-start gap-2">
           <span className="text-amber-600 mt-0.5">*</span>
           Be specific about your topic or goal
@@ -48,18 +48,18 @@ function RelatedToolsCard({ tools }: { tools: Tool[] }) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-      <h3 className="text-sm font-semibold text-gray-900 mb-3">
+    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-5">
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
         Related Tools
       </h3>
       <ul className="space-y-3">
         {tools.map((relatedTool) => (
           <li key={relatedTool.id}>
             <Link href={`/tools/${relatedTool.slug}`} className="block group">
-              <div className="text-sm font-medium text-gray-900 group-hover:text-amber-600 transition-colors">
+              <div className="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-amber-600 transition-colors">
                 {relatedTool.name}
               </div>
-              <div className="text-xs text-gray-500 line-clamp-1">
+              <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
                 {relatedTool.description}
               </div>
             </Link>

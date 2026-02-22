@@ -15,7 +15,7 @@ interface BookGeneratorProps {
   setLoading: (loading: boolean) => void;
 }
 
-export default function BookGenerator({ conversationId, setContent, setLoading }: BookGeneratorProps) {
+function useBookGeneratorView({ conversationId, setContent, setLoading }: BookGeneratorProps) {
   const [title, setTitle] = useState('');
   const [numChapters, setNumChapters] = useState(5);
   const [sectionsPerChapter, setSectionsPerChapter] = useState(3);
@@ -170,14 +170,14 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
     <div>
       <div className="flex items-center mb-6">
         <BookOpenIcon className="h-5 w-5 text-amber-600 mr-2" />
-        <h2 className="text-xl font-bold text-gray-800">Book Generator</h2>
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Book Generator</h2>
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-amber-50 rounded-lg p-4 border border-amber-100">
+        <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4 border border-amber-100 dark:border-amber-800">
           <div className="flex items-center mb-2">
             <PencilIcon className="h-4 w-4 text-amber-600 mr-2" />
-            <label htmlFor="title" className="block text-sm font-medium text-amber-800">
+            <label htmlFor="title" className="block text-sm font-medium text-amber-800 dark:text-amber-400">
               Book Title
             </label>
           </div>
@@ -186,21 +186,21 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
             id="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 bg-white"
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 bg-white dark:bg-gray-800 dark:text-gray-100"
             placeholder="Enter book title..."
             required
           />
         </div>
 
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-800">
           <div className="flex items-center mb-3">
             <AdjustmentsHorizontalIcon className="h-4 w-4 text-amber-600 mr-2" />
-            <h3 className="text-sm font-medium text-gray-700">Book Structure</h3>
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Book Structure</h3>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="numChapters" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="numChapters" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Number of Chapters
               </label>
               <input
@@ -210,11 +210,11 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
                 onChange={(e) => setNumChapters(parseInt(e.target.value, 10))}
                 min={1}
                 max={20}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500"
               />
             </div>
             <div>
-              <label htmlFor="sectionsPerChapter" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="sectionsPerChapter" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Topics per Chapter
               </label>
               <input
@@ -224,7 +224,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
                 onChange={(e) => setSectionsPerChapter(parseInt(e.target.value, 10))}
                 min={1}
                 max={10}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500"
               />
             </div>
           </div>
@@ -232,7 +232,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label htmlFor="keywords" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="keywords" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Keywords (comma separated)
             </label>
             <input
@@ -240,20 +240,20 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
               id="keywords"
               value={keywords}
               onChange={(e) => setKeywords(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500"
               placeholder="AI, technology, future..."
             />
           </div>
 
           <div>
-            <label htmlFor="tone" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="tone" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Tone
             </label>
             <select
               id="tone"
               value={tone}
               onChange={(e) => setTone(e.target.value as BookGenerationOptions['tone'])}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500"
             >
               <option value="informative">Informative</option>
               <option value="conversational">Conversational</option>
@@ -265,7 +265,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
           </div>
 
           <div>
-            <label htmlFor="provider" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="provider" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Model Provider
             </label>
             <select
@@ -275,7 +275,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
                 hasUserSelection.current = true
                 setProviderType(e.target.value as LlmProviderType)
               }}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500"
               disabled={(availableProviders || []).length <= 1}
             >
               {(availableProviders || []).map((p) => (
@@ -287,10 +287,10 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
           </div>
         </div>
 
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-800">
           <div className="flex items-center mb-3">
             <LightBulbIcon className="h-4 w-4 text-amber-600 mr-2" />
-            <h3 className="text-sm font-medium text-gray-700">Advanced Options</h3>
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Advanced Options</h3>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -309,7 +309,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
                   } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
                 />
               </Switch>
-              <span className="text-sm text-gray-700">Use web research</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">Use web research</span>
             </div>
 
             <div className="flex items-center space-x-3">
@@ -327,7 +327,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
                   } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
                 />
               </Switch>
-              <span className="text-sm text-gray-700">Proofread content</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">Proofread content</span>
             </div>
 
             <div className="flex items-center space-x-3">
@@ -345,7 +345,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
                   } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
                 />
               </Switch>
-              <span className="text-sm text-gray-700">Humanize content</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">Humanize content</span>
             </div>
           </div>
 
@@ -360,7 +360,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
             <p className="font-medium">Error</p>
             <p>{error}</p>
             <button
@@ -382,4 +382,8 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
       </form>
     </div>
   );
+}
+
+export default function BookGenerator(props: BookGeneratorProps) {
+  return useBookGeneratorView(props)
 }

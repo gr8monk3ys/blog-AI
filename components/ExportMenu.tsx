@@ -97,7 +97,7 @@ const publishOptions: ExportOption[] = [
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
-export default function ExportMenu({
+function useExportMenuView({
   content,
   onExportStart,
   onExportComplete,
@@ -306,7 +306,7 @@ export default function ExportMenu({
     <Menu as="div" className={`relative inline-block text-left ${className}`}>
       <Menu.Button
         disabled={disabled}
-        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <ArrowDownTrayIcon className="w-4 h-4" aria-hidden="true" />
         Export
@@ -322,11 +322,11 @@ export default function ExportMenu({
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <Menu.Items className="absolute right-0 z-20 mt-2 w-64 origin-top-right rounded-xl bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none divide-y divide-gray-100">
+        <Menu.Items className="absolute right-0 z-20 mt-2 w-64 origin-top-right rounded-xl bg-white dark:bg-gray-900 shadow-lg ring-1 ring-black ring-opacity-5 dark:ring-gray-700 focus:outline-none divide-y divide-gray-100 dark:divide-gray-800">
           {/* Download options */}
           <div className="p-1">
             <div className="px-3 py-2">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Download
               </p>
             </div>
@@ -337,12 +337,12 @@ export default function ExportMenu({
                     onClick={() => handleExport(option.id)}
                     disabled={loading !== null}
                     className={`${
-                      active ? 'bg-gray-50' : ''
+                      active ? 'bg-gray-50 dark:bg-gray-800' : ''
                     } group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors disabled:opacity-50`}
                   >
                     <span
                       className={`flex-shrink-0 w-8 h-8 rounded-lg ${
-                        active ? 'bg-amber-100' : 'bg-gray-100'
+                        active ? 'bg-amber-100 dark:bg-amber-900/40' : 'bg-gray-100 dark:bg-gray-800'
                       } flex items-center justify-center transition-colors`}
                     >
                       {loading === option.id ? (
@@ -371,7 +371,7 @@ export default function ExportMenu({
                       ) : (
                         <option.icon
                           className={`w-4 h-4 ${
-                            active ? 'text-amber-600' : 'text-gray-500'
+                            active ? 'text-amber-600' : 'text-gray-500 dark:text-gray-400'
                           } transition-colors`}
                         />
                       )}
@@ -379,12 +379,12 @@ export default function ExportMenu({
                     <span className="flex-1 text-left">
                       <span
                         className={`block font-medium ${
-                          active ? 'text-gray-900' : 'text-gray-700'
+                          active ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'
                         }`}
                       >
                         {copied === option.id ? 'Copied!' : option.name}
                       </span>
-                      <span className="block text-xs text-gray-500">
+                      <span className="block text-xs text-gray-500 dark:text-gray-400">
                         {option.description}
                       </span>
                     </span>
@@ -397,7 +397,7 @@ export default function ExportMenu({
           {/* Publishing options */}
           <div className="p-1">
             <div className="px-3 py-2">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Copy for Publishing
               </p>
             </div>
@@ -408,12 +408,12 @@ export default function ExportMenu({
                     onClick={() => handleExport(option.id)}
                     disabled={loading !== null}
                     className={`${
-                      active ? 'bg-gray-50' : ''
+                      active ? 'bg-gray-50 dark:bg-gray-800' : ''
                     } group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors disabled:opacity-50`}
                   >
                     <span
                       className={`flex-shrink-0 w-8 h-8 rounded-lg ${
-                        active ? 'bg-amber-100' : 'bg-gray-100'
+                        active ? 'bg-amber-100 dark:bg-amber-900/40' : 'bg-gray-100 dark:bg-gray-800'
                       } flex items-center justify-center transition-colors`}
                     >
                       {loading === option.id ? (
@@ -442,7 +442,7 @@ export default function ExportMenu({
                       ) : (
                         <option.icon
                           className={`w-4 h-4 ${
-                            active ? 'text-amber-600' : 'text-gray-500'
+                            active ? 'text-amber-600' : 'text-gray-500 dark:text-gray-400'
                           } transition-colors`}
                         />
                       )}
@@ -450,12 +450,12 @@ export default function ExportMenu({
                     <span className="flex-1 text-left">
                       <span
                         className={`block font-medium ${
-                          active ? 'text-gray-900' : 'text-gray-700'
+                          active ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'
                         }`}
                       >
                         {copied === option.id ? 'Copied!' : option.name}
                       </span>
-                      <span className="block text-xs text-gray-500">
+                      <span className="block text-xs text-gray-500 dark:text-gray-400">
                         {option.description}
                       </span>
                     </span>
@@ -468,4 +468,8 @@ export default function ExportMenu({
       </Transition>
     </Menu>
   )
+}
+
+export default function ExportMenu(props: ExportMenuProps) {
+  return useExportMenuView(props)
 }

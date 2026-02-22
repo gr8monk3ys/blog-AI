@@ -211,6 +211,28 @@ async def generate_book_endpoint(
                 )
             )
 
+        # Attempt image generation for book cover (always-on, graceful degradation)
+        try:
+            from src.images.image_generator import ImageGenerator
+            generator = ImageGenerator()
+            full_content = "\n\n".join(
+                topic.content or ""
+                for chapter in book.chapters
+                for topic in chapter.topics
+            )
+            images_result = await generator.generate_blog_images(
+                content=full_content[:5000],
+                title=book.title,
+                keywords=book.tags,
+                generate_featured=True,
+                generate_social=False,
+                inline_count=0,
+            )
+            if images_result.featured_image:
+                book.image = images_result.featured_image.url
+        except Exception as e:
+            logger.warning(f"Book image generation failed, using default: {e}")
+
         # Convert book to JSON-serializable format
         book_data = {
             "title": book.title,

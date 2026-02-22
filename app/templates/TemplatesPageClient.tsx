@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import SiteHeader from '../../components/SiteHeader'
 import SiteFooter from '../../components/SiteFooter'
 import TemplateGrid from '../../components/templates/TemplateGrid'
@@ -11,13 +11,13 @@ import {
 
 export default function TemplatesPageClient() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
       <SiteHeader />
 
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-amber-600 to-amber-700 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -49,34 +49,34 @@ export default function TemplatesPageClient() {
                 <div className="text-sm text-amber-200">Setup</div>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         </div>
       </section>
 
       {/* Main Content */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <TemplateGrid />
-        </motion.div>
+        </m.div>
       </section>
 
       {/* CTA Section */}
-      <section className="bg-white border-t border-gray-200">
+      <section className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
             className="text-center"
           >
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
               Create Your Own Templates
             </h2>
-            <p className="text-gray-600 max-w-xl mx-auto mb-6">
+            <p className="text-gray-600 dark:text-gray-400 max-w-xl mx-auto mb-6">
               Use any AI tool to create content, then save your settings as a
               reusable template for future use.
             </p>
@@ -89,12 +89,12 @@ export default function TemplatesPageClient() {
               </Link>
               <Link
                 href="/brand"
-                className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+                className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
               >
                 Set Up Brand Voice
               </Link>
             </div>
-          </motion.div>
+          </m.div>
         </div>
       </section>
 

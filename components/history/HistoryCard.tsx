@@ -191,7 +191,7 @@ export default function HistoryCard({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.3, delay: index * 0.05 }}
-        className={`group relative bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-amber-200 transition-all duration-200 overflow-hidden ${
+        className={`group relative bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-amber-200 dark:hover:border-amber-700 transition-all duration-200 overflow-hidden ${
           isDeleting ? 'opacity-50 pointer-events-none' : ''
         }`}
       >
@@ -213,7 +213,7 @@ export default function HistoryCard({
               <Icon className={`w-5 h-5 ${categoryInfo.color}`} aria-hidden="true" />
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="text-base font-semibold text-gray-900 truncate">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">
                 {previewTitle}
               </h3>
               <div className="flex items-center gap-2 mt-1">
@@ -240,15 +240,15 @@ export default function HistoryCard({
         </div>
 
         {/* Preview */}
-        <p className="text-sm text-gray-600 line-clamp-3 mb-4">{previewOutput}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4">{previewOutput}</p>
 
         {/* Actions */}
-        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+        <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800">
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handleCopy}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1"
               aria-label="Copy to clipboard"
             >
               {copied ? (

@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useCallback, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { m, AnimatePresence } from 'framer-motion'
 import {
   MagnifyingGlassIcon,
   XMarkIcon,
@@ -129,13 +129,13 @@ export default function HistoryFilters({
             type="text"
             value={filters.search || ''}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="block w-full pl-11 pr-10 py-3 border border-gray-200 rounded-xl bg-white shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm transition-all"
+            className="block w-full pl-11 pr-10 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm dark:text-gray-100 transition-all"
             placeholder="Search your content history..."
             aria-label="Search history"
           />
           <AnimatePresence>
             {filters.search && (
-              <motion.button
+              <m.button
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
@@ -145,7 +145,7 @@ export default function HistoryFilters({
                 aria-label="Clear search"
               >
                 <XMarkIcon className="h-5 w-5" aria-hidden="true" />
-              </motion.button>
+              </m.button>
             )}
           </AnimatePresence>
         </div>
@@ -159,7 +159,7 @@ export default function HistoryFilters({
             className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 ${
               filters.favorites_only
                 ? 'bg-amber-100 text-amber-700 border border-amber-200'
-                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
             }`}
             aria-pressed={filters.favorites_only}
           >
@@ -175,7 +175,7 @@ export default function HistoryFilters({
                 className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-xs ${
                   filters.favorites_only
                     ? 'bg-amber-200 text-amber-800'
-                    : 'bg-gray-100 text-gray-500'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                 }`}
               >
                 {stats.favorites}
@@ -186,7 +186,7 @@ export default function HistoryFilters({
           {/* Clear All Filters */}
           <AnimatePresence>
             {hasActiveFilters && (
-              <motion.button
+              <m.button
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
@@ -197,7 +197,7 @@ export default function HistoryFilters({
               >
                 <FunnelIcon className="w-4 h-4" aria-hidden="true" />
                 <XMarkIcon className="w-3 h-3" aria-hidden="true" />
-              </motion.button>
+              </m.button>
             )}
           </AnimatePresence>
         </div>
@@ -232,7 +232,7 @@ export default function HistoryFilters({
                 className={`relative flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 ${
                   isSelected
                     ? 'bg-amber-600 text-white shadow-sm'
-                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                    : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
                 <span className="flex items-center gap-2">
@@ -242,7 +242,7 @@ export default function HistoryFilters({
                       className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-xs ${
                         isSelected
                           ? 'bg-amber-500 text-amber-100'
-                          : 'bg-gray-100 text-gray-500'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                       }`}
                     >
                       {count}
@@ -250,7 +250,7 @@ export default function HistoryFilters({
                   )}
                 </span>
                 {isSelected && (
-                  <motion.div
+                  <m.div
                     layoutId="historyFilterIndicator"
                     className="absolute inset-0 bg-amber-600 rounded-lg -z-10"
                     transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}

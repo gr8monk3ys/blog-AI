@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { m, AnimatePresence } from 'framer-motion'
 import {
   CheckIcon,
   ClipboardDocumentIcon,
@@ -42,7 +42,7 @@ function getStyleDescription(style: string): string {
   }
 }
 
-function renderStyleIcon(style: string, className: string) {
+function StyleIcon({ style, className }: { style: string; className: string }) {
   switch (style) {
     case 'standard':
       return <DocumentTextIcon className={className} />
@@ -93,18 +93,18 @@ function VariationCard({
   }
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.1 }}
       className={`relative rounded-xl border-2 transition-all duration-200 ${
         isSelected
-          ? 'border-amber-500 bg-amber-50/50 shadow-md'
-          : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+          ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-900/20 shadow-md'
+          : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm'
       }`}
     >
       {/* Header */}
-      <div className="p-4 border-b border-gray-100">
+      <div className="p-4 border-b border-gray-100 dark:border-gray-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             {/* Variation badge */}
@@ -112,19 +112,19 @@ function VariationCard({
               className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${
                 isSelected
                   ? 'bg-amber-600 text-white'
-                  : 'bg-gray-100 text-gray-700'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
               }`}
             >
               {variation.label}
             </span>
             <div>
               <div className="flex items-center gap-2">
-                {renderStyleIcon(variation.prompt_style, 'w-4 h-4 text-gray-500')}
-                <span className="text-sm font-medium text-gray-900">
+                <StyleIcon style={variation.prompt_style} className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {getStyleDescription(variation.prompt_style)}
                 </span>
               </div>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-gray-500 dark:text-gray-400">
                 Temperature: {variation.temperature.toFixed(1)}
               </span>
             </div>
@@ -160,7 +160,7 @@ function VariationCard({
             {/* Copy button */}
             <button
               onClick={handleCopy}
-              className="p-1.5 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+              className="p-1.5 rounded-md text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               aria-label="Copy content"
             >
               {copied ? (
@@ -176,23 +176,23 @@ function VariationCard({
       {/* Score details */}
       <AnimatePresence>
         {showScores && variation.scores && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="border-b border-gray-100"
+            className="border-b border-gray-100 dark:border-gray-800"
           >
             <div className="p-4">
               <ContentScore scores={variation.scores} showDetails={false} />
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 
       {/* Content preview */}
       <div className="p-4">
         <div
-          className="text-sm text-gray-700 whitespace-pre-wrap max-h-64 overflow-y-auto prose prose-sm"
+          className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap max-h-64 overflow-y-auto prose prose-sm dark:prose-invert"
           style={{ wordBreak: 'break-word' }}
         >
           {variation.content.length > 500
@@ -208,7 +208,7 @@ function VariationCard({
           className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
             isSelected
               ? 'bg-amber-600 text-white shadow-sm'
-              : 'bg-gray-100 text-gray-700 hover:bg-amber-50 hover:text-amber-700'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-700'
           }`}
         >
           {isSelected ? (
@@ -224,15 +224,15 @@ function VariationCard({
 
       {/* Selected indicator */}
       {isSelected && (
-        <motion.div
-          initial={{ scale: 0 }}
+        <m.div
+          initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1 }}
           className="absolute -top-2 -right-2 w-6 h-6 bg-amber-600 rounded-full flex items-center justify-center shadow-md"
         >
           <CheckIcon className="w-4 h-4 text-white" />
-        </motion.div>
+        </m.div>
       )}
-    </motion.div>
+    </m.div>
   )
 }
 
@@ -242,17 +242,17 @@ function LoadingSkeleton() {
       <div className="flex items-center justify-center py-4">
         <div className="flex items-center gap-3">
           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-amber-600" />
-          <span className="text-sm text-gray-600">Generating variations...</span>
+          <span className="text-sm text-gray-600 dark:text-gray-400">Generating variations...</span>
         </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {[1, 2].map((i) => (
+        {[1, 2].map((slot) => (
           <div
-            key={i}
-            className="rounded-xl border border-gray-200 p-4 animate-pulse"
+            key={slot}
+            className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 animate-pulse"
           >
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 bg-gray-200 rounded-full" />
+              <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full" />
               <div className="space-y-2">
                 <div className="h-4 w-24 bg-gray-200 rounded" />
                 <div className="h-3 w-20 bg-gray-100 rounded" />
@@ -291,8 +291,8 @@ export default function VariationCompare({
 
   if (variations.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
-        <BeakerIcon className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+        <BeakerIcon className="w-12 h-12 mx-auto mb-3 text-gray-400 dark:text-gray-500" />
         <p>No variations generated yet.</p>
         <p className="text-sm mt-1">Enable variations to compare different content styles.</p>
       </div>
@@ -310,12 +310,12 @@ export default function VariationCompare({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <BeakerIcon className="w-5 h-5 text-amber-600" />
-          <h3 className="font-semibold text-gray-900">
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100">
             Compare Variations ({variations.length})
           </h3>
         </div>
         {bestScore > 0 && (
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-gray-500 dark:text-gray-400">
             Best score: {Math.round(bestScore)}
           </span>
         )}
@@ -342,7 +342,7 @@ export default function VariationCompare({
 
       {/* Selection hint */}
       {!effectiveSelectedId && (
-        <p className="text-center text-sm text-gray-500">
+        <p className="text-center text-sm text-gray-500 dark:text-gray-400">
           Click &quot;Pick this one&quot; to select your preferred version
         </p>
       )}

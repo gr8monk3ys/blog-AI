@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import Link from 'next/link'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 import { API_ENDPOINTS, apiFetch } from '@/lib/api'
 import { useConfirmModal } from '@/hooks/useConfirmModal'
 import ErrorBoundary from '@/components/ErrorBoundary'
@@ -30,7 +30,7 @@ interface SampleListItem {
   is_primary_example: boolean
 }
 
-function VoiceTrainingPageContent() {
+function useVoiceTrainingPageContentView() {
   // Confirm modal hook
   const { confirm, ConfirmModalComponent } = useConfirmModal()
 
@@ -231,7 +231,7 @@ function VoiceTrainingPageContent() {
   }, [profileId, testContent, fingerprint])
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Confirm Modal */}
       <ConfirmModalComponent />
 
@@ -240,7 +240,7 @@ function VoiceTrainingPageContent() {
         <div className="flex items-center gap-4 mb-8">
           <Link
             href="/brand"
-            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700"
+            className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
           >
             <ArrowLeftIcon className="w-4 h-4" />
             Back to Profiles
@@ -248,8 +248,8 @@ function VoiceTrainingPageContent() {
         </div>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Voice Training Studio</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Voice Training Studio</h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
             Train your brand voice with content samples for consistent AI-generated content
           </p>
         </div>
@@ -257,18 +257,18 @@ function VoiceTrainingPageContent() {
         {/* Error Alert */}
         <AnimatePresence>
           {error && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 flex items-center gap-2"
+              className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 flex items-center gap-2"
             >
               <ExclamationCircleIcon className="w-5 h-5" />
               {error}
               <button onClick={() => setError(null)} className="ml-auto text-red-500">
                 &times;
               </button>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
 
@@ -325,7 +325,7 @@ function VoiceTrainingPageContent() {
 export default function VoiceTrainingPageClient() {
   return (
     <ErrorBoundary>
-      <VoiceTrainingPageContent />
+      {useVoiceTrainingPageContentView()}
     </ErrorBoundary>
   )
 }

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import SiteHeader from '../../components/SiteHeader'
 import SiteFooter from '../../components/SiteFooter'
-import { motion, AnimatePresence } from 'framer-motion'
+import { m, AnimatePresence } from 'framer-motion'
 import {
   SparklesIcon,
   ClockIcon,
@@ -18,7 +18,7 @@ import { historyApi } from '../../lib/history-api'
 import type { GeneratedContentItem, HistoryFilters as HistoryFiltersType } from '../../types/history'
 import { useAuth } from '@clerk/nextjs'
 
-export default function HistoryPageClient() {
+function useHistoryPageView() {
   const [items, setItems] = useState<GeneratedContentItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -143,13 +143,13 @@ export default function HistoryPageClient() {
   }, [fetchHistory])
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
       <SiteHeader />
 
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-amber-600 to-amber-700 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -188,7 +188,7 @@ export default function HistoryPageClient() {
                 </div>
               </div>
             )}
-          </motion.div>
+          </m.div>
         </div>
       </section>
 
@@ -196,16 +196,16 @@ export default function HistoryPageClient() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {!isAvailable ? (
           /* Not Configured State */
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center py-16"
           >
             <ExclamationTriangleIcon className="w-16 h-16 mx-auto text-amber-500 mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
               Sign In Required
             </h2>
-            <p className="text-gray-600 max-w-md mx-auto mb-6">
+            <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto mb-6">
               Sign in to view and manage your saved generations.
             </p>
             <Link
@@ -215,11 +215,11 @@ export default function HistoryPageClient() {
               <DocumentTextIcon className="w-5 h-5" />
               Sign In
             </Link>
-          </motion.div>
+          </m.div>
         ) : (
           <>
             {/* Filters */}
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
@@ -230,62 +230,62 @@ export default function HistoryPageClient() {
                 onFiltersChange={setFilters}
                 stats={stats}
               />
-            </motion.div>
+            </m.div>
 
             {/* Error State */}
             <AnimatePresence>
               {error && (
-                <motion.div
+                <m.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm"
+                  className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-400 text-sm"
                   role="alert"
                 >
                   {error}
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
 
             {/* Loading State */}
             {isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => (
+                {[1, 2, 3, 4, 5, 6].map((slot) => (
                   <div
-                    key={i}
-                    className="bg-white rounded-xl border border-gray-200 p-5 animate-pulse"
+                    key={`history-skeleton-${slot}`}
+                    className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 animate-pulse"
                   >
                     <div className="flex items-start gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-lg bg-gray-200" />
+                      <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-700" />
                       <div className="flex-1">
-                        <div className="h-5 bg-gray-200 rounded w-3/4 mb-2" />
-                        <div className="h-4 bg-gray-100 rounded w-1/2" />
+                        <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2" />
+                        <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-1/2" />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <div className="h-4 bg-gray-100 rounded" />
-                      <div className="h-4 bg-gray-100 rounded w-5/6" />
-                      <div className="h-4 bg-gray-100 rounded w-4/6" />
+                      <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded" />
+                      <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-5/6" />
+                      <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-4/6" />
                     </div>
                   </div>
                 ))}
               </div>
             ) : items.length === 0 ? (
               /* Empty State */
-              <motion.div
+              <m.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="text-center py-16"
               >
-                <DocumentTextIcon className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                <DocumentTextIcon className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
                   {filters.favorites_only
                     ? 'No Favorites Yet'
                     : filters.search
                     ? 'No Results Found'
                     : 'No Content History'}
                 </h2>
-                <p className="text-gray-600 max-w-md mx-auto mb-6">
+                <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto mb-6">
                   {filters.favorites_only
                     ? 'Star your favorite generations to find them here.'
                     : filters.search
@@ -299,11 +299,11 @@ export default function HistoryPageClient() {
                   <SparklesIcon className="w-5 h-5" />
                   Start Creating
                 </Link>
-              </motion.div>
+              </m.div>
             ) : (
               <>
                 {/* History Grid */}
-                <motion.div
+                <m.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.3, delay: 0.2 }}
@@ -320,7 +320,7 @@ export default function HistoryPageClient() {
                       />
                     ))}
                   </AnimatePresence>
-                </motion.div>
+                </m.div>
 
                 {/* Load More */}
                 {hasMore && (
@@ -329,7 +329,7 @@ export default function HistoryPageClient() {
                       type="button"
                       onClick={handleLoadMore}
                       disabled={isLoadingMore}
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isLoadingMore ? (
                         <>
@@ -370,4 +370,8 @@ export default function HistoryPageClient() {
       <SiteFooter />
     </main>
   )
+}
+
+export default function HistoryPageClient() {
+  return useHistoryPageView()
 }

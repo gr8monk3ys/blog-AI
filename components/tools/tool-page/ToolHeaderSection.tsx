@@ -39,7 +39,7 @@ export default function ToolHeaderSection({
   const Icon = categoryIcons[tool.category] || DocumentTextIcon
 
   return (
-    <section className="bg-white border-b border-gray-200">
+    <section className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -57,7 +57,7 @@ export default function ToolHeaderSection({
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
                   {tool.name}
                 </h1>
                 {tool.isFree && (
@@ -66,12 +66,12 @@ export default function ToolHeaderSection({
                   </span>
                 )}
                 {tool.isNew && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-amber-500 to-amber-500 text-white">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white">
                     New
                   </span>
                 )}
               </div>
-              <p className="mt-2 text-gray-600">{tool.description}</p>
+              <p className="mt-2 text-gray-600 dark:text-gray-400">{tool.description}</p>
               <div className="mt-3">
                 <span
                   className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${categoryInfo.bgColor} ${categoryInfo.color} border ${categoryInfo.borderColor}`}

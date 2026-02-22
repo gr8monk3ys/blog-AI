@@ -24,7 +24,7 @@ import type {
 import type { BrandProfile } from '@/types/brand'
 import type { LlmProviderType } from '@/types/llm'
 
-function RemixPageContent() {
+function useRemixPageContentView() {
   // State
   const [formats, setFormats] = useState<ContentFormatInfo[]>([])
   const [selectedFormats, setSelectedFormats] = useState<ContentFormatId[]>([])
@@ -206,12 +206,12 @@ function RemixPageContent() {
   }, [selectedFormats, sourceTitle, sourceContent, provider, brandVoiceEnabled, selectedBrandProfile])
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Content Remix Engine</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Content Remix Engine</h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
             Transform your content into multiple formats with one click
           </p>
         </div>
@@ -219,7 +219,7 @@ function RemixPageContent() {
         {/* Error Alert */}
         <AnimatePresence>
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+            <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400">
               {error}
               <button onClick={() => setError(null)} className="ml-4 text-red-500 hover:text-red-700">
                 x
@@ -231,17 +231,20 @@ function RemixPageContent() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Panel - Input */}
           <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="text-lg font-semibold mb-4">Model Provider</h2>
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-6">
+              <h2 className="text-lg font-semibold dark:text-gray-100 mb-4">Model Provider</h2>
               <div className="flex items-center gap-3">
-                <label className="text-sm font-medium text-gray-700 w-20">Provider</label>
+                <label htmlFor="remix-provider" className="text-sm font-medium text-gray-700 dark:text-gray-300 w-20">
+                  Provider
+                </label>
                 <select
+                  id="remix-provider"
                   value={provider}
                   onChange={(e) => {
                     setProviderTouched(true)
                     setProvider(e.target.value as LlmProviderType)
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100"
                 >
                   {availableProviders.map((p) => {
                     const model = llmConfig?.models?.[p]
@@ -313,7 +316,7 @@ function RemixPageContent() {
 export default function RemixPageClient() {
   return (
     <ErrorBoundary>
-      <RemixPageContent />
+      {useRemixPageContentView()}
     </ErrorBoundary>
   )
 }

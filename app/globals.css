@@ -14,6 +14,18 @@
   --glass-shadow: 0 20px 60px rgba(217, 119, 6, 0.12);
 }
 
+.dark {
+  --foreground-rgb: 229, 229, 229;
+  --background-start-rgb: 15, 15, 15;
+  --background-end-rgb: 23, 23, 23;
+  --surface-rgb: 30, 30, 30;
+  --muted-rgb: 160, 160, 160;
+  --accent-rgb: 245, 158, 11;
+  --glass-bg: 30, 30, 30, 0.55;
+  --glass-border: 55, 55, 55, 0.35;
+  --glass-shadow: 0 20px 60px rgba(245, 158, 11, 0.08);
+}
+
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(120deg, rgb(var(--background-start-rgb)) 0%, rgb(var(--background-end-rgb)) 70%);
@@ -30,4 +42,31 @@ body {
   box-shadow: var(--glass-shadow);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
+}
+
+/* Common dark-mode-aware utility patterns */
+@layer components {
+  .page-gradient {
+    @apply bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900;
+  }
+
+  .card-surface {
+    @apply bg-white border border-gray-200 dark:bg-gray-900 dark:border-gray-800;
+  }
+
+  .input-surface {
+    @apply bg-white border border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100;
+  }
+
+  .text-primary {
+    @apply text-gray-900 dark:text-gray-100;
+  }
+
+  .text-secondary {
+    @apply text-gray-600 dark:text-gray-400;
+  }
+
+  .text-muted {
+    @apply text-gray-500 dark:text-gray-500;
+  }
 }

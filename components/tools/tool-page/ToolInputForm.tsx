@@ -92,7 +92,7 @@ export default function ToolInputForm({
 }: ToolInputFormProps) {
   return (
     <div className="p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">
+      <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
         Create Content
       </h2>
 
@@ -101,7 +101,7 @@ export default function ToolInputForm({
         <div>
           <label
             htmlFor="input"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
             {getInputLabel(tool)}
           </label>
@@ -110,7 +110,7 @@ export default function ToolInputForm({
             value={inputText}
             onChange={(e) => onInputTextChange(e.target.value)}
             rows={4}
-            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+            className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
             placeholder={getInputPlaceholder(tool)}
             required
           />
@@ -120,7 +120,7 @@ export default function ToolInputForm({
         <div>
           <label
             htmlFor="tone"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
             Tone
           </label>
@@ -128,7 +128,7 @@ export default function ToolInputForm({
             id="tone"
             value={tone}
             onChange={(e) => onToneChange(e.target.value)}
-            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+            className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
           >
             {TONE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
