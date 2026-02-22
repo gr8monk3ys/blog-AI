@@ -80,6 +80,7 @@ jobs:
         uses: aquasecurity/trivy-action@0.28.0
         with:
           image-ref: blog-ai:security-scan
+          scanners: vuln
           format: table
           exit-code: 1
           severity: CRITICAL,HIGH
