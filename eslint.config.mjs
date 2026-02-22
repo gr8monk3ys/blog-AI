@@ -8,6 +8,9 @@ import globals from 'globals'
 const COMMON_IGNORES = [
   '.next/**',
   'node_modules/**',
+  'coverage/**',
+  'playwright-report/**',
+  'test-results/**',
   'backend/**',
   'chrome-extension/**',
   'supabase/**',

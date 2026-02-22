@@ -1,4 +1,17 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
+import { resolveProtectedRouteState, waitForAppToSettle } from './helpers'
+
+async function canAccessBrand(page: Page): Promise<boolean> {
+  await page.goto('/brand')
+  const routeState = await resolveProtectedRouteState(page, /\/brand(?:\/|$)/)
+
+  if (routeState === 'auth') {
+    test.skip(true, 'Brand route requires authentication in this environment')
+    return false
+  }
+
+  return true
+}
 
 /**
  * E2E tests for brand voice profiles page.
@@ -6,6 +19,7 @@ import { test, expect } from '@playwright/test'
 test.describe('Brand Profiles', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/brand')
+    await waitForAppToSettle(page)
   })
 
   test('brand page loads', async ({ page }) => {
@@ -14,6 +28,8 @@ test.describe('Brand Profiles', () => {
   })
 
   test('shows profiles list or empty state', async ({ page }) => {
+    if (!(await canAccessBrand(page))) return
+
     // Should show either profile cards or an empty state
     const profileCards = page.locator('[data-testid="profile-card"]').or(
       page.locator('.profile-card')
@@ -37,12 +53,16 @@ test.describe('Brand Profiles', () => {
   })
 
   test('create profile button is present', async ({ page }) => {
+    if (!(await canAccessBrand(page))) return
+
     // The create button is a core UI element on the brand page
     const createButton = page.getByRole('button', { name: /create|add|new/i })
     await expect(createButton.first()).toBeVisible()
   })
 
   test('can open create profile modal', async ({ page }) => {
+    if (!(await canAccessBrand(page))) return
+
     // The create button must be present to open the modal
     const createButton = page.getByRole('button', { name: /create|add|new/i })
     await expect(createButton.first()).toBeVisible()
@@ -72,6 +92,8 @@ test.describe('Brand Profiles', () => {
   })
 
   test('profile cards are clickable', async ({ page }) => {
+    if (!(await canAccessBrand(page))) return
+
     // Profile cards only exist when profiles have been created
     const profileCards = page.locator('[data-testid="profile-card"]').or(
       page.locator('.profile-card')

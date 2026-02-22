@@ -1,4 +1,17 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
+import { resolveProtectedRouteState, waitForAppToSettle } from './helpers'
+
+async function canAccessHistory(page: Page): Promise<boolean> {
+  await page.goto('/history')
+  const routeState = await resolveProtectedRouteState(page, /\/history(?:\/|$)/)
+
+  if (routeState === 'auth') {
+    test.skip(true, 'History route requires authentication in this environment')
+    return false
+  }
+
+  return true
+}
 
 /**
  * E2E tests for content history page.
@@ -6,6 +19,7 @@ import { test, expect } from '@playwright/test'
 test.describe('Content History', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/history')
+    await waitForAppToSettle(page)
   })
 
   test('history page loads', async ({ page }) => {
@@ -14,6 +28,8 @@ test.describe('Content History', () => {
   })
 
   test('shows content list or empty state', async ({ page }) => {
+    if (!(await canAccessHistory(page))) return
+
     // Should show either content items or an empty state
     const contentItems = page.locator('[data-testid="content-item"]').or(
       page.locator('.content-item')
@@ -36,6 +52,8 @@ test.describe('Content History', () => {
   })
 
   test('search/filter is present', async ({ page }) => {
+    if (!(await canAccessHistory(page))) return
+
     // Search input may not be present if page shows empty state with no controls
     const searchInput = page.getByPlaceholder(/search/i).or(
       page.getByRole('searchbox')
@@ -52,6 +70,8 @@ test.describe('Content History', () => {
   })
 
   test('can filter by category', async ({ page }) => {
+    if (!(await canAccessHistory(page))) return
+
     // Category filter depends on having content history available
     const categoryFilter = page.getByRole('combobox', { name: /category|type/i }).or(
       page.getByRole('button', { name: /blog|book|all/i })
@@ -67,6 +87,8 @@ test.describe('Content History', () => {
   })
 
   test('favorite button works', async ({ page }) => {
+    if (!(await canAccessHistory(page))) return
+
     // Favorite buttons only exist when content items are present
     const favoriteButton = page.getByRole('button', { name: /favorite|star/i }).or(
       page.locator('button[aria-label*="favorite"]')

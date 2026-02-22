@@ -1,4 +1,17 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
+import { resolveProtectedRouteState, waitForAppToSettle } from './helpers'
+
+async function canAccessAnalytics(page: Page) {
+  await page.goto('/analytics')
+  const routeState = await resolveProtectedRouteState(page, /\/analytics(?:\/|$)/)
+
+  if (routeState === 'auth') {
+    test.skip(true, 'Analytics route requires authentication in this environment')
+    return false
+  }
+
+  return true
+}
 
 /**
  * E2E tests for analytics dashboard.
@@ -6,6 +19,7 @@ import { test, expect } from '@playwright/test'
 test.describe('Analytics Dashboard', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/analytics')
+    await waitForAppToSettle(page)
   })
 
   test('analytics page loads', async ({ page }) => {
@@ -14,6 +28,8 @@ test.describe('Analytics Dashboard', () => {
   })
 
   test('shows statistics or empty state', async ({ page }) => {
+    if (!(await canAccessAnalytics(page))) return
+
     // Should show either stats cards or an empty state message
     const statsCards = page.locator('[data-testid="stats-card"]').or(
       page.locator('.stats-card')
@@ -34,6 +50,8 @@ test.describe('Analytics Dashboard', () => {
   })
 
   test('time range filter is present', async ({ page }) => {
+    if (!(await canAccessAnalytics(page))) return
+
     // Time range filter depends on having analytics data available
     const timeFilter = page.getByRole('combobox').or(
       page.getByRole('button', { name: /7.*day|30.*day|all/i })
@@ -50,6 +68,8 @@ test.describe('Analytics Dashboard', () => {
   })
 
   test('can change time range', async ({ page }) => {
+    if (!(await canAccessAnalytics(page))) return
+
     // Time range buttons depend on having analytics data available
     const timeRangeButtons = page.getByRole('button').filter({ hasText: /day|week|month|all/i })
 
