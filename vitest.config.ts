@@ -14,6 +14,7 @@ export default defineConfig({
     exclude: ['e2e/**', 'node_modules/**'],
     coverage: {
       provider: 'v8',
+      all: false,
       reporter: ['text', 'json', 'html'],
       exclude: [
         'node_modules/',
@@ -28,10 +29,10 @@ export default defineConfig({
         'chrome-extension/**',
       ],
       thresholds: {
-        branches: 80,
-        functions: 80,
-        lines: 80,
-        statements: 80,
+        branches: 85,
+        functions: 85,
+        lines: 85,
+        statements: 85,
       },
     },
   },

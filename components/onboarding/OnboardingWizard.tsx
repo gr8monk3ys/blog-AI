@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   SparklesIcon,
@@ -528,26 +529,26 @@ export default function OnboardingWizard({
       </div>
 
       <div className="max-w-sm mx-auto grid gap-3">
-        <a
+        <Link
           href="/"
           className="flex items-center justify-center gap-2 rounded-lg bg-amber-600 px-5 py-3 text-sm font-medium text-white hover:bg-amber-700 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
           data-autofocus="true"
         >
           <SparklesIcon className="h-4 w-4" aria-hidden="true" />
           Go to Dashboard
-        </a>
-        <a
+        </Link>
+        <Link
           href="/templates"
           className="flex items-center justify-center rounded-lg border border-amber-200 bg-amber-50/70 px-5 py-3 text-sm font-medium text-amber-800 hover:bg-amber-100 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
         >
           Browse Templates
-        </a>
-        <a
+        </Link>
+        <Link
           href="/brand"
           className="flex items-center justify-center rounded-lg border border-gray-200 bg-white px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
         >
           Refine Brand Settings
-        </a>
+        </Link>
       </div>
     </div>
   )

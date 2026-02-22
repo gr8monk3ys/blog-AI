@@ -17,7 +17,7 @@ describe('NotFound', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     // Override useRouter for this test file to control the mock directly
-    vi.mocked(useRouter).mockReturnValue(mockRouter as any)
+    vi.mocked(useRouter).mockReturnValue(mockRouter as unknown as ReturnType<typeof useRouter>)
   })
 
   describe('Rendering', () => {
@@ -66,7 +66,7 @@ describe('NotFound', () => {
         name: /contact support/i,
       })
       expect(supportLink).toBeInTheDocument()
-      expect(supportLink).toHaveAttribute('href', 'mailto:support@example.com')
+      expect(supportLink).toHaveAttribute('href', 'mailto:support@blogai.com')
     })
   })
 

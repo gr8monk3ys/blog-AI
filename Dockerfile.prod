@@ -40,6 +40,8 @@ RUN npm ci 2>/dev/null || npm install
 # Copy all frontend source files
 COPY app/ ./app/
 COPY components/ ./components/
+COPY hooks/ ./hooks/
+COPY types/ ./types/
 COPY public/ ./public/
 COPY lib/ ./lib/
 COPY tailwind.config.js postcss.config.js next.config.mjs tsconfig.json ./

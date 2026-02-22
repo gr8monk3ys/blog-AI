@@ -181,7 +181,9 @@ export const getDefaultHeaders = async (): Promise<HeadersInit> => {
   if (typeof window !== 'undefined') {
     try {
       // Clerk injects a global `window.Clerk` when configured.
-      const clerk = (window as any)?.Clerk
+      const clerk = (window as Window & {
+        Clerk?: { session?: { getToken?: () => Promise<string | null> } }
+      }).Clerk
       if (clerk?.session?.getToken) {
         const token = await clerk.session.getToken()
         if (token) headers['Authorization'] = `Bearer ${token}`
@@ -234,7 +236,7 @@ function extractErrorMessage(errorData: unknown, status: number): string {
   if (typeof errorData === 'string') return errorData
 
   if (errorData && typeof errorData === 'object') {
-    const obj: any = errorData
+    const obj = errorData as Record<string, unknown>
     const detail = obj?.detail
 
     // FastAPI HTTPException: { detail: "..." }
@@ -243,15 +245,17 @@ function extractErrorMessage(errorData: unknown, status: number): string {
     // FastAPI validation errors: { detail: [{ msg: "..." }, ...] }
     if (Array.isArray(detail) && detail.length > 0) {
       const first = detail[0]
-      if (first && typeof first === 'object' && typeof (first as any).msg === 'string') {
-        return String((first as any).msg)
+      if (first && typeof first === 'object') {
+        const firstObj = first as Record<string, unknown>
+        if (typeof firstObj.msg === 'string') return firstObj.msg
       }
     }
 
     // QuotaExceededError is returned as { detail: { error: "..." } }
     if (detail && typeof detail === 'object') {
-      if (typeof (detail as any).error === 'string') return String((detail as any).error)
-      if (typeof (detail as any).message === 'string') return String((detail as any).message)
+      const detailObj = detail as Record<string, unknown>
+      if (typeof detailObj.error === 'string') return detailObj.error
+      if (typeof detailObj.message === 'string') return detailObj.message
     }
 
     // Custom JSON errors: { error: "..." } or { message: "..." }

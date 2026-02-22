@@ -4,7 +4,7 @@ import { Switch } from '@headlessui/react';
 import { PencilIcon, LightBulbIcon, DocumentTextIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { BlogGenerationOptions } from '../types/blog';
 import { BlogGenerationResponse, ContentGenerationResponse } from '../types/content';
-import { API_ENDPOINTS, ApiError, getDefaultHeaders, checkServerConnection, apiFetchWithRetry } from '../lib/api';
+import { API_ENDPOINTS, ApiError, checkServerConnection, apiFetchWithRetry } from '../lib/api';
 import { useUsageCheck } from './UsageIndicator';
 import BrandVoiceSelector from './brand/BrandVoiceSelector'
 import type { BrandProfile } from '../types/brand'
@@ -33,7 +33,6 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
     'auth' | 'forbidden' | 'rate-limit' | 'unavailable' | 'offline' | 'limit' | 'generic'
   >('generic');
   const [retryAfterSeconds, setRetryAfterSeconds] = useState<number | null>(null);
-  const [limitReached, setLimitReached] = useState(false);
 
   const { checkUsage } = useUsageCheck();
 
@@ -130,7 +129,6 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
     setError(null);
     setErrorKind('generic');
     setRetryAfterSeconds(null);
-    setLimitReached(false);
 
     try {
       if (brandVoiceEnabled && !selectedBrandProfile) {
@@ -142,7 +140,6 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
       // Check usage limit before generating
       const hasUsage = await checkUsage();
       if (!hasUsage) {
-        setLimitReached(true);
         setErrorKind('limit');
         setError('You have reached your usage limit. Upgrade your plan to continue generating content.');
         setLoading(false);

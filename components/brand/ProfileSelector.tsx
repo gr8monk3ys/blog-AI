@@ -13,6 +13,17 @@ interface ProfileSelectorProps {
   isLoading?: boolean
 }
 
+async function fetchActiveProfiles(): Promise<BrandProfile[]> {
+  const response = await fetch('/api/brand-profiles?activeOnly=true', {
+    headers: await getDefaultHeaders(),
+  })
+  const data = await response.json().catch(() => ({}))
+  if (data?.success && Array.isArray(data?.data)) {
+    return data.data as BrandProfile[]
+  }
+  return SAMPLE_BRAND_PROFILES
+}
+
 function ProfileSelectorComponent({
   profileId,
   onProfileIdChange,
@@ -26,25 +37,19 @@ function ProfileSelectorComponent({
     const fetchProfiles = async () => {
       setLoadingProfiles(true)
       try {
-        const response = await fetch('/api/brand-profiles?activeOnly=true', {
-          headers: await getDefaultHeaders(),
-        })
-        const data = await response.json().catch(() => ({}))
+        const fetchedProfiles = await fetchActiveProfiles()
+        setProfiles(fetchedProfiles)
 
-        if (data?.success && Array.isArray(data?.data)) {
-          setProfiles(data.data)
-
-          // Auto-select default profile on first load.
-          if (!profileId) {
-            const defaultProfile =
-              data.data.find((p: BrandProfile) => p.isDefault) || data.data[0]
-            if (defaultProfile?.id) {
-              onProfileIdChange(defaultProfile.id)
-              onLoad(defaultProfile.id)
-            }
+        // Auto-select default profile on first load.
+        if (!profileId) {
+          const defaultProfile =
+            fetchedProfiles.find((p: BrandProfile) => p.isDefault) || fetchedProfiles[0]
+          if (defaultProfile?.id) {
+            onProfileIdChange(defaultProfile.id)
+            onLoad(defaultProfile.id)
           }
-          return
         }
+        return
       } catch {
         // Ignore and fallback
       } finally {

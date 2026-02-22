@@ -286,9 +286,12 @@ export async function POST(request: NextRequest) {
       }
 
       row = rows[0] as BrandProfileRow
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const code = typeof e === 'object' && e !== null && 'code' in e
+        ? (e as { code?: unknown }).code
+        : undefined
       // Unique constraint violation (e.g., slug)
-      if (e?.code === '23505') {
+      if (code === '23505') {
         return NextResponse.json(
           { success: false, error: 'A brand profile with this name already exists' },
           { status: 409 }

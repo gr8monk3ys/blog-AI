@@ -15,6 +15,17 @@ import { BrandProfile, SAMPLE_BRAND_PROFILES } from '../../types/brand'
 import { useConfirmModal } from '../../hooks/useConfirmModal'
 import { getDefaultHeaders } from '../../lib/api'
 
+async function fetchBrandProfilesFromApi(): Promise<BrandProfile[]> {
+  const response = await fetch('/api/brand-profiles', {
+    headers: await getDefaultHeaders(),
+  })
+  const data = await response.json()
+  if (data.success && Array.isArray(data.data)) {
+    return data.data as BrandProfile[]
+  }
+  return SAMPLE_BRAND_PROFILES
+}
+
 export default function BrandPageClient() {
   const { confirm, ConfirmModalComponent } = useConfirmModal()
 
@@ -29,14 +40,8 @@ export default function BrandPageClient() {
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
-        const response = await fetch('/api/brand-profiles', {
-          headers: await getDefaultHeaders(),
-        })
-        const data = await response.json()
-
-        if (data.success) {
-          setProfiles(data.data)
-        }
+        const fetchedProfiles = await fetchBrandProfilesFromApi()
+        setProfiles(fetchedProfiles)
       } catch (error) {
         console.error('Error fetching brand profiles:', error)
         // Fall back to sample data

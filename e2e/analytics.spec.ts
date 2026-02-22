@@ -41,7 +41,7 @@ test.describe('Analytics Dashboard', () => {
       page.locator('select')
     )
 
-    if (\!(await timeFilter.first().isVisible({ timeout: 5000 }).catch(() => false))) {
+    if (!(await timeFilter.first().isVisible({ timeout: 5000 }).catch(() => false))) {
       test.skip(true, 'Time range filter not available -- no analytics data present')
       return
     }
@@ -53,7 +53,7 @@ test.describe('Analytics Dashboard', () => {
     // Time range buttons depend on having analytics data available
     const timeRangeButtons = page.getByRole('button').filter({ hasText: /day|week|month|all/i })
 
-    if (\!(await timeRangeButtons.first().isVisible({ timeout: 5000 }).catch(() => false))) {
+    if (!(await timeRangeButtons.first().isVisible({ timeout: 5000 }).catch(() => false))) {
       test.skip(true, 'Time range buttons not available -- no analytics data present')
       return
     }

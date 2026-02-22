@@ -19,6 +19,32 @@ interface TemplateGridProps {
   toolId?: string
 }
 
+async function fetchTemplatesFromApi(
+  selectedCategory: TemplateCategory | 'all',
+  toolId?: string,
+  searchQuery?: string
+): Promise<Template[]> {
+  const params = new URLSearchParams()
+  if (selectedCategory !== 'all') {
+    params.set('category', selectedCategory)
+  }
+  if (toolId) {
+    params.set('toolId', toolId)
+  }
+  if (searchQuery) {
+    params.set('search', searchQuery)
+  }
+
+  const response = await fetch(`/api/templates?${params.toString()}`, {
+    headers: await getDefaultHeaders(),
+  })
+  const data = await response.json()
+  if (data.success && Array.isArray(data.data)) {
+    return data.data as Template[]
+  }
+  return SAMPLE_TEMPLATES
+}
+
 export default function TemplateGrid({
   showFilters = true,
   showSearch = true,
@@ -38,25 +64,12 @@ export default function TemplateGrid({
     const fetchTemplates = async () => {
       setLoading(true)
       try {
-        const params = new URLSearchParams()
-        if (selectedCategory !== 'all') {
-          params.set('category', selectedCategory)
-        }
-        if (toolId) {
-          params.set('toolId', toolId)
-        }
-        if (searchQuery) {
-          params.set('search', searchQuery)
-        }
-
-        const response = await fetch(`/api/templates?${params.toString()}`, {
-          headers: await getDefaultHeaders(),
-        })
-        const data = await response.json()
-
-        if (data.success) {
-          setTemplates(data.data)
-        }
+        const nextTemplates = await fetchTemplatesFromApi(
+          selectedCategory,
+          toolId,
+          searchQuery
+        )
+        setTemplates(nextTemplates)
       } catch (error) {
         console.error('Error fetching templates:', error)
         // Fall back to sample data

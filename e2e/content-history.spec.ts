@@ -43,7 +43,7 @@ test.describe('Content History', () => {
       page.locator('input[type="search"]')
     )
 
-    if (\!(await searchInput.first().isVisible({ timeout: 5000 }).catch(() => false))) {
+    if (!(await searchInput.first().isVisible({ timeout: 5000 }).catch(() => false))) {
       test.skip(true, 'Search input not available -- page may be in empty state')
       return
     }
@@ -57,7 +57,7 @@ test.describe('Content History', () => {
       page.getByRole('button', { name: /blog|book|all/i })
     )
 
-    if (\!(await categoryFilter.first().isVisible({ timeout: 5000 }).catch(() => false))) {
+    if (!(await categoryFilter.first().isVisible({ timeout: 5000 }).catch(() => false))) {
       test.skip(true, 'Category filter not available -- no content history present')
       return
     }
@@ -72,7 +72,7 @@ test.describe('Content History', () => {
       page.locator('button[aria-label*="favorite"]')
     )
 
-    if (\!(await favoriteButton.first().isVisible({ timeout: 5000 }).catch(() => false))) {
+    if (!(await favoriteButton.first().isVisible({ timeout: 5000 }).catch(() => false))) {
       test.skip(true, 'Favorite button not available -- no content items present')
       return
     }

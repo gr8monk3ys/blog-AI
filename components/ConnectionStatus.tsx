@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { ExclamationTriangleIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { checkServerConnection } from '../lib/api'
 
@@ -14,7 +14,6 @@ const INITIAL_DELAY_MS = 2_000
 export default function ConnectionStatus(): React.ReactElement | null {
   const [status, setStatus] = useState<'connected' | 'disconnected' | 'checking'>('checking')
   const [dismissed, setDismissed] = useState(false)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const check = useCallback(async () => {
     const ok = await checkServerConnection()
@@ -36,7 +35,6 @@ export default function ConnectionStatus(): React.ReactElement | null {
     return () => {
       clearTimeout(initialTimer)
       clearInterval(interval)
-      if (timerRef.current) clearTimeout(timerRef.current)
     }
   }, [check])
 

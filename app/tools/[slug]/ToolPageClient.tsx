@@ -11,7 +11,7 @@ import type { BrandProfile } from '../../../types/brand'
 import type { LlmProviderType } from '../../../types/llm'
 import { historyApi } from '../../../lib/history-api'
 import { toolsApi } from '../../../lib/tools-api'
-import { API_ENDPOINTS, apiFetch, getDefaultHeaders } from '../../../lib/api'
+import { API_ENDPOINTS, ApiError, apiFetch, getDefaultHeaders } from '../../../lib/api'
 import SaveTemplateModal from '../../../components/templates/SaveTemplateModal'
 import type { PlagiarismCheckResponse, PlagiarismCheckResult } from '../../../types/plagiarism'
 import { useLlmConfig } from '../../../hooks/useLlmConfig'
@@ -61,7 +61,7 @@ export default function ToolPageClient() {
   const [brandVoiceEnabled, setBrandVoiceEnabled] = useState(false)
   const [selectedBrandProfile, setSelectedBrandProfile] = useState<BrandProfile | null>(null)
   const { availableProviders, defaultProvider } = useLlmConfig()
-  const [providerType, setProviderType] = useState<LlmProviderType>('openai')
+  const [providerType, setProviderType] = useState<LlmProviderType>(defaultProvider)
 
   // Output state
   const [loading, setLoading] = useState(false)
@@ -109,11 +109,6 @@ export default function ToolPageClient() {
     loadFromHistory()
   }, [fromHistoryId])
 
-  useEffect(() => {
-    setProviderType(defaultProvider)
-  }, [defaultProvider])
-
-
   const buildExecutionInputs = (keywordList: string[]) => ({
     topic: inputText,
     input: inputText,
@@ -140,8 +135,8 @@ export default function ToolPageClient() {
       // Treat structured "success: false" responses as real errors so we don't
       // silently fall back to mock output in production.
       throw new Error(result.error || 'Tool execution failed')
-    } catch (err) {
-      const status = (err as any)?.status
+    } catch (err: unknown) {
+      const status = err instanceof ApiError ? err.status : undefined
       // In production, don't silently fall back to mock output for auth/quota issues.
       if (process.env.NODE_ENV === 'production' || status === 401 || status === 403 || status === 429) {
         throw err
@@ -194,8 +189,8 @@ export default function ToolPageClient() {
       } else {
         await handleSingleGeneration(keywordList, startTime)
       }
-    } catch (err: any) {
-      const status = err?.status
+    } catch (err: unknown) {
+      const status = err instanceof ApiError ? err.status : undefined
       if (status === 401 || status === 403) {
         setExportToast({
           show: true,
@@ -387,8 +382,8 @@ export default function ToolPageClient() {
       }
 
       setPlagiarismResult(payload.data || null)
-    } catch (err: any) {
-      const status = err?.status
+    } catch (err: unknown) {
+      const status = err instanceof ApiError ? err.status : undefined
       if (status === 401 || status === 403) {
         setPlagiarismError('Sign in required to run checks.')
       } else if (status === 429) {

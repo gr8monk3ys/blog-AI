@@ -203,8 +203,9 @@ describe('ExportMenu', () => {
       const onExportStart = vi.fn()
 
       // Mock clipboard for the clipboard export path
-      Object.assign(navigator, {
-        clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: { writeText: vi.fn().mockResolvedValue(undefined) },
       })
 
       render(
@@ -226,8 +227,9 @@ describe('ExportMenu', () => {
       const user = userEvent.setup()
       const onExportComplete = vi.fn()
 
-      Object.assign(navigator, {
-        clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: { writeText: vi.fn().mockResolvedValue(undefined) },
       })
 
       render(

@@ -3,6 +3,11 @@ import { NextResponse } from 'next/server'
 import { requireClerkUserId } from '../../../../lib/clerk-auth'
 import { getSqlOrNull } from '../../../../lib/db'
 
+type ToolCountRow = {
+  tool_id?: unknown
+  count?: unknown
+}
+
 export async function GET() {
   try {
     const sql = getSqlOrNull()
@@ -42,8 +47,10 @@ export async function GET() {
     )
 
     const by_tool: Record<string, number> = {}
-    for (const row of (byToolRows as any[]) || []) {
-      by_tool[row.tool_id] = Number(row.count) || 0
+    for (const row of ((byToolRows ?? []) as ToolCountRow[])) {
+      const toolId = typeof row.tool_id === 'string' ? row.tool_id : ''
+      if (!toolId) continue
+      by_tool[toolId] = Number(row.count) || 0
     }
 
     return NextResponse.json({
@@ -58,4 +65,3 @@ export async function GET() {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-

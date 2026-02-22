@@ -79,7 +79,7 @@ test.describe('Brand Profiles', () => {
       page.locator('article')
     )
 
-    if (\!(await profileCards.first().isVisible({ timeout: 5000 }).catch(() => false))) {
+    if (!(await profileCards.first().isVisible({ timeout: 5000 }).catch(() => false))) {
       test.skip(true, 'No profile cards available -- no profiles have been created')
       return
     }

@@ -1,6 +1,7 @@
 'use client'
 
 import { Fragment, useState, useEffect } from 'react'
+import Link from 'next/link'
 import { Listbox, Transition, Switch } from '@headlessui/react'
 import { ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline'
 import { SparklesIcon } from '@heroicons/react/24/solid'
@@ -13,6 +14,17 @@ interface BrandVoiceSelectorProps {
   selectedProfile: BrandProfile | null
   onProfileChange: (profile: BrandProfile | null) => void
   compact?: boolean
+}
+
+async function fetchActiveBrandProfiles(): Promise<BrandProfile[]> {
+  const response = await fetch('/api/brand-profiles?activeOnly=true', {
+    headers: await getDefaultHeaders(),
+  })
+  const data = await response.json()
+  if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+    return data.data as BrandProfile[]
+  }
+  return SAMPLE_BRAND_PROFILES
 }
 
 export default function BrandVoiceSelector({
@@ -32,19 +44,13 @@ export default function BrandVoiceSelector({
     const fetchProfiles = async () => {
       setLoading(true)
       try {
-        const response = await fetch('/api/brand-profiles?activeOnly=true', {
-          headers: await getDefaultHeaders(),
-        })
-        const data = await response.json()
-
-        if (data.success && data.data.length > 0) {
-          setProfiles(data.data)
-          // Set default profile if none selected
-          if (!selectedProfile) {
-            const defaultProfile = data.data.find((p: BrandProfile) => p.isDefault)
-            if (defaultProfile) {
-              onProfileChange(defaultProfile)
-            }
+        const fetchedProfiles = await fetchActiveBrandProfiles()
+        setProfiles(fetchedProfiles)
+        // Set default profile if none selected
+        if (!selectedProfile) {
+          const defaultProfile = fetchedProfiles.find((p) => p.isDefault)
+          if (defaultProfile) {
+            onProfileChange(defaultProfile)
           }
         }
       } catch (error) {
@@ -179,9 +185,9 @@ export default function BrandVoiceSelector({
                   ) : profiles.length === 0 ? (
                     <div className="py-2 px-4 text-gray-500">
                       No profiles found.{' '}
-                      <a href="/brand" className="text-amber-600 hover:underline">
+                      <Link href="/brand" className="text-amber-600 hover:underline">
                         Create one
-                      </a>
+                      </Link>
                     </div>
                   ) : (
                     profiles.map((profile) => (

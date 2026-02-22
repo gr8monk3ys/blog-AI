@@ -1,6 +1,4 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
 
 const isProtectedRoute = createRouteMatcher([
   '/history(.*)',
@@ -55,15 +53,12 @@ if (!clerkEnabled && !isProduction && !suppressAuthWarning) {
   )
 }
 
-export default clerkEnabled
-  ? clerkMiddleware(async (auth, req) => {
-      if (isProtectedRoute(req)) {
-        await auth.protect()
-      }
-    })
-  : function passthroughMiddleware(_req: NextRequest): NextResponse {
-      return NextResponse.next()
-    }
+export default clerkMiddleware(async (auth, req) => {
+  if (!clerkEnabled) return
+  if (isProtectedRoute(req)) {
+    await auth.protect()
+  }
+})
 
 export const config = {
   matcher: [

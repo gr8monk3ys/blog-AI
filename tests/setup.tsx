@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom'
 import { afterEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
+import type { ImgHTMLAttributes, ReactNode } from 'react'
 
 // Cleanup after each test
 afterEach(() => {
@@ -36,9 +37,13 @@ vi.mock('next/navigation', () => ({
 // ---------------------------------------------------------------------------
 vi.mock('next/image', () => ({
   default: (props: Record<string, unknown>) => {
-    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
-    const { fill, priority, ...rest } = props as any
-    return <img {...rest} />
+    const { fill, priority, ...rest } = props
+    void fill
+    void priority
+    const imageProps = rest as ImgHTMLAttributes<HTMLImageElement>
+    const alt = typeof imageProps.alt === 'string' ? imageProps.alt : ''
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img {...imageProps} alt={alt} />
   },
 }))
 
@@ -46,7 +51,11 @@ vi.mock('next/image', () => ({
 // Mock next/link (render as plain <a> to keep assertions simple)
 // ---------------------------------------------------------------------------
 vi.mock('next/link', () => ({
-  default: ({ children, href, ...rest }: any) => (
+  default: ({
+    children,
+    href,
+    ...rest
+  }: { children: ReactNode; href: string } & Record<string, unknown>) => (
     <a href={href} {...rest}>
       {children}
     </a>
@@ -57,8 +66,8 @@ vi.mock('next/link', () => ({
 // Mock @clerk/nextjs
 // ---------------------------------------------------------------------------
 vi.mock('@clerk/nextjs', () => ({
-  SignedIn: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  SignedOut: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  SignedIn: ({ children }: { children: ReactNode }) => <>{children}</>,
+  SignedOut: ({ children }: { children: ReactNode }) => <>{children}</>,
   UserButton: () => <div data-testid="clerk-user-button" />,
   useUser: () => ({ isSignedIn: true, user: { id: 'test-user' } }),
   useAuth: () => ({
@@ -66,7 +75,7 @@ vi.mock('@clerk/nextjs', () => ({
     userId: 'test-user',
     getToken: vi.fn().mockResolvedValue('mock-token'),
   }),
-  ClerkProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  ClerkProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
   auth: () => ({ userId: 'test-user' }),
 }))
 

@@ -8,6 +8,19 @@ interface Message {
   timestamp: string;
 }
 
+async function fetchConversationMessages(conversationId: string): Promise<Message[]> {
+  const response = await fetch(API_ENDPOINTS.conversation(conversationId), {
+    headers: await getDefaultHeaders(),
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to load conversation: ${response.status}`)
+  }
+
+  const data = await response.json()
+  return Array.isArray(data.conversation) ? data.conversation : []
+}
+
 // Mock data for development or when server is not available
 const MOCK_MESSAGES: Message[] = [
   {
@@ -163,26 +176,17 @@ export default function ConversationHistory({ conversationId }: ConversationHist
       // Server is running, setup WebSocket connection
       websocket = setupWebSocket(conversationId);
 
-      // Load conversation history
-      try {
-        const response = await fetch(API_ENDPOINTS.conversation(conversationId), {
-          headers: await getDefaultHeaders(),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to load conversation: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (isMounted) {
-          setMessages(data.conversation || []);
-          setError(null);
-        }
-      } catch (err) {
-        if (isMounted) {
-          console.error('Error loading conversation:', err);
-          setError('Failed to load conversation history. Please try again.');
+	      // Load conversation history
+	      try {
+	        const conversationMessages = await fetchConversationMessages(conversationId)
+	        if (isMounted) {
+	          setMessages(conversationMessages);
+	          setError(null);
+	        }
+	      } catch (err) {
+	        if (isMounted) {
+	          console.error('Error loading conversation:', err);
+	          setError('Failed to load conversation history. Please try again.');
         }
       } finally {
         if (isMounted) {
