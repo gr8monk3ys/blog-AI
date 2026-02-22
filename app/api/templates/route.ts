@@ -18,6 +18,15 @@ type TemplateRow = {
   updated_at: string
 }
 
+function isPgConflictError(error: unknown): error is { code: string } {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    typeof (error as { code?: unknown }).code === 'string'
+  )
+}
+
 /**
  * Generate a URL-friendly slug from a name
  */
@@ -273,11 +282,8 @@ export async function POST(request: NextRequest) {
 
       row = rows[0] as TemplateRow
     } catch (e: unknown) {
-      const code = typeof e === 'object' && e !== null && 'code' in e
-        ? (e as { code?: unknown }).code
-        : undefined
       // Unique constraint violation (e.g., slug)
-      if (code === '23505') {
+      if (isPgConflictError(e) && e.code === '23505') {
         return NextResponse.json(
           { success: false, error: 'A template with this name already exists' },
           { status: 409 }

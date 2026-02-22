@@ -20,7 +20,14 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from fastapi.testclient import TestClient
 
+DATABASE_CONFIGURED = bool(
+    os.environ.get("DATABASE_URL") or os.environ.get("DATABASE_URL_DIRECT")
+)
 
+@unittest.skipUnless(
+    DATABASE_CONFIGURED,
+    "Database is not configured; analytics endpoints are expected to return 503.",
+)
 class TestAnalyticsOverview(unittest.TestCase):
     """Tests for /analytics/overview endpoint."""
 
@@ -70,6 +77,10 @@ class TestAnalyticsOverview(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
 
 
+@unittest.skipUnless(
+    DATABASE_CONFIGURED,
+    "Database is not configured; analytics endpoints are expected to return 503.",
+)
 class TestAnalyticsToolUsage(unittest.TestCase):
     """Tests for /analytics/tools endpoint."""
 
@@ -109,6 +120,10 @@ class TestAnalyticsToolUsage(unittest.TestCase):
         self.assertLessEqual(len(data), 5)
 
 
+@unittest.skipUnless(
+    DATABASE_CONFIGURED,
+    "Database is not configured; analytics endpoints are expected to return 503.",
+)
 class TestAnalyticsTimeline(unittest.TestCase):
     """Tests for /analytics/timeline endpoint."""
 
@@ -149,6 +164,10 @@ class TestAnalyticsTimeline(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
 
 
+@unittest.skipUnless(
+    DATABASE_CONFIGURED,
+    "Database is not configured; analytics endpoints are expected to return 503.",
+)
 class TestAnalyticsCategories(unittest.TestCase):
     """Tests for /analytics/categories endpoint."""
 
@@ -190,6 +209,10 @@ class TestAnalyticsCategories(unittest.TestCase):
             self.assertAlmostEqual(total_percentage, 100, delta=1)
 
 
+@unittest.skipUnless(
+    DATABASE_CONFIGURED,
+    "Database is not configured; analytics endpoints are expected to return 503.",
+)
 class TestAnalyticsMockData(unittest.TestCase):
     """Tests for analytics mock data in development mode."""
 

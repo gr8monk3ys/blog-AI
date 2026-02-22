@@ -4,8 +4,8 @@ import { requireClerkUserId } from '../../../../lib/clerk-auth'
 import { getSqlOrNull } from '../../../../lib/db'
 
 type ToolCountRow = {
-  tool_id?: unknown
-  count?: unknown
+  tool_id: string
+  count: number | string
 }
 
 export async function GET() {
@@ -47,10 +47,8 @@ export async function GET() {
     )
 
     const by_tool: Record<string, number> = {}
-    for (const row of ((byToolRows ?? []) as ToolCountRow[])) {
-      const toolId = typeof row.tool_id === 'string' ? row.tool_id : ''
-      if (!toolId) continue
-      by_tool[toolId] = Number(row.count) || 0
+    for (const row of (byToolRows as ToolCountRow[]) || []) {
+      by_tool[row.tool_id] = Number(row.count) || 0
     }
 
     return NextResponse.json({

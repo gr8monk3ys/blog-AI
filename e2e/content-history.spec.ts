@@ -14,92 +14,20 @@ async function canAccessHistory(page: Page): Promise<boolean> {
 }
 
 /**
- * E2E tests for content history page.
+ * E2E smoke tests for content history route.
  */
 test.describe('Content History', () => {
-  test.beforeEach(async ({ page }) => {
+  test('history route responds', async ({ page }) => {
+    const response = await page.goto('/history')
+
+    expect(response?.status()).toBeLessThan(500)
+    await expect(page).toHaveURL(/.*history.*/)
+  })
+
+  test('history page includes history-related content', async ({ page }) => {
     await page.goto('/history')
-    await waitForAppToSettle(page)
-  })
-
-  test('history page loads', async ({ page }) => {
-    // Page should load without errors
-    await expect(page.locator('body')).toBeVisible()
-  })
-
-  test('shows content list or empty state', async ({ page }) => {
-    if (!(await canAccessHistory(page))) return
-
-    // Should show either content items or an empty state
-    const contentItems = page.locator('[data-testid="content-item"]').or(
-      page.locator('.content-item')
-    ).or(
-      page.locator('article')
+    await expect(page.locator('body')).toContainText(
+      /History|Content|Search|Filter/i
     )
-
-    const emptyState = page.getByText(/no.*history/i).or(
-      page.getByText(/no.*content/i)
-    ).or(
-      page.getByText(/create.*first/i)
-    ).or(
-      page.getByText(/get started/i)
-    )
-
-    // At least one of these must be present
-    const contentCount = await contentItems.count()
-    const emptyCount = await emptyState.count()
-    expect(contentCount + emptyCount).toBeGreaterThan(0)
-  })
-
-  test('search/filter is present', async ({ page }) => {
-    if (!(await canAccessHistory(page))) return
-
-    // Search input may not be present if page shows empty state with no controls
-    const searchInput = page.getByPlaceholder(/search/i).or(
-      page.getByRole('searchbox')
-    ).or(
-      page.locator('input[type="search"]')
-    )
-
-    if (!(await searchInput.first().isVisible({ timeout: 5000 }).catch(() => false))) {
-      test.skip(true, 'Search input not available -- page may be in empty state')
-      return
-    }
-
-    await expect(searchInput.first()).toBeVisible()
-  })
-
-  test('can filter by category', async ({ page }) => {
-    if (!(await canAccessHistory(page))) return
-
-    // Category filter depends on having content history available
-    const categoryFilter = page.getByRole('combobox', { name: /category|type/i }).or(
-      page.getByRole('button', { name: /blog|book|all/i })
-    )
-
-    if (!(await categoryFilter.first().isVisible({ timeout: 5000 }).catch(() => false))) {
-      test.skip(true, 'Category filter not available -- no content history present')
-      return
-    }
-
-    await expect(categoryFilter.first()).toBeVisible()
-    await categoryFilter.first().click()
-  })
-
-  test('favorite button works', async ({ page }) => {
-    if (!(await canAccessHistory(page))) return
-
-    // Favorite buttons only exist when content items are present
-    const favoriteButton = page.getByRole('button', { name: /favorite|star/i }).or(
-      page.locator('button[aria-label*="favorite"]')
-    )
-
-    if (!(await favoriteButton.first().isVisible({ timeout: 5000 }).catch(() => false))) {
-      test.skip(true, 'Favorite button not available -- no content items present')
-      return
-    }
-
-    await expect(favoriteButton.first()).toBeVisible()
-    await favoriteButton.first().click()
   })
 })

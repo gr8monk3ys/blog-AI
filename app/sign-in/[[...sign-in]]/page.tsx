@@ -1,6 +1,12 @@
+import type { Metadata } from 'next'
 import SiteFooter from '../../../components/SiteFooter'
 import SiteHeader from '../../../components/SiteHeader'
 import { SignIn } from '@clerk/nextjs'
+
+export const metadata: Metadata = {
+  title: 'Sign In | Blog AI',
+  description: 'Sign in to your Blog AI account to access content generation tools and workspace data.',
+}
 
 export default function SignInPage() {
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY

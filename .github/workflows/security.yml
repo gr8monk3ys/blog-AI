@@ -55,7 +55,10 @@ jobs:
         run: npm ci
 
       - name: Run npm audit
-        run: npm audit --audit-level=high
+        # Block PRs on high/critical runtime vulnerabilities. A temporary
+        # allowlist is enforced in scripts/audit-runtime.mjs for a single
+        # upstream-only advisory that currently has no non-breaking fix.
+        run: node scripts/audit-runtime.mjs
 
   trivy-scan:
     name: Container Security Scan

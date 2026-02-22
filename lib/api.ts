@@ -181,9 +181,15 @@ export const getDefaultHeaders = async (): Promise<HeadersInit> => {
   if (typeof window !== 'undefined') {
     try {
       // Clerk injects a global `window.Clerk` when configured.
-      const clerk = (window as Window & {
-        Clerk?: { session?: { getToken?: () => Promise<string | null> } }
-      }).Clerk
+      const clerk = (
+        window as Window & {
+          Clerk?: {
+            session?: {
+              getToken?: () => Promise<string | null>
+            }
+          }
+        }
+      ).Clerk
       if (clerk?.session?.getToken) {
         const token = await clerk.session.getToken()
         if (token) headers['Authorization'] = `Bearer ${token}`
@@ -244,23 +250,22 @@ function extractErrorMessage(errorData: unknown, status: number): string {
 
     // FastAPI validation errors: { detail: [{ msg: "..." }, ...] }
     if (Array.isArray(detail) && detail.length > 0) {
-      const first = detail[0]
-      if (first && typeof first === 'object') {
-        const firstObj = first as Record<string, unknown>
-        if (typeof firstObj.msg === 'string') return firstObj.msg
+      const first = detail[0] as Record<string, unknown> | undefined
+      if (first && typeof first.msg === 'string') {
+        return first.msg
       }
     }
 
     // QuotaExceededError is returned as { detail: { error: "..." } }
     if (detail && typeof detail === 'object') {
-      const detailObj = detail as Record<string, unknown>
-      if (typeof detailObj.error === 'string') return detailObj.error
-      if (typeof detailObj.message === 'string') return detailObj.message
+      const nestedDetail = detail as Record<string, unknown>
+      if (typeof nestedDetail.error === 'string') return nestedDetail.error
+      if (typeof nestedDetail.message === 'string') return nestedDetail.message
     }
 
     // Custom JSON errors: { error: "..." } or { message: "..." }
-    if (typeof obj?.error === 'string') return String(obj.error)
-    if (typeof obj?.message === 'string') return String(obj.message)
+    if (typeof obj.error === 'string') return obj.error
+    if (typeof obj.message === 'string') return obj.message
   }
 
   return `HTTP error! status: ${status}`

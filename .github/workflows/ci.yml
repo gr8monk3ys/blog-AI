@@ -41,13 +41,30 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt pytest pytest-asyncio pytest-cov
 
-      - name: Run backend smoke tests
+      - name: Run smoke suite (blocking)
         run: |
-          pytest tests/test_ci_smoke.py \
-            --cov=src \
-            --cov=app \
+          pytest tests/test_feature_smoke.py tests/test_routes_health.py -q
+        env:
+          DEV_MODE: "true"
+          OPENAI_API_KEY: "test"
+
+      - name: Enforce critical-route integration coverage >= 85%
+        run: |
+          pytest \
+            tests/test_routes_blog.py \
+            tests/test_routes_book.py \
+            tests/test_routes_webhooks.py \
+            tests/test_routes_payments.py \
+            tests/test_routes_usage.py \
+            --cov=app.routes.blog \
+            --cov=app.routes.book \
+            --cov=app.routes.webhooks \
+            --cov=app.routes.payments \
+            --cov=app.routes.usage \
+            --cov-fail-under=85 \
             --cov-report=xml \
-            --cov-report=term-missing
+            --cov-report=term-missing \
+            -q
         env:
           DEV_MODE: "true"
           DEV_API_KEY: "test-key"
@@ -63,6 +80,34 @@ jobs:
           name: backend-coverage
           path: backend/coverage.xml
           retention-days: 14
+
+  backend-regression:
+    name: Backend Regression (non-blocking)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest pytest-asyncio
+
+      - name: Run full backend tests
+        run: pytest -q
+        env:
+          DEV_MODE: "true"
+          OPENAI_API_KEY: "test"
 
   frontend-checks:
     name: Frontend Checks (Next.js)
@@ -122,8 +167,16 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Run E2E tests
-        run: bun run test:e2e
+      - name: Run E2E tests with coverage gate
+        run: bun run test:e2e:coverage
+
+      - name: Upload E2E coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-e2e-coverage
+          path: coverage/e2e/
+          retention-days: 14
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4

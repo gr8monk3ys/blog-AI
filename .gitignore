@@ -3,6 +3,8 @@
 # Coverage reports
 .coverage
 htmlcov/
+.nyc_output/
+coverage/
 
 # Run logs
 backend/run_logs/*
@@ -80,3 +82,4 @@ frontend_legacy/
 
 # Next.js build output
 frontend/.next/
+.vercel

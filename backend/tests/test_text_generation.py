@@ -11,7 +11,7 @@ Tests cover:
 
 import asyncio
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -426,7 +426,7 @@ class TestGenerateTextAsync:
     ):
         """Test successful async text generation."""
         with patch("src.text_generation.core.get_rate_limiter") as mock_limiter:
-            mock_limiter.return_value.acquire = MagicMock(return_value=asyncio.sleep(0))
+            mock_limiter.return_value.acquire = AsyncMock(return_value=None)
 
             result = await generate_text_async(
                 "Test prompt", openai_provider, check_rate_limit=False
@@ -439,7 +439,7 @@ class TestGenerateTextAsync:
         """Test that async generation waits for rate limit."""
         with patch("src.text_generation.core.get_rate_limiter") as mock_limiter:
             mock_rl = MagicMock()
-            mock_rl.acquire = MagicMock(return_value=asyncio.sleep(0))
+            mock_rl.acquire = AsyncMock(return_value=None)
             mock_limiter.return_value = mock_rl
 
             await generate_text_async(

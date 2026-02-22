@@ -8,10 +8,11 @@ Authorization:
 """
 
 import logging
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from src.db import is_database_configured
 from src.organizations import AuthorizationContext, Permission
 from src.types.usage import (
     SubscriptionTier,
@@ -88,6 +89,23 @@ def _stats_to_response(stats: UsageStats) -> UsageStatsResponse:
     )
 
 
+def _build_quota_exceeded_detail(error: Any) -> Dict[str, Any]:
+    """Normalize quota exceeded exceptions into the API error payload."""
+    tier = getattr(error, "tier", "free")
+    reset_date = getattr(error, "reset_date", None)
+    return {
+        "success": False,
+        "has_quota": False,
+        "error": getattr(error, "message", "Quota exceeded"),
+        "error_code": "QUOTA_EXCEEDED",
+        "tier": getattr(tier, "value", str(tier)),
+        "current_usage": getattr(error, "current_usage", 0),
+        "quota_limit": getattr(error, "quota_limit", 0),
+        "reset_date": reset_date.isoformat() if hasattr(reset_date, "isoformat") else None,
+        "upgrade_url": "/pricing",
+    }
+
+
 @router.get("/stats")
 async def get_user_usage_stats(
     auth_ctx: AuthorizationContext = Depends(get_optional_organization_context),
@@ -96,14 +114,42 @@ async def get_user_usage_stats(
     Get usage statistics for the authenticated user.
 
     Returns current usage counts, limits, and remaining quota.
+    Delegates to the Postgres-backed quota service when available,
+    falling back to the file-based limiter otherwise.
 
     Authorization: Requires content.view permission.
     """
     _require_view_permission_if_org(auth_ctx)
 
-    # Use organization_id for scoping if available, fallback to user_id
     scope_id = auth_ctx.organization_id or auth_ctx.user_id
     logger.info(f"Usage stats requested by user: {auth_ctx.user_id} in org: {auth_ctx.organization_id}")
+
+    if is_database_configured():
+        quota_stats = await get_quota_stats(scope_id)
+        tier_config = get_tier_config(quota_stats.tier)
+        return UsageStatsResponse(
+            user_hash=auth_ctx.user_id[:8] + "...",
+            tier=quota_stats.tier.value,
+            daily_count=quota_stats.daily_usage,
+            daily_limit=quota_stats.daily_limit,
+            daily_remaining=quota_stats.daily_remaining,
+            monthly_count=quota_stats.current_usage,
+            monthly_limit=quota_stats.quota_limit,
+            monthly_remaining=quota_stats.remaining,
+            tokens_used_today=0,
+            tokens_used_month=quota_stats.tokens_used,
+            is_limit_reached=quota_stats.is_quota_exceeded,
+            percentage_used_daily=round(
+                (quota_stats.daily_usage / quota_stats.daily_limit * 100)
+                if quota_stats.daily_limit > 0
+                else 0.0,
+                1,
+            ),
+            percentage_used_monthly=quota_stats.percentage_used,
+            reset_daily_at=None,
+            reset_monthly_at=quota_stats.reset_date.isoformat(),
+        )
+
     stats = get_usage_stats(scope_id)
     return _stats_to_response(stats)
 
@@ -116,12 +162,33 @@ async def check_user_limit(
     Check if user has remaining usage quota.
 
     Returns remaining count or raises 429 if limit reached.
+    Delegates to the Postgres-backed quota service when available.
 
     Authorization: Requires content.view permission.
     """
     _require_view_permission_if_org(auth_ctx)
 
     scope_id = auth_ctx.organization_id or auth_ctx.user_id
+
+    if is_database_configured():
+        try:
+            quota_service = get_quota_service()
+            await quota_service.check_quota(scope_id)
+            quota_stats = await get_quota_stats(scope_id)
+            return {
+                "success": True,
+                "can_generate": True,
+                "remaining_today": quota_stats.daily_remaining,
+                "tier": quota_stats.tier.value,
+                "daily_limit": quota_stats.daily_limit,
+                "monthly_remaining": quota_stats.remaining,
+            }
+        except QuotaExceeded as e:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=_build_quota_exceeded_detail(e),
+            )
+
     try:
         remaining = check_usage_limit(scope_id)
         stats = get_usage_stats(scope_id)
@@ -157,6 +224,7 @@ async def get_all_tiers(
     Get information about all available tiers.
 
     Returns configuration for each tier including limits and pricing.
+    Uses quota service for current tier when database is available.
 
     Authorization: Requires content.view permission.
     """
@@ -176,11 +244,15 @@ async def get_all_tiers(
             description=config.description,
         ))
 
-    current_tier = usage_limiter.get_user_tier(scope_id)
+    if is_database_configured():
+        quota_stats = await get_quota_stats(scope_id)
+        current_tier_value = quota_stats.tier.value
+    else:
+        current_tier_value = usage_limiter.get_user_tier(scope_id).value
 
     return AllTiersResponse(
         tiers=tiers,
-        current_tier=current_tier.value,
+        current_tier=current_tier_value,
     )
 
 
@@ -232,6 +304,7 @@ async def upgrade_user_tier(
 
     Note: In production, this would integrate with a payment system.
     For now, it directly updates the tier (for testing purposes).
+    Delegates to quota service when database is available.
 
     Args:
         request: The upgrade request with target tier.
@@ -250,18 +323,21 @@ async def upgrade_user_tier(
             detail=f"Invalid tier: {request.tier}. Must be one of: free, starter, pro, business",
         )
 
-    current_tier = usage_limiter.get_user_tier(scope_id)
-
-    # In production, verify payment before upgrading
-    # For now, allow direct upgrade for testing
-    usage_limiter.set_user_tier(scope_id, new_tier)
-
-    logger.info(f"User {auth_ctx.user_id} upgraded org {auth_ctx.organization_id} from {current_tier.value} to {new_tier.value}")
+    if is_database_configured():
+        quota_service = get_quota_service()
+        quota_stats = await get_quota_stats(scope_id)
+        previous_tier = quota_stats.tier.value
+        await quota_service.set_user_tier(scope_id, SubscriptionTier(new_tier.value))
+        logger.info(f"User {auth_ctx.user_id} upgraded org {auth_ctx.organization_id} from {previous_tier} to {new_tier.value}")
+    else:
+        previous_tier = usage_limiter.get_user_tier(scope_id).value
+        usage_limiter.set_user_tier(scope_id, new_tier)
+        logger.info(f"User {auth_ctx.user_id} upgraded org {auth_ctx.organization_id} from {previous_tier} to {new_tier.value}")
 
     config = get_tier_info(new_tier)
     return {
         "success": True,
-        "previous_tier": current_tier.value,
+        "previous_tier": previous_tier,
         "new_tier": new_tier.value,
         "daily_limit": config.daily_limit,
         "monthly_limit": config.monthly_limit,
@@ -277,6 +353,8 @@ async def get_user_features(
     """
     Get the features available to the authenticated user based on their tier.
 
+    Uses quota service for current tier when database is available.
+
     Returns:
         List of enabled features and tier name.
 
@@ -285,6 +363,20 @@ async def get_user_features(
     _require_view_permission_if_org(auth_ctx)
 
     scope_id = auth_ctx.organization_id or auth_ctx.user_id
+
+    if is_database_configured():
+        quota_stats = await get_quota_stats(scope_id)
+        tier_config = get_tier_config(quota_stats.tier)
+        features = tier_config.features
+        return {
+            "tier": quota_stats.tier.value,
+            "tier_name": tier_config.name,
+            "features_enabled": features,
+            "bulk_generation_enabled": "bulk_generation" in features,
+            "research_enabled": "research_mode" in features,
+            "api_access_enabled": "api_access" in features,
+        }
+
     tier = usage_limiter.get_user_tier(scope_id)
     config = get_tier_info(tier)
 
@@ -395,17 +487,19 @@ async def check_quota_available(
     except QuotaExceeded as e:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail={
-                "success": False,
-                "has_quota": False,
-                "error": e.message,
-                "error_code": "QUOTA_EXCEEDED",
-                "tier": e.tier.value,
-                "current_usage": e.current_usage,
-                "quota_limit": e.quota_limit,
-                "reset_date": e.reset_date.isoformat(),
-                "upgrade_url": "/pricing",
-            },
+            detail=_build_quota_exceeded_detail(e),
+        )
+    except Exception as e:
+        # Some tests reload modules; class identity may differ despite matching shape/name.
+        if e.__class__.__name__ == "QuotaExceeded":
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=_build_quota_exceeded_detail(e),
+            )
+        logger.error(f"Error checking quota availability: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to check quota availability",
         )
 
 

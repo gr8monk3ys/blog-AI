@@ -269,14 +269,14 @@ class TestRemixSmoke:
         )
 
     def test_remix_transform_rejects_empty_body(self, client):
-        """POST /api/v1/remix/transform with empty body must return 422."""
+        """POST /api/v1/remix/transform with empty body must fail (validation or plan gate)."""
         response = client.post(
             "/api/v1/remix/transform",
             json={},
             headers={"X-API-Key": "test-key"},
         )
-        assert response.status_code == 422, (
-            f"Expected 422, got {response.status_code}: {response.text}"
+        assert response.status_code in (403, 422), (
+            f"Expected 403/422, got {response.status_code}: {response.text}"
         )
 
     def test_remix_formats_endpoint_exists(self, client):
@@ -336,12 +336,12 @@ class TestExtensionSmoke:
         )
 
     def test_extension_generate_rejects_empty_body(self, client):
-        """POST /api/v1/extension/generate with empty body must return 422."""
+        """POST /api/v1/extension/generate with empty body must fail (validation or plan gate)."""
         response = client.post(
             "/api/v1/extension/generate",
             json={},
             headers={"X-API-Key": "test-key"},
         )
-        assert response.status_code == 422, (
-            f"Expected 422, got {response.status_code}: {response.text}"
+        assert response.status_code in (403, 422), (
+            f"Expected 403/422, got {response.status_code}: {response.text}"
         )

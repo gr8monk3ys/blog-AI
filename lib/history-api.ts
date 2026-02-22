@@ -14,12 +14,22 @@ import type {
 } from '../types/history'
 import type { ToolCategory } from '../types/tools'
 
-type ErrorWithStatus = Error & { status?: number }
+class HistoryApiError extends Error {
+  status: number
+
+  constructor(message: string, status: number) {
+    super(message)
+    this.name = 'HistoryApiError'
+    this.status = status
+  }
+}
 
 function getErrorStatus(error: unknown): number | undefined {
-  if (!error || typeof error !== 'object') return undefined
-  const maybeStatus = (error as { status?: unknown }).status
-  return typeof maybeStatus === 'number' ? maybeStatus : undefined
+  if (typeof error === 'object' && error !== null && 'status' in error) {
+    const status = (error as { status?: unknown }).status
+    return typeof status === 'number' ? status : undefined
+  }
+  return undefined
 }
 
 function getToolCategory(toolId: string): ToolCategory | null {
@@ -64,9 +74,7 @@ async function jsonOrThrow<T>(res: Response): Promise<T> {
       (data && typeof data === 'object' && 'error' in data && typeof data.error === 'string'
         ? data.error
         : `Request failed (${res.status})`)
-    const error = new Error(message) as ErrorWithStatus
-    error.status = res.status
-    throw error
+    throw new HistoryApiError(message, res.status)
   }
   return data as T
 }

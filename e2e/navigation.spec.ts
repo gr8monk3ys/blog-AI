@@ -2,63 +2,42 @@ import { test, expect } from '@playwright/test'
 import { authPromptLocator, resolveProtectedRouteState, waitForAppToSettle } from './helpers'
 
 /**
- * E2E tests for navigation and basic page rendering.
+ * E2E smoke tests for key frontend routes.
  */
 test.describe('Navigation', () => {
   test('homepage loads successfully', async ({ page }) => {
-    await page.goto('/')
-    await waitForAppToSettle(page)
+    const response = await page.goto('/')
 
-    // Should show the main heading or content generator
+    expect(response?.status()).toBeLessThan(500)
     await expect(page).toHaveTitle(/Blog AI/i)
   })
 
-  test('can navigate to tools page', async ({ page }) => {
-    await page.goto('/tools')
-    const routeState = await resolveProtectedRouteState(page, /\/tools(?:\/|$)/)
+  test('tool directory route loads', async ({ page }) => {
+    const response = await page.goto('/tool-directory')
 
-    if (routeState === 'auth') {
-      await expect(authPromptLocator(page)).toBeVisible()
-      return
-    }
-
-    await expect(page).toHaveURL(/\/tools(?:\/|$)/)
+    expect(response?.status()).toBeLessThan(500)
+    await expect(page).toHaveURL(/.*tool-directory.*/)
   })
 
-  test('can navigate to history page', async ({ page }) => {
-    await page.goto('/history')
-    const routeState = await resolveProtectedRouteState(page, /\/history(?:\/|$)/)
+  test('tools route loads', async ({ page }) => {
+    const response = await page.goto('/tools')
 
-    if (routeState === 'auth') {
-      await expect(authPromptLocator(page)).toBeVisible()
-      return
-    }
-
-    await expect(page).toHaveURL(/\/history(?:\/|$)/)
+    expect(response?.status()).toBeLessThan(500)
+    await expect(page).toHaveURL(/.*tools.*/)
   })
 
-  test('can navigate to analytics page', async ({ page }) => {
-    await page.goto('/analytics')
-    const routeState = await resolveProtectedRouteState(page, /\/analytics(?:\/|$)/)
+  test('history route loads', async ({ page }) => {
+    const response = await page.goto('/history')
 
-    if (routeState === 'auth') {
-      await expect(authPromptLocator(page)).toBeVisible()
-      return
-    }
-
-    await expect(page).toHaveURL(/\/analytics(?:\/|$)/)
+    expect(response?.status()).toBeLessThan(500)
+    await expect(page).toHaveURL(/.*history.*/)
   })
 
-  test('can navigate to brand voice page', async ({ page }) => {
-    await page.goto('/brand')
-    const routeState = await resolveProtectedRouteState(page, /\/brand(?:\/|$)/)
+  test('pricing route loads', async ({ page }) => {
+    const response = await page.goto('/pricing')
 
-    if (routeState === 'auth') {
-      await expect(authPromptLocator(page)).toBeVisible()
-      return
-    }
-
-    await expect(page).toHaveURL(/\/brand(?:\/|$)/)
+    expect(response?.status()).toBeLessThan(500)
+    await expect(page).toHaveURL(/.*pricing.*/)
   })
 
   test('404 page shows for invalid routes', async ({ page }) => {

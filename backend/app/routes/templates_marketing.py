@@ -313,7 +313,7 @@ async def generate_template_content(
                 detail={"error": sanitize_error_message(error_msg), "success": False},
             )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail={
                 "error": sanitize_error_message(error_msg),
                 "success": False,

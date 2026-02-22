@@ -5,6 +5,7 @@ Core text generation functionality.
 import asyncio
 import logging
 import os
+import warnings
 from typing import Dict, Optional, Tuple
 
 from tenacity import (
@@ -41,7 +42,13 @@ except ImportError:  # pragma: no cover
     anthropic = None  # type: ignore
 
 try:
-    import google.generativeai as genai  # type: ignore
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message=r"[\s\S]*google\.generativeai[\s\S]*",
+            category=FutureWarning,
+        )
+        import google.generativeai as genai  # type: ignore
     from google.api_core import exceptions as google_exceptions  # type: ignore
 except ImportError:  # pragma: no cover
     genai = None  # type: ignore

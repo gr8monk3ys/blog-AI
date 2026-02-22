@@ -7,6 +7,8 @@
  */
 
 const STORAGE_KEY = 'onboarding_completed'
+const COOKIE_KEY = 'onboarding_completed'
+const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365
 
 /**
  * Check whether the current user has already completed onboarding.
@@ -36,6 +38,7 @@ export function markOnboardingComplete(): void {
 
   try {
     localStorage.setItem(STORAGE_KEY, 'true')
+    document.cookie = `${COOKIE_KEY}=true; path=/; max-age=${COOKIE_MAX_AGE_SECONDS}; samesite=lax`
   } catch {
     // Swallow -- quota or privacy restrictions.
   }
@@ -50,6 +53,7 @@ export function resetOnboarding(): void {
 
   try {
     localStorage.removeItem(STORAGE_KEY)
+    document.cookie = `${COOKIE_KEY}=; path=/; max-age=0; samesite=lax`
   } catch {
     // Swallow.
   }

@@ -60,10 +60,6 @@ async def authenticate_websocket(
     # Accept the connection so the client can send the auth message
     await websocket.accept()
 
-    # Check DEV_API_KEY first (non-production only)
-    if _is_dev_api_key_active():
-        return "dev_user"
-
     try:
         raw = await asyncio.wait_for(websocket.receive_text(), timeout=5.0)
         auth_msg = json.loads(raw)
@@ -76,6 +72,12 @@ async def authenticate_websocket(
             return None
 
         api_key = auth_msg["api_key"]
+
+        # Non-production shortcut for local development only.
+        if _is_dev_api_key_active() and api_key == os.environ.get("DEV_API_KEY"):
+            await websocket.send_json({"type": "auth_result", "success": True})
+            return "dev_user"
+
         user_id = api_key_store.verify_key(api_key)
 
         if not user_id:

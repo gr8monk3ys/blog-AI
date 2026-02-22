@@ -1,8 +1,9 @@
 name: Deploy
 
 on:
-  push:
-    branches: [main]
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
   workflow_dispatch:
 
 concurrency:
@@ -24,29 +25,61 @@ jobs:
   changes:
     name: Detect Changes
     runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main')
     outputs:
-      frontend: ${{ steps.filter.outputs.frontend }}
-      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.detect.outputs.frontend }}
+      backend: ${{ steps.detect.outputs.backend }}
       manual: ${{ github.event_name == 'workflow_dispatch' }}
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: dorny/paths-filter@v3
-        id: filter
+      - name: Checkout (manual dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
         with:
-          filters: |
-            frontend:
-              - 'app/**'
-              - 'components/**'
-              - 'lib/**'
-              - 'public/**'
-              - 'package.json'
-              - 'bun.lockb'
-              - 'next.config.mjs'
-              - 'tailwind.config.js'
-              - 'tsconfig.json'
-            backend:
-              - 'backend/**'
+          fetch-depth: 2
+
+      - name: Checkout tested commit (CI workflow_run)
+        if: github.event_name == 'workflow_run'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 2
+
+      - name: Detect changed paths
+        id: detect
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Diff against the previous commit on main.
+          changed_files="$(git diff --name-only HEAD^ HEAD || true)"
+          if [ -z "$changed_files" ]; then
+            changed_files="$(git show --pretty='' --name-only HEAD || true)"
+          fi
+
+          frontend=false
+          backend=false
+
+          while IFS= read -r file; do
+            case "$file" in
+              app/*|components/*|lib/*|public/*|package.json|bun.lockb|next.config.mjs|tailwind.config.js|tsconfig.json)
+                frontend=true
+                ;;
+              backend/*)
+                backend=true
+                ;;
+            esac
+          done <<< "$changed_files"
+
+          echo "frontend=$frontend" >> "$GITHUB_OUTPUT"
+          echo "backend=$backend" >> "$GITHUB_OUTPUT"
 
   # ---------------------------------------------------------------------------
   # Frontend -> Vercel
@@ -60,9 +93,40 @@ jobs:
       name: production
       url: ${{ steps.vercel.outputs.preview-url }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout (manual dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
+
+      - name: Checkout tested commit (CI workflow_run)
+        if: github.event_name == 'workflow_run'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Validate Vercel credentials
+        id: vercel-preflight
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          missing=0
+          for key in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID; do
+            if [ -z "${!key}" ]; then
+              echo "::warning::Skipping frontend deploy: missing ${key}."
+              missing=1
+            fi
+          done
+
+          if [ "$missing" -eq 0 ]; then
+            echo "can_deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "can_deploy=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Deploy to Vercel
+        if: steps.vercel-preflight.outputs.can_deploy == 'true'
         id: vercel
         uses: amondnet/vercel-action@v25
         with:
@@ -83,7 +147,15 @@ jobs:
     environment:
       name: production
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout (manual dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
+
+      - name: Checkout tested commit (CI workflow_run)
+        if: github.event_name == 'workflow_run'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -108,7 +180,7 @@ jobs:
         uses: docker/build-push-action@v5
         env:
           BUILD_DATE_VALUE: ${{ github.event.repository.updated_at }}
-          GIT_SHA_VALUE: ${{ github.sha }}
+          GIT_SHA_VALUE: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
         with:
           context: .
           file: Dockerfile.backend

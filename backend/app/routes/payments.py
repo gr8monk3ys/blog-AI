@@ -325,14 +325,14 @@ async def get_subscription_status(
                 generations_limit=PRICING_TIERS[SubscriptionTier.FREE].generations_per_month,
             )
 
-        status = await stripe_service.get_subscription_status(customer_id)
+        subscription_status = await stripe_service.get_subscription_status(customer_id)
 
         logger.info(
             f"Subscription status retrieved for user {user_id}: "
-            f"tier={status.tier.value}, has_subscription={status.has_subscription}"
+            f"tier={subscription_status.tier.value}, has_subscription={subscription_status.has_subscription}"
         )
 
-        return status
+        return subscription_status
 
     except Exception as e:
         logger.error(f"Error getting subscription status: {e}")

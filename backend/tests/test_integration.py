@@ -192,7 +192,7 @@ class TestTierEnforcement:
                     "quality": "standard",
                     "provider": "openai",
                 },
-                headers={"X-API-Key": "mocked-key"},
+                headers={"X-API-Key": "test-key"},
             )
 
         # Clean up override
@@ -244,7 +244,7 @@ class TestTierEnforcement:
                     "conversation_id": "test-conv-tier-001",
                     "provider": "openai",
                 },
-                headers={"X-API-Key": "mocked-key"},
+                headers={"X-API-Key": "test-key"},
             )
 
         # Clean up override

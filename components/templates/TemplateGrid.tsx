@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
+import { m, AnimatePresence } from 'framer-motion'
 import TemplateCard from './TemplateCard'
 import TemplateCategoryFilter from './TemplateCategoryFilter'
 import {
@@ -21,27 +21,33 @@ interface TemplateGridProps {
 
 async function fetchTemplatesFromApi(
   selectedCategory: TemplateCategory | 'all',
-  toolId?: string,
-  searchQuery?: string
+  toolId: string | undefined,
+  searchQuery: string
 ): Promise<Template[]> {
-  const params = new URLSearchParams()
-  if (selectedCategory !== 'all') {
-    params.set('category', selectedCategory)
-  }
-  if (toolId) {
-    params.set('toolId', toolId)
-  }
-  if (searchQuery) {
-    params.set('search', searchQuery)
+  try {
+    const params = new URLSearchParams()
+    if (selectedCategory !== 'all') {
+      params.set('category', selectedCategory)
+    }
+    if (toolId) {
+      params.set('toolId', toolId)
+    }
+    if (searchQuery) {
+      params.set('search', searchQuery)
+    }
+
+    const response = await fetch(`/api/templates?${params.toString()}`, {
+      headers: await getDefaultHeaders(),
+    })
+    const data = await response.json()
+
+    if (data.success && Array.isArray(data.data)) {
+      return data.data
+    }
+  } catch (error) {
+    console.error('Error fetching templates:', error)
   }
 
-  const response = await fetch(`/api/templates?${params.toString()}`, {
-    headers: await getDefaultHeaders(),
-  })
-  const data = await response.json()
-  if (data.success && Array.isArray(data.data)) {
-    return data.data as Template[]
-  }
   return SAMPLE_TEMPLATES
 }
 
@@ -54,34 +60,42 @@ export default function TemplateGrid({
   const router = useRouter()
   const [templates, setTemplates] = useState<Template[]>(SAMPLE_TEMPLATES)
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<TemplateCategory | 'all'>(
-    initialCategory
-  )
+  const [selectedCategoryOverride, setSelectedCategoryOverride] = useState<TemplateCategory | 'all' | null>(null)
   const [loading, setLoading] = useState(false)
+  const selectedCategory = selectedCategoryOverride ?? initialCategory
+
+  const beginTemplateLoad = () => {
+    setLoading(true)
+  }
+
+  const applyLoadedTemplates = (loadedTemplates: Template[]) => {
+    setTemplates(loadedTemplates)
+    setLoading(false)
+  }
 
   // Fetch templates from API
   useEffect(() => {
-    const fetchTemplates = async () => {
-      setLoading(true)
-      try {
-        const nextTemplates = await fetchTemplatesFromApi(
-          selectedCategory,
-          toolId,
-          searchQuery
-        )
-        setTemplates(nextTemplates)
-      } catch (error) {
-        console.error('Error fetching templates:', error)
-        // Fall back to sample data
-        setTemplates(SAMPLE_TEMPLATES)
-      } finally {
-        setLoading(false)
+    let cancelled = false
+
+    const loadTemplates = async () => {
+      beginTemplateLoad()
+      const loadedTemplates = await fetchTemplatesFromApi(
+        selectedCategory,
+        toolId,
+        searchQuery
+      )
+
+      if (!cancelled) {
+        applyLoadedTemplates(loadedTemplates)
       }
     }
 
     // Debounce search
-    const timeoutId = setTimeout(fetchTemplates, searchQuery ? 300 : 0)
-    return () => clearTimeout(timeoutId)
+    const timeoutId = setTimeout(loadTemplates, searchQuery ? 300 : 0)
+    return () => {
+      cancelled = true
+      clearTimeout(timeoutId)
+    }
   }, [selectedCategory, toolId, searchQuery])
 
   // Filter templates locally for immediate feedback
@@ -188,7 +202,7 @@ export default function TemplateGrid({
           {showFilters && (
             <TemplateCategoryFilter
               selectedCategory={selectedCategory}
-              onCategoryChange={setSelectedCategory}
+              onCategoryChange={setSelectedCategoryOverride}
               templateCounts={templateCounts}
             />
           )}
@@ -208,22 +222,22 @@ export default function TemplateGrid({
       {/* Templates grid */}
       <AnimatePresence mode="wait">
         {loading ? (
-          <motion.div
+          <m.div
             key="loading"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
           >
-            {[...Array(8)].map((_, i) => (
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((slot) => (
               <div
-                key={i}
+                key={`template-skeleton-${slot}`}
                 className="h-64 bg-gray-100 rounded-xl animate-pulse"
               />
             ))}
-          </motion.div>
+          </m.div>
         ) : sortedTemplates.length > 0 ? (
-          <motion.div
+          <m.div
             key="grid"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -238,9 +252,9 @@ export default function TemplateGrid({
                 onUse={handleUseTemplate}
               />
             ))}
-          </motion.div>
+          </m.div>
         ) : (
-          <motion.div
+          <m.div
             key="empty"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -261,13 +275,13 @@ export default function TemplateGrid({
               type="button"
               onClick={() => {
                 setSearchQuery('')
-                setSelectedCategory('all')
+                setSelectedCategoryOverride('all')
               }}
               className="mt-4 inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-colors"
             >
               Clear all filters
             </button>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

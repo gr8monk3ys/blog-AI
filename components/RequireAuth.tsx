@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useAuth } from '@clerk/nextjs'
 
 interface RequireAuthProps {
@@ -39,13 +38,6 @@ export default function RequireAuth({
   fallback,
 }: RequireAuthProps): React.ReactElement | null {
   const { isLoaded, isSignedIn } = useAuth()
-  const router = useRouter()
-
-  useEffect(() => {
-    if (isLoaded && !isSignedIn) {
-      router.replace(redirectTo)
-    }
-  }, [isLoaded, isSignedIn, redirectTo, router])
 
   // Clerk is still initializing -- show a loading state.
   if (!isLoaded) {
@@ -70,9 +62,23 @@ export default function RequireAuth({
     )
   }
 
-  // User is not signed in -- redirect is already in progress via the effect.
+  // User is not signed in.
   if (!isSignedIn) {
-    return null
+    return (
+      <main className="min-h-screen flex items-center justify-center px-4">
+        <div className="text-center max-w-sm">
+          <p className="text-sm text-gray-600 mb-4">
+            You need to sign in to view this page.
+          </p>
+          <Link
+            href={redirectTo}
+            className="inline-flex items-center px-4 py-2 rounded-lg bg-amber-600 text-white text-sm font-medium hover:bg-amber-700 transition-colors"
+          >
+            Sign In
+          </Link>
+        </div>
+      </main>
+    )
   }
 
   return <>{children}</>

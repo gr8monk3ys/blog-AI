@@ -359,11 +359,16 @@ class TestWebSocketAuthentication:
     async def test_dev_api_key_bypass_returns_dev_user(self):
         """
         When DEV_API_KEY is set and not in production,
-        authentication should be bypassed and return 'dev_user'.
+        sending that key should authenticate as 'dev_user'.
         """
         authenticate = self._get_authenticate()
         ws = AsyncMock()
         ws.accept = AsyncMock()
+        ws.send_json = AsyncMock()
+        ws.close = AsyncMock()
+        ws.receive_text = AsyncMock(
+            return_value=json.dumps({"type": "auth", "api_key": "test-dev-key"})
+        )
 
         env_overrides = {
             'DEV_API_KEY': 'test-dev-key',
@@ -374,6 +379,8 @@ class TestWebSocketAuthentication:
 
         assert result == 'dev_user'
         ws.accept.assert_awaited_once()
+        ws.send_json.assert_awaited_once()
+        ws.close.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_dev_api_key_blocked_in_production_environment(self):

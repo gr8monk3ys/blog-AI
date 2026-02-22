@@ -14,6 +14,9 @@ const COMMON_IGNORES = [
   'backend/**',
   'chrome-extension/**',
   'supabase/**',
+  'coverage/**',
+  'playwright-report/**',
+  'test-results/**',
 ]
 
 export default [

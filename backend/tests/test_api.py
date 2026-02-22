@@ -25,6 +25,8 @@ class TestHealthEndpoint(unittest.TestCase):
         from server import app
 
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_health_check_returns_healthy(self):
         """Health check should return healthy status."""
@@ -52,6 +54,7 @@ class TestBlogGenerationValidation(unittest.TestCase):
         from server import app
 
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_missing_topic_returns_error(self):
         """Missing topic should return 422 validation error."""
@@ -124,6 +127,7 @@ class TestBookGenerationValidation(unittest.TestCase):
         from server import app
 
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_missing_title_returns_error(self):
         """Missing title should return 422 validation error."""
@@ -165,6 +169,7 @@ class TestConversationEndpoint(unittest.TestCase):
         from server import app
 
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_get_nonexistent_conversation_returns_empty(self):
         """Getting a non-existent conversation should return empty list."""
@@ -188,6 +193,7 @@ class TestPromptInjectionProtection(unittest.TestCase):
         from server import app
 
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_prompt_injection_in_topic_is_filtered(self):
         """Prompt injection attempts should be filtered."""
@@ -231,6 +237,7 @@ class TestRateLimiting(unittest.TestCase):
 
         importlib.reload(server)
         self.client = TestClient(server.app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def tearDown(self):
         """Reset environment."""
@@ -267,6 +274,11 @@ class TestWebSocket(unittest.TestCase):
         with self.client.websocket_connect(
             "/ws/conversation/valid-id-123"
         ) as websocket:
+            websocket.send_json({"type": "auth", "api_key": "test-key"})
+            auth_data = websocket.receive_json()
+            self.assertEqual(auth_data["type"], "auth_result")
+            self.assertTrue(auth_data["success"])
+
             # Send a valid message
             websocket.send_json({"role": "user", "content": "Hello"})
             # Should receive the message back
@@ -277,6 +289,11 @@ class TestWebSocket(unittest.TestCase):
     def test_websocket_invalid_message_format(self):
         """WebSocket should handle invalid message format gracefully."""
         with self.client.websocket_connect("/ws/conversation/test-123") as websocket:
+            websocket.send_json({"type": "auth", "api_key": "test-key"})
+            auth_data = websocket.receive_json()
+            self.assertEqual(auth_data["type"], "auth_result")
+            self.assertTrue(auth_data["success"])
+
             # Send invalid JSON
             websocket.send_text("not valid json")
             data = websocket.receive_json()

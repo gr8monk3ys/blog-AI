@@ -113,6 +113,8 @@ def sample_blog_post_with_faqs():
 def mock_dependencies():
     """Mock common dependencies for blog route tests."""
     with patch("app.routes.blog.verify_api_key") as mock_auth, \
+         patch("app.routes.blog.check_generation_rate_limit", new_callable=AsyncMock) as mock_rate_limit, \
+         patch("app.routes.blog.require_pro_tier", new_callable=AsyncMock) as mock_pro_tier, \
          patch("app.routes.blog.require_quota", new_callable=AsyncMock) as mock_quota, \
          patch("app.routes.blog.increment_usage_for_operation") as mock_usage, \
          patch("app.routes.blog.conversations") as mock_conv, \
@@ -121,6 +123,8 @@ def mock_dependencies():
 
         # Configure mocks
         mock_auth.return_value = "test-user-id"
+        mock_rate_limit.return_value = None
+        mock_pro_tier.return_value = None
         mock_quota.return_value = "test-user-id"
         mock_usage.return_value = AsyncMock()
         mock_conv.append = MagicMock()
@@ -129,6 +133,8 @@ def mock_dependencies():
 
         yield {
             "auth": mock_auth,
+            "rate_limit": mock_rate_limit,
+            "pro_tier": mock_pro_tier,
             "quota": mock_quota,
             "usage": mock_usage,
             "conversations": mock_conv,

@@ -29,6 +29,7 @@ class TestAnalyzeSampleValidation(unittest.TestCase):
         from server import app
         # Don't raise server exceptions so we can check status codes
         self.client = TestClient(app, raise_server_exceptions=False)
+        self.client.headers.update({"X-API-Key": "test-key"})
         self.valid_content = "This is a sample piece of content that needs to be at least 50 characters long for the brand voice analysis to work properly."
 
     def test_analyze_content_too_short_returns_422(self):
@@ -76,6 +77,7 @@ class TestAddSampleValidation(unittest.TestCase):
         """Set up test client and sample data."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
         self.valid_content = "This is sample content that needs to be at least 50 characters long for brand voice training."
         self.valid_profile_id = "test-profile-123"
 
@@ -111,6 +113,7 @@ class TestSampleSourceURLValidation(unittest.TestCase):
         """Set up test client and sample data."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
         self.valid_content = "This is sample content that needs to be at least 50 characters long for testing."
         self.valid_profile_id = "test-profile"
 
@@ -177,6 +180,7 @@ class TestContentSanitization(unittest.TestCase):
         from server import app
         # Don't raise server exceptions so we can check status codes
         self.client = TestClient(app, raise_server_exceptions=False)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_script_tags_removed_in_validation(self):
         """Script tags should be sanitized during validation, not cause 422."""
@@ -205,6 +209,7 @@ class TestScoreContentValidation(unittest.TestCase):
         """Set up test client."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
         self.valid_content = "This is content to score against a brand voice profile. It should be at least 50 characters."
 
     def test_score_content_too_short_returns_422(self):
@@ -226,6 +231,7 @@ class TestSamplesEndpoint(unittest.TestCase):
         """Set up test client."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_get_samples_method_not_allowed(self):
         """GET method should not be allowed on /brand-voice/samples."""
@@ -241,6 +247,7 @@ class TestDeleteSampleEndpoint(unittest.TestCase):
         """Set up test client."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_delete_samples_method_not_allowed(self):
         """DELETE method on /brand-voice/samples/{id} returns 405."""

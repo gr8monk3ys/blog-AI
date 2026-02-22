@@ -30,6 +30,16 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response,
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from app.auth import verify_api_key
+from src.auth.sso.persistence import (
+    count_active_user_sessions as db_count_active_user_sessions,
+    delete_auth_session as db_delete_auth_session,
+    delete_user_session as db_delete_user_session,
+    get_auth_session as db_get_auth_session,
+    get_user_session as db_get_user_session,
+    load_sso_config as db_load_sso_config,
+    store_auth_session as db_store_auth_session,
+    store_user_session as db_store_user_session,
+)
 from src.auth.sso.oidc_service import OIDCService, OIDCServiceError
 from src.auth.sso.providers import (
     OIDCProvider,
@@ -89,41 +99,146 @@ async def _get_redis():
         return None
 
 
+def _to_sso_session(value: Any) -> Optional[SSOSession]:
+    if isinstance(value, SSOSession):
+        return value
+    if isinstance(value, dict):
+        try:
+            return SSOSession.model_validate(value)
+        except Exception:
+            return None
+    return None
+
+
+async def _load_sso_config(organization_id: str) -> Optional[SSOConfiguration]:
+    """Load SSO config from in-memory cache first, then Postgres."""
+    config = _get_sso_config(organization_id)
+    if config is not None:
+        return config
+
+    db_config = await db_load_sso_config(organization_id)
+    if db_config is None:
+        return None
+
+    # Prime shared in-memory cache used by sso_admin + tests.
+    from app.routes.sso_admin import _sso_configurations
+
+    _sso_configurations[organization_id] = db_config
+    return db_config
+
+
 async def _store_auth_session(session_id: str, data: dict, ttl_seconds: int = 600) -> None:
+    payload = dict(data)
+    payload.setdefault("created_at", datetime.now(timezone.utc).isoformat())
+
     redis = await _get_redis()
+    persisted = False
     if redis:
         import json as _json
-        await redis.setex(f"{_SSO_SESSION_PREFIX}{session_id}", ttl_seconds, _json.dumps(data, default=str))
-    else:
+        try:
+            await redis.setex(
+                f"{_SSO_SESSION_PREFIX}{session_id}",
+                ttl_seconds,
+                _json.dumps(payload, default=str),
+            )
+            persisted = True
+        except Exception:
+            pass
+
+    if await db_store_auth_session(session_id, payload, ttl_seconds):
+        persisted = True
+
+    if not persisted:
         if len(_sso_auth_sessions) >= _MAX_MEMORY_SESSIONS:
             oldest = next(iter(_sso_auth_sessions))
             del _sso_auth_sessions[oldest]
-        _sso_auth_sessions[session_id] = data
+        _sso_auth_sessions[session_id] = payload
 
 
 async def _get_auth_session(session_id: str) -> dict | None:
+    if not session_id:
+        return None
+
     redis = await _get_redis()
+    data = None
     if redis:
         import json as _json
-        raw = await redis.get(f"{_SSO_SESSION_PREFIX}{session_id}")
-        return _json.loads(raw) if raw else None
-    return _sso_auth_sessions.get(session_id)
+        try:
+            raw = await redis.get(f"{_SSO_SESSION_PREFIX}{session_id}")
+            data = _json.loads(raw) if raw else None
+        except Exception:
+            data = None
+
+    if data is None:
+        data = await db_get_auth_session(session_id)
+
+    if data is None:
+        data = _sso_auth_sessions.get(session_id)
+
+    if not data:
+        return None
+
+    created_at_raw = data.get("created_at")
+    if not created_at_raw:
+        return data
+
+    try:
+        created_at = datetime.fromisoformat(created_at_raw)
+    except (TypeError, ValueError):
+        await _delete_auth_session(session_id)
+        return None
+
+    if created_at.tzinfo is None:
+        created_at = created_at.replace(tzinfo=timezone.utc)
+
+    if datetime.now(timezone.utc) - created_at > SSO_AUTH_SESSION_TIMEOUT:
+        await _delete_auth_session(session_id)
+        return None
+
+    return data
 
 
 async def _delete_auth_session(session_id: str) -> None:
     redis = await _get_redis()
     if redis:
-        await redis.delete(f"{_SSO_SESSION_PREFIX}{session_id}")
-    else:
-        _sso_auth_sessions.pop(session_id, None)
+        try:
+            await redis.delete(f"{_SSO_SESSION_PREFIX}{session_id}")
+        except Exception:
+            pass
+    await db_delete_auth_session(session_id)
+    _sso_auth_sessions.pop(session_id, None)
+
+
+async def _delete_user_session(session_id: str) -> None:
+    redis = await _get_redis()
+    if redis:
+        try:
+            await redis.delete(f"{_SSO_USER_PREFIX}{session_id}")
+        except Exception:
+            pass
+    await db_delete_user_session(session_id)
+    _sso_user_sessions.pop(session_id, None)
 
 
 async def _store_user_session(session_id: str, session: "SSOSession", ttl_seconds: int = 86400) -> None:
     redis = await _get_redis()
+    persisted = False
     if redis:
         import json as _json
-        await redis.setex(f"{_SSO_USER_PREFIX}{session_id}", ttl_seconds, _json.dumps(session.__dict__ if hasattr(session, '__dict__') else str(session), default=str))
-    else:
+        try:
+            await redis.setex(
+                f"{_SSO_USER_PREFIX}{session_id}",
+                ttl_seconds,
+                _json.dumps(session.model_dump(mode="json", exclude_none=True), default=str),
+            )
+            persisted = True
+        except Exception:
+            pass
+
+    if await db_store_user_session(session_id, session, ttl_seconds):
+        persisted = True
+
+    if not persisted:
         if len(_sso_user_sessions) >= _MAX_MEMORY_SESSIONS:
             oldest = next(iter(_sso_user_sessions))
             del _sso_user_sessions[oldest]
@@ -132,11 +247,26 @@ async def _store_user_session(session_id: str, session: "SSOSession", ttl_second
 
 async def _get_user_session(session_id: str):
     redis = await _get_redis()
+    data = None
     if redis:
         import json as _json
-        raw = await redis.get(f"{_SSO_USER_PREFIX}{session_id}")
-        return _json.loads(raw) if raw else None
-    return _sso_user_sessions.get(session_id)
+        try:
+            raw = await redis.get(f"{_SSO_USER_PREFIX}{session_id}")
+            data = _json.loads(raw) if raw else None
+        except Exception:
+            data = None
+
+    if data is not None:
+        session = _to_sso_session(data)
+        if session is not None:
+            return session
+
+    db_session = await db_get_user_session(session_id)
+    if db_session is not None:
+        return db_session
+
+    fallback = _sso_user_sessions.get(session_id)
+    return _to_sso_session(fallback) or fallback
 
 
 # =============================================================================
@@ -248,7 +378,7 @@ async def get_saml_metadata(
     Identity Provider (IdP) during SAML configuration.
     """
     # Get SSO configuration
-    sso_config = _get_sso_config(organization_id)
+    sso_config = await _load_sso_config(organization_id)
 
     if not sso_config or not sso_config.saml_config:
         # Return a template metadata based on environment configuration
@@ -312,7 +442,7 @@ async def saml_login(
 
     Redirects the user to the Identity Provider (IdP) for authentication.
     """
-    sso_config = _get_sso_config(organization_id)
+    sso_config = await _load_sso_config(organization_id)
 
     if not sso_config or not sso_config.saml_config:
         raise HTTPException(
@@ -393,7 +523,7 @@ async def saml_acs(
 
     Processes the SAML Response from the IdP and creates a user session.
     """
-    sso_config = _get_sso_config(organization_id)
+    sso_config = await _load_sso_config(organization_id)
 
     if not sso_config or not sso_config.saml_config:
         raise HTTPException(
@@ -528,11 +658,14 @@ async def saml_slo(
 
     Handles both IdP-initiated logout requests and logout responses.
     """
-    sso_config = _get_sso_config(organization_id)
+    sso_config = await _load_sso_config(organization_id)
 
     if not sso_config or not sso_config.saml_config:
-        # No SSO configured, just redirect to home
-        return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+        # No SSO configured, just redirect to home but always clear local cookies.
+        response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+        response.delete_cookie("sso_session")
+        response.delete_cookie("sso_auth_session")
+        return response
 
     # Get current session
     session_token = request.cookies.get("sso_session")
@@ -541,7 +674,7 @@ async def saml_slo(
         session = await _get_user_session(session_hash)
 
         if session:
-            await _delete_auth_session(session_hash)
+            await _delete_user_session(session_hash)
             user_email = session.sso_user.email if hasattr(session, 'sso_user') else session.get('sso_user', {}).get('email', 'unknown')
             logger.info(
                 f"SAML logout for user {user_email} in org {organization_id}"
@@ -576,7 +709,7 @@ async def oidc_authorize(
 
     Redirects the user to the OIDC provider for authentication.
     """
-    sso_config = _get_sso_config(organization_id)
+    sso_config = await _load_sso_config(organization_id)
 
     if not sso_config or not sso_config.oidc_config:
         raise HTTPException(
@@ -671,7 +804,7 @@ async def oidc_callback(
             },
         )
 
-    sso_config = _get_sso_config(organization_id)
+    sso_config = await _load_sso_config(organization_id)
 
     if not sso_config or not sso_config.oidc_config:
         raise HTTPException(
@@ -814,7 +947,7 @@ async def get_sso_status(
 
     Returns whether SSO is configured and enabled, along with current status.
     """
-    sso_config = _get_sso_config(organization_id)
+    sso_config = await _load_sso_config(organization_id)
 
     if not sso_config:
         return SSOStatusResponse(
@@ -828,13 +961,15 @@ async def get_sso_status(
             active_sessions_count=0,
         )
 
-    # Count active sessions for this organization
-    active_sessions = sum(
-        1
-        for s in _sso_user_sessions.values()
-        if s.organization_id == organization_id
-        and s.expires_at > datetime.now(timezone.utc)
-    )
+    # Count active sessions (DB first, in-memory fallback).
+    active_sessions = await db_count_active_user_sessions(organization_id)
+    if active_sessions is None:
+        now = datetime.now(timezone.utc)
+        active_sessions = sum(
+            1
+            for s in _sso_user_sessions.values()
+            if s.organization_id == organization_id and s.expires_at > now
+        )
 
     # Get certificate expiry for SAML
     cert_expiry = None
@@ -876,6 +1011,7 @@ async def sso_logout(
     session = await _get_user_session(session_hash)
 
     if session:
+        await _delete_user_session(session_hash)
         user_email = session.sso_user.email if hasattr(session, 'sso_user') else session.get('sso_user', {}).get('email', 'unknown')
         org_id = session.organization_id if hasattr(session, 'organization_id') else session.get('organization_id', 'unknown')
         logger.info(
@@ -884,7 +1020,7 @@ async def sso_logout(
         )
 
         # Check if we need to redirect to IdP for SLO
-        sso_config = _get_sso_config(org_id)
+        sso_config = await _load_sso_config(org_id)
         if sso_config:
             if (
                 sso_config.provider_type == SSOProviderType.SAML

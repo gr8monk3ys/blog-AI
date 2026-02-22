@@ -1,7 +1,8 @@
 import '@testing-library/jest-dom'
 import { afterEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
-import type { ImgHTMLAttributes, ReactNode } from 'react'
+import React from 'react'
+import type { ReactNode } from 'react'
 
 // Cleanup after each test
 afterEach(() => {
@@ -37,13 +38,11 @@ vi.mock('next/navigation', () => ({
 // ---------------------------------------------------------------------------
 vi.mock('next/image', () => ({
   default: (props: Record<string, unknown>) => {
-    const { fill, priority, ...rest } = props
-    void fill
-    void priority
-    const imageProps = rest as ImgHTMLAttributes<HTMLImageElement>
-    const alt = typeof imageProps.alt === 'string' ? imageProps.alt : ''
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img {...imageProps} alt={alt} />
+    const { alt, ...rest } = props
+    return React.createElement('img', {
+      ...rest,
+      alt: typeof alt === 'string' ? alt : '',
+    })
   },
 }))
 
@@ -55,7 +54,11 @@ vi.mock('next/link', () => ({
     children,
     href,
     ...rest
-  }: { children: ReactNode; href: string } & Record<string, unknown>) => (
+  }: {
+    children: ReactNode
+    href: string
+    [key: string]: unknown
+  }) => (
     <a href={href} {...rest}>
       {children}
     </a>

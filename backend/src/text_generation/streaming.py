@@ -7,6 +7,7 @@ Provides async generators for token-by-token streaming from LLM providers.
 import asyncio
 import logging
 import os
+import warnings
 from dataclasses import dataclass
 from enum import Enum
 from typing import AsyncGenerator, Optional, Union
@@ -353,7 +354,13 @@ async def _stream_gemini(
         StreamEvent objects containing tokens.
     """
     try:
-        import google.generativeai as genai
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message=r"[\s\S]*google\.generativeai[\s\S]*",
+                category=FutureWarning,
+            )
+            import google.generativeai as genai
         from google.api_core import exceptions as google_exceptions
     except ImportError:
         raise StreamingError(
