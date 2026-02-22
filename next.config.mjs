@@ -12,8 +12,12 @@ const isDev = process.env.NODE_ENV === 'development'
 // Only enforced in CI/Vercel (not local `npm run build`)
 // =============================================================================
 const isDeployBuild = process.env.CI === 'true' || process.env.VERCEL === '1'
+const isVercelProductionBuild =
+  process.env.NODE_ENV === 'production' &&
+  isDeployBuild &&
+  process.env.VERCEL_ENV === 'production'
 
-if (process.env.NODE_ENV === 'production' && isDeployBuild) {
+if (isVercelProductionBuild) {
   if (!process.env.NEXT_PUBLIC_API_URL) {
     throw new Error(
       'NEXT_PUBLIC_API_URL is required in production. ' +
@@ -26,18 +30,34 @@ if (process.env.NODE_ENV === 'production' && isDeployBuild) {
       'Set it to your Clerk publishable key for authentication.'
     )
   }
+  if (!process.env.CLERK_SECRET_KEY) {
+    throw new Error(
+      'CLERK_SECRET_KEY is required in production. ' +
+      'Set it to your Clerk secret key for server-side authentication.'
+    )
+  }
+  if (
+    !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.startsWith('pk_test_') &&
+    !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.startsWith('pk_live_')
+  ) {
+    throw new Error(
+      'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY must be a valid Clerk key in production ' +
+      '(pk_test_... or pk_live_...).'
+    )
+  }
+  if (
+    !process.env.CLERK_SECRET_KEY.startsWith('sk_test_') &&
+    !process.env.CLERK_SECRET_KEY.startsWith('sk_live_')
+  ) {
+    throw new Error(
+      'CLERK_SECRET_KEY must be a valid Clerk key in production (sk_test_... or sk_live_...).'
+    )
+  }
   if (process.env.NEXT_PUBLIC_API_URL.includes('localhost')) {
     console.warn(
       '[next.config] WARNING: NEXT_PUBLIC_API_URL contains "localhost". ' +
       'This is likely incorrect for a production build.'
     )
-  }
-} else if (process.env.NODE_ENV === 'production') {
-  if (!process.env.NEXT_PUBLIC_API_URL) {
-    console.warn('[next.config] WARNING: NEXT_PUBLIC_API_URL not set. API calls will fall back to localhost:8000.')
-  }
-  if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
-    console.warn('[next.config] WARNING: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY not set. Auth will be disabled.')
   }
 }
 
@@ -204,6 +224,30 @@ const nextConfig = {
 
   // Webpack configuration for production optimizations
   webpack: (config, { dev, isServer }) => {
+    // Ignore known noisy dependency warning from OpenTelemetry's dynamic require.
+    // This warning originates in a third-party package used by Sentry/Prisma.
+    config.ignoreWarnings = [
+      ...(config.ignoreWarnings || []),
+      (warning) => {
+        const message =
+          typeof warning === 'string'
+            ? warning
+            : (warning?.message ?? '')
+        const moduleResource =
+          typeof warning === 'object' &&
+          typeof warning?.module === 'object' &&
+          warning.module &&
+          'resource' in warning.module
+            ? String(warning.module.resource ?? '')
+            : ''
+
+        return (
+          /Critical dependency: the request of a dependency is an expression/.test(message) &&
+          /@opentelemetry\/instrumentation/.test(moduleResource)
+        )
+      },
+    ]
+
     // Production optimizations
     if (!dev && !isServer) {
       // Enable tree shaking for better bundle size

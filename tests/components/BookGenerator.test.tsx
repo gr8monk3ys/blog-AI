@@ -13,6 +13,39 @@ vi.mock('../../lib/api', () => ({
   checkServerConnection: vi.fn(),
 }))
 
+const { mockUseLlmConfig } = vi.hoisted(() => ({
+  mockUseLlmConfig: vi.fn(() => ({
+    availableProviders: ['openai', 'anthropic', 'gemini'],
+    defaultProvider: 'openai',
+  })),
+}))
+
+vi.mock('../../hooks/useLlmConfig', () => ({
+  useLlmConfig: () => mockUseLlmConfig(),
+}))
+
+vi.mock('../../components/brand/BrandVoiceSelector', () => ({
+  default: ({
+    onEnabledChange,
+    onProfileChange,
+  }: {
+    onEnabledChange: (enabled: boolean) => void
+    onProfileChange: (profile: { id: string } | null) => void
+  }) => (
+    <div data-testid="brand-voice-selector">
+      <button type="button" onClick={() => onEnabledChange(true)}>
+        Enable Brand Voice
+      </button>
+      <button type="button" onClick={() => onEnabledChange(false)}>
+        Disable Brand Voice
+      </button>
+      <button type="button" onClick={() => onProfileChange({ id: 'brand-1' })}>
+        Pick Brand Profile
+      </button>
+    </div>
+  ),
+}))
+
 describe('BookGenerator', () => {
   const mockSetContent = vi.fn()
   const mockSetLoading = vi.fn()
@@ -24,6 +57,10 @@ describe('BookGenerator', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mockUseLlmConfig.mockReturnValue({
+      availableProviders: ['openai', 'anthropic', 'gemini'],
+      defaultProvider: 'openai',
+    })
     vi.mocked(global.fetch).mockReset()
   })
 
@@ -94,6 +131,17 @@ describe('BookGenerator', () => {
       await user.selectOptions(toneSelect, 'professional')
 
       expect(toneSelect).toHaveValue('professional')
+    })
+
+    it('should disable provider selector when only one provider is available', () => {
+      mockUseLlmConfig.mockReturnValue({
+        availableProviders: ['openai'],
+        defaultProvider: 'openai',
+      })
+
+      render(<BookGenerator {...defaultProps} />)
+
+      expect(screen.getByLabelText(/model provider/i)).toBeDisabled()
     })
   })
 
@@ -215,6 +263,52 @@ describe('BookGenerator', () => {
         expect(mockSetLoading).toHaveBeenLastCalledWith(false)
       })
     })
+
+    it('should require a brand profile when brand voice is enabled', async () => {
+      render(<BookGenerator {...defaultProps} />)
+
+      fireEvent.click(screen.getByRole('button', { name: /enable brand voice/i }))
+      fireEvent.change(screen.getByLabelText(/book title/i), {
+        target: { value: 'Brand Book' },
+      })
+      fireEvent.submit(screen.getByRole('button', { name: /generate book/i }))
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(/select a brand profile/i)
+        ).toBeInTheDocument()
+      })
+      expect(global.fetch).not.toHaveBeenCalled()
+    })
+
+    it('should include brand_profile_id when a brand profile is selected', async () => {
+      vi.mocked(api.checkServerConnection).mockResolvedValue(true)
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValueOnce({
+          success: true,
+          type: 'book',
+          content: { title: 'Branded Book', chapters: [] },
+        }),
+      } as unknown as Response)
+
+      render(<BookGenerator {...defaultProps} />)
+
+      fireEvent.click(screen.getByRole('button', { name: /enable brand voice/i }))
+      fireEvent.click(screen.getByRole('button', { name: /pick brand profile/i }))
+      fireEvent.change(screen.getByLabelText(/book title/i), {
+        target: { value: 'Branded Book' },
+      })
+      fireEvent.submit(screen.getByRole('button', { name: /generate book/i }))
+
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalled()
+      })
+      const call = vi.mocked(global.fetch).mock.calls[0]
+      expect(call).toBeDefined()
+      const body = JSON.parse((call?.[1] as RequestInit).body as string)
+      expect(body.brand_profile_id).toBe('brand-1')
+    })
   })
 
   describe('Error Handling', () => {
@@ -271,6 +365,109 @@ describe('BookGenerator', () => {
       await waitFor(() => {
         expect(screen.queryByText('First error')).not.toBeInTheDocument()
       })
+    })
+
+    it('should map 401/403 responses to sign-in message', async () => {
+      vi.mocked(api.checkServerConnection).mockResolvedValue(true)
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        json: vi.fn().mockResolvedValueOnce({}),
+      } as unknown as Response)
+
+      render(<BookGenerator {...defaultProps} />)
+      fireEvent.change(screen.getByLabelText(/book title/i), {
+        target: { value: 'Auth Book' },
+      })
+      fireEvent.submit(screen.getByRole('button', { name: /generate book/i }))
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(/sign in required to generate books/i)
+        ).toBeInTheDocument()
+      })
+    })
+
+    it('should map 429 responses to usage limit message', async () => {
+      vi.mocked(api.checkServerConnection).mockResolvedValue(true)
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        json: vi.fn().mockResolvedValueOnce({}),
+      } as unknown as Response)
+
+      render(<BookGenerator {...defaultProps} />)
+      fireEvent.change(screen.getByLabelText(/book title/i), {
+        target: { value: 'Limited Book' },
+      })
+      fireEvent.submit(screen.getByRole('button', { name: /generate book/i }))
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(/usage limit reached/i)
+        ).toBeInTheDocument()
+      })
+    })
+
+    it('should use detail.error when detail is an object', async () => {
+      vi.mocked(api.checkServerConnection).mockResolvedValue(true)
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        json: vi.fn().mockResolvedValueOnce({ detail: { error: 'Nested detail error' } }),
+      } as unknown as Response)
+
+      render(<BookGenerator {...defaultProps} />)
+      fireEvent.change(screen.getByLabelText(/book title/i), {
+        target: { value: 'Nested Error Book' },
+      })
+      fireEvent.submit(screen.getByRole('button', { name: /generate book/i }))
+
+      await waitFor(() => {
+        expect(screen.getByText('Nested detail error')).toBeInTheDocument()
+      })
+    })
+
+    it('should use top-level error when detail is missing', async () => {
+      vi.mocked(api.checkServerConnection).mockResolvedValue(true)
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        json: vi.fn().mockResolvedValueOnce({ error: 'Top level error message' }),
+      } as unknown as Response)
+
+      render(<BookGenerator {...defaultProps} />)
+      fireEvent.change(screen.getByLabelText(/book title/i), {
+        target: { value: 'Top Error Book' },
+      })
+      fireEvent.submit(screen.getByRole('button', { name: /generate book/i }))
+
+      await waitFor(() => {
+        expect(screen.getByText('Top level error message')).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('Option Toggles', () => {
+    it('should toggle advanced option switches', async () => {
+      const user = userEvent.setup()
+      render(<BookGenerator {...defaultProps} />)
+
+      const researchToggle = screen.getByLabelText(/use web research/i)
+      const proofreadToggle = screen.getByLabelText(/proofread content/i)
+      const humanizeToggle = screen.getByLabelText(/humanize content/i)
+
+      expect(researchToggle).toHaveAttribute('aria-checked', 'false')
+      expect(proofreadToggle).toHaveAttribute('aria-checked', 'true')
+      expect(humanizeToggle).toHaveAttribute('aria-checked', 'true')
+
+      await user.click(researchToggle)
+      await user.click(proofreadToggle)
+      await user.click(humanizeToggle)
+
+      expect(researchToggle).toHaveAttribute('aria-checked', 'true')
+      expect(proofreadToggle).toHaveAttribute('aria-checked', 'false')
+      expect(humanizeToggle).toHaveAttribute('aria-checked', 'false')
     })
   })
 })
