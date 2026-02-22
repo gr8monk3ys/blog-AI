@@ -371,7 +371,7 @@ async def stream_via_sse(
 
         except Exception as e:
             logger.error(f"SSE streaming error: {e}", exc_info=True)
-            yield f"event: error\ndata: {str(e)}\n\n"
+            yield f"event: error\ndata: An internal error occurred\n\n"
 
     return StreamingResponse(
         generate_events(),

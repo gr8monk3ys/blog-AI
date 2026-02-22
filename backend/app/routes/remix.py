@@ -357,10 +357,11 @@ async def batch_transform(
                 "error": e.detail,
             })
         except ValueError as e:
+            logger.warning(f"Validation error in batch transform: {e}")
             results.append({
                 "success": False,
                 "conversation_id": req.conversation_id,
-                "error": f"Invalid input: {sanitize_error_message(str(e))}",
+                "error": "Invalid input provided",
             })
         except Exception as e:
             results.append({

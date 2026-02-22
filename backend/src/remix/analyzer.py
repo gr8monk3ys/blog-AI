@@ -173,8 +173,8 @@ class ContentAnalyzer:
         chunks: List[ContentChunk] = []
 
         # Split by headers (Markdown style)
-        # Using non-greedy quantifier to prevent ReDoS
-        header_pattern = r'^(#{1,3})\s+(.+?)$'
+        # Using negated character class to prevent ReDoS
+        header_pattern = r'^(#{1,3})\s+([^\n]+)$'
         current_section = None
         current_content = []
 
