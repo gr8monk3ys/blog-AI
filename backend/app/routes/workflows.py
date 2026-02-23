@@ -175,6 +175,29 @@ async def get_preset(preset_id: str) -> Dict[str, Any]:
     }
 
 
+@router.get(
+    "",
+    summary="List custom workflows",
+    description="Returns all custom workflows created by the current user.",
+    response_model=List[WorkflowSummary],
+)
+async def list_workflows(
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
+) -> List[Dict[str, Any]]:
+    """Return all custom workflows for the authenticated user."""
+    workflows = await workflow_store.list_workflows(auth_ctx.user_id)
+    return [
+        {
+            "id": wf["id"],
+            "name": wf["name"],
+            "description": wf.get("description", ""),
+            "step_count": len(wf.get("steps", [])),
+            "step_types": [s.get("type", "") for s in wf.get("steps", [])],
+        }
+        for wf in workflows
+    ]
+
+
 @router.post(
     "",
     status_code=status.HTTP_201_CREATED,

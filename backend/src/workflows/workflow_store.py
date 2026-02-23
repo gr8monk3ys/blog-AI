@@ -13,7 +13,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
-from src.db import execute as db_execute, fetchrow as db_fetchrow, is_database_configured
+from src.db import execute as db_execute, fetch as db_fetch, fetchrow as db_fetchrow, is_database_configured
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +24,12 @@ _executions: Dict[str, Dict[str, Any]] = {}
 _db_enabled = is_database_configured()
 _schema_ready = False
 _schema_lock = asyncio.Lock()
+
+if not _db_enabled:
+    logger.warning(
+        "DATABASE_URL is not set. Workflow storage will use in-memory fallback only. "
+        "Data will be lost on restart."
+    )
 
 
 def _as_iso(value: Any) -> Optional[str]:
@@ -221,6 +227,47 @@ async def get_workflow(workflow_id: str, user_id: Optional[str] = None) -> Optio
     normalized = _normalize_workflow(row)
     _workflows[workflow_id] = normalized
     return normalized
+
+
+async def list_workflows(user_id: str) -> list:
+    """List all workflows for a user, merging DB and in-memory results.
+
+    Returns a list of normalized workflow dicts sorted by created_at descending.
+    """
+    results: Dict[str, Dict[str, Any]] = {}
+
+    # Collect in-memory workflows belonging to this user.
+    for wf in _workflows.values():
+        if wf.get("created_by") == user_id:
+            results[wf["id"]] = wf
+
+    # Try to load from DB if available.
+    if await _ensure_schema():
+        try:
+            rows = await db_fetch(
+                """
+                SELECT id, user_id, name, description, steps, created_at
+                FROM app_workflows
+                WHERE user_id = $1
+                ORDER BY created_at DESC
+                """,
+                user_id,
+            )
+            for row in rows:
+                normalized = _normalize_workflow(row)
+                results[normalized["id"]] = normalized
+                # Backfill in-memory cache.
+                _workflows[normalized["id"]] = normalized
+        except Exception as exc:
+            logger.warning("Failed listing workflows from DB for user %s: %s", user_id[:8], exc)
+
+    # Sort by created_at descending (most recent first).
+    sorted_results = sorted(
+        results.values(),
+        key=lambda w: w.get("created_at") or "",
+        reverse=True,
+    )
+    return sorted_results
 
 
 async def create_execution(record: Dict[str, Any], variables: Optional[Dict[str, Any]] = None, provider: Optional[str] = None) -> None:
