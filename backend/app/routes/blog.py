@@ -21,6 +21,10 @@ from src.blog.make_blog import (
     generate_blog_post_with_research,
     post_process_blog_post,
 )
+from src.fact_checking.fact_checker import check_facts
+from src.seo.optimization_loop import optimize_until_threshold
+from src.seo.serp_analyzer import analyze_serp
+from src.types.seo import SEOOptimizationResult, SEOThresholds
 from src.brand.storage import get_brand_voice_storage
 from src.organizations import AuthorizationContext
 from src.config import get_settings
@@ -207,6 +211,82 @@ async def generate_blog(
                 )
             )
 
+        # SEO optimization loop (Pro tier, opt-in)
+        seo_result = None
+        if request.seo_optimize:
+            await require_pro_tier(user_id)
+            try:
+                seo_thresholds = (
+                    SEOThresholds(**request.seo_thresholds)
+                    if request.seo_thresholds
+                    else SEOThresholds()
+                )
+                # Run SERP analysis for the primary keyword
+                primary_keyword = request.keywords[0] if request.keywords else request.topic
+                provider = await asyncio.to_thread(create_provider_from_env, provider_type)
+                serp = await asyncio.to_thread(
+                    partial(
+                        analyze_serp,
+                        primary_keyword,
+                        provider=provider,
+                        options=options,
+                    )
+                )
+                # Run optimization loop
+                seo_result = await asyncio.to_thread(
+                    partial(
+                        optimize_until_threshold,
+                        blog_post=blog_post,
+                        keyword=primary_keyword,
+                        serp_analysis=serp,
+                        thresholds=seo_thresholds,
+                        provider_type=provider_type,
+                        options=options,
+                    )
+                )
+                logger.info(
+                    "SEO optimization complete: score=%.1f passed=%s passes=%d",
+                    seo_result.score.overall_score,
+                    seo_result.passed,
+                    seo_result.passes_used,
+                )
+            except Exception as e:
+                logger.warning("SEO optimization failed, continuing without: %s", e)
+
+        # Fact-checking (Pro tier, opt-in)
+        fact_check_result = None
+        if request.fact_check:
+            await require_pro_tier(user_id)
+            try:
+                # Gather sources from blog post if available
+                blog_sources = [
+                    {"title": str(getattr(s, "title", "")), "url": str(getattr(s, "url", "")),
+                     "snippet": str(getattr(s, "snippet", ""))}
+                    for s in getattr(blog_post, "sources", []) or []
+                ]
+                full_text = "\n\n".join(
+                    subtopic.content or ""
+                    for section in blog_post.sections
+                    for subtopic in section.subtopics
+                )
+                fact_check_result = await asyncio.to_thread(
+                    partial(
+                        check_facts,
+                        content=full_text,
+                        sources=blog_sources if blog_sources else None,
+                        provider_type=provider_type,
+                        options=options,
+                    )
+                )
+                logger.info(
+                    "Fact-check complete: confidence=%.2f verified=%d contradicted=%d",
+                    fact_check_result.overall_confidence,
+                    fact_check_result.verified_count,
+                    fact_check_result.contradicted_count,
+                )
+            except Exception as e:
+                logger.warning("Fact-checking failed, continuing without: %s", e)
+
         # Attempt image generation (always-on, graceful degradation)
         try:
             from src.images.image_generator import ImageGenerator
@@ -265,6 +345,38 @@ async def generate_blog(
 
             blog_post_data["sections"].append(section_data)
 
+        if seo_result:
+            blog_post_data["seo_score"] = {
+                "overall_score": seo_result.score.overall_score,
+                "topic_coverage": seo_result.score.topic_coverage,
+                "term_usage": seo_result.score.term_usage,
+                "structure_score": seo_result.score.structure_score,
+                "readability_score": seo_result.score.readability_score,
+                "word_count_score": seo_result.score.word_count_score,
+                "passed": seo_result.passed,
+                "passes_used": seo_result.passes_used,
+                "suggestions_applied": seo_result.suggestions_applied,
+            }
+
+        if fact_check_result:
+            blog_post_data["fact_check"] = {
+                "overall_confidence": fact_check_result.overall_confidence,
+                "verified_count": fact_check_result.verified_count,
+                "unverified_count": fact_check_result.unverified_count,
+                "contradicted_count": fact_check_result.contradicted_count,
+                "summary": fact_check_result.summary,
+                "claims": [
+                    {
+                        "text": v.claim.text,
+                        "status": v.status.value,
+                        "confidence": v.confidence,
+                        "explanation": v.explanation,
+                        "supporting_sources": v.supporting_sources,
+                    }
+                    for v in fact_check_result.claims
+                ],
+            }
+
         # Add user message to conversation (with persistence and ownership)
         user_message = {
             "role": "user",
@@ -288,6 +400,18 @@ async def generate_blog(
         await manager.send_message(
             {"type": "message", **assistant_message}, request.conversation_id
         )
+
+        # Org-level usage tracking (if in org context)
+        if auth_ctx.organization_id:
+            await increment_usage_for_operation(
+                user_id=auth_ctx.organization_id,
+                operation_type="blog_org",
+                tokens_used=4000,
+                metadata={
+                    "actual_user": user_id,
+                    "topic": request.topic[:50],
+                },
+            )
 
         # Increment usage quota after successful generation
         await increment_usage_for_operation(

@@ -142,6 +142,12 @@ export const API_ENDPOINTS = {
     transformFormat: (formatId: string) => `${API_V1_BASE_URL}/remix/transform/${formatId}`,
     batch: `${API_V1_BASE_URL}/remix/batch`,
   },
+  // Deep research endpoints
+  research: {
+    conduct: `${API_V1_BASE_URL}/research`,
+    history: `${API_V1_BASE_URL}/research/history`,
+    get: (queryId: string) => `${API_V1_BASE_URL}/research/${queryId}`,
+  },
   // Content quality endpoints
   content: {
     checkPlagiarism: `${API_V1_BASE_URL}/content/check-plagiarism`,
@@ -162,6 +168,19 @@ export const API_ENDPOINTS = {
   feedback: {
     submit: '/api/feedback',
     stats: (contentId: string) => `/api/feedback?content_id=${encodeURIComponent(contentId)}`,
+  },
+  // Organization / team endpoints
+  organizations: {
+    list: `${API_V1_BASE_URL}/organizations`,
+    create: `${API_V1_BASE_URL}/organizations`,
+    get: (orgId: string) => `${API_V1_BASE_URL}/organizations/${orgId}`,
+    members: (orgId: string) => `${API_V1_BASE_URL}/organizations/${orgId}/members`,
+    invites: (orgId: string) => `${API_V1_BASE_URL}/organizations/${orgId}/invites`,
+    invite: (orgId: string) => `${API_V1_BASE_URL}/organizations/${orgId}/invites`,
+    updateMember: (orgId: string, userId: string) =>
+      `${API_V1_BASE_URL}/organizations/${orgId}/members/${userId}`,
+    removeMember: (orgId: string, userId: string) =>
+      `${API_V1_BASE_URL}/organizations/${orgId}/members/${userId}`,
   },
   // Content editing endpoints
   editSection: `${API_BASE_URL}/edit-section`,

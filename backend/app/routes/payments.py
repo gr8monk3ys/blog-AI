@@ -8,11 +8,15 @@ Provides API endpoints for:
 - Querying subscription status
 """
 
+import asyncio
 import logging
 import os
+from functools import partial
 from typing import Dict
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
+from pydantic import BaseModel, Field
+import stripe
 
 from src.payments import stripe_service
 from src.payments.subscription_sync import sync_webhook_event
@@ -121,6 +125,96 @@ async def create_checkout_session(
         )
     except Exception as e:
         logger.error(f"Error creating checkout session: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": "Failed to create checkout session", "success": False},
+        )
+
+
+class OrgCheckoutRequest(BaseModel):
+    """Request model for organization-level checkout."""
+
+    price_id: str = Field(..., description="Stripe price ID for the subscription tier")
+    success_url: str = Field(..., description="URL to redirect to after successful checkout")
+    cancel_url: str = Field(..., description="URL to redirect to if checkout is cancelled")
+    org_id: str = Field(..., description="Organization ID to associate with the subscription")
+    seat_count: int = Field(default=1, ge=1, le=100, description="Number of seats to purchase")
+
+
+@router.post(
+    "/org/create-checkout-session",
+    response_model=CheckoutSessionResponse,
+    summary="Create an org-level Stripe checkout session",
+    responses={
+        400: {"description": "Invalid request or Stripe not configured"},
+        500: {"description": "Stripe API error"},
+        503: {"description": "Payment processing not configured"},
+    },
+)
+async def create_org_checkout_session(
+    request: OrgCheckoutRequest,
+    user_id: str = Depends(verify_api_key),
+) -> CheckoutSessionResponse:
+    """Create a Stripe checkout for an organization with seat-based billing."""
+    if not stripe_service.is_configured:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"error": "Payment processing is not configured", "success": False},
+        )
+
+    if not stripe_service.is_configured_price_id(request.price_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"error": "Invalid price_id", "success": False},
+        )
+
+    try:
+        customer_id = await stripe_service.get_or_create_customer(user_id)
+
+        session = await asyncio.to_thread(
+            partial(
+                stripe.checkout.Session.create,
+                customer=customer_id,
+                payment_method_types=["card"],
+                line_items=[
+                    {
+                        "price": request.price_id,
+                        "quantity": request.seat_count,
+                    }
+                ],
+                mode="subscription",
+                success_url=request.success_url,
+                cancel_url=request.cancel_url,
+                metadata={
+                    "user_id": user_id,
+                    "org_id": request.org_id,
+                    "seat_count": str(request.seat_count),
+                },
+                subscription_data={
+                    "metadata": {
+                        "user_id": user_id,
+                        "org_id": request.org_id,
+                        "seat_count": str(request.seat_count),
+                    },
+                },
+                allow_promotion_codes=True,
+            )
+        )
+
+        logger.info(
+            "Org checkout session created for user %s, org %s (%d seats)",
+            user_id,
+            request.org_id,
+            request.seat_count,
+        )
+
+        return CheckoutSessionResponse(
+            success=True,
+            session_id=session.id,
+            url=session.url,
+        )
+    except Exception as e:
+        logger.error("Failed to create org checkout session: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={"error": "Failed to create checkout session", "success": False},

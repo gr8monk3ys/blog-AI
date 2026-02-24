@@ -19,6 +19,7 @@ const navLinks: NavLink[] = [
   { href: '/blog', label: 'Blog', authRequired: false },
   { href: '/pricing', label: 'Pricing', authRequired: false },
   { href: '/history', label: 'History', authRequired: true },
+  { href: '/team', label: 'Team', authRequired: true },
 ]
 
 const publicLinks = navLinks.filter((link) => !link.authRequired)

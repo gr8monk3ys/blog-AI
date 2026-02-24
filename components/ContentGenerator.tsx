@@ -22,8 +22,11 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
   const [keywords, setKeywords] = useState('');
   const [tone, setTone] = useState<BlogGenerationOptions['tone']>('informative');
   const [useResearch, setUseResearch] = useState(false);
+  const [researchDepth, setResearchDepth] = useState<'basic' | 'deep' | 'comprehensive'>('basic');
   const [proofread, setProofread] = useState(true);
   const [humanize, setHumanize] = useState(true);
+  const [seoOptimize, setSeoOptimize] = useState(false);
+  const [factCheck, setFactCheck] = useState(false);
   const [brandVoiceEnabled, setBrandVoiceEnabled] = useState(false)
   const [selectedBrandProfile, setSelectedBrandProfile] = useState<BrandProfile | null>(null)
   const { availableProviders, defaultProvider } = useLlmConfig()
@@ -174,9 +177,12 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
             keywords: keywords.split(',').map(k => k.trim()).filter(k => k),
             tone,
             research: useResearch,
+            research_depth: useResearch ? researchDepth : undefined,
             provider_type: providerType,
             proofread,
             humanize,
+            seo_optimize: seoOptimize,
+            fact_check: factCheck,
             conversation_id: conversationId,
             ...(brandVoiceEnabled && selectedBrandProfile?.id
               ? { brand_profile_id: selectedBrandProfile.id }
@@ -339,6 +345,17 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
                 />
               </Switch>
               <span className="text-sm text-gray-700 dark:text-gray-300" id="research-label">Use web research</span>
+              {useResearch && (
+                <select
+                  value={researchDepth}
+                  onChange={(e) => setResearchDepth(e.target.value as 'basic' | 'deep' | 'comprehensive')}
+                  className="ml-2 text-xs rounded border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:border-amber-500 focus:ring-amber-500"
+                >
+                  <option value="basic">Basic</option>
+                  <option value="deep">Deep</option>
+                  <option value="comprehensive">Comprehensive</option>
+                </select>
+              )}
             </div>
 
             <div className="flex items-center space-x-3">
@@ -377,6 +394,44 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
                 />
               </Switch>
               <span className="text-sm text-gray-700 dark:text-gray-300" id="humanize-label">Humanize content</span>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <Switch
+                checked={seoOptimize}
+                onChange={setSeoOptimize}
+                aria-label="Enable SEO optimization"
+                className={`${
+                  seoOptimize ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`${
+                    seoOptimize ? 'translate-x-6' : 'translate-x-1'
+                  } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                />
+              </Switch>
+              <span className="text-sm text-gray-700 dark:text-gray-300" id="seo-label">SEO optimize</span>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <Switch
+                checked={factCheck}
+                onChange={setFactCheck}
+                aria-label="Enable fact checking"
+                className={`${
+                  factCheck ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`${
+                    factCheck ? 'translate-x-6' : 'translate-x-1'
+                  } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                />
+              </Switch>
+              <span className="text-sm text-gray-700 dark:text-gray-300" id="fact-check-label">Fact check</span>
             </div>
           </div>
 

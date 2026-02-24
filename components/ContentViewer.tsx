@@ -13,6 +13,8 @@ import { API_ENDPOINTS, apiFetch, getDefaultHeaders } from '../lib/api';
 import { toolsApi } from '../lib/tools-api'
 import type { ContentScoreResult } from './tools/ContentScore'
 import type { PlagiarismCheckResponse, PlagiarismCheckResult } from '../types/plagiarism'
+import SEOScorePanel from './seo/SEOScorePanel'
+import FactCheckPanel from './fact-check/FactCheckPanel'
 
 function blogToMarkdown(blog: BlogContent): string {
   let markdown = `# ${blog.title}\n\n`;
@@ -413,6 +415,18 @@ function useContentViewerView({ content, contentId }: ContentViewerProps) {
           error={plagiarismError}
           onRun={runPlagiarismCheck}
         />
+
+        {content.type === 'blog' && (content.content as BlogContent).seo_score && (
+          <div className="mb-6">
+            <SEOScorePanel score={(content.content as BlogContent).seo_score!} />
+          </div>
+        )}
+
+        {content.type === 'blog' && (content.content as BlogContent).fact_check && (
+          <div className="mb-6">
+            <FactCheckPanel result={(content.content as BlogContent).fact_check!} />
+          </div>
+        )}
 
         <div className="prose prose-lg max-w-none">
           {content.content.sections.map((section: BlogSection) => {

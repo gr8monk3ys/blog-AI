@@ -41,6 +41,12 @@ class BlogGenerationRequest(BaseModel):
     # Default to disabled to avoid surprise latency/cost; callers can opt-in.
     proofread: bool = False
     humanize: bool = False
+    seo_optimize: bool = False
+    fact_check: bool = False
+    seo_thresholds: Optional[dict] = Field(
+        default=None,
+        description="Custom SEO score thresholds (overrides defaults)",
+    )
     use_knowledge_base: bool = Field(
         default=False,
         description="Whether to search the knowledge base for relevant context"

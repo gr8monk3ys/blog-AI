@@ -82,9 +82,11 @@ from app.routes import (
     extension_router,
     health_router,
     images_router,
+    fact_check_router,
     organizations_router,
     payments_router,
     remix_router,
+    research_router,
     seo_router,
     social_router,
     sso_admin_router,
@@ -227,6 +229,13 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning("Failed to start reconciliation scheduler: %s", e)
 
+    # Initialize organization schema
+    try:
+        from src.organizations.db_init import ensure_org_schema
+        await ensure_org_schema()
+    except Exception as e:
+        logger.warning("Failed to initialize organization schema: %s", e)
+
     yield
 
     # Cancel the reconciliation task on shutdown
@@ -323,6 +332,7 @@ The API supports versioning via URL path. Current version: `v1`
         {"name": "Content Remix", "description": "Transform content across formats"},
         {"name": "content", "description": "Content quality and plagiarism detection"},
         {"name": "seo", "description": "SERP analysis and content optimization"},
+        {"name": "research", "description": "Deep research with quality-scored sources"},
         {"name": "Knowledge Base", "description": "Upload documents and search your knowledge base for RAG"},
         {"name": "batch", "description": "Batch processing for bulk content generation"},
         {"name": "images", "description": "AI-powered image generation"},
@@ -504,9 +514,11 @@ app.include_router(config_router)
 app.include_router(export_router)
 app.include_router(extension_router)
 app.include_router(images_router)
+app.include_router(fact_check_router)
 app.include_router(organizations_router)
 app.include_router(payments_router)
 app.include_router(remix_router)
+app.include_router(research_router)
 app.include_router(seo_router)
 app.include_router(streaming_router)
 app.include_router(subscription_router)
@@ -558,10 +570,12 @@ api_v1_router.include_router(bulk_router)
 api_v1_router.include_router(config_router)
 api_v1_router.include_router(export_router)
 api_v1_router.include_router(extension_router)
+api_v1_router.include_router(fact_check_router)
 api_v1_router.include_router(images_router)
 api_v1_router.include_router(organizations_router)
 api_v1_router.include_router(payments_router)
 api_v1_router.include_router(remix_router)
+api_v1_router.include_router(research_router)
 api_v1_router.include_router(seo_router)
 api_v1_router.include_router(streaming_router)
 api_v1_router.include_router(subscription_router)

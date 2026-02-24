@@ -334,3 +334,28 @@ class ContentBrief(BaseModel):
         default="",
         description="Recommended tone and style based on top results",
     )
+
+
+class SEOThresholds(BaseModel):
+    """Minimum score thresholds for SEO optimization to pass."""
+
+    overall_minimum: float = Field(default=70.0, ge=0, le=100)
+    topic_coverage_minimum: float = Field(default=60.0, ge=0, le=100)
+    term_usage_minimum: float = Field(default=50.0, ge=0, le=100)
+    structure_minimum: float = Field(default=50.0, ge=0, le=100)
+    readability_minimum: float = Field(default=50.0, ge=0, le=100)
+    word_count_minimum: float = Field(default=50.0, ge=0, le=100)
+    max_optimization_passes: int = Field(default=3, ge=1, le=10)
+
+
+class SEOOptimizationResult(BaseModel):
+    """Result of the SEO optimization loop."""
+
+    score: ContentScore
+    passed: bool = Field(description="Whether all thresholds were met")
+    suggestions_applied: int = Field(default=0, description="Number of suggestions fed to LLM")
+    passes_used: int = Field(default=0, description="Optimization passes executed")
+    final_suggestions: List[OptimizationSuggestion] = Field(
+        default_factory=list,
+        description="Remaining suggestions after optimization",
+    )
