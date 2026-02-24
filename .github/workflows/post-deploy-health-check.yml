@@ -25,7 +25,7 @@ jobs:
         if: github.event_name == 'workflow_run'
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: main
 
       - name: Validate Vercel token
         shell: bash
@@ -38,6 +38,7 @@ jobs:
           fi
 
       - name: Install Vercel CLI
+        shell: bash
         run: npm i -g vercel@50.13.2
 
       - name: Run production health check
