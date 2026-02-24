@@ -39,6 +39,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@next/bundle-analyzer": "^16.1.6",
     "@playwright/test": "^1.58.2",
     "@testing-library/jest-dom": "^6.9.1",

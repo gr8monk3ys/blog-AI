@@ -272,7 +272,7 @@ function useToolPageContentView() {
     let usedFallback = false
 
     for (let i = 0; i < variationCount; i++) {
-      let backendOutput: string | null = null
+      let backendOutput: string | null
       try {
         backendOutput = await executeTool(keywordList)
       } catch {
