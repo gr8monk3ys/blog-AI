@@ -9,8 +9,8 @@ export default defineConfig({
   // Directory containing test files
   testDir: './e2e',
 
-  // Run tests in files in parallel
-  fullyParallel: true,
+  // Keep route warmup deterministic; parallel startup in dev mode was flaky.
+  fullyParallel: false,
 
   // Fail the build on CI if you accidentally left test.only in the source code
   forbidOnly: !!process.env.CI,
@@ -18,8 +18,8 @@ export default defineConfig({
   // Retry on CI only
   retries: process.env.CI ? 2 : 0,
 
-  // Opt out of parallel tests on CI for stability
-  workers: process.env.CI ? 1 : undefined,
+  // Use serial workers for stable dev-server route compilation during smoke tests.
+  workers: 1,
 
   // Reporter to use
   reporter: process.env.CI
@@ -60,14 +60,17 @@ export default defineConfig({
 
   // Run local dev server before starting the tests
   webServer: {
-    command: 'bun run dev -- -p 3000',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
+    // Webpack mode is slower but substantially more stable than Turbopack for e2e startup.
+    command:
+      'env -u NO_COLOR SUPPRESS_PROXY_AUTH_WARNING=1 PLAYWRIGHT_TEST=1 bun run dev -- -p 3000 --webpack',
+    // Use a lightweight route for readiness checks to avoid flakiness on heavier pages.
+    url: 'http://localhost:3000/tool-directory',
+    reuseExistingServer: false,
+    timeout: 180 * 1000,
   },
 
   // Test timeout
-  timeout: 30 * 1000,
+  timeout: 60 * 1000,
 
   // Expect timeout
   expect: {

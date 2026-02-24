@@ -28,6 +28,7 @@ class TestMainHealthEndpoint(unittest.TestCase):
         """Set up test client."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_health_returns_200(self):
         """Health endpoint should return 200 status code."""
@@ -42,8 +43,8 @@ class TestMainHealthEndpoint(unittest.TestCase):
         self.assertIn("status", data)
         self.assertIn("timestamp", data)
         self.assertIn("version", data)
-        self.assertIn("environment", data)
         self.assertIn("services", data)
+        self.assertIn("features", data)
 
     def test_health_services_structure(self):
         """Health response should contain services status."""
@@ -52,18 +53,17 @@ class TestMainHealthEndpoint(unittest.TestCase):
         services = data["services"]
 
         self.assertIn("database", services)
-        self.assertIn("stripe", services)
-        self.assertIn("sentry", services)
         self.assertIn("redis", services)
+        self.assertIn("llm_providers", services)
 
     def test_health_status_values(self):
         """Service statuses should be valid values."""
         response = self.client.get("/health")
         data = response.json()
 
-        valid_statuses = {"up", "down", "unconfigured"}
-        for service, info in data["services"].items():
-            self.assertIn(info["status"], valid_statuses)
+        valid_statuses = {"connected", "disconnected", "unconfigured"}
+        for service in ("database", "redis"):
+            self.assertIn(data["services"][service]["status"], valid_statuses)
 
 
 class TestDatabaseHealthEndpoint(unittest.TestCase):
@@ -73,6 +73,7 @@ class TestDatabaseHealthEndpoint(unittest.TestCase):
         """Set up test client."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_db_health_returns_200(self):
         """Database health endpoint should return 200."""
@@ -94,7 +95,7 @@ class TestDatabaseHealthEndpoint(unittest.TestCase):
             data = response.json()
             self.assertFalse(data["database"]["configured"])
 
-    @patch("app.routes.health.get_database_status")
+    @patch("app.routes.health._get_full_database_status", new_callable=AsyncMock)
     def test_db_health_connected(self, mock_db_status):
         """Database should report connected when available."""
         mock_db_status.return_value = {
@@ -115,6 +116,7 @@ class TestStripeHealthEndpoint(unittest.TestCase):
         """Set up test client."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_stripe_health_returns_200(self):
         """Stripe health endpoint should return 200."""
@@ -153,6 +155,7 @@ class TestRedisHealthEndpoint(unittest.TestCase):
         """Set up test client."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_redis_health_returns_200(self):
         """Redis health endpoint should return 200."""
@@ -181,6 +184,7 @@ class TestSentryHealthEndpoint(unittest.TestCase):
         """Set up test client."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_sentry_health_returns_200(self):
         """Sentry health endpoint should return 200."""
@@ -211,6 +215,7 @@ class TestCacheHealthEndpoint(unittest.TestCase):
         """Set up test client."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_cache_stats_returns_200(self):
         """Cache stats endpoint should return 200."""
@@ -233,6 +238,7 @@ class TestCacheCleanupEndpoint(unittest.TestCase):
         """Set up test client."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_cache_cleanup_returns_200(self):
         """Cache cleanup endpoint should return 200."""
@@ -255,6 +261,7 @@ class TestRootEndpoint(unittest.TestCase):
         """Set up test client."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_root_returns_200(self):
         """Root endpoint should return 200."""

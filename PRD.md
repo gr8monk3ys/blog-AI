@@ -1,8 +1,8 @@
 # Blog AI - Product Requirements Document
 
-**Version:** 2.0
-**Last Updated:** 2025-01-24
-**Status:** Draft
+**Version:** 2.1
+**Last Updated:** 2026-02-21
+**Status:** In Progress
 
 ---
 
@@ -52,21 +52,23 @@ Blog AI is evolving from a content generation tool into a **comprehensive AI con
 
 | ID | Feature | Tier | Priority | Est. Effort | Status |
 |----|---------|------|----------|-------------|--------|
-| F1 | Batch Generation System | 1 | Critical | 18 days | Not Started |
-| F2 | Content Remix Engine | 1 | Critical | 23 days | Not Started |
-| F3 | Enhanced Brand Voice Training | 1 | Critical | 29 days | Not Started |
-| F4 | AI Image Generation | 2 | High | 4-6 weeks | Not Started |
-| F5 | Visual Content Workflows | 2 | High | 8-12 weeks | Not Started |
-| F6 | Fact-Checking & Citations | 2 | High | 6-8 weeks | Not Started |
+| F1 | Batch Generation System | 1 | Critical | 18 days | Implemented |
+| F2 | Content Remix Engine | 1 | Critical | 23 days | Implemented |
+| F3 | Enhanced Brand Voice Training | 1 | Critical | 29 days | Implemented |
+| F4 | AI Image Generation | 2 | High | 4-6 weeks | Implemented |
+| F5 | Visual Content Workflows | 2 | High | 8-12 weeks | Partial |
+| F6 | Fact-Checking & Citations | 2 | High | 6-8 weeks | Partial |
 | F7 | Voice Input → Content | 3 | Medium | 6-8 weeks | Not Started |
-| F8 | Live SEO Mode | 3 | Medium | 8-10 weeks | Not Started |
+| F8 | Live SEO Mode | 3 | Medium | 8-10 weeks | Partial |
 | F9 | Multi-LLM Ensemble Mode | 3 | Medium | 4-6 weeks | Not Started |
-| F10 | Agent-Based Deep Research | 3 | Medium | 10-12 weeks | Not Started |
-| F11 | Browser Extension | 4 | Low | 4-6 weeks | Not Started |
-| F12 | Team Collaboration | 4 | Low | 12-16 weeks | Not Started |
-| F13 | Additional Publishing | 4 | Low | 6-8 weeks | Not Started |
+| F10 | Agent-Based Deep Research | 3 | Medium | 10-12 weeks | Partial |
+| F11 | Browser Extension | 4 | Low | 4-6 weeks | Implemented |
+| F12 | Team Collaboration | 4 | Low | 12-16 weeks | Partial |
+| F13 | Additional Publishing | 4 | Low | 6-8 weeks | Partial |
 | F14 | Content Marketplace | 5 | Exploratory | 12-16 weeks | Not Started |
-| F15 | Humanizer Pro | 5 | Exploratory | 4-6 weeks | Not Started |
+| F15 | Humanizer Pro | 5 | Exploratory | 4-6 weeks | Partial |
+
+**Status note (2026-02-21):** This table reflects verified implementation state in the repository and production deployment behavior, not original planning intent.
 
 **Total Estimated Effort:** 120-160 weeks (single engineer) or 40-53 weeks (3-person team)
 

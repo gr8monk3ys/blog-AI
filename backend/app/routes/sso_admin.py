@@ -25,6 +25,14 @@ from app.auth import verify_api_key
 from app.dependencies import get_organization_context, require_permission
 from app.middleware import require_business_tier
 from src.auth.sso.oidc_service import OIDCService, OIDCServiceError
+from src.auth.sso.persistence import (
+    delete_sso_config as db_delete_sso_config,
+    delete_user_session_for_org as db_delete_user_session_for_org,
+    delete_user_sessions_for_org as db_delete_user_sessions_for_org,
+    list_active_user_sessions as db_list_active_user_sessions,
+    load_sso_config as db_load_sso_config,
+    save_sso_config as db_save_sso_config,
+)
 from src.auth.sso.providers import (
     OIDCProvider,
     SAMLProvider,
@@ -296,7 +304,21 @@ def _get_sso_config(organization_id: str) -> Optional[SSOConfiguration]:
     return _sso_configurations.get(organization_id)
 
 
-def _save_sso_config(config: SSOConfiguration) -> None:
+async def _load_sso_config(organization_id: str) -> Optional[SSOConfiguration]:
+    """Load SSO configuration from cache first, then Postgres."""
+    config = _get_sso_config(organization_id)
+    if config is not None:
+        return config
+
+    db_config = await db_load_sso_config(organization_id)
+    if db_config is None:
+        return None
+
+    _sso_configurations[organization_id] = db_config
+    return db_config
+
+
+async def _save_sso_config(config: SSOConfiguration) -> None:
     """
     Save SSO configuration to storage.
 
@@ -312,6 +334,7 @@ def _save_sso_config(config: SSOConfiguration) -> None:
         config: The SSO configuration to save
     """
     _sso_configurations[config.organization_id] = config
+    await db_save_sso_config(config)
     logger.info(
         f"Saved SSO configuration for org {config.organization_id}, "
         f"provider: {config.provider_type.value}, enabled: {config.enabled}"
@@ -427,7 +450,7 @@ async def configure_saml(
             )
 
         # Save configuration
-        _save_sso_config(sso_config)
+        await _save_sso_config(sso_config)
 
         logger.info(
             f"SAML SSO configured for org {organization_id} by user {auth_ctx.user_id}"
@@ -553,7 +576,7 @@ async def configure_oidc(
             )
 
         # Save configuration
-        _save_sso_config(sso_config)
+        await _save_sso_config(sso_config)
 
         logger.info(
             f"OIDC SSO configured for org {organization_id} by user {auth_ctx.user_id}"
@@ -602,7 +625,7 @@ async def get_sso_config(
 
     Returns configuration without sensitive data (certificates, secrets).
     """
-    sso_config = _get_sso_config(organization_id)
+    sso_config = await _load_sso_config(organization_id)
 
     if not sso_config:
         raise HTTPException(
@@ -660,7 +683,7 @@ async def delete_sso_config(
     This will disable SSO and remove all configuration.
     Active SSO sessions will be terminated.
     """
-    sso_config = _get_sso_config(organization_id)
+    sso_config = await _load_sso_config(organization_id)
 
     if not sso_config:
         raise HTTPException(
@@ -668,22 +691,23 @@ async def delete_sso_config(
             detail={"error": "SSO not configured for this organization"},
         )
 
-    # Delete from storage
-    if organization_id in _sso_configurations:
-        del _sso_configurations[organization_id]
+    # Delete configuration from cache + DB.
+    _sso_configurations.pop(organization_id, None)
+    await db_delete_sso_config(organization_id)
 
     # Terminate active SSO sessions for this organization
     from app.routes.sso import _sso_user_sessions
 
-    terminated_sessions = 0
+    db_terminated = await db_delete_user_sessions_for_org(organization_id)
     session_ids_to_remove = []
     for session_id, session in _sso_user_sessions.items():
         if session.organization_id == organization_id:
             session_ids_to_remove.append(session_id)
-            terminated_sessions += 1
 
     for session_id in session_ids_to_remove:
         del _sso_user_sessions[session_id]
+    memory_terminated = len(session_ids_to_remove)
+    terminated_sessions = max(db_terminated, memory_terminated)
 
     logger.info(
         f"SSO configuration deleted for org {organization_id} by user {auth_ctx.user_id}, "
@@ -714,7 +738,7 @@ async def toggle_sso_enabled(
 
     Requires: organization.update permission (owner, admin).
     """
-    sso_config = _get_sso_config(organization_id)
+    sso_config = await _load_sso_config(organization_id)
 
     if not sso_config:
         raise HTTPException(
@@ -728,7 +752,7 @@ async def toggle_sso_enabled(
     )
     sso_config.updated_at = datetime.now(timezone.utc)
 
-    _save_sso_config(sso_config)
+    await _save_sso_config(sso_config)
 
     action = "enabled" if enabled else "disabled"
     logger.info(
@@ -765,7 +789,7 @@ async def test_sso_config(
     - Endpoint availability
     - Attribute mapping validation
     """
-    sso_config = _get_sso_config(organization_id)
+    sso_config = await _load_sso_config(organization_id)
 
     if not sso_config:
         raise HTTPException(
@@ -866,7 +890,7 @@ async def list_attribute_mappings(
 
     Requires: organization.update permission (owner, admin).
     """
-    sso_config = _get_sso_config(organization_id)
+    sso_config = await _load_sso_config(organization_id)
 
     if not sso_config:
         raise HTTPException(
@@ -949,7 +973,7 @@ async def update_attribute_mappings(
 
     Requires: organization.update permission (owner, admin).
     """
-    sso_config = _get_sso_config(organization_id)
+    sso_config = await _load_sso_config(organization_id)
 
     if not sso_config:
         raise HTTPException(
@@ -982,7 +1006,7 @@ async def update_attribute_mappings(
                 claim_mapping.groups_claim = mapping.source_attribute
 
     sso_config.updated_at = datetime.now(timezone.utc)
-    _save_sso_config(sso_config)
+    await _save_sso_config(sso_config)
 
     logger.info(
         f"Attribute mappings updated for org {organization_id} by user {auth_ctx.user_id}"
@@ -1017,17 +1041,15 @@ async def list_sso_sessions(
 
     Requires: audit.view permission (owner, admin).
     """
-    # TODO: Fetch from database
-    # For now, return from in-memory store
-
-    from app.routes.sso import _sso_user_sessions
-
-    now = datetime.now(timezone.utc)
-    sessions = []
-
-    for session in _sso_user_sessions.values():
-        if session.organization_id == organization_id and session.expires_at > now:
-            sessions.append(SSOSessionInfo(
+    db_result = await db_list_active_user_sessions(
+        organization_id=organization_id,
+        limit=limit,
+        offset=offset,
+    )
+    if db_result is not None:
+        db_sessions, total = db_result
+        sessions = [
+            SSOSessionInfo(
                 id=session.id,
                 user_id=session.user_id,
                 email=session.sso_user.email,
@@ -1037,14 +1059,34 @@ async def list_sso_sessions(
                 expires_at=session.expires_at,
                 last_activity_at=session.last_activity_at,
                 ip_address=session.ip_address,
-            ))
+            )
+            for session in db_sessions
+        ]
+    else:
+        from app.routes.sso import _sso_user_sessions
 
-    # Sort by created_at descending
-    sessions.sort(key=lambda s: s.created_at, reverse=True)
+        now = datetime.now(timezone.utc)
+        sessions = []
 
-    # Apply pagination
-    total = len(sessions)
-    sessions = sessions[offset : offset + limit]
+        for session in _sso_user_sessions.values():
+            if session.organization_id == organization_id and session.expires_at > now:
+                sessions.append(
+                    SSOSessionInfo(
+                        id=session.id,
+                        user_id=session.user_id,
+                        email=session.sso_user.email,
+                        display_name=session.sso_user.display_name,
+                        provider_type=session.provider_type.value,
+                        created_at=session.created_at,
+                        expires_at=session.expires_at,
+                        last_activity_at=session.last_activity_at,
+                        ip_address=session.ip_address,
+                    )
+                )
+
+        sessions.sort(key=lambda s: s.created_at, reverse=True)
+        total = len(sessions)
+        sessions = sessions[offset : offset + limit]
 
     return {
         "success": True,
@@ -1074,15 +1116,18 @@ async def revoke_sso_session(
     """
     from app.routes.sso import _sso_user_sessions
 
+    deleted_from_db = await db_delete_user_session_for_org(session_id, organization_id)
+    deleted_from_memory = False
     session = _sso_user_sessions.get(session_id)
+    if session and session.organization_id == organization_id:
+        del _sso_user_sessions[session_id]
+        deleted_from_memory = True
 
-    if not session or session.organization_id != organization_id:
+    if not deleted_from_db and not deleted_from_memory:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={"error": "Session not found"},
         )
-
-    del _sso_user_sessions[session_id]
 
     logger.info(
         f"SSO session {session_id[:20]}... revoked for org {organization_id} "
@@ -1116,16 +1161,17 @@ async def revoke_all_sso_sessions(
     """
     from app.routes.sso import _sso_user_sessions
 
-    revoked_count = 0
+    db_revoked_count = await db_delete_user_sessions_for_org(organization_id)
     session_ids_to_remove = []
 
     for session_id, session in _sso_user_sessions.items():
         if session.organization_id == organization_id:
             session_ids_to_remove.append(session_id)
-            revoked_count += 1
 
     for session_id in session_ids_to_remove:
         del _sso_user_sessions[session_id]
+    memory_revoked_count = len(session_ids_to_remove)
+    revoked_count = max(db_revoked_count, memory_revoked_count)
 
     logger.info(
         f"All SSO sessions ({revoked_count}) revoked for org {organization_id} "

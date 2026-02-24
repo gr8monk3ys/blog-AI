@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useRouter } from 'next/navigation'
+import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime'
 import NotFound from '../../app/not-found'
 
 describe('NotFound', () => {
@@ -17,7 +18,7 @@ describe('NotFound', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     // Override useRouter for this test file to control the mock directly
-    vi.mocked(useRouter).mockReturnValue(mockRouter as any)
+    vi.mocked(useRouter).mockReturnValue(mockRouter as AppRouterInstance)
   })
 
   describe('Rendering', () => {
@@ -66,7 +67,7 @@ describe('NotFound', () => {
         name: /contact support/i,
       })
       expect(supportLink).toBeInTheDocument()
-      expect(supportLink).toHaveAttribute('href', 'mailto:support@example.com')
+      expect(supportLink).toHaveAttribute('href', 'mailto:support@blogai.com')
     })
   })
 

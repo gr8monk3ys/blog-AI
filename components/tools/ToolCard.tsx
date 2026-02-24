@@ -45,11 +45,11 @@ export default function ToolCard({ tool, index = 0 }: ToolCardProps) {
         className="block group"
         aria-label={`Open ${tool.name} tool`}
       >
-        <div className="relative h-full bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-amber-200 transition-all duration-200 overflow-hidden">
+        <div className="relative h-full bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-amber-200 dark:hover:border-amber-700 transition-all duration-200 overflow-hidden">
           {/* Top badges row */}
           <div className="absolute top-3 right-3 flex items-center gap-2">
             {tool.isNew && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-amber-500 to-amber-500 text-white">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white">
                 New
               </span>
             )}
@@ -83,12 +83,12 @@ export default function ToolCard({ tool, index = 0 }: ToolCardProps) {
             </div>
 
             {/* Title */}
-            <h3 className="text-base font-semibold text-gray-900 group-hover:text-amber-600 transition-colors mb-2 line-clamp-1">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 group-hover:text-amber-600 transition-colors mb-2 line-clamp-1">
               {tool.name}
             </h3>
 
             {/* Description */}
-            <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed">
               {tool.description}
             </p>
           </div>

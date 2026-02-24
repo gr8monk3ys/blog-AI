@@ -28,7 +28,12 @@ class TestImageGeneration(unittest.TestCase):
     def setUp(self):
         """Set up test client and sample data."""
         from server import app
+        from app.middleware import require_pro_tier
+
+        app.dependency_overrides[require_pro_tier] = lambda: "pro"
+        self.addCleanup(lambda: app.dependency_overrides.pop(require_pro_tier, None))
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
         self.valid_request = {
             "custom_prompt": "A beautiful sunset over mountains",
             "size": "1024x1024",
@@ -126,7 +131,12 @@ class TestImageGenerationValidation(unittest.TestCase):
     def setUp(self):
         """Set up test client."""
         from server import app
+        from app.middleware import require_pro_tier
+
+        app.dependency_overrides[require_pro_tier] = lambda: "pro"
+        self.addCleanup(lambda: app.dependency_overrides.pop(require_pro_tier, None))
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_invalid_style_returns_422(self):
         """Invalid style should return 422 validation error."""
@@ -171,7 +181,12 @@ class TestImageGenerationErrors(unittest.TestCase):
     def setUp(self):
         """Set up test client."""
         from server import app
+        from app.middleware import require_pro_tier
+
+        app.dependency_overrides[require_pro_tier] = lambda: "pro"
+        self.addCleanup(lambda: app.dependency_overrides.pop(require_pro_tier, None))
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
         self.valid_request = {
             "custom_prompt": "A beautiful sunset",
             "size": "1024x1024",
@@ -219,6 +234,7 @@ class TestImageStyles(unittest.TestCase):
         """Set up test client."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_get_styles_returns_200(self):
         """Get styles endpoint should return 200."""
@@ -240,6 +256,7 @@ class TestImageServiceHealth(unittest.TestCase):
         """Set up test client."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_image_service_health_returns_200(self):
         """Image service health endpoint should return 200."""

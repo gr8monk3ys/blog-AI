@@ -285,3 +285,54 @@ class ResearchResults:
     def __str__(self) -> str:
         # Use JSON so prompts get structured context instead of a memory address.
         return json.dumps(self.to_dict(), ensure_ascii=True, sort_keys=True)
+
+
+# =============================================================================
+# Deep Research Types (Pydantic)
+# =============================================================================
+
+from enum import Enum
+from pydantic import BaseModel, Field
+
+
+class ResearchDepth(str, Enum):
+    """Depth of research to conduct."""
+    BASIC = "basic"
+    DEEP = "deep"
+    COMPREHENSIVE = "comprehensive"
+
+
+class CredibilityTier(str, Enum):
+    """Source credibility classification."""
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+    UNKNOWN = "unknown"
+
+
+class SourceQuality(BaseModel):
+    """Quality assessment for a single research source."""
+    domain_authority: float = Field(ge=0, le=100, description="Estimated domain authority score")
+    recency: float = Field(ge=0, le=100, description="How recent the source is")
+    relevance: float = Field(ge=0, le=100, description="Keyword relevance to query")
+    credibility_tier: CredibilityTier = Field(default=CredibilityTier.UNKNOWN)
+    overall: float = Field(ge=0, le=100, description="Weighted composite score")
+
+
+class QualityRatedSource(BaseModel):
+    """A research source with quality rating attached."""
+    title: str
+    url: str
+    snippet: str = ""
+    provider: str = ""
+    quality: SourceQuality
+
+
+class DeepResearchResult(BaseModel):
+    """Result of a deep research query."""
+    query: str
+    depth: ResearchDepth
+    sources: list[QualityRatedSource] = Field(default_factory=list)
+    summary: str = ""
+    total_sources_found: int = 0
+    sources_after_quality_filter: int = 0

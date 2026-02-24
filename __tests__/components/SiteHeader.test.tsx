@@ -1,16 +1,32 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest'
+import { render, screen, within, RenderOptions } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { ThemeProvider } from '../../hooks/useTheme'
 import SiteHeader from '../../components/SiteHeader'
 
+function renderWithProviders(ui: React.ReactElement, options?: RenderOptions) {
+  return render(ui, { wrapper: ThemeProvider, ...options })
+}
+
 describe('SiteHeader', () => {
+  const originalClerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+
   beforeEach(() => {
     vi.clearAllMocks()
+    delete process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+  })
+
+  afterAll(() => {
+    if (originalClerkKey) {
+      process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = originalClerkKey
+    } else {
+      delete process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+    }
   })
 
   describe('Rendering', () => {
     it('should render the site logo text and link to home', () => {
-      render(<SiteHeader />)
+      renderWithProviders(<SiteHeader />)
 
       const homeLink = screen.getByRole('link', { name: /blog ai/i })
       expect(homeLink).toBeInTheDocument()
@@ -18,7 +34,7 @@ describe('SiteHeader', () => {
     })
 
     it('should render all desktop navigation links', () => {
-      render(<SiteHeader />)
+      renderWithProviders(<SiteHeader />)
 
       const expectedLinks = [
         { label: 'Directory', href: '/tool-directory' },
@@ -37,7 +53,7 @@ describe('SiteHeader', () => {
     })
 
     it('should render a sign-in link', () => {
-      render(<SiteHeader />)
+      renderWithProviders(<SiteHeader />)
 
       const signInLinks = screen.getAllByRole('link', { name: /sign in/i })
       expect(signInLinks.length).toBeGreaterThanOrEqual(1)
@@ -46,7 +62,7 @@ describe('SiteHeader', () => {
 
   describe('Mobile menu toggle', () => {
     it('should render the hamburger menu button', () => {
-      render(<SiteHeader />)
+      renderWithProviders(<SiteHeader />)
 
       const menuButton = screen.getByRole('button', {
         name: /open navigation menu/i,
@@ -55,7 +71,7 @@ describe('SiteHeader', () => {
     })
 
     it('should have aria-expanded set to false initially', () => {
-      render(<SiteHeader />)
+      renderWithProviders(<SiteHeader />)
 
       const menuButton = screen.getByRole('button', {
         name: /open navigation menu/i,
@@ -64,7 +80,7 @@ describe('SiteHeader', () => {
     })
 
     it('should have aria-controls pointing to mobile-nav', () => {
-      render(<SiteHeader />)
+      renderWithProviders(<SiteHeader />)
 
       const menuButton = screen.getByRole('button', {
         name: /open navigation menu/i,
@@ -73,7 +89,7 @@ describe('SiteHeader', () => {
     })
 
     it('should not render the mobile navigation panel initially', () => {
-      render(<SiteHeader />)
+      renderWithProviders(<SiteHeader />)
 
       const mobileNav = document.getElementById('mobile-nav')
       expect(mobileNav).not.toBeInTheDocument()
@@ -81,7 +97,7 @@ describe('SiteHeader', () => {
 
     it('should open the mobile menu when the hamburger button is clicked', async () => {
       const user = userEvent.setup()
-      render(<SiteHeader />)
+      renderWithProviders(<SiteHeader />)
 
       const menuButton = screen.getByRole('button', {
         name: /open navigation menu/i,
@@ -94,7 +110,7 @@ describe('SiteHeader', () => {
 
     it('should set aria-expanded to true after opening the menu', async () => {
       const user = userEvent.setup()
-      render(<SiteHeader />)
+      renderWithProviders(<SiteHeader />)
 
       const menuButton = screen.getByRole('button', {
         name: /open navigation menu/i,
@@ -110,7 +126,7 @@ describe('SiteHeader', () => {
 
     it('should show all navigation links in the mobile menu', async () => {
       const user = userEvent.setup()
-      render(<SiteHeader />)
+      renderWithProviders(<SiteHeader />)
 
       const menuButton = screen.getByRole('button', {
         name: /open navigation menu/i,
@@ -131,7 +147,7 @@ describe('SiteHeader', () => {
 
     it('should close the mobile menu when a mobile nav link is clicked', async () => {
       const user = userEvent.setup()
-      render(<SiteHeader />)
+      renderWithProviders(<SiteHeader />)
 
       // Open the menu
       const menuButton = screen.getByRole('button', {
@@ -149,7 +165,7 @@ describe('SiteHeader', () => {
 
     it('should close the mobile menu when the close button is clicked', async () => {
       const user = userEvent.setup()
-      render(<SiteHeader />)
+      renderWithProviders(<SiteHeader />)
 
       // Open the menu
       const menuButton = screen.getByRole('button', {
@@ -169,25 +185,53 @@ describe('SiteHeader', () => {
 
   describe('Accessibility', () => {
     it('should use a header landmark', () => {
-      render(<SiteHeader />)
+      renderWithProviders(<SiteHeader />)
 
       expect(screen.getByRole('banner')).toBeInTheDocument()
     })
 
     it('should contain a navigation landmark for desktop links', () => {
-      render(<SiteHeader />)
+      renderWithProviders(<SiteHeader />)
 
       const navElements = screen.getAllByRole('navigation')
       expect(navElements.length).toBeGreaterThanOrEqual(1)
     })
 
     it('should mark decorative icons as aria-hidden', () => {
-      const { container } = render(<SiteHeader />)
+      const { container } = renderWithProviders(<SiteHeader />)
 
       const sparklesIcon = container.querySelector(
         'svg[aria-hidden="true"]'
       )
       expect(sparklesIcon).toBeInTheDocument()
+    })
+  })
+
+  describe('Clerk-configured branch', () => {
+    it('should render Clerk auth controls when Clerk is configured', () => {
+      process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = 'pk_test_mock'
+
+      renderWithProviders(<SiteHeader />)
+
+      expect(screen.getByTestId('clerk-user-button')).toBeInTheDocument()
+      const signInLink = screen.getAllByRole('link', { name: /sign in/i })[0]
+      expect(signInLink).toHaveAttribute('href', '/sign-in')
+    })
+
+    it('should render auth links in mobile navigation when Clerk is configured', async () => {
+      const user = userEvent.setup()
+      process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = 'pk_test_mock'
+
+      renderWithProviders(<SiteHeader />)
+
+      await user.click(
+        screen.getByRole('button', { name: /open navigation menu/i })
+      )
+
+      const mobileNav = document.getElementById('mobile-nav')!
+      expect(within(mobileNav).getByRole('link', { name: 'Tools' })).toBeInTheDocument()
+      expect(within(mobileNav).getByRole('link', { name: 'Templates' })).toBeInTheDocument()
+      expect(within(mobileNav).getByRole('link', { name: 'History' })).toBeInTheDocument()
     })
   })
 })

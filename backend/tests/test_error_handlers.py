@@ -145,6 +145,7 @@ class TestExceptionHandlerIntegration(unittest.TestCase):
         from server import app
 
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_validation_error_returns_422(self):
         """Validation errors should return 422."""
@@ -184,6 +185,7 @@ class TestErrorResponseFormat(unittest.TestCase):
         from server import app
 
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_error_response_is_json(self):
         """Error responses should be JSON."""
@@ -213,6 +215,7 @@ class TestSentryIntegration(unittest.TestCase):
         from server import app
 
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     @patch("sentry_sdk.capture_exception")
     def test_unexpected_errors_reported_to_sentry(self, mock_capture):
@@ -233,6 +236,7 @@ class TestHTTPExceptionHandling(unittest.TestCase):
         from server import app
 
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_http_exception_preserves_status_code(self):
         """HTTP exceptions should preserve their status code."""

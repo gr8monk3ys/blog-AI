@@ -55,6 +55,7 @@ class StepType(str, Enum):
     PUBLISH_MEDIUM = "publish_medium"
     PUBLISH_GITHUB = "publish_github"
     SOCIAL_POST = "social_post"
+    FACT_CHECK = "fact_check"
     CUSTOM_LLM = "custom_llm"
 
 
@@ -987,6 +988,33 @@ async def _execute_custom_llm(
     return {"content": result.strip(), "text": result.strip()}
 
 
+async def _execute_fact_check(
+    config: Dict[str, Any],
+    context: Dict[str, Any],
+    provider: LLMProvider,
+    options: Optional[GenerationOptions],
+) -> Any:
+    """Run fact-checking on the accumulated content."""
+    from ..fact_checking.fact_checker import check_facts
+
+    content = _resolve_content(context)
+    sources = config.get("sources")
+    result = await asyncio.to_thread(
+        check_facts,
+        content=content,
+        sources=sources,
+        provider_type=provider.config.provider_type if hasattr(provider, "config") else "openai",
+        options=options,
+    )
+    return {
+        "overall_confidence": result.overall_confidence,
+        "verified_count": result.verified_count,
+        "unverified_count": result.unverified_count,
+        "contradicted_count": result.contradicted_count,
+        "summary": result.summary,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Handler registry
 # ---------------------------------------------------------------------------
@@ -1007,5 +1035,6 @@ _STEP_HANDLERS: Dict[StepType, Callable] = {
     StepType.PUBLISH_MEDIUM: _execute_publish_medium,
     StepType.PUBLISH_GITHUB: _execute_publish_github,
     StepType.SOCIAL_POST: _execute_social_post,
+    StepType.FACT_CHECK: _execute_fact_check,
     StepType.CUSTOM_LLM: _execute_custom_llm,
 }

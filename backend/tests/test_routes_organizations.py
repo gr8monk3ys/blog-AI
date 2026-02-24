@@ -12,6 +12,7 @@ Comprehensive tests covering:
 - Role permissions endpoint
 """
 
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -25,6 +26,12 @@ from src.organizations import (
     PermissionDeniedError,
 )
 from src.types.organization import OrganizationRole
+from src.types.organization import (
+    Organization,
+    OrganizationMember,
+    OrganizationSettings,
+    OrganizationSummary,
+)
 
 
 # =============================================================================
@@ -67,7 +74,7 @@ def mock_viewer_ctx():
     return AuthorizationContext(
         user_id="user-viewer-001",
         organization_id="org-001",
-        role="viewer",
+        role=OrganizationRole.VIEWER,
         is_org_member=True,
     )
 
@@ -75,41 +82,41 @@ def mock_viewer_ctx():
 @pytest.fixture
 def mock_org():
     """Create a sample organization."""
-    org = MagicMock()
-    org.id = "org-001"
-    org.name = "Test Organization"
-    org.slug = "test-org"
-    org.description = "A test organization"
-    org.plan_tier = "free"
-    org.is_active = True
-    org.model_dump = MagicMock(return_value={
-        "id": "org-001",
-        "name": "Test Organization",
-        "slug": "test-org",
-        "description": "A test organization",
-        "plan_tier": "free",
-        "is_active": True,
-    })
-    return org
+    now = datetime.now(timezone.utc)
+    return Organization(
+        id="org-001",
+        name="Test Organization",
+        slug="test-org",
+        description="A test organization",
+        plan_tier="free",
+        settings=OrganizationSettings(),
+        monthly_generation_limit=100,
+        current_month_usage=0,
+        quota_reset_date=now,
+        logo_url=None,
+        website_url=None,
+        is_active=True,
+        created_at=now,
+        updated_at=now,
+        created_by="user-owner-001",
+    )
 
 
 @pytest.fixture
 def mock_member():
     """Create a sample organization member."""
-    member = MagicMock()
-    member.id = "member-001"
-    member.user_id = "user-admin-001"
-    member.organization_id = "org-001"
-    member.role = OrganizationRole.ADMIN
-    member.is_active = True
-    member.model_dump = MagicMock(return_value={
-        "id": "member-001",
-        "user_id": "user-admin-001",
-        "organization_id": "org-001",
-        "role": "admin",
-        "is_active": True,
-    })
-    return member
+    now = datetime.now(timezone.utc)
+    return OrganizationMember(
+        id="member-001",
+        user_id="user-admin-001",
+        organization_id="org-001",
+        role=OrganizationRole.ADMIN,
+        invited_by="user-owner-001",
+        invite_accepted_at=now,
+        is_active=True,
+        created_at=now,
+        updated_at=now,
+    )
 
 
 def _override_deps(app, auth_ctx, verify_user_id="user-owner-001"):
@@ -233,9 +240,19 @@ class TestListOrganizations:
 
         app.dependency_overrides[verify_api_key] = lambda: "user-001"
 
+        summary = OrganizationSummary(
+            id=mock_org.id,
+            name=mock_org.name,
+            slug=mock_org.slug,
+            plan_tier=mock_org.plan_tier,
+            role=OrganizationRole.OWNER,
+            member_count=1,
+            joined_at=datetime.now(timezone.utc),
+        )
+
         mock_org_service = MagicMock()
         mock_org_service.list_user_organizations = AsyncMock(
-            return_value=[mock_org]
+            return_value=[summary]
         )
 
         with patch(
@@ -295,7 +312,8 @@ class TestGetOrganization:
         app.dependency_overrides[verify_api_key] = lambda: "outsider-user"
 
         mock_org_service = MagicMock()
-        mock_org_service.get_member = AsyncMock(return_value=None)
+        mock_org_service.get_organization = AsyncMock(return_value=object())
+        mock_org_service.get_member_role = AsyncMock(return_value=None)
 
         with patch(
             "app.routes.organizations.get_organization_service",
@@ -327,9 +345,13 @@ class TestGetOrganization:
 
         mock_org_service = MagicMock()
         mock_org_service.get_organization = AsyncMock(return_value=mock_org)
+        mock_org_service.get_member_role = AsyncMock(return_value=OrganizationRole.OWNER)
 
         with patch(
             "app.routes.organizations.get_organization_service",
+            return_value=mock_org_service,
+        ), patch(
+            "app.dependencies.organization.get_organization_service",
             return_value=mock_org_service,
         ):
             response = client.get(
@@ -351,9 +373,10 @@ class TestGetOrganization:
         app.dependency_overrides[verify_api_key] = lambda: "user-001"
 
         mock_org_service = MagicMock()
-        mock_org_service.get_member = AsyncMock(
+        mock_org_service.get_organization = AsyncMock(
             side_effect=OrganizationNotFoundError("Organization not found")
         )
+        mock_org_service.get_member_role = AsyncMock(return_value=None)
 
         with patch(
             "app.dependencies.organization.get_organization_service",
@@ -435,12 +458,10 @@ class TestDeleteOrganization:
         """Owner can delete the organization."""
         from server import app
         from app.auth import verify_api_key
-        from app.dependencies import get_organization_context, require_owner
+        from app.dependencies import get_organization_context
 
-        owner_dep = require_owner()
         app.dependency_overrides[verify_api_key] = lambda: "user-owner-001"
         app.dependency_overrides[get_organization_context] = lambda: mock_owner_ctx
-        app.dependency_overrides[owner_dep] = lambda: mock_owner_ctx
 
         mock_org_service = MagicMock()
         mock_org_service.delete_organization = AsyncMock(return_value=None)
@@ -460,8 +481,7 @@ class TestDeleteOrganization:
 
         app.dependency_overrides.clear()
 
-        # May be 200 or 403 depending on dependency injection resolution
-        assert response.status_code in (200, 403)
+        assert response.status_code == 200
 
 
 # =============================================================================
@@ -515,7 +535,7 @@ class TestRemoveMember:
 
         mock_org_service = MagicMock()
         mock_org_service.remove_member = AsyncMock(
-            side_effect=PermissionDeniedError("Permission denied")
+            side_effect=PermissionDeniedError(message="Permission denied")
         )
 
         with patch(
@@ -643,14 +663,10 @@ class TestRolePermissions:
 
         app.dependency_overrides[verify_api_key] = lambda: "user-001"
 
-        with patch(
-            "app.routes.organizations.get_role_description",
-            return_value="A role",
-        ):
-            response = client.get(
-                "/organizations/roles/permissions",
-                headers={"X-API-Key": "test-key"},
-            )
+        response = client.get(
+            "/organizations/roles/permissions",
+            headers={"X-API-Key": "test-key"},
+        )
 
         app.dependency_overrides.clear()
 
@@ -679,7 +695,8 @@ class TestOrganizationDataIsolation:
         app.dependency_overrides[verify_api_key] = lambda: "user-a"
 
         mock_org_service = MagicMock()
-        mock_org_service.get_member = AsyncMock(return_value=None)
+        mock_org_service.get_organization = AsyncMock(return_value=object())
+        mock_org_service.get_member_role = AsyncMock(return_value=None)
 
         with patch(
             "app.dependencies.organization.get_organization_service",

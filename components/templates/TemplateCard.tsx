@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { Template, TEMPLATE_CATEGORIES } from '../../types/templates'
 import {
   DocumentTextIcon,
@@ -43,12 +43,12 @@ export default function TemplateCard({ template, index = 0, onUse }: TemplateCar
   }
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
     >
-      <div className="relative h-full bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-amber-200 transition-all duration-200 overflow-hidden">
+      <div className="relative h-full bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-amber-200 dark:hover:border-amber-700 transition-all duration-200 overflow-hidden">
         {/* Top badges row */}
         <div className="absolute top-3 right-3 flex items-center gap-2">
           {template.useCount > 100 && (
@@ -76,12 +76,12 @@ export default function TemplateCard({ template, index = 0, onUse }: TemplateCar
           </div>
 
           {/* Title */}
-          <h3 className="text-base font-semibold text-gray-900 mb-2 line-clamp-1">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2 line-clamp-1">
             {template.name}
           </h3>
 
           {/* Description */}
-          <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed mb-3">
+          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed mb-3">
             {template.description || 'No description available'}
           </p>
 
@@ -91,7 +91,7 @@ export default function TemplateCard({ template, index = 0, onUse }: TemplateCar
               {template.tags.slice(0, 3).map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center px-2 py-0.5 rounded text-xs text-gray-500 bg-gray-100"
+                  className="inline-flex items-center px-2 py-0.5 rounded text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800"
                 >
                   {tag}
                 </span>
@@ -105,7 +105,7 @@ export default function TemplateCard({ template, index = 0, onUse }: TemplateCar
           )}
 
           {/* Stats */}
-          <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+          <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-4">
             <span className="flex items-center gap-1">
               <SparklesIcon className="w-3.5 h-3.5" />
               {template.useCount} uses
@@ -124,6 +124,6 @@ export default function TemplateCard({ template, index = 0, onUse }: TemplateCar
           </button>
         </div>
       </div>
-    </motion.div>
+    </m.div>
   )
 }

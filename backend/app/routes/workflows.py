@@ -24,6 +24,7 @@ from src.config import get_settings
 from src.organizations import AuthorizationContext
 from src.text_generation.core import GenerationOptions
 from src.workflows.preset_workflows import PRESET_WORKFLOWS, build_preset_workflow
+from src.workflows import workflow_store
 from src.workflows.workflow_engine import (
     StepType,
     Workflow,
@@ -43,16 +44,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/workflows", tags=["Workflows"])
 
-# ---------------------------------------------------------------------------
-# In-memory stores
-#
-# In a production deployment these would be backed by a database (e.g. the
-# Neon Postgres pool already used elsewhere in the app).  The in-memory
-# dicts keep the first iteration simple and dependency-free.
-# ---------------------------------------------------------------------------
-
-_custom_workflows: Dict[str, Dict[str, Any]] = {}
-_executions: Dict[str, Dict[str, Any]] = {}
 _running_engines: Dict[str, WorkflowEngine] = {}
 
 _ALLOWED_PROVIDERS = {"openai", "anthropic", "gemini"}
@@ -184,6 +175,29 @@ async def get_preset(preset_id: str) -> Dict[str, Any]:
     }
 
 
+@router.get(
+    "",
+    summary="List custom workflows",
+    description="Returns all custom workflows created by the current user.",
+    response_model=List[WorkflowSummary],
+)
+async def list_workflows(
+    auth_ctx: AuthorizationContext = Depends(require_content_access),
+) -> List[Dict[str, Any]]:
+    """Return all custom workflows for the authenticated user."""
+    workflows = await workflow_store.list_workflows(auth_ctx.user_id)
+    return [
+        {
+            "id": wf["id"],
+            "name": wf["name"],
+            "description": wf.get("description", ""),
+            "step_count": len(wf.get("steps", [])),
+            "step_types": [s.get("type", "") for s in wf.get("steps", [])],
+        }
+        for wf in workflows
+    ]
+
+
 @router.post(
     "",
     status_code=status.HTTP_201_CREATED,
@@ -232,7 +246,7 @@ async def create_workflow(
         "created_by": user_id,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
-    _custom_workflows[workflow_id] = workflow_data
+    await workflow_store.save_workflow(workflow_data)
 
     logger.info("Custom workflow '%s' created by user %s", request.name, user_id[:8])
 
@@ -279,7 +293,7 @@ async def execute_workflow(
                 detail=str(exc),
             )
     else:
-        wf_data = _custom_workflows.get(workflow_id)
+        wf_data = await workflow_store.get_workflow(workflow_id, user_id=user_id)
         if wf_data is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -305,18 +319,22 @@ async def execute_workflow(
         )
 
     execution_id = str(uuid.uuid4())
-    _executions[execution_id] = {
-        "execution_id": execution_id,
-        "workflow_id": workflow.id,
-        "workflow_name": workflow.name,
-        "status": WorkflowStatus.PENDING.value,
-        "current_step": None,
-        "started_at": datetime.now(timezone.utc).isoformat(),
-        "completed_at": None,
-        "error": None,
-        "results": {},
-        "user_id": user_id,
-    }
+    await workflow_store.create_execution(
+        {
+            "execution_id": execution_id,
+            "workflow_id": workflow.id,
+            "workflow_name": workflow.name,
+            "status": WorkflowStatus.PENDING.value,
+            "current_step": None,
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "completed_at": None,
+            "error": None,
+            "results": {},
+            "user_id": user_id,
+        },
+        variables=request.variables,
+        provider=provider_type,
+    )
 
     engine = WorkflowEngine()
     _running_engines[execution_id] = engine
@@ -329,17 +347,18 @@ async def execute_workflow(
 
     async def _progress(step_id: str, step_status: WorkflowStatus, message: Optional[str]) -> None:
         """Update the execution record as each step completes."""
-        record = _executions.get(execution_id)
-        if record is None:
-            return
-        record["current_step"] = step_id
-        record["status"] = step_status.value if step_status == WorkflowStatus.FAILED else "running"
+        next_status = step_status.value if step_status == WorkflowStatus.FAILED else WorkflowStatus.RUNNING.value
+        await workflow_store.update_execution(
+            execution_id,
+            current_step=step_id,
+            status=next_status,
+        )
 
     async def _run() -> None:
-        record = _executions.get(execution_id)
-        if record is None:
-            return
-        record["status"] = WorkflowStatus.RUNNING.value
+        await workflow_store.update_execution(
+            execution_id,
+            status=WorkflowStatus.RUNNING.value,
+        )
         try:
             execution = await engine.execute_workflow(
                 workflow=workflow,
@@ -348,12 +367,13 @@ async def execute_workflow(
                 options=options,
                 progress_callback=_progress,
             )
-            record["status"] = execution.status.value
-            record["results"] = execution.results
-            record["completed_at"] = (
-                execution.completed_at.isoformat() if execution.completed_at else None
+            await workflow_store.update_execution(
+                execution_id,
+                status=execution.status.value,
+                results=execution.results,
+                completed_at=execution.completed_at.isoformat() if execution.completed_at else None,
+                error=execution.error,
             )
-            record["error"] = execution.error
 
             # Track usage on success.
             if execution.status == WorkflowStatus.COMPLETED:
@@ -370,14 +390,20 @@ async def execute_workflow(
                 )
 
         except WorkflowExecutionError as exc:
-            record["status"] = WorkflowStatus.FAILED.value
-            record["error"] = str(exc)
-            record["completed_at"] = datetime.now(timezone.utc).isoformat()
+            await workflow_store.update_execution(
+                execution_id,
+                status=WorkflowStatus.FAILED.value,
+                error=str(exc),
+                completed_at=datetime.now(timezone.utc).isoformat(),
+            )
             logger.error("Workflow execution %s failed: %s", execution_id, exc)
         except Exception as exc:
-            record["status"] = WorkflowStatus.FAILED.value
-            record["error"] = "Unexpected error during workflow execution"
-            record["completed_at"] = datetime.now(timezone.utc).isoformat()
+            await workflow_store.update_execution(
+                execution_id,
+                status=WorkflowStatus.FAILED.value,
+                error="Unexpected error during workflow execution",
+                completed_at=datetime.now(timezone.utc).isoformat(),
+            )
             logger.error("Unexpected workflow error %s: %s", execution_id, exc, exc_info=True)
         finally:
             _running_engines.pop(execution_id, None)
@@ -422,15 +448,12 @@ async def get_execution_status(
     Despite the path parameter name, this accepts either an execution_id
     or a workflow_id and returns the most recent execution for that workflow.
     """
-    # Try direct lookup by execution ID first.
-    record = _executions.get(workflow_id)
-
+    record = await workflow_store.get_execution(workflow_id, user_id=auth_ctx.user_id)
     if record is None:
-        # Fall back to searching by workflow_id.
-        for exec_record in reversed(list(_executions.values())):
-            if exec_record.get("workflow_id") == workflow_id:
-                record = exec_record
-                break
+        record = await workflow_store.get_latest_execution_for_workflow(
+            workflow_id,
+            user_id=auth_ctx.user_id,
+        )
 
     if record is None:
         raise HTTPException(
@@ -460,14 +483,16 @@ async def cancel_workflow(
     auth_ctx: AuthorizationContext = Depends(require_content_creation),
 ) -> Dict[str, Any]:
     """Cancel a running workflow execution."""
+    user_id = auth_ctx.user_id
+
     # Try as execution_id.
     engine = _running_engines.get(workflow_id)
-    record = _executions.get(workflow_id)
+    record = await workflow_store.get_execution(workflow_id, user_id=user_id)
 
     # Fall back to workflow_id search.
     if engine is None:
         for eid, eng in list(_running_engines.items()):
-            rec = _executions.get(eid)
+            rec = await workflow_store.get_execution(eid, user_id=user_id)
             if rec and rec.get("workflow_id") == workflow_id:
                 engine = eng
                 record = rec
@@ -491,8 +516,11 @@ async def cancel_workflow(
     engine.cancel()
 
     if record:
-        record["status"] = WorkflowStatus.CANCELLED.value
-        record["completed_at"] = datetime.now(timezone.utc).isoformat()
+        await workflow_store.update_execution(
+            record["execution_id"],
+            status=WorkflowStatus.CANCELLED.value,
+            completed_at=datetime.now(timezone.utc).isoformat(),
+        )
 
     logger.info("Workflow execution cancelled for %s by user %s", workflow_id, auth_ctx.user_id[:8])
 

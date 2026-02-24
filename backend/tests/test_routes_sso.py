@@ -13,8 +13,10 @@ Comprehensive tests covering:
 - Logout flow
 """
 
+import asyncio
 import hashlib
 import secrets
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -32,6 +34,16 @@ def client():
     """Create test client."""
     from server import app
     return TestClient(app)
+
+
+@contextmanager
+def _client_cookie(client: TestClient, key: str, value: str):
+    """Set a cookie on the client for a single request to avoid deprecated per-request cookies."""
+    client.cookies.set(key, value)
+    try:
+        yield
+    finally:
+        client.cookies.pop(key, None)
 
 
 @pytest.fixture
@@ -240,7 +252,7 @@ class TestSAMLLogin:
             response = client.get("/sso/saml/login/org-missing")
 
         assert response.status_code == 404
-        assert "SSO_NOT_CONFIGURED" in str(response.json().get("detail", ""))
+        assert response.json().get("error_code") == "RESOURCE_NOT_FOUND"
 
     def test_saml_login_disabled_returns_403(
         self, client, mock_sso_config_disabled
@@ -252,7 +264,7 @@ class TestSAMLLogin:
             response = client.get("/sso/saml/login/org-003")
 
         assert response.status_code == 403
-        assert "SSO_DISABLED" in str(response.json().get("detail", ""))
+        assert response.json().get("error_code") == "PERMISSION_DENIED"
 
     def test_saml_login_configuration_error_returns_500(
         self, client, mock_sso_config_saml
@@ -273,7 +285,7 @@ class TestSAMLLogin:
             response = client.get("/sso/saml/login/org-001")
 
         assert response.status_code == 500
-        assert "SSO_CONFIG_ERROR" in str(response.json().get("detail", ""))
+        assert response.json().get("error_code") == "INTERNAL_ERROR"
 
 
 # =============================================================================
@@ -296,7 +308,7 @@ class TestSAMLACS:
             )
 
         assert response.status_code == 400
-        assert "SAML_MISSING_RESPONSE" in str(response.json().get("detail", ""))
+        assert response.json().get("error_code") == "VALIDATION_ERROR"
 
     def test_saml_acs_invalid_signature_returns_400(
         self, client, mock_sso_config_saml
@@ -320,7 +332,7 @@ class TestSAMLACS:
             )
 
         assert response.status_code == 400
-        assert "SSO_VALIDATION_ERROR" in str(response.json().get("detail", ""))
+        assert response.json().get("error_code") == "VALIDATION_ERROR"
 
     def test_saml_acs_valid_response_creates_session(
         self, client, mock_sso_config_saml, mock_sso_user
@@ -366,7 +378,7 @@ class TestSAMLACS:
             )
 
         assert response.status_code == 400
-        assert "SSO_REPLAY_ERROR" in str(response.json().get("detail", ""))
+        assert response.json().get("error_code") == "VALIDATION_ERROR"
 
     def test_saml_acs_auth_failure_returns_401(
         self, client, mock_sso_config_saml
@@ -390,7 +402,8 @@ class TestSAMLACS:
             )
 
         assert response.status_code == 401
-        assert "SSO_AUTH_ERROR" in str(response.json().get("detail", ""))
+        data = response.json()
+        assert data.get("error_code") == "AUTHENTICATION_REQUIRED"
 
     def test_saml_acs_not_configured_returns_404(self, client):
         """ACS callback returns 404 when SSO is not configured."""
@@ -403,24 +416,15 @@ class TestSAMLACS:
         assert response.status_code == 404
 
     def test_saml_acs_email_domain_restriction(
-        self, client, mock_sso_user
+        self, client, mock_sso_user, mock_sso_config_saml
     ):
         """ACS callback rejects users from disallowed email domains."""
-        from src.types.sso import (
-            SSOConfiguration,
-            SSOConnectionStatus,
-            SSOProviderType,
-        )
-
-        config = SSOConfiguration(
-            id="sso-restricted",
-            organization_id="org-restricted",
-            provider_type=SSOProviderType.SAML,
-            enabled=True,
-            status=SSOConnectionStatus.ACTIVE,
-            saml_config=MagicMock(),
-            oidc_config=None,
-            allowed_email_domains=["company.com"],
+        config = mock_sso_config_saml.model_copy(
+            update={
+                "id": "sso-restricted",
+                "organization_id": "org-restricted",
+                "allowed_email_domains": ["company.com"],
+            }
         )
 
         mock_provider = MagicMock()
@@ -438,7 +442,7 @@ class TestSAMLACS:
             )
 
         assert response.status_code == 403
-        assert "SSO_DOMAIN_NOT_ALLOWED" in str(response.json().get("detail", ""))
+        assert response.json().get("error_code") == "PERMISSION_DENIED"
 
     def test_saml_acs_session_cookie_attributes(
         self, client, mock_sso_config_saml, mock_sso_user
@@ -551,7 +555,7 @@ class TestOIDCCallback:
         )
 
         assert response.status_code == 401
-        assert "OIDC_ACCESS_DENIED" in str(response.json().get("detail", ""))
+        assert response.json().get("error_code") == "AUTHENTICATION_REQUIRED"
 
     def test_oidc_callback_invalid_state_returns_400(
         self, client, mock_sso_config_oidc
@@ -567,7 +571,7 @@ class TestOIDCCallback:
             )
 
         assert response.status_code == 400
-        assert "OIDC_SESSION_EXPIRED" in str(response.json().get("detail", ""))
+        assert response.json().get("error_code") == "VALIDATION_ERROR"
 
     def test_oidc_callback_valid_creates_session(
         self, client, mock_sso_config_oidc, mock_sso_user
@@ -595,11 +599,11 @@ class TestOIDCCallback:
         ), patch(
             "app.routes.sso._delete_auth_session"
         ):
-            response = client.get(
-                "/sso/oidc/callback/org-002?code=valid-code&state=valid-state",
-                cookies={"sso_auth_session": "test-session-id"},
-                follow_redirects=False,
-            )
+            with _client_cookie(client, "sso_auth_session", "test-session-id"):
+                response = client.get(
+                    "/sso/oidc/callback/org-002?code=valid-code&state=valid-state",
+                    follow_redirects=False,
+                )
 
         assert response.status_code == 302
         cookie_header = response.headers.get("set-cookie", "")
@@ -629,13 +633,13 @@ class TestOIDCCallback:
         ), patch(
             "app.routes.sso._get_auth_session", return_value=session_data
         ):
-            response = client.get(
-                "/sso/oidc/callback/org-002?code=reused-code&state=s1",
-                cookies={"sso_auth_session": "session-id"},
-            )
+            with _client_cookie(client, "sso_auth_session", "session-id"):
+                response = client.get(
+                    "/sso/oidc/callback/org-002?code=reused-code&state=s1"
+                )
 
         assert response.status_code == 400
-        assert "SSO_REPLAY_ERROR" in str(response.json().get("detail", ""))
+        assert response.json().get("error_code") == "VALIDATION_ERROR"
 
     def test_oidc_callback_validation_error_returns_400(
         self, client, mock_sso_config_oidc
@@ -661,10 +665,10 @@ class TestOIDCCallback:
         ), patch(
             "app.routes.sso._get_auth_session", return_value=session_data
         ):
-            response = client.get(
-                "/sso/oidc/callback/org-002?code=bad-code&state=s1",
-                cookies={"sso_auth_session": "session-id"},
-            )
+            with _client_cookie(client, "sso_auth_session", "session-id"):
+                response = client.get(
+                    "/sso/oidc/callback/org-002?code=bad-code&state=s1"
+                )
 
         assert response.status_code == 400
 
@@ -712,9 +716,8 @@ class TestSSOSessionManagement:
             last_activity_at=datetime.now(timezone.utc) - timedelta(hours=10),
         )
 
-        response = client.get(
-            "/sso/session", cookies={"sso_session": token}
-        )
+        with _client_cookie(client, "sso_session", token):
+            response = client.get("/sso/session")
         data = response.json()
         assert data["authenticated"] is False
 
@@ -753,9 +756,8 @@ class TestSSOSessionManagement:
             last_activity_at=now,
         )
 
-        response = client.get(
-            "/sso/session", cookies={"sso_session": token}
-        )
+        with _client_cookie(client, "sso_session", token):
+            response = client.get("/sso/session")
         data = response.json()
         assert data["authenticated"] is True
         assert data["user"]["email"] == "valid@example.com"
@@ -844,9 +846,8 @@ class TestSSOLogout:
         )
 
         with patch("app.routes.sso._get_sso_config", return_value=None):
-            response = client.post(
-                "/sso/logout", cookies={"sso_session": token}
-            )
+            with _client_cookie(client, "sso_session", token):
+                response = client.post("/sso/logout")
 
         assert response.status_code == 200
         data = response.json()
@@ -875,11 +876,11 @@ class TestSAMLSLO:
     def test_saml_slo_deletes_session_cookie(self, client):
         """SLO deletes the session cookies."""
         with patch("app.routes.sso._get_sso_config", return_value=None):
-            response = client.get(
-                "/sso/saml/slo/org-001",
-                cookies={"sso_session": "some-token"},
-                follow_redirects=False,
-            )
+            with _client_cookie(client, "sso_session", "some-token"):
+                response = client.get(
+                    "/sso/saml/slo/org-001",
+                    follow_redirects=False,
+                )
 
         assert response.status_code == 302
         set_cookies = response.headers.get_list("set-cookie")
@@ -904,7 +905,9 @@ class TestAuthSessionTimeout:
         )
 
         session_id = "test-timeout-session"
-        _store_auth_session(session_id, {"organization_id": "org-001"})
+        asyncio.run(
+            _store_auth_session(session_id, {"organization_id": "org-001"})
+        )
 
         # Manually set created_at to the past
         _sso_auth_sessions[session_id]["created_at"] = (
@@ -912,7 +915,7 @@ class TestAuthSessionTimeout:
         ).isoformat()
 
         # Should return None for expired session
-        result = _get_auth_session(session_id)
+        result = asyncio.run(_get_auth_session(session_id))
         assert result is None
         assert session_id not in _sso_auth_sessions
 
@@ -925,9 +928,11 @@ class TestAuthSessionTimeout:
         )
 
         session_id = "test-valid-session"
-        _store_auth_session(session_id, {"organization_id": "org-001"})
+        asyncio.run(
+            _store_auth_session(session_id, {"organization_id": "org-001"})
+        )
 
-        result = _get_auth_session(session_id)
+        result = asyncio.run(_get_auth_session(session_id))
         assert result is not None
         assert result["organization_id"] == "org-001"
 

@@ -28,6 +28,8 @@ export interface BlogContent {
   tags: string[]
   sections: BlogSection[]
   sources?: SourceCitation[]
+  seo_score?: import('./seo').SEOScore
+  fact_check?: import('./factCheck').FactCheckResult
 }
 
 export interface Topic {

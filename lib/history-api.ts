@@ -14,6 +14,24 @@ import type {
 } from '../types/history'
 import type { ToolCategory } from '../types/tools'
 
+class HistoryApiError extends Error {
+  status: number
+
+  constructor(message: string, status: number) {
+    super(message)
+    this.name = 'HistoryApiError'
+    this.status = status
+  }
+}
+
+function getErrorStatus(error: unknown): number | undefined {
+  if (typeof error === 'object' && error !== null && 'status' in error) {
+    const status = (error as { status?: unknown }).status
+    return typeof status === 'number' ? status : undefined
+  }
+  return undefined
+}
+
 function getToolCategory(toolId: string): ToolCategory | null {
   const categoryMap: Record<string, ToolCategory> = {
     'blog-post-generator': 'blog',
@@ -56,9 +74,7 @@ async function jsonOrThrow<T>(res: Response): Promise<T> {
       (data && typeof data === 'object' && 'error' in data && typeof data.error === 'string'
         ? data.error
         : `Request failed (${res.status})`)
-    const error = new Error(message)
-    ;(error as any).status = res.status
-    throw error
+    throw new HistoryApiError(message, res.status)
   }
   return data as T
 }
@@ -96,9 +112,10 @@ export const historyApi = {
         ...payload,
         items,
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       // If not signed in or history is unavailable, behave like "no history".
-      if (e?.status === 401 || e?.status === 403 || e?.status === 503) {
+      const status = getErrorStatus(e)
+      if (status === 401 || status === 403 || status === 503) {
         return { items: [], total: 0, limit: filters.limit ?? 20, offset: filters.offset ?? 0, has_more: false }
       }
       throw e
@@ -177,8 +194,9 @@ export const historyApi = {
       }
 
       return payload
-    } catch (e: any) {
-      if (e?.status === 401 || e?.status === 403 || e?.status === 503) {
+    } catch (e: unknown) {
+      const status = getErrorStatus(e)
+      if (status === 401 || status === 403 || status === 503) {
         return {
           total_generations: 0,
           total_favorites: 0,
@@ -197,4 +215,3 @@ export const historyApi = {
 }
 
 export default historyApi
-

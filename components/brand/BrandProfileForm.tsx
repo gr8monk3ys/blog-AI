@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   BrandProfile,
   ToneKeyword,
@@ -36,7 +36,7 @@ export interface BrandProfileFormData {
   contentThemes: string[]
 }
 
-export default function BrandProfileForm({
+function useBrandProfileFormView({
   profile,
   onSubmit,
   onCancel,
@@ -77,22 +77,6 @@ export default function BrandProfileForm({
   const [avoidWordInput, setAvoidWordInput] = useState('')
   const [brandValueInput, setBrandValueInput] = useState('')
   const [contentThemeInput, setContentThemeInput] = useState('')
-
-  // Update form when profile changes
-  useEffect(() => {
-    if (profile) {
-      setName(profile.name)
-      setToneKeywords(profile.toneKeywords)
-      setWritingStyle(profile.writingStyle)
-      setExampleContent(profile.exampleContent || '')
-      setIndustry(profile.industry || null)
-      setTargetAudience(profile.targetAudience || '')
-      setPreferredWords(profile.preferredWords)
-      setAvoidWords(profile.avoidWords)
-      setBrandValues(profile.brandValues)
-      setContentThemes(profile.contentThemes)
-    }
-  }, [profile])
 
   const handleToneToggle = (keyword: ToneKeyword) => {
     setToneKeywords((prev) =>
@@ -156,7 +140,7 @@ export default function BrandProfileForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="p-4 rounded-lg bg-red-50 text-sm text-red-600 border border-red-100">
+        <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-sm text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800">
           {error}
         </div>
       )}
@@ -165,7 +149,7 @@ export default function BrandProfileForm({
       <div>
         <label
           htmlFor="profile-name"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
           Profile Name *
         </label>
@@ -175,7 +159,7 @@ export default function BrandProfileForm({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g., Tech Startup Voice"
-          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+          className="block w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
           required
         />
       </div>
@@ -184,7 +168,7 @@ export default function BrandProfileForm({
       <div>
         <label
           htmlFor="writing-style"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
           Writing Style
         </label>
@@ -192,7 +176,7 @@ export default function BrandProfileForm({
           id="writing-style"
           value={writingStyle}
           onChange={(e) => setWritingStyle(e.target.value as WritingStyle)}
-          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+          className="block w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
         >
           {WRITING_STYLES.map((style) => (
             <option key={style.value} value={style.value}>
@@ -203,10 +187,10 @@ export default function BrandProfileForm({
       </div>
 
       {/* Tone Keywords */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+      <fieldset>
+        <legend className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Tone Keywords * (select multiple)
-        </label>
+        </legend>
         <div className="flex flex-wrap gap-2">
           {TONE_KEYWORDS.map((keyword) => (
             <button
@@ -216,20 +200,20 @@ export default function BrandProfileForm({
               className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                 toneKeywords.includes(keyword.value)
                   ? 'bg-amber-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
             >
               {keyword.label}
             </button>
           ))}
         </div>
-      </div>
+      </fieldset>
 
       {/* Industry */}
       <div>
         <label
           htmlFor="industry"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
           Industry
         </label>
@@ -237,7 +221,7 @@ export default function BrandProfileForm({
           id="industry"
           value={industry || ''}
           onChange={(e) => setIndustry((e.target.value as Industry) || null)}
-          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+          className="block w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
         >
           <option value="">Select an industry...</option>
           {INDUSTRIES.map((ind) => (
@@ -252,7 +236,7 @@ export default function BrandProfileForm({
       <div>
         <label
           htmlFor="target-audience"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
           Target Audience
         </label>
@@ -262,7 +246,7 @@ export default function BrandProfileForm({
           onChange={(e) => setTargetAudience(e.target.value)}
           placeholder="Describe your ideal reader or customer..."
           rows={2}
-          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+          className="block w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
         />
       </div>
 
@@ -270,11 +254,11 @@ export default function BrandProfileForm({
       <div>
         <label
           htmlFor="example-content"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
           Example Content
         </label>
-        <p className="text-xs text-gray-500 mb-2">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
           Paste an example of your ideal brand voice for the AI to learn from.
         </p>
         <textarea
@@ -283,17 +267,21 @@ export default function BrandProfileForm({
           onChange={(e) => setExampleContent(e.target.value)}
           placeholder="Paste a paragraph that exemplifies your brand voice..."
           rows={4}
-          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+          className="block w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
         />
       </div>
 
       {/* Preferred Words */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="preferred-words-input"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+        >
           Preferred Words & Phrases
         </label>
         <div className="flex gap-2 mb-2">
           <input
+            id="preferred-words-input"
             type="text"
             value={preferredWordInput}
             onChange={(e) => setPreferredWordInput(e.target.value)}
@@ -304,14 +292,14 @@ export default function BrandProfileForm({
               }
             }}
             placeholder="Add a word or phrase..."
-            className="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+            className="flex-1 rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm dark:bg-gray-800 dark:text-gray-100"
           />
           <button
             type="button"
             onClick={() =>
               addToArray(preferredWordInput, setPreferredWords, setPreferredWordInput)
             }
-            className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 bg-white hover:bg-gray-50"
+            className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             <PlusIcon className="w-4 h-4" />
           </button>
@@ -337,11 +325,15 @@ export default function BrandProfileForm({
 
       {/* Avoid Words */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="avoid-words-input"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+        >
           Words to Avoid
         </label>
         <div className="flex gap-2 mb-2">
           <input
+            id="avoid-words-input"
             type="text"
             value={avoidWordInput}
             onChange={(e) => setAvoidWordInput(e.target.value)}
@@ -352,14 +344,14 @@ export default function BrandProfileForm({
               }
             }}
             placeholder="Add a word to avoid..."
-            className="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+            className="flex-1 rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm dark:bg-gray-800 dark:text-gray-100"
           />
           <button
             type="button"
             onClick={() =>
               addToArray(avoidWordInput, setAvoidWords, setAvoidWordInput)
             }
-            className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 bg-white hover:bg-gray-50"
+            className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             <PlusIcon className="w-4 h-4" />
           </button>
@@ -385,11 +377,15 @@ export default function BrandProfileForm({
 
       {/* Brand Values */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="brand-values-input"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+        >
           Brand Values
         </label>
         <div className="flex gap-2 mb-2">
           <input
+            id="brand-values-input"
             type="text"
             value={brandValueInput}
             onChange={(e) => setBrandValueInput(e.target.value)}
@@ -400,14 +396,14 @@ export default function BrandProfileForm({
               }
             }}
             placeholder="e.g., Innovation, Transparency..."
-            className="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+            className="flex-1 rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm dark:bg-gray-800 dark:text-gray-100"
           />
           <button
             type="button"
             onClick={() =>
               addToArray(brandValueInput, setBrandValues, setBrandValueInput)
             }
-            className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 bg-white hover:bg-gray-50"
+            className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             <PlusIcon className="w-4 h-4" />
           </button>
@@ -433,11 +429,15 @@ export default function BrandProfileForm({
 
       {/* Content Themes */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="content-themes-input"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+        >
           Content Themes
         </label>
         <div className="flex gap-2 mb-2">
           <input
+            id="content-themes-input"
             type="text"
             value={contentThemeInput}
             onChange={(e) => setContentThemeInput(e.target.value)}
@@ -448,14 +448,14 @@ export default function BrandProfileForm({
               }
             }}
             placeholder="e.g., Future of work, Team collaboration..."
-            className="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+            className="flex-1 rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm dark:bg-gray-800 dark:text-gray-100"
           />
           <button
             type="button"
             onClick={() =>
               addToArray(contentThemeInput, setContentThemes, setContentThemeInput)
             }
-            className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 bg-white hover:bg-gray-50"
+            className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             <PlusIcon className="w-4 h-4" />
           </button>
@@ -480,12 +480,12 @@ export default function BrandProfileForm({
       </div>
 
       {/* Actions */}
-      <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+      <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-colors"
           >
             Cancel
           </button>
@@ -501,4 +501,8 @@ export default function BrandProfileForm({
       </div>
     </form>
   )
+}
+
+export default function BrandProfileForm(props: BrandProfileFormProps) {
+  return useBrandProfileFormView(props)
 }

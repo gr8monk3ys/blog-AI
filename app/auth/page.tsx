@@ -1,9 +1,15 @@
+import type { Metadata } from 'next'
 import SiteFooter from '../../components/SiteFooter'
 import SiteHeader from '../../components/SiteHeader'
 import { SignIn } from '@clerk/nextjs'
 
 // Back-compat route: the app previously used /auth for Supabase email/password.
 // Keep /auth as a Clerk Sign In page.
+export const metadata: Metadata = {
+  title: 'Authentication | Blog AI',
+  description: 'Sign in to Blog AI and access your content generation workspace.',
+}
+
 export default function AuthPage() {
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 

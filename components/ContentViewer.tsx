@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Popover } from '@headlessui/react';
 import BookViewer from './BookViewer';
 import BookEditor from './BookEditor';
@@ -13,6 +13,8 @@ import { API_ENDPOINTS, apiFetch, getDefaultHeaders } from '../lib/api';
 import { toolsApi } from '../lib/tools-api'
 import type { ContentScoreResult } from './tools/ContentScore'
 import type { PlagiarismCheckResponse, PlagiarismCheckResult } from '../types/plagiarism'
+import SEOScorePanel from './seo/SEOScorePanel'
+import FactCheckPanel from './fact-check/FactCheckPanel'
 
 function blogToMarkdown(blog: BlogContent): string {
   let markdown = `# ${blog.title}\n\n`;
@@ -63,7 +65,7 @@ interface ContentViewerProps {
   contentId?: string;
 }
 
-export default function ContentViewer({ content, contentId }: ContentViewerProps) {
+function useContentViewerView({ content, contentId }: ContentViewerProps) {
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
   const [editInstructions, setEditInstructions] = useState('');
   const [isEditingBook, setIsEditingBook] = useState(false);
@@ -83,9 +85,7 @@ export default function ContentViewer({ content, contentId }: ContentViewerProps
   }, [contentId, content])
 
   // Stable key for the inline content editor localStorage persistence
-  const editorStorageKey = useMemo(() => {
-    return `editor-${feedbackContentId}`
-  }, [feedbackContentId])
+  const editorStorageKey = `editor-${feedbackContentId}`
 
   // Convert BookContent to Book type for the editor
   const getBookData = (): Book | null => {
@@ -105,7 +105,7 @@ export default function ContentViewer({ content, contentId }: ContentViewerProps
     return null;
   };
 
-  const [bookData, setBookData] = useState<Book | null>(getBookData());
+  const [bookData, setBookData] = useState<Book | null>(() => getBookData());
   const [exportToast, setExportToast] = useState<{
     show: boolean;
     message: string;
@@ -127,14 +127,27 @@ export default function ContentViewer({ content, contentId }: ContentViewerProps
     return Array.isArray(tags) ? tags : [];
   }, [content]);
 
-  useEffect(() => {
-    let mounted = true;
-    const text = analysisText;
-
+  const resetAnalysisState = useCallback(() => {
     setPlagiarismResult(null);
     setPlagiarismError(null);
     setContentScore(null);
     setScoringLoading(false);
+  }, []);
+
+  const beginScoring = useCallback(() => {
+    setScoringLoading(true);
+  }, []);
+
+  const applyScoringResult = useCallback((score: ContentScoreResult | null) => {
+    setContentScore(score);
+    setScoringLoading(false);
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    const text = analysisText;
+
+    resetAnalysisState();
 
     if (!text || text.trim().length < 50) {
       return () => {
@@ -142,7 +155,7 @@ export default function ContentViewer({ content, contentId }: ContentViewerProps
       };
     }
 
-    setScoringLoading(true);
+    beginScoring();
     (async () => {
       try {
         const score = await toolsApi.scoreGenericContent({
@@ -150,19 +163,17 @@ export default function ContentViewer({ content, contentId }: ContentViewerProps
           keywords: analysisTags.length > 0 ? analysisTags : undefined,
         });
         if (!mounted) return;
-        setContentScore(score);
+        applyScoringResult(score);
       } catch {
         if (!mounted) return;
-        setContentScore(null);
-      } finally {
-        if (mounted) setScoringLoading(false);
+        applyScoringResult(null);
       }
     })();
 
     return () => {
       mounted = false;
     };
-  }, [analysisText, analysisTags]);
+  }, [analysisText, analysisTags, applyScoringResult, beginScoring, resetAnalysisState]);
 
   const runPlagiarismCheck = async (opts?: { skipCache?: boolean }) => {
     const text = analysisText;
@@ -318,8 +329,8 @@ export default function ContentViewer({ content, contentId }: ContentViewerProps
             <div
               className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg ${
                 exportToast.type === 'success'
-                  ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
-                  : 'bg-red-50 border border-red-200 text-red-800'
+                  ? 'bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300'
+                  : 'bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300'
               }`}
             >
               <span className="text-sm font-medium">{exportToast.message}</span>
@@ -327,7 +338,7 @@ export default function ContentViewer({ content, contentId }: ContentViewerProps
           )}
 
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">{content.content.title}</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{content.content.title}</h1>
             <div className="flex items-center gap-3">
               <ExportMenu
                 content={getExportContent()}
@@ -336,7 +347,7 @@ export default function ContentViewer({ content, contentId }: ContentViewerProps
               <button
                 type="button"
                 onClick={() => setIsInlineEditing(false)}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors"
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors"
               >
                 Back to View
               </button>
@@ -405,37 +416,51 @@ export default function ContentViewer({ content, contentId }: ContentViewerProps
           onRun={runPlagiarismCheck}
         />
 
+        {content.type === 'blog' && (content.content as BlogContent).seo_score && (
+          <div className="mb-6">
+            <SEOScorePanel score={(content.content as BlogContent).seo_score!} />
+          </div>
+        )}
+
+        {content.type === 'blog' && (content.content as BlogContent).fact_check && (
+          <div className="mb-6">
+            <FactCheckPanel result={(content.content as BlogContent).fact_check!} />
+          </div>
+        )}
+
         <div className="prose prose-lg max-w-none">
-          {content.content.sections.map((section: BlogSection, index: number) => (
-            <Popover key={`section-${index}`} className="relative">
+          {content.content.sections.map((section: BlogSection) => {
+            const sectionId = `${section.title}-${section.subtopics.length}`
+            return (
+            <Popover key={sectionId} className="relative">
               <div
-                className="hover:bg-gray-50 p-2 rounded transition-colors cursor-pointer group"
-                onMouseEnter={() => setEditingSectionId(`section-${index}`)}
+                className="hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded transition-colors cursor-pointer group"
+                onMouseEnter={() => setEditingSectionId(sectionId)}
                 onMouseLeave={() => setEditingSectionId(null)}
               >
                 <h2 className="text-xl font-semibold">{section.title}</h2>
                 <div className="prose">
-                  {section.subtopics.map((subtopic, subIndex) => (
-                    <div key={subIndex}>
+                  {section.subtopics.map((subtopic) => (
+                    <div key={`${subtopic.title}-${subtopic.content.slice(0, 24)}`}>
                       <h3>{subtopic.title}</h3>
                       <p>{subtopic.content}</p>
                     </div>
                   ))}
                 </div>
 
-                {editingSectionId === `section-${index}` && (
+                {editingSectionId === sectionId && (
                   <Popover.Panel className="absolute z-10 w-96 px-4 mt-3 transform -translate-x-1/2 left-1/2">
                     <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
-                      <div className="relative bg-white p-4">
+                      <div className="relative bg-white dark:bg-gray-900 p-4">
                         <textarea
-                          className="w-full p-2 border rounded"
+                          className="w-full p-2 border dark:border-gray-700 rounded dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
                           placeholder="How would you like to change this section?"
                           value={editInstructions}
                           onChange={(e) => setEditInstructions(e.target.value)}
                           rows={4}
                         />
                         <button
-                          onClick={() => handleSectionEdit(`section-${index}`)}
+                          onClick={() => handleSectionEdit(sectionId)}
                           className="mt-2 w-full bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700"
                         >
                           Update Section
@@ -446,15 +471,16 @@ export default function ContentViewer({ content, contentId }: ContentViewerProps
                 )}
               </div>
             </Popover>
-          ))}
+            )
+          })}
         </div>
 
         {sources.length > 0 && (
-          <div className="mt-10 border-t border-gray-200 pt-6">
-            <h2 className="text-lg font-semibold text-gray-900">Sources</h2>
+          <div className="mt-10 border-t border-gray-200 dark:border-gray-800 pt-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Sources</h2>
             <ul className="mt-3 space-y-2 text-sm">
               {sources.map((s) => (
-                <li key={s.id} className="text-gray-700">
+                <li key={s.id} className="text-gray-700 dark:text-gray-300">
                   <span className="font-medium">[{s.id}]</span>{' '}
                   <a
                     href={s.url}
@@ -464,8 +490,8 @@ export default function ContentViewer({ content, contentId }: ContentViewerProps
                   >
                     {s.title}
                   </a>
-                  {s.provider ? <span className="text-gray-400"> ({s.provider})</span> : null}
-                  {s.snippet ? <div className="text-gray-500 mt-1">{s.snippet}</div> : null}
+                  {s.provider ? <span className="text-gray-400 dark:text-gray-500"> ({s.provider})</span> : null}
+                  {s.snippet ? <div className="text-gray-500 dark:text-gray-400 mt-1">{s.snippet}</div> : null}
                 </li>
               ))}
             </ul>
@@ -499,8 +525,8 @@ export default function ContentViewer({ content, contentId }: ContentViewerProps
             <div
               className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg ${
                 exportToast.type === 'success'
-                  ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
-                  : 'bg-red-50 border border-red-200 text-red-800'
+                  ? 'bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300'
+                  : 'bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300'
               }`}
             >
               <span className="text-sm font-medium">{exportToast.message}</span>
@@ -508,7 +534,7 @@ export default function ContentViewer({ content, contentId }: ContentViewerProps
           )}
 
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">{content.content.title}</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{content.content.title}</h1>
             <div className="flex items-center gap-3">
               <ExportMenu
                 content={getExportContent()}
@@ -517,7 +543,7 @@ export default function ContentViewer({ content, contentId }: ContentViewerProps
               <button
                 type="button"
                 onClick={() => setIsInlineEditing(false)}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors"
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors"
               >
                 Back to View
               </button>
@@ -597,7 +623,7 @@ export default function ContentViewer({ content, contentId }: ContentViewerProps
               <>
                 <p className="mt-4">
                   Your book has been generated and saved to: <br />
-                  <code className="bg-gray-100 px-2 py-1 rounded">{filePath}</code>
+                  <code className="bg-gray-100 dark:bg-gray-800 dark:text-gray-200 px-2 py-1 rounded">{filePath}</code>
                 </p>
                 <button
                   onClick={() => window.open(`/api/download?path=${encodeURIComponent(filePath)}`)}
@@ -611,11 +637,11 @@ export default function ContentViewer({ content, contentId }: ContentViewerProps
 	        )}
 
         {sources.length > 0 && (
-          <div className="mt-10 border-t border-gray-200 pt-6">
-            <h2 className="text-lg font-semibold text-gray-900">Sources</h2>
+          <div className="mt-10 border-t border-gray-200 dark:border-gray-800 pt-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Sources</h2>
             <ul className="mt-3 space-y-2 text-sm">
               {sources.map((s) => (
-                <li key={s.id} className="text-gray-700">
+                <li key={s.id} className="text-gray-700 dark:text-gray-300">
                   <span className="font-medium">[{s.id}]</span>{' '}
                   <a
                     href={s.url}
@@ -625,8 +651,8 @@ export default function ContentViewer({ content, contentId }: ContentViewerProps
                   >
                     {s.title}
                   </a>
-                  {s.provider ? <span className="text-gray-400"> ({s.provider})</span> : null}
-                  {s.snippet ? <div className="text-gray-500 mt-1">{s.snippet}</div> : null}
+                  {s.provider ? <span className="text-gray-400 dark:text-gray-500"> ({s.provider})</span> : null}
+                  {s.snippet ? <div className="text-gray-500 dark:text-gray-400 mt-1">{s.snippet}</div> : null}
                 </li>
               ))}
             </ul>
@@ -639,4 +665,8 @@ export default function ContentViewer({ content, contentId }: ContentViewerProps
   }
 
   return null;
+}
+
+export default function ContentViewer(props: ContentViewerProps) {
+  return useContentViewerView(props)
 }

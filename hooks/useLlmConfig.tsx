@@ -18,6 +18,12 @@ export function useLlmConfig(): {
   const [error, setError] = useState<string | null>(null)
   const [config, setConfig] = useState<LlmConfig | null>(null)
 
+  const finalizeLoad = (nextConfig: LlmConfig | null, nextError: string | null) => {
+    setConfig(nextConfig)
+    setError(nextError)
+    setLoading(false)
+  }
+
   useEffect(() => {
     let mounted = true
 
@@ -25,13 +31,13 @@ export function useLlmConfig(): {
       try {
         const cfg = await apiFetch<LlmConfig>(API_ENDPOINTS.config.llm)
         if (!mounted) return
-        setConfig(cfg)
-        setError(null)
+        finalizeLoad(cfg, null)
       } catch (err) {
         if (!mounted) return
-        setError(err instanceof Error ? err.message : 'Failed to load model providers')
-      } finally {
-        if (mounted) setLoading(false)
+        finalizeLoad(
+          null,
+          err instanceof Error ? err.message : 'Failed to load model providers'
+        )
       }
     })()
 
@@ -53,4 +59,3 @@ export function useLlmConfig(): {
 
   return { loading, error, config, availableProviders, defaultProvider }
 }
-

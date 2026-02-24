@@ -12,7 +12,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
 
 class SocialPlatform(str, Enum):
@@ -99,13 +99,6 @@ class SocialAccount(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        """Pydantic configuration."""
-
-        json_encoders = {
-            datetime: lambda v: v.isoformat() if v else None
-        }
-
 
 class SocialConnection(BaseModel):
     """Response model for a social media connection."""
@@ -149,7 +142,8 @@ class PostContent(BaseModel):
     hashtags: List[str] = Field(default_factory=list)
     mentions: List[str] = Field(default_factory=list)
 
-    @validator("text")
+    @field_validator("text")
+    @classmethod
     def validate_text_not_empty(cls, v: str) -> str:
         """Ensure text is not just whitespace."""
         if not v.strip():
@@ -165,10 +159,11 @@ class PlatformPostContent(BaseModel):
     media: List[MediaAttachment] = Field(default_factory=list)
     thread_posts: List[str] = Field(default_factory=list)  # For Twitter threads
 
-    @validator("text")
-    def validate_platform_limits(cls, v: str, values: Dict[str, Any]) -> str:
+    @field_validator("text")
+    @classmethod
+    def validate_platform_limits(cls, v: str, info: ValidationInfo) -> str:
         """Validate text against platform character limits."""
-        platform = values.get("platform")
+        platform = info.data.get("platform") if info.data else None
         limits = {
             SocialPlatform.TWITTER: 280,
             SocialPlatform.LINKEDIN: 3000,
@@ -207,13 +202,6 @@ class ScheduledPost(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        """Pydantic configuration."""
-
-        json_encoders = {
-            datetime: lambda v: v.isoformat() if v else None
-        }
-
 
 # -----------------------------------------------------------------------------
 # Campaign Models
@@ -250,13 +238,6 @@ class SocialCampaign(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     completed_at: Optional[datetime] = None
-
-    class Config:
-        """Pydantic configuration."""
-
-        json_encoders = {
-            datetime: lambda v: v.isoformat() if v else None
-        }
 
 
 # -----------------------------------------------------------------------------
@@ -375,7 +356,8 @@ class SchedulePostRequest(BaseModel):
     campaign_id: Optional[str] = None
     source_content_id: Optional[str] = None
 
-    @validator("scheduled_at")
+    @field_validator("scheduled_at")
+    @classmethod
     def validate_future_date(cls, v: datetime) -> datetime:
         """Ensure scheduled time is in the future."""
         if v <= datetime.utcnow():
@@ -398,7 +380,8 @@ class UpdateScheduledPostRequest(BaseModel):
     recurrence: Optional[RecurrenceType] = None
     recurrence_end_date: Optional[datetime] = None
 
-    @validator("scheduled_at")
+    @field_validator("scheduled_at")
+    @classmethod
     def validate_future_date(cls, v: Optional[datetime]) -> Optional[datetime]:
         """Ensure scheduled time is in the future."""
         if v is not None and v <= datetime.utcnow():
@@ -419,7 +402,8 @@ class CreateCampaignRequest(BaseModel):
     tags: List[str] = Field(default_factory=list)
     source_content_id: Optional[str] = None
 
-    @validator("platforms")
+    @field_validator("platforms")
+    @classmethod
     def validate_platforms(cls, v: List[CampaignPlatformConfig]) -> List[CampaignPlatformConfig]:
         """Ensure at least one platform is configured."""
         if not v:

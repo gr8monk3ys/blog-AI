@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { m, AnimatePresence } from 'framer-motion'
 import SiteHeader from '../../components/SiteHeader'
 import SiteFooter from '../../components/SiteFooter'
 import BrandProfileCard from '../../components/brand/BrandProfileCard'
@@ -15,7 +15,23 @@ import { BrandProfile, SAMPLE_BRAND_PROFILES } from '../../types/brand'
 import { useConfirmModal } from '../../hooks/useConfirmModal'
 import { getDefaultHeaders } from '../../lib/api'
 
-export default function BrandPageClient() {
+async function loadBrandProfiles(): Promise<BrandProfile[]> {
+  try {
+    const response = await fetch('/api/brand-profiles', {
+      headers: await getDefaultHeaders(),
+    })
+    const data = await response.json()
+    if (data.success && Array.isArray(data.data)) {
+      return data.data
+    }
+  } catch (error) {
+    console.error('Error fetching brand profiles:', error)
+  }
+
+  return SAMPLE_BRAND_PROFILES
+}
+
+function useBrandPageView() {
   const { confirm, ConfirmModalComponent } = useConfirmModal()
 
   const [profiles, setProfiles] = useState<BrandProfile[]>(SAMPLE_BRAND_PROFILES)
@@ -27,26 +43,21 @@ export default function BrandPageClient() {
 
   // Fetch profiles from API
   useEffect(() => {
-    const fetchProfiles = async () => {
-      try {
-        const response = await fetch('/api/brand-profiles', {
-          headers: await getDefaultHeaders(),
-        })
-        const data = await response.json()
+    let mounted = true
 
-        if (data.success) {
-          setProfiles(data.data)
-        }
-      } catch (error) {
-        console.error('Error fetching brand profiles:', error)
-        // Fall back to sample data
-        setProfiles(SAMPLE_BRAND_PROFILES)
-      } finally {
+    const initializeProfiles = async () => {
+      const loadedProfiles = await loadBrandProfiles()
+      if (mounted) {
+        setProfiles(loadedProfiles)
         setLoading(false)
       }
     }
 
-    fetchProfiles()
+    initializeProfiles()
+
+    return () => {
+      mounted = false
+    }
   }, [])
 
   const handleCreateProfile = async (data: BrandProfileFormData) => {
@@ -164,16 +175,16 @@ export default function BrandPageClient() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
       {/* Confirm Modal */}
       <ConfirmModalComponent />
 
       <SiteHeader />
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-amber-600 to-amber-600 text-white">
+      <section className="bg-gradient-to-r from-amber-600 to-amber-700 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -189,7 +200,7 @@ export default function BrandPageClient() {
               Define your brand&apos;s unique voice and style. Create profiles that ensure
               consistent messaging across all your AI-generated content.
             </p>
-          </motion.div>
+          </m.div>
         </div>
       </section>
 
@@ -197,29 +208,29 @@ export default function BrandPageClient() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {/* Error message */}
         {error && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 p-4 rounded-lg bg-red-50 text-red-600 border border-red-100 flex items-center justify-between"
+            className="mb-6 p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800 flex items-center justify-between"
           >
             <span>{error}</span>
             <button
               type="button"
               onClick={() => setError(null)}
-              className="text-red-400 hover:text-red-600"
+              className="text-red-400 hover:text-red-600 dark:hover:text-red-300"
             >
               <XMarkIcon className="w-5 h-5" />
             </button>
-          </motion.div>
+          </m.div>
         )}
 
         {/* Actions */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               Your Brand Profiles
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               {profiles.length} profile{profiles.length !== 1 ? 's' : ''} created
             </p>
           </div>
@@ -238,16 +249,16 @@ export default function BrandPageClient() {
         {/* Form */}
         <AnimatePresence mode="wait">
           {(showForm || editingProfile) && (
-            <motion.div
+            <m.div
               key="form"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               className="mb-8"
             >
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {editingProfile ? 'Edit Profile' : 'Create New Profile'}
                   </h3>
                   <button
@@ -256,12 +267,13 @@ export default function BrandPageClient() {
                       setShowForm(false)
                       setEditingProfile(null)
                     }}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   >
                     <XMarkIcon className="w-5 h-5" />
                   </button>
                 </div>
                 <BrandProfileForm
+                  key={editingProfile?.id ?? 'new-profile'}
                   profile={editingProfile}
                   onSubmit={editingProfile ? handleUpdateProfile : handleCreateProfile}
                   onCancel={() => {
@@ -271,42 +283,42 @@ export default function BrandPageClient() {
                   isLoading={saving}
                 />
               </div>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
 
         {/* Profiles Grid */}
         <AnimatePresence mode="wait">
           {loading ? (
-            <motion.div
+            <m.div
               key="loading"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
             >
-              {[...Array(3)].map((_, i) => (
+              {[1, 2, 3].map((slot) => (
                 <div
-                  key={i}
-                  className="h-64 bg-gray-100 rounded-xl animate-pulse"
+                  key={`brand-skeleton-${slot}`}
+                  className="h-64 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse"
                 />
               ))}
-            </motion.div>
+            </m.div>
           ) : profiles.length === 0 ? (
-            <motion.div
+            <m.div
               key="empty"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200"
+              className="text-center py-12 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800"
             >
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                 <SparklesIcon className="w-8 h-8 text-gray-400" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                 No brand profiles yet
               </h3>
-              <p className="text-sm text-gray-500 max-w-sm mx-auto mb-6">
+              <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-6">
                 Create your first brand voice profile to ensure consistent
                 messaging in your AI-generated content.
               </p>
@@ -318,9 +330,9 @@ export default function BrandPageClient() {
                 <PlusIcon className="w-4 h-4" />
                 Create Your First Profile
               </button>
-            </motion.div>
+            </m.div>
           ) : (
-            <motion.div
+            <m.div
               key="grid"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -337,65 +349,69 @@ export default function BrandPageClient() {
                   onSetDefault={handleSetDefault}
                 />
               ))}
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </section>
 
       {/* Tips Section */}
-      <section className="bg-white border-t border-gray-200">
+      <section className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
           >
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 text-center">
               Tips for Creating Effective Brand Profiles
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                 <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center mb-4">
                   <span className="text-lg font-bold text-amber-600">1</span>
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
                   Be Specific with Tone
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   Choose 3-5 tone keywords that truly represent your brand. Avoid
                   generic terms and be as specific as possible.
                 </p>
               </div>
-              <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                 <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center mb-4">
                   <span className="text-lg font-bold text-amber-600">2</span>
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
                   Provide Example Content
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   Include a paragraph of your best content as an example. This helps
                   the AI understand your unique voice and style.
                 </p>
               </div>
-              <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                 <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center mb-4">
                   <span className="text-lg font-bold text-amber-600">3</span>
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
                   Define Words to Avoid
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   List words and phrases that do not fit your brand. This helps
                   ensure generated content stays authentic to your voice.
                 </p>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         </div>
       </section>
 
       <SiteFooter />
     </main>
   )
+}
+
+export default function BrandPageClient() {
+  return useBrandPageView()
 }

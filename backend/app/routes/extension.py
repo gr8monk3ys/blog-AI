@@ -141,12 +141,14 @@ async def extension_auth(request: ExtensionAuthRequest):
         user_id = api_key_store.verify_key(request.api_key)
 
         if user_id:
+            usage = await get_usage_stats(user_id)
             logger.info(f"Extension auth successful for user: {user_id}")
             return ExtensionAuthResponse(
                 success=True,
                 user_id=user_id,
-                email=f"{user_id}@blogai.com",  # Placeholder - replace with actual user lookup
-                tier="pro",  # Placeholder - replace with actual tier lookup
+                # Email is optional; avoid returning fabricated values.
+                email=None,
+                tier=usage.tier.value,
                 message="Authentication successful",
             )
         logger.warning("Extension auth failed: Invalid API key")
@@ -210,11 +212,12 @@ async def extension_user(user_id: str = Depends(verify_api_key)):
         return ExtensionUserResponse(
             success=True,
             user_id=user_id,
-            email=f"{user_id}@blogai.com",  # Placeholder
-            tier="pro",  # Placeholder
-            quota_used=usage.get("generations_used", 0),
-            quota_limit=usage.get("generations_limit", 100),
-            quota_remaining=usage.get("generations_remaining", 100),
+            # Email is optional; avoid returning fabricated values.
+            email=None,
+            tier=usage.tier.value,
+            quota_used=usage.current_usage,
+            quota_limit=usage.quota_limit,
+            quota_remaining=usage.remaining,
         )
     except Exception as e:
         logger.error(f"Extension user info error: {str(e)}")
@@ -355,11 +358,11 @@ async def extension_usage(user_id: str = Depends(verify_api_key)):
 
         return ExtensionUsageResponse(
             success=True,
-            generations_used=usage.get("generations_used", 0),
-            generations_limit=usage.get("generations_limit", 100),
-            generations_remaining=usage.get("generations_remaining", 100),
-            tokens_used=usage.get("tokens_used", 0),
-            reset_date=usage.get("reset_date"),
+            generations_used=usage.current_usage,
+            generations_limit=usage.quota_limit,
+            generations_remaining=usage.remaining,
+            tokens_used=usage.tokens_used,
+            reset_date=usage.reset_date.isoformat(),
         )
     except Exception as e:
         logger.error(f"Extension usage error: {str(e)}")

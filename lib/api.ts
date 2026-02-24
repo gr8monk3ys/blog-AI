@@ -142,6 +142,12 @@ export const API_ENDPOINTS = {
     transformFormat: (formatId: string) => `${API_V1_BASE_URL}/remix/transform/${formatId}`,
     batch: `${API_V1_BASE_URL}/remix/batch`,
   },
+  // Deep research endpoints
+  research: {
+    conduct: `${API_V1_BASE_URL}/research`,
+    history: `${API_V1_BASE_URL}/research/history`,
+    get: (queryId: string) => `${API_V1_BASE_URL}/research/${queryId}`,
+  },
   // Content quality endpoints
   content: {
     checkPlagiarism: `${API_V1_BASE_URL}/content/check-plagiarism`,
@@ -163,6 +169,19 @@ export const API_ENDPOINTS = {
     submit: '/api/feedback',
     stats: (contentId: string) => `/api/feedback?content_id=${encodeURIComponent(contentId)}`,
   },
+  // Organization / team endpoints
+  organizations: {
+    list: `${API_V1_BASE_URL}/organizations`,
+    create: `${API_V1_BASE_URL}/organizations`,
+    get: (orgId: string) => `${API_V1_BASE_URL}/organizations/${orgId}`,
+    members: (orgId: string) => `${API_V1_BASE_URL}/organizations/${orgId}/members`,
+    invites: (orgId: string) => `${API_V1_BASE_URL}/organizations/${orgId}/invites`,
+    invite: (orgId: string) => `${API_V1_BASE_URL}/organizations/${orgId}/invites`,
+    updateMember: (orgId: string, userId: string) =>
+      `${API_V1_BASE_URL}/organizations/${orgId}/members/${userId}`,
+    removeMember: (orgId: string, userId: string) =>
+      `${API_V1_BASE_URL}/organizations/${orgId}/members/${userId}`,
+  },
   // Content editing endpoints
   editSection: `${API_BASE_URL}/edit-section`,
   saveBook: `${API_BASE_URL}/save-book`,
@@ -181,7 +200,15 @@ export const getDefaultHeaders = async (): Promise<HeadersInit> => {
   if (typeof window !== 'undefined') {
     try {
       // Clerk injects a global `window.Clerk` when configured.
-      const clerk = (window as any)?.Clerk
+      const clerk = (
+        window as Window & {
+          Clerk?: {
+            session?: {
+              getToken?: () => Promise<string | null>
+            }
+          }
+        }
+      ).Clerk
       if (clerk?.session?.getToken) {
         const token = await clerk.session.getToken()
         if (token) headers['Authorization'] = `Bearer ${token}`
@@ -234,7 +261,7 @@ function extractErrorMessage(errorData: unknown, status: number): string {
   if (typeof errorData === 'string') return errorData
 
   if (errorData && typeof errorData === 'object') {
-    const obj: any = errorData
+    const obj = errorData as Record<string, unknown>
     const detail = obj?.detail
 
     // FastAPI HTTPException: { detail: "..." }
@@ -242,21 +269,22 @@ function extractErrorMessage(errorData: unknown, status: number): string {
 
     // FastAPI validation errors: { detail: [{ msg: "..." }, ...] }
     if (Array.isArray(detail) && detail.length > 0) {
-      const first = detail[0]
-      if (first && typeof first === 'object' && typeof (first as any).msg === 'string') {
-        return String((first as any).msg)
+      const first = detail[0] as Record<string, unknown> | undefined
+      if (first && typeof first.msg === 'string') {
+        return first.msg
       }
     }
 
     // QuotaExceededError is returned as { detail: { error: "..." } }
     if (detail && typeof detail === 'object') {
-      if (typeof (detail as any).error === 'string') return String((detail as any).error)
-      if (typeof (detail as any).message === 'string') return String((detail as any).message)
+      const nestedDetail = detail as Record<string, unknown>
+      if (typeof nestedDetail.error === 'string') return nestedDetail.error
+      if (typeof nestedDetail.message === 'string') return nestedDetail.message
     }
 
     // Custom JSON errors: { error: "..." } or { message: "..." }
-    if (typeof obj?.error === 'string') return String(obj.error)
-    if (typeof obj?.message === 'string') return String(obj.message)
+    if (typeof obj.error === 'string') return obj.error
+    if (typeof obj.message === 'string') return obj.message
   }
 
   return `HTTP error! status: ${status}`

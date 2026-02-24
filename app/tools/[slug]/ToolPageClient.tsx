@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
-import { useParams, useSearchParams } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { Suspense, useState, useMemo, useEffect } from 'react'
+import { useParams } from 'next/navigation'
+import { m } from 'framer-motion'
 import { TOOL_CATEGORIES, SAMPLE_TOOLS } from '../../../types/tools'
 import type { TemplateCategory } from '../../../types/templates'
 import type { ExportFormat } from '../../../components/ExportMenu'
@@ -11,7 +11,7 @@ import type { BrandProfile } from '../../../types/brand'
 import type { LlmProviderType } from '../../../types/llm'
 import { historyApi } from '../../../lib/history-api'
 import { toolsApi } from '../../../lib/tools-api'
-import { API_ENDPOINTS, apiFetch, getDefaultHeaders } from '../../../lib/api'
+import { API_ENDPOINTS, ApiError, apiFetch, getDefaultHeaders } from '../../../lib/api'
 import SaveTemplateModal from '../../../components/templates/SaveTemplateModal'
 import type { PlagiarismCheckResponse, PlagiarismCheckResult } from '../../../types/plagiarism'
 import { useLlmConfig } from '../../../hooks/useLlmConfig'
@@ -33,6 +33,14 @@ import {
 
 import type { ToastState } from '../../../components/tools/tool-page'
 
+function getErrorStatus(error: unknown): number | undefined {
+  if (typeof error === 'object' && error !== null && 'status' in error) {
+    const status = (error as { status?: unknown }).status
+    return typeof status === 'number' ? status : undefined
+  }
+  return undefined
+}
+
 /**
  * Tool Page Client Component
  *
@@ -40,11 +48,15 @@ import type { ToastState } from '../../../components/tools/tool-page'
  * Supports various content types (blog, email, social media, etc.)
  * with features like A/B testing, content scoring, and brand voice.
  */
-export default function ToolPageClient() {
+function useToolPageContentView() {
   const params = useParams()
-  const searchParams = useSearchParams()
   const slug = params.slug as string
-  const fromHistoryId = searchParams.get('from')
+  const [fromHistoryId, setFromHistoryId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    setFromHistoryId(new URLSearchParams(window.location.search).get('from'))
+  }, [])
 
   // Find the tool by slug
   const tool = useMemo(() => {
@@ -61,7 +73,7 @@ export default function ToolPageClient() {
   const [brandVoiceEnabled, setBrandVoiceEnabled] = useState(false)
   const [selectedBrandProfile, setSelectedBrandProfile] = useState<BrandProfile | null>(null)
   const { availableProviders, defaultProvider } = useLlmConfig()
-  const [providerType, setProviderType] = useState<LlmProviderType>('openai')
+  const [providerType, setProviderType] = useState<LlmProviderType>(defaultProvider)
 
   // Output state
   const [loading, setLoading] = useState(false)
@@ -85,6 +97,21 @@ export default function ToolPageClient() {
     type: 'success',
   })
 
+  const applyHistoryItem = (item: {
+    inputs: unknown
+    output: string
+    id: string
+    is_favorite: boolean
+  }) => {
+    const inputs = item.inputs as Record<string, unknown>
+    if (inputs.topic) setInputText(String(inputs.topic))
+    else if (inputs.input) setInputText(String(inputs.input))
+    if (inputs.tone) setTone(String(inputs.tone))
+    setOutput(item.output)
+    setSavedContentId(item.id)
+    setIsFavorite(item.is_favorite)
+  }
+
   // Load previous content if coming from history
   useEffect(() => {
     const loadFromHistory = async () => {
@@ -93,13 +120,7 @@ export default function ToolPageClient() {
       try {
         const item = await historyApi.getById(fromHistoryId)
         if (item) {
-          const inputs = item.inputs as Record<string, unknown>
-          if (inputs.topic) setInputText(String(inputs.topic))
-          else if (inputs.input) setInputText(String(inputs.input))
-          if (inputs.tone) setTone(String(inputs.tone))
-          setOutput(item.output)
-          setSavedContentId(item.id)
-          setIsFavorite(item.is_favorite)
+          applyHistoryItem(item)
         }
       } catch (err) {
         console.error('Failed to load from history:', err)
@@ -108,11 +129,6 @@ export default function ToolPageClient() {
 
     loadFromHistory()
   }, [fromHistoryId])
-
-  useEffect(() => {
-    setProviderType(defaultProvider)
-  }, [defaultProvider])
-
 
   const buildExecutionInputs = (keywordList: string[]) => ({
     topic: inputText,
@@ -141,7 +157,7 @@ export default function ToolPageClient() {
       // silently fall back to mock output in production.
       throw new Error(result.error || 'Tool execution failed')
     } catch (err) {
-      const status = (err as any)?.status
+      const status = getErrorStatus(err)
       // In production, don't silently fall back to mock output for auth/quota issues.
       if (process.env.NODE_ENV === 'production' || status === 401 || status === 403 || status === 429) {
         throw err
@@ -194,8 +210,8 @@ export default function ToolPageClient() {
       } else {
         await handleSingleGeneration(keywordList, startTime)
       }
-    } catch (err: any) {
-      const status = err?.status
+    } catch (err: unknown) {
+      const status = getErrorStatus(err)
       if (status === 401 || status === 403) {
         setExportToast({
           show: true,
@@ -387,8 +403,8 @@ export default function ToolPageClient() {
       }
 
       setPlagiarismResult(payload.data || null)
-    } catch (err: any) {
-      const status = err?.status
+    } catch (err: unknown) {
+      const status = getErrorStatus(err)
       if (status === 401 || status === 403) {
         setPlagiarismError('Sign in required to run checks.')
       } else if (status === 429) {
@@ -505,7 +521,7 @@ export default function ToolPageClient() {
   ).slice(0, 3)
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
       {/* Toast notification for export */}
       <ToastNotification toast={exportToast} />
 
@@ -519,13 +535,13 @@ export default function ToolPageClient() {
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Input Form with Output */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
             className="lg:col-span-2"
           >
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
               <ToolInputForm
                 tool={tool}
                 inputText={inputText}
@@ -575,7 +591,7 @@ export default function ToolPageClient() {
                 loading={loading}
               />
             </div>
-          </motion.div>
+          </m.div>
 
           {/* Sidebar */}
           <ToolSidebar relatedTools={relatedTools} />
@@ -597,5 +613,19 @@ export default function ToolPageClient() {
         }}
       />
     </main>
+  )
+}
+
+export default function ToolPageClient() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+          Loading tool...
+        </main>
+      }
+    >
+      {useToolPageContentView()}
+    </Suspense>
   )
 }

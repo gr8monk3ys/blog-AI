@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import Link from 'next/link'
 import {
   ClipboardDocumentIcon,
@@ -95,10 +95,10 @@ export default function ToolOutput({
     <>
       {/* Variations comparison section */}
       {variations.length > 0 && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          className="border-t border-gray-200 bg-gray-50"
+          className="border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950"
         >
           <div className="p-6">
             <VariationCompare
@@ -108,20 +108,20 @@ export default function ToolOutput({
               selectedId={selectedVariation?.id}
             />
           </div>
-        </motion.div>
+        </m.div>
       )}
 
       {/* Output section */}
       {output && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          className="border-t border-gray-200 bg-gray-50"
+          className="border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950"
         >
           <div className="p-6">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <h3 className="text-sm font-medium text-gray-900">
+                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {selectedVariation
                     ? `Selected Content (Version ${selectedVariation.label})`
                     : 'Generated Content'}
@@ -139,7 +139,7 @@ export default function ToolOutput({
                 <button
                   type="button"
                   onClick={onCopy}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
                   {copied ? (
                     <>
@@ -159,8 +159,8 @@ export default function ToolOutput({
                 />
               </div>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">
+            <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
+              <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                 {output}
               </p>
             </div>
@@ -189,14 +189,14 @@ export default function ToolOutput({
               <button
                 type="button"
                 onClick={onSaveTemplateClick}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-md hover:bg-amber-100 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
               >
                 <BookmarkIcon className="w-3.5 h-3.5" />
                 Save as Template
               </button>
 
               {savedContentId && (
-                <div className="flex items-center gap-2 text-xs text-gray-500">
+                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                   <span className="inline-flex items-center gap-1">
                     <ClockIcon className="w-3.5 h-3.5" aria-hidden="true" />
                     Saved to history
@@ -224,7 +224,7 @@ export default function ToolOutput({
               )}
             </div>
           </div>
-        </motion.div>
+        </m.div>
       )}
     </>
   )

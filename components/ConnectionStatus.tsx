@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { ExclamationTriangleIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { checkServerConnection } from '../lib/api'
 
@@ -14,7 +14,6 @@ const INITIAL_DELAY_MS = 2_000
 export default function ConnectionStatus(): React.ReactElement | null {
   const [status, setStatus] = useState<'connected' | 'disconnected' | 'checking'>('checking')
   const [dismissed, setDismissed] = useState(false)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const check = useCallback(async () => {
     const ok = await checkServerConnection()
@@ -36,7 +35,6 @@ export default function ConnectionStatus(): React.ReactElement | null {
     return () => {
       clearTimeout(initialTimer)
       clearInterval(interval)
-      if (timerRef.current) clearTimeout(timerRef.current)
     }
   }, [check])
 
@@ -49,15 +47,15 @@ export default function ConnectionStatus(): React.ReactElement | null {
       aria-live="polite"
       className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-md w-full px-4"
     >
-      <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 shadow-lg text-sm">
+      <div className="flex items-center gap-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/30 px-4 py-3 shadow-lg text-sm">
         <ExclamationTriangleIcon className="h-5 w-5 flex-shrink-0 text-amber-500" aria-hidden="true" />
-        <p className="flex-1 text-amber-800">
+        <p className="flex-1 text-amber-800 dark:text-amber-400">
           Unable to reach the server. Retrying automatically.
         </p>
         <button
           type="button"
           onClick={() => setDismissed(true)}
-          className="flex-shrink-0 rounded p-1 text-amber-600 hover:bg-amber-100 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+          className="flex-shrink-0 rounded p-1 text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
           aria-label="Dismiss connection warning"
         >
           <XMarkIcon className="h-4 w-4" aria-hidden="true" />

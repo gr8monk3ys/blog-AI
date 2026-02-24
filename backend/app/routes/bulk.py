@@ -28,14 +28,15 @@ from src.blog.make_blog import (
 from src.organizations import AuthorizationContext
 from src.storage import get_bulk_job_store
 from src.text_generation.core import GenerationOptions, create_provider_from_env
-from src.usage import (
-    UsageLimitExceeded,
-    check_usage_limit,
-    get_usage_stats,
-    increment_usage,
+from src.usage.quota_service import (
+    QuotaExceeded,
+    check_quota as service_check_quota,
+    get_usage_stats as get_quota_stats,
+    increment_usage as service_increment_usage,
 )
 
 from ..auth import verify_api_key
+from ..middleware import increment_usage_for_operation
 from ..dependencies import require_content_access, require_content_creation
 from ..error_handlers import sanitize_error_message
 from ..models import (
@@ -69,10 +70,10 @@ async def _generate_single_item(
     start_time = time.time()
 
     try:
-        # Check usage limit before generation
+        # Check quota before generation
         try:
-            check_usage_limit(user_id)
-        except UsageLimitExceeded as e:
+            await service_check_quota(user_id)
+        except QuotaExceeded as e:
             return BulkGenerationItemResult(
                 index=index,
                 success=False,
@@ -146,7 +147,7 @@ async def _generate_single_item(
             blog_post_data["sections"].append(section_data)
 
         # Increment usage after successful generation
-        increment_usage(user_id, tokens_used=4000, tool_id="bulk-blog-generation")
+        await increment_usage_for_operation(user_id, "bulk", tokens_used=4000)
 
         execution_time_ms = int((time.time() - start_time) * 1000)
 
@@ -158,13 +159,13 @@ async def _generate_single_item(
             execution_time_ms=execution_time_ms,
         )
 
-    except UsageLimitExceeded as e:
-        logger.warning(f"Usage limit exceeded for item {index}: {str(e)}")
+    except QuotaExceeded as e:
+        logger.warning(f"Quota exceeded for item {index}: {str(e)}")
         return BulkGenerationItemResult(
             index=index,
             success=False,
             topic=topic,
-            error=f"Usage limit exceeded: {sanitize_error_message(str(e))}",
+            error=f"Quota exceeded: {sanitize_error_message(str(e))}",
             execution_time_ms=int((time.time() - start_time) * 1000),
         )
     except ValueError as e:
@@ -338,22 +339,24 @@ async def start_bulk_generation(
         f"Bulk generation requested by user: {auth_ctx.user_id}, org: {auth_ctx.organization_id}, items: {len(request.items)}"
     )
 
-    # Check if user has enough usage remaining
+    # Check if user has enough quota remaining
     try:
-        remaining = check_usage_limit(scope_id)
-        if remaining != -1 and remaining < len(request.items):
+        await service_check_quota(scope_id)
+        stats = await get_quota_stats(scope_id)
+        if stats.remaining != -1 and stats.remaining < len(request.items):
             # User doesn't have enough remaining, but allow partial processing
             logger.warning(
-                f"User {auth_ctx.user_id} (scope {scope_id}) has {remaining} generations remaining, "
+                f"User {auth_ctx.user_id} (scope {scope_id}) has {stats.remaining} generations remaining, "
                 f"but requested {len(request.items)}"
             )
-    except UsageLimitExceeded as e:
+    except QuotaExceeded as e:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail={
                 "error": sanitize_error_message(str(e)),
                 "tier": e.tier.value,
-                "limit_type": e.limit_type,
+                "current_usage": e.current_usage,
+                "quota_limit": e.quota_limit,
                 "upgrade_url": "/pricing",
             },
         )

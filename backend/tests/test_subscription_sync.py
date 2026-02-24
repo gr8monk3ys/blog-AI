@@ -556,7 +556,7 @@ class TestSubscriptionUpdatedHandler(unittest.IsolatedAsyncioTestCase):
 
         # Should not call set_user_tier for non-active status
         mock_quota_service.set_user_tier.assert_not_called()
-        self.assertEqual(result["action"], "subscription_status_past_due")
+        self.assertEqual(result["action"], "grace_period_started")
 
 
 class TestSubscriptionDeletedHandler(unittest.IsolatedAsyncioTestCase):

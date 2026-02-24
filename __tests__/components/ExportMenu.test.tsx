@@ -195,16 +195,42 @@ describe('ExportMenu', () => {
       expect(body.content_type).toBe('blog')
       expect(body.metadata).toEqual(sampleContent.metadata)
     })
+
+    it('should export plain text format', async () => {
+      const user = userEvent.setup()
+
+      vi.mocked(global.fetch).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['plain text'], { type: 'text/plain' })),
+      } as Response)
+
+      global.URL.createObjectURL = vi.fn().mockReturnValue('blob:test-url')
+      global.URL.revokeObjectURL = vi.fn()
+
+      render(<ExportMenu content={sampleContent} />)
+
+      await user.click(screen.getByRole('button', { name: /export/i }))
+      await user.click(screen.getByText('Plain Text'))
+
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledTimes(1)
+      })
+
+      const [fetchUrl] = vi.mocked(global.fetch).mock.calls[0]!
+      expect(fetchUrl).toContain('/export/text')
+    })
   })
 
   describe('Callbacks', () => {
     it('should call onExportStart when an export begins', async () => {
       const user = userEvent.setup()
       const onExportStart = vi.fn()
+      const writeText = vi.fn().mockResolvedValue(undefined)
 
       // Mock clipboard for the clipboard export path
-      Object.assign(navigator, {
-        clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText },
+        configurable: true,
       })
 
       render(
@@ -225,9 +251,11 @@ describe('ExportMenu', () => {
     it('should call onExportComplete after a successful export', async () => {
       const user = userEvent.setup()
       const onExportComplete = vi.fn()
+      const writeText = vi.fn().mockResolvedValue(undefined)
 
-      Object.assign(navigator, {
-        clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText },
+        configurable: true,
       })
 
       render(
@@ -245,6 +273,97 @@ describe('ExportMenu', () => {
 
       await waitFor(() => {
         expect(onExportComplete).toHaveBeenCalledWith('clipboard', true)
+      })
+    })
+
+    it('should call onExportComplete with failure when export throws', async () => {
+      const user = userEvent.setup()
+      const onExportComplete = vi.fn()
+
+      vi.mocked(global.fetch).mockRejectedValue(new Error('network failure'))
+
+      render(
+        <ExportMenu content={sampleContent} onExportComplete={onExportComplete} />
+      )
+
+      await user.click(screen.getByRole('button', { name: /export/i }))
+      await user.click(screen.getByText('Markdown'))
+
+      await waitFor(() => {
+        expect(onExportComplete).toHaveBeenCalledWith('markdown', false)
+      })
+    })
+  })
+
+  describe('Publishing options', () => {
+    it('should copy WordPress content when export succeeds', async () => {
+      const user = userEvent.setup()
+      const writeText = vi.fn().mockResolvedValue(undefined)
+
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText },
+        configurable: true,
+      })
+
+      vi.mocked(global.fetch).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ content: 'wordpress-formatted' }),
+      } as Response)
+
+      render(<ExportMenu content={sampleContent} />)
+
+      await user.click(screen.getByRole('button', { name: /export/i }))
+      await user.click(screen.getByText('WordPress'))
+
+      await waitFor(() => {
+        expect(writeText).toHaveBeenCalledWith('wordpress-formatted')
+      })
+    })
+
+    it('should copy Medium content when export succeeds', async () => {
+      const user = userEvent.setup()
+      const writeText = vi.fn().mockResolvedValue(undefined)
+
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText },
+        configurable: true,
+      })
+
+      vi.mocked(global.fetch).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ content: 'medium-formatted' }),
+      } as Response)
+
+      render(<ExportMenu content={sampleContent} />)
+
+      await user.click(screen.getByRole('button', { name: /export/i }))
+      await user.click(screen.getByText('Medium'))
+
+      await waitFor(() => {
+        expect(writeText).toHaveBeenCalledWith('medium-formatted')
+      })
+    })
+  })
+
+  describe('Clipboard fallback', () => {
+    it('should fallback to document.execCommand when clipboard API is unavailable', async () => {
+      const user = userEvent.setup()
+      const execCommand = vi.fn().mockReturnValue(true)
+
+      Object.defineProperty(navigator, 'clipboard', {
+        value: undefined,
+        configurable: true,
+      })
+      ;(document as Document & { execCommand: (commandId: string) => boolean }).execCommand =
+        execCommand
+
+      render(<ExportMenu content={sampleContent} />)
+
+      await user.click(screen.getByRole('button', { name: /export/i }))
+      await user.click(screen.getByText('Copy to Clipboard'))
+
+      await waitFor(() => {
+        expect(execCommand).toHaveBeenCalledWith('copy')
       })
     })
   })

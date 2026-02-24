@@ -12,11 +12,13 @@ from .content import router as content_router
 from .conversations import router as conversations_router
 from .export import router as export_router
 from .extension import router as extension_router
+from .fact_check import router as fact_check_router
 from .health import router as health_router
 from .images import router as images_router
 from .organizations import router as organizations_router
 from .payments import router as payments_router
 from .remix import router as remix_router
+from .research import router as research_router
 from .seo import router as seo_router
 from .social import router as social_router
 from .sso import router as sso_router
@@ -44,11 +46,13 @@ __all__ = [
     "conversations_router",
     "export_router",
     "extension_router",
+    "fact_check_router",
     "health_router",
     "images_router",
     "organizations_router",
     "payments_router",
     "remix_router",
+    "research_router",
     "seo_router",
     "social_router",
     "sso_router",

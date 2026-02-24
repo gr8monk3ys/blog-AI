@@ -22,7 +22,7 @@ interface SaveTemplateData {
   isPublic: boolean
 }
 
-export default function SaveTemplateModal({
+function useSaveTemplateModalView({
   isOpen,
   onClose,
   onSave,
@@ -102,11 +102,11 @@ export default function SaveTemplateModal({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-gray-900 p-6 text-left align-middle shadow-xl transition-all">
                 <div className="flex items-center justify-between mb-4">
                   <Dialog.Title
                     as="h3"
-                    className="text-lg font-semibold leading-6 text-gray-900 flex items-center gap-2"
+                    className="text-lg font-semibold leading-6 text-gray-900 dark:text-gray-100 flex items-center gap-2"
                   >
                     <BookmarkIcon className="w-5 h-5 text-amber-600" />
                     Save as Template
@@ -114,18 +114,18 @@ export default function SaveTemplateModal({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                   >
                     <XMarkIcon className="w-5 h-5" />
                   </button>
                 </div>
 
-                <p className="text-sm text-gray-500 mb-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                   Save your current settings for &quot;{toolName}&quot; as a reusable template.
                 </p>
 
                 {error && (
-                  <div className="mb-4 p-3 rounded-lg bg-red-50 text-sm text-red-600 border border-red-100">
+                  <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-sm text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800">
                     {error}
                   </div>
                 )}
@@ -134,7 +134,7 @@ export default function SaveTemplateModal({
                   <div>
                     <label
                       htmlFor="template-name"
-                      className="block text-sm font-medium text-gray-700 mb-1"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                     >
                       Template Name *
                     </label>
@@ -144,7 +144,7 @@ export default function SaveTemplateModal({
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g., SaaS Product Launch"
-                      className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+                      className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
                       required
                     />
                   </div>
@@ -152,7 +152,7 @@ export default function SaveTemplateModal({
                   <div>
                     <label
                       htmlFor="template-description"
-                      className="block text-sm font-medium text-gray-700 mb-1"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                     >
                       Description
                     </label>
@@ -162,14 +162,14 @@ export default function SaveTemplateModal({
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="Describe what this template is for..."
                       rows={3}
-                      className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+                      className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
                     />
                   </div>
 
                   <div>
                     <label
                       htmlFor="template-category"
-                      className="block text-sm font-medium text-gray-700 mb-1"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                     >
                       Category
                     </label>
@@ -177,7 +177,7 @@ export default function SaveTemplateModal({
                       id="template-category"
                       value={category}
                       onChange={(e) => setCategory(e.target.value as TemplateCategory)}
-                      className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+                      className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
                     >
                       {Object.entries(TEMPLATE_CATEGORIES).map(([key, info]) => (
                         <option key={key} value={key}>
@@ -190,7 +190,7 @@ export default function SaveTemplateModal({
                   <div>
                     <label
                       htmlFor="template-tags"
-                      className="block text-sm font-medium text-gray-700 mb-1"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                     >
                       Tags (comma-separated)
                     </label>
@@ -200,7 +200,7 @@ export default function SaveTemplateModal({
                       value={tagsInput}
                       onChange={(e) => setTagsInput(e.target.value)}
                       placeholder="e.g., landing-page, conversion, copy"
-                      className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+                      className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
                     />
                   </div>
 
@@ -210,21 +210,21 @@ export default function SaveTemplateModal({
                       id="template-public"
                       checked={isPublic}
                       onChange={(e) => setIsPublic(e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                      className="h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-amber-600 focus:ring-amber-500 dark:bg-gray-800"
                     />
                     <label
                       htmlFor="template-public"
-                      className="text-sm text-gray-700"
+                      className="text-sm text-gray-700 dark:text-gray-300"
                     >
                       Make this template public
                     </label>
                   </div>
 
-                  <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                    <p className="text-xs text-gray-500 mb-2">
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                       Preset inputs to be saved:
                     </p>
-                    <pre className="text-xs text-gray-600 overflow-x-auto max-h-24">
+                    <pre className="text-xs text-gray-600 dark:text-gray-400 overflow-x-auto max-h-24">
                       {JSON.stringify(presetInputs, null, 2)}
                     </pre>
                   </div>
@@ -233,7 +233,7 @@ export default function SaveTemplateModal({
                     <button
                       type="button"
                       onClick={onClose}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-colors"
+                      className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
                     >
                       Cancel
                     </button>
@@ -253,4 +253,8 @@ export default function SaveTemplateModal({
       </Dialog>
     </Transition>
   )
+}
+
+export default function SaveTemplateModal(props: SaveTemplateModalProps) {
+  return useSaveTemplateModalView(props)
 }

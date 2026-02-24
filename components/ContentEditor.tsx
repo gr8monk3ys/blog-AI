@@ -88,7 +88,7 @@ function clearDraft(key: string): void {
 // Component
 // ---------------------------------------------------------------------------
 
-export default function ContentEditor({
+function useContentEditorView({
   initialContent,
   storageKey,
   title,
@@ -115,6 +115,7 @@ export default function ContentEditor({
   const [historyIndex, setHistoryIndex] = useState(0)
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const previewRef = useRef<HTMLDivElement>(null)
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ---- Derived values ------------------------------------------------------
@@ -343,6 +344,12 @@ export default function ContentEditor({
     setHistoryIndex(0)
   }, [initialContent, storageKey, onChange])
 
+  const resetEditorState = useCallback((newContent: string) => {
+    setContent(newContent)
+    setHistory([{ text: newContent, cursorStart: 0, cursorEnd: 0 }])
+    setHistoryIndex(0)
+  }, [])
+
   // ---- Auto-resize textarea ------------------------------------------------
 
   useEffect(() => {
@@ -361,11 +368,15 @@ export default function ContentEditor({
       prevInitialRef.current = initialContent
       const draft = loadDraft(storageKey)
       const newContent = draft ?? initialContent
-      setContent(newContent)
-      setHistory([{ text: newContent, cursorStart: 0, cursorEnd: 0 }])
-      setHistoryIndex(0)
+      resetEditorState(newContent)
     }
-  }, [initialContent, storageKey])
+  }, [initialContent, resetEditorState, storageKey])
+
+  useEffect(() => {
+    if (mode !== 'preview') return
+    if (!previewRef.current) return
+    previewRef.current.innerHTML = previewHtml
+  }, [mode, previewHtml])
 
   // ---- Render --------------------------------------------------------------
 
@@ -494,8 +505,8 @@ export default function ContentEditor({
           />
         ) : (
           <div
+            ref={previewRef}
             className="prose prose-lg max-w-none p-4 bg-white border border-gray-200 rounded-lg min-h-[400px]"
-            dangerouslySetInnerHTML={{ __html: previewHtml }}
           />
         )}
       </div>
@@ -508,4 +519,10 @@ export default function ContentEditor({
       )}
     </div>
   )
+}
+
+export default function ContentEditor(
+  props: ContentEditorProps
+): React.ReactElement {
+  return useContentEditorView(props)
 }

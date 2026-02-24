@@ -28,6 +28,7 @@ class TestExportMarkdown(unittest.TestCase):
         """Set up test client and sample data."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
         self.valid_request = {
             "title": "Test Blog Post",
             "content": "# Introduction\n\nThis is test content with **bold** text.",
@@ -83,6 +84,7 @@ class TestExportHTML(unittest.TestCase):
         """Set up test client and sample data."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
         self.valid_request = {
             "title": "Test HTML Export",
             "content": "# Heading\n\nParagraph with **bold** and *italic*.",
@@ -128,6 +130,7 @@ class TestExportPlainText(unittest.TestCase):
         """Set up test client and sample data."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
         self.valid_request = {
             "title": "Plain Text Export",
             "content": "# Heading\n\n**Bold** and *italic* text.",
@@ -160,6 +163,7 @@ class TestExportWordPress(unittest.TestCase):
         """Set up test client and sample data."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
         self.valid_request = {
             "title": "WordPress Export Test",
             "content": "# Introduction\n\nTest content for WordPress export.",
@@ -188,6 +192,7 @@ class TestExportMedium(unittest.TestCase):
         """Set up test client and sample data."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
         self.valid_request = {
             "title": "Medium Export Test",
             "content": "# My Article\n\nContent for Medium publishing.",
@@ -216,6 +221,7 @@ class TestExportWithMetadata(unittest.TestCase):
         """Set up test client."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_export_with_metadata(self):
         """Export should handle metadata correctly."""
@@ -250,6 +256,7 @@ class TestExportContentTypes(unittest.TestCase):
         """Set up test client."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_export_blog_content_type(self):
         """Export should accept 'blog' content_type."""
@@ -289,6 +296,7 @@ class TestExportFilenameHeader(unittest.TestCase):
         """Set up test client."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_markdown_has_filename_header(self):
         """Markdown export should include Content-Disposition with filename."""

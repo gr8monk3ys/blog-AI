@@ -3,6 +3,13 @@
 # Coverage reports
 .coverage
 htmlcov/
+.nyc_output/
+coverage/
+backend/coverage.xml
+
+# Test artifacts
+playwright-report/
+test-results/
 
 # Run logs
 backend/run_logs/*
@@ -80,3 +87,4 @@ frontend_legacy/
 
 # Next.js build output
 frontend/.next/
+.vercel

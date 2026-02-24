@@ -94,12 +94,16 @@ def sample_large_book():
 def mock_dependencies():
     """Mock common dependencies for book route tests."""
     with patch("app.routes.book.verify_api_key") as mock_auth, \
+         patch("app.routes.book.check_generation_rate_limit", new_callable=AsyncMock) as mock_rate_limit, \
+         patch("app.routes.book.require_pro_tier", new_callable=AsyncMock) as mock_pro_tier, \
          patch("app.routes.book.require_quota", new_callable=AsyncMock) as mock_quota, \
          patch("app.routes.book.increment_usage_for_operation") as mock_usage, \
          patch("app.routes.book.conversations") as mock_conv, \
          patch("app.routes.book.manager") as mock_ws:
 
         mock_auth.return_value = "test-user-id"
+        mock_rate_limit.return_value = None
+        mock_pro_tier.return_value = None
         mock_quota.return_value = "test-user-id"
         mock_usage.return_value = AsyncMock()
         mock_conv.append = MagicMock()
@@ -107,6 +111,8 @@ def mock_dependencies():
 
         yield {
             "auth": mock_auth,
+            "rate_limit": mock_rate_limit,
+            "pro_tier": mock_pro_tier,
             "quota": mock_quota,
             "usage": mock_usage,
             "conversations": mock_conv,

@@ -28,6 +28,7 @@ class TestSecurityHeadersMiddleware(unittest.TestCase):
         """Set up test client."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_response_has_x_content_type_options(self):
         """Response should have X-Content-Type-Options header."""
@@ -84,6 +85,7 @@ class TestRequestIDMiddleware(unittest.TestCase):
         """Set up test client."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_response_has_request_id(self):
         """Response should have X-Request-ID header."""
@@ -129,6 +131,7 @@ class TestRequestValidationMiddleware(unittest.TestCase):
         """Set up test client."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_accepts_valid_json(self):
         """Middleware should accept valid JSON content."""
@@ -172,6 +175,7 @@ class TestRateLimiterMiddleware(unittest.TestCase):
 
         importlib.reload(server)
         self.client = TestClient(server.app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def tearDown(self):
         """Reset rate limiting."""
@@ -199,6 +203,7 @@ class TestMiddlewareIntegration(unittest.TestCase):
         """Set up test client."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_all_security_headers_present(self):
         """All security headers should be present in response."""
@@ -257,6 +262,7 @@ class TestHSTSHeader(unittest.TestCase):
         """Set up test client."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_hsts_with_https_forwarded_proto(self):
         """HSTS header should be present when X-Forwarded-Proto is https."""
@@ -281,6 +287,7 @@ class TestResponseTimeHeader(unittest.TestCase):
         """Set up test client."""
         from server import app
         self.client = TestClient(app)
+        self.client.headers.update({"X-API-Key": "test-key"})
 
     def test_response_has_timing_header(self):
         """Response may have timing information."""

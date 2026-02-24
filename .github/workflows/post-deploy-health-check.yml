@@ -1,0 +1,55 @@
+name: Post-Deploy Health Check
+
+on:
+  workflow_run:
+    workflows: ["Deploy"]
+    types: [completed]
+  schedule:
+    - cron: "15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  health-check:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout (manual/scheduled)
+        if: github.event_name != 'workflow_run'
+        uses: actions/checkout@v4
+
+      - name: Checkout deployed commit (workflow_run)
+        if: github.event_name == 'workflow_run'
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Validate Vercel token
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -z "${VERCEL_TOKEN}" ]; then
+            echo "::error::Missing required secret VERCEL_TOKEN"
+            exit 1
+          fi
+
+      - name: Install Vercel CLI
+        shell: bash
+        run: npm i -g vercel@50.13.2
+
+      - name: Run production health check
+        shell: bash
+        env:
+          APP_URL: https://blog-ai.vivancedata.com
+          ROUTES: / /pricing /blog /tool-directory /sitemap.xml
+          LOOKBACK: 1h
+          LOG_LIMIT: 200
+          FAIL_ON_WARNINGS: "false"
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_SCOPE: gr8monk3ys-projects
+        run: bash scripts/post_deploy_health_check.sh

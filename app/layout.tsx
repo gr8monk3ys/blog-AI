@@ -18,8 +18,18 @@ export default function RootLayout({
 }) {
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 
+  // Inline script to prevent flash of unstyled content (FOUC) on dark mode.
+  // This is a static string with no user input — safe to use dangerouslySetInnerHTML.
+  const themeScript =
+    "(function(){try{var t=localStorage.getItem('theme');" +
+    "if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches))" +
+    "{document.documentElement.classList.add('dark')}}catch(e){}})()"
+
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className={inter.className}>
         {publishableKey ? (
           <ClerkProvider publishableKey={publishableKey}>

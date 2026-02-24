@@ -4,7 +4,7 @@ import { Switch } from '@headlessui/react';
 import { PencilIcon, LightBulbIcon, DocumentTextIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { BlogGenerationOptions } from '../types/blog';
 import { BlogGenerationResponse, ContentGenerationResponse } from '../types/content';
-import { API_ENDPOINTS, ApiError, getDefaultHeaders, checkServerConnection, apiFetchWithRetry } from '../lib/api';
+import { API_ENDPOINTS, ApiError, checkServerConnection, apiFetchWithRetry } from '../lib/api';
 import { useUsageCheck } from './UsageIndicator';
 import BrandVoiceSelector from './brand/BrandVoiceSelector'
 import type { BrandProfile } from '../types/brand'
@@ -17,13 +17,16 @@ interface ContentGeneratorProps {
   setLoading: (loading: boolean) => void;
 }
 
-export default function ContentGenerator({ conversationId, setContent, setLoading }: ContentGeneratorProps) {
+function useContentGeneratorView({ conversationId, setContent, setLoading }: ContentGeneratorProps) {
   const [topic, setTopic] = useState('');
   const [keywords, setKeywords] = useState('');
   const [tone, setTone] = useState<BlogGenerationOptions['tone']>('informative');
   const [useResearch, setUseResearch] = useState(false);
+  const [researchDepth, setResearchDepth] = useState<'basic' | 'deep' | 'comprehensive'>('basic');
   const [proofread, setProofread] = useState(true);
   const [humanize, setHumanize] = useState(true);
+  const [seoOptimize, setSeoOptimize] = useState(false);
+  const [factCheck, setFactCheck] = useState(false);
   const [brandVoiceEnabled, setBrandVoiceEnabled] = useState(false)
   const [selectedBrandProfile, setSelectedBrandProfile] = useState<BrandProfile | null>(null)
   const { availableProviders, defaultProvider } = useLlmConfig()
@@ -33,7 +36,6 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
     'auth' | 'forbidden' | 'rate-limit' | 'unavailable' | 'offline' | 'limit' | 'generic'
   >('generic');
   const [retryAfterSeconds, setRetryAfterSeconds] = useState<number | null>(null);
-  const [limitReached, setLimitReached] = useState(false);
 
   const { checkUsage } = useUsageCheck();
 
@@ -130,7 +132,6 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
     setError(null);
     setErrorKind('generic');
     setRetryAfterSeconds(null);
-    setLimitReached(false);
 
     try {
       if (brandVoiceEnabled && !selectedBrandProfile) {
@@ -142,7 +143,6 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
       // Check usage limit before generating
       const hasUsage = await checkUsage();
       if (!hasUsage) {
-        setLimitReached(true);
         setErrorKind('limit');
         setError('You have reached your usage limit. Upgrade your plan to continue generating content.');
         setLoading(false);
@@ -177,9 +177,12 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
             keywords: keywords.split(',').map(k => k.trim()).filter(k => k),
             tone,
             research: useResearch,
+            research_depth: useResearch ? researchDepth : undefined,
             provider_type: providerType,
             proofread,
             humanize,
+            seo_optimize: seoOptimize,
+            fact_check: factCheck,
             conversation_id: conversationId,
             ...(brandVoiceEnabled && selectedBrandProfile?.id
               ? { brand_profile_id: selectedBrandProfile.id }
@@ -239,14 +242,14 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
     <div>
       <div className="flex items-center mb-6">
         <DocumentTextIcon className="h-5 w-5 text-amber-600 mr-2" />
-        <h2 className="text-xl font-bold text-gray-800">Blog Post Generator</h2>
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Blog Post Generator</h2>
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-amber-50 rounded-lg p-4 border border-amber-100">
+        <div className="bg-amber-50 dark:bg-amber-950/30 rounded-lg p-4 border border-amber-100 dark:border-amber-800">
           <div className="flex items-center mb-2">
             <PencilIcon className="h-4 w-4 text-amber-600 mr-2" />
-            <label htmlFor="topic" className="block text-sm font-medium text-amber-800">
+            <label htmlFor="topic" className="block text-sm font-medium text-amber-700">
               What would you like to write about?
             </label>
           </div>
@@ -255,7 +258,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
             id="topic"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 bg-white"
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 bg-white dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
             placeholder="Enter your topic..."
             required
           />
@@ -263,7 +266,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label htmlFor="keywords" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="keywords" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Keywords (comma separated)
             </label>
             <input
@@ -271,20 +274,20 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
               id="keywords"
               value={keywords}
               onChange={(e) => setKeywords(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
               placeholder="SEO, marketing, content..."
             />
           </div>
 
           <div>
-            <label htmlFor="tone" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="tone" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Tone
             </label>
             <select
               id="tone"
               value={tone}
               onChange={(e) => setTone(e.target.value as BlogGenerationOptions['tone'])}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
             >
               <option value="informative">Informative</option>
               <option value="conversational">Conversational</option>
@@ -296,7 +299,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
           </div>
 
           <div>
-            <label htmlFor="provider" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="provider" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Model Provider
             </label>
             <select
@@ -306,7 +309,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
                 hasUserSelection.current = true
                 setProviderType(e.target.value as LlmProviderType)
               }}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
               disabled={(availableProviders || []).length <= 1}
             >
               {(availableProviders || []).map((p) => (
@@ -318,10 +321,10 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
           </div>
         </div>
 
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-800">
           <div className="flex items-center mb-3">
             <LightBulbIcon className="h-4 w-4 text-amber-600 mr-2" />
-            <h3 className="text-sm font-medium text-gray-700">Advanced Options</h3>
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Advanced Options</h3>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -331,7 +334,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
                 onChange={setUseResearch}
                 aria-label="Enable web research"
                 className={`${
-                  useResearch ? 'bg-amber-600' : 'bg-gray-200'
+                  useResearch ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
                 } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
               >
                 <span
@@ -341,7 +344,18 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
                   } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
                 />
               </Switch>
-              <span className="text-sm text-gray-700" id="research-label">Use web research</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300" id="research-label">Use web research</span>
+              {useResearch && (
+                <select
+                  value={researchDepth}
+                  onChange={(e) => setResearchDepth(e.target.value as 'basic' | 'deep' | 'comprehensive')}
+                  className="ml-2 text-xs rounded border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:border-amber-500 focus:ring-amber-500"
+                >
+                  <option value="basic">Basic</option>
+                  <option value="deep">Deep</option>
+                  <option value="comprehensive">Comprehensive</option>
+                </select>
+              )}
             </div>
 
             <div className="flex items-center space-x-3">
@@ -350,7 +364,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
                 onChange={setProofread}
                 aria-label="Enable proofreading"
                 className={`${
-                  proofread ? 'bg-amber-600' : 'bg-gray-200'
+                  proofread ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
                 } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
               >
                 <span
@@ -360,7 +374,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
                   } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
                 />
               </Switch>
-              <span className="text-sm text-gray-700" id="proofread-label">Proofread content</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300" id="proofread-label">Proofread content</span>
             </div>
 
             <div className="flex items-center space-x-3">
@@ -369,7 +383,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
                 onChange={setHumanize}
                 aria-label="Enable content humanization"
                 className={`${
-                  humanize ? 'bg-amber-600' : 'bg-gray-200'
+                  humanize ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
                 } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
               >
                 <span
@@ -379,7 +393,45 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
                   } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
                 />
               </Switch>
-              <span className="text-sm text-gray-700" id="humanize-label">Humanize content</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300" id="humanize-label">Humanize content</span>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <Switch
+                checked={seoOptimize}
+                onChange={setSeoOptimize}
+                aria-label="Enable SEO optimization"
+                className={`${
+                  seoOptimize ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`${
+                    seoOptimize ? 'translate-x-6' : 'translate-x-1'
+                  } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                />
+              </Switch>
+              <span className="text-sm text-gray-700 dark:text-gray-300" id="seo-label">SEO optimize</span>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <Switch
+                checked={factCheck}
+                onChange={setFactCheck}
+                aria-label="Enable fact checking"
+                className={`${
+                  factCheck ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`${
+                    factCheck ? 'translate-x-6' : 'translate-x-1'
+                  } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                />
+              </Switch>
+              <span className="text-sm text-gray-700 dark:text-gray-300" id="fact-check-label">Fact check</span>
             </div>
           </div>
 
@@ -397,8 +449,8 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
           <div
             className={`${
               errorKind === 'limit' || errorKind === 'rate-limit'
-                ? 'bg-amber-50 border-amber-200'
-                : 'bg-red-50 border-red-200'
+                ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800'
+                : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800'
             } border text-sm px-4 py-3 rounded-lg`}
             role="alert"
           >
@@ -414,7 +466,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
                 <p
                   className={`font-medium ${
                     errorKind === 'limit' || errorKind === 'rate-limit'
-                      ? 'text-amber-800'
+                      ? 'text-amber-700'
                       : 'text-red-700'
                   }`}
                 >
@@ -464,7 +516,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
                 {(errorKind === 'unavailable' || errorKind === 'offline') && (
                   <button
                     type="submit"
-                    className="mt-2 text-xs bg-red-100 hover:bg-red-200 px-2 py-1 rounded transition-colors"
+                    className="mt-2 text-xs bg-red-100 dark:bg-red-900/50 hover:bg-red-200 dark:hover:bg-red-900/70 px-2 py-1 rounded transition-colors"
                   >
                     Retry
                   </button>
@@ -478,7 +530,7 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
                   <button
                     type="button"
                     onClick={() => setError(null)}
-                    className="mt-2 text-xs bg-red-100 hover:bg-red-200 px-2 py-1 rounded transition-colors"
+                    className="mt-2 text-xs bg-red-100 dark:bg-red-900/50 hover:bg-red-200 dark:hover:bg-red-900/70 px-2 py-1 rounded transition-colors"
                   >
                     Dismiss
                   </button>
@@ -497,4 +549,8 @@ export default function ContentGenerator({ conversationId, setContent, setLoadin
       </form>
     </div>
   );
+}
+
+export default function ContentGenerator(props: ContentGeneratorProps) {
+  return useContentGeneratorView(props)
 }

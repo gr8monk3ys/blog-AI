@@ -54,12 +54,12 @@ export default function BookViewer({ book, filePath }: BookViewerProps) {
       <ToastComponent />
 
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">{book.title}</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{book.title}</h1>
         <div className="flex items-center space-x-2">
           <select
             value={downloadFormat}
             onChange={(e) => setDownloadFormat(e.target.value as 'markdown' | 'json')}
-            className="rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+            className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500"
           >
             <option value="markdown">Markdown</option>
             <option value="json">JSON</option>
@@ -75,9 +75,9 @@ export default function BookViewer({ book, filePath }: BookViewerProps) {
 
       {book.tags && book.tags.length > 0 && (
         <div className="mb-4">
-          <span className="text-sm text-gray-500">Tags: </span>
-          {book.tags.map((tag, index) => (
-            <span key={index} className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">
+          <span className="text-sm text-gray-500 dark:text-gray-400">Tags: </span>
+          {Array.from(new Set(book.tags)).map((tag) => (
+            <span key={tag} className="inline-block bg-gray-200 dark:bg-gray-800 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 dark:text-gray-300 mr-2 mb-2">
               {tag}
             </span>
           ))}
@@ -85,7 +85,7 @@ export default function BookViewer({ book, filePath }: BookViewerProps) {
       )}
 
       {book.date && (
-        <div className="mb-6 text-sm text-gray-500">
+        <div className="mb-6 text-sm text-gray-500 dark:text-gray-400">
           Date: {book.date}
         </div>
       )}
@@ -95,7 +95,7 @@ export default function BookViewer({ book, filePath }: BookViewerProps) {
           <Disclosure key={chapter.number}>
             {({ open }) => (
               <>
-                <Disclosure.Button className="flex justify-between w-full px-4 py-2 text-lg font-medium text-left text-amber-900 bg-amber-100 rounded-lg hover:bg-amber-200 focus:outline-none focus-visible:ring focus-visible:ring-amber-500 focus-visible:ring-opacity-75">
+                <Disclosure.Button className="flex justify-between w-full px-4 py-2 text-lg font-medium text-left text-amber-900 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900/50 focus:outline-none focus-visible:ring focus-visible:ring-amber-500 focus-visible:ring-opacity-75">
                   <span>{chapter.title}</span>
                   <ChevronUpIcon
                     className={`${
@@ -103,11 +103,11 @@ export default function BookViewer({ book, filePath }: BookViewerProps) {
                     } w-5 h-5 text-amber-500`}
                   />
                 </Disclosure.Button>
-                <Disclosure.Panel className="px-4 pt-4 pb-2 text-gray-500">
+                <Disclosure.Panel className="px-4 pt-4 pb-2 text-gray-500 dark:text-gray-400">
                   {chapter.topics.map((topic, topicIndex) => (
                     <div key={topicIndex} className="mb-4">
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">{topic.title}</h3>
-                      <div className="prose prose-indigo">{topic.content}</div>
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">{topic.title}</h3>
+                      <div className="prose prose-indigo dark:prose-invert">{topic.content}</div>
                     </div>
                   ))}
                 </Disclosure.Panel>
@@ -117,10 +117,10 @@ export default function BookViewer({ book, filePath }: BookViewerProps) {
         ))}
       </div>
 
-      <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-        <p className="text-sm text-gray-600">
+      <div className="mt-6 p-4 bg-gray-100 dark:bg-gray-900 rounded-lg">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
           Your book has been generated and saved to: <br />
-          <code className="bg-gray-200 px-2 py-1 rounded">{filePath}</code>
+          <code className="bg-gray-200 dark:bg-gray-800 dark:text-gray-300 px-2 py-1 rounded">{filePath}</code>
         </p>
       </div>
     </div>

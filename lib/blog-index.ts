@@ -14,6 +14,17 @@ export interface BlogPost extends BlogPostMeta {
   body: string
 }
 
+type BlogPostDbRow = {
+  title: string
+  slug: string
+  excerpt: string | null
+  body: string
+  tags: string[] | null
+  published_at: string | null
+  updated_at: string | null
+  created_at: string | null
+}
+
 const BLOG_DIR = path.join(process.cwd(), 'content', 'blog')
 
 const FRONTMATTER_BOUNDARY = '---'
@@ -153,9 +164,9 @@ const loadBlogPostsFromDb = async (): Promise<BlogPostMeta[]> => {
 
     if (!rows || rows.length === 0) return []
 
-    return (rows as any[]).map((post) => ({
+    return (rows as BlogPostDbRow[]).map((post) => ({
       title: post.title,
-      date: post.published_at || post.updated_at || post.created_at,
+      date: post.published_at || post.updated_at || post.created_at || new Date().toISOString(),
       excerpt: post.excerpt || '',
       slug: post.slug,
       tags: post.tags || [],
@@ -190,10 +201,11 @@ const loadBlogPostFromDb = async (slug: string): Promise<BlogPost | null> => {
 
     if (!rows || rows.length === 0) return null
 
-    const data = rows[0] as any
+    const data = rows[0] as BlogPostDbRow
     return {
       title: data.title,
-      date: data.published_at || data.updated_at || data.created_at,
+      date:
+        data.published_at || data.updated_at || data.created_at || new Date().toISOString(),
       excerpt: data.excerpt || '',
       slug: data.slug,
       tags: data.tags || [],
