@@ -37,3 +37,5 @@ When we receive a security bug report, we will:
 2. Audit code to find any potential similar problems
 3. Prepare fixes for all releases still under maintenance
 4. Release new security fix versions as soon as possible
+
+For private disclosure, use GitHub Security Advisories: [https://github.com/gr8monk3ys/blog-AI/security/advisories](https://github.com/gr8monk3ys/blog-AI/security/advisories).
