@@ -248,6 +248,7 @@ describe('apiFetchWithRetry', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     vi.restoreAllMocks()
+    vi.mocked(global.fetch).mockReset()
   })
 
   afterEach(() => {
