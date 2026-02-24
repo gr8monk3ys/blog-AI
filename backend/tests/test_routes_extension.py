@@ -110,7 +110,7 @@ class TestExtensionAuthRoute(unittest.TestCase):
         """Valid API key must return 200 with success=True, user_id, tier, email."""
         response = self.client.post(
             "/api/v1/extension/auth",
-            json={"api_key": "valid-key-abc123"},
+            json={"api_key": "test"},
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
