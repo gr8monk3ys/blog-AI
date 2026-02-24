@@ -2,7 +2,6 @@
 
 import { Fragment, useRef, useEffect, useCallback } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
-import { motion } from 'framer-motion'
 import {
   ExclamationTriangleIcon,
   InformationCircleIcon,
@@ -127,11 +126,6 @@ export default function ConfirmModal({
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel
-                as={motion.div}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
                 className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all"
               >
                 <div className="flex items-start gap-4">
