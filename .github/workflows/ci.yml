@@ -74,7 +74,7 @@ jobs:
           OPENAI_API_KEY: "test"
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: backend-coverage
@@ -136,7 +136,7 @@ jobs:
         run: bun run test:coverage
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: frontend-coverage
@@ -171,7 +171,7 @@ jobs:
         run: bun run test:e2e:coverage
 
       - name: Upload E2E coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: frontend-e2e-coverage
@@ -179,7 +179,7 @@ jobs:
           retention-days: 14
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: failure()
         with:
           name: playwright-report
