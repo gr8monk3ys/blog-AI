@@ -809,6 +809,286 @@ class TestBlogResponseStructure:
 # =============================================================================
 
 
+class TestBlogSEOAndFactCheck:
+    """Tests for SEO optimization and fact-checking code paths in blog generation."""
+
+    def test_generate_blog_with_seo_optimize(self, client, sample_blog_post, mock_dependencies):
+        """Test blog generation with SEO optimization enabled."""
+        from src.types.seo import ContentScore, SEOOptimizationResult, SERPAnalysis
+
+        mock_score = ContentScore(
+            overall_score=85.0,
+            topic_coverage=80.0,
+            term_usage=75.0,
+            structure_score=90.0,
+            readability_score=88.0,
+            word_count_score=82.0,
+        )
+        mock_seo_result = SEOOptimizationResult(
+            score=mock_score,
+            passed=True,
+            suggestions_applied=2,
+            passes_used=1,
+        )
+        mock_serp = SERPAnalysis(keyword="test")
+
+        with patch("app.routes.blog.generate_blog_post") as mock_gen, \
+             patch("app.routes.blog.create_provider_from_env") as mock_provider, \
+             patch("app.routes.blog.analyze_serp") as mock_analyze, \
+             patch("app.routes.blog.optimize_until_threshold") as mock_optimize:
+
+            mock_gen.return_value = sample_blog_post
+            mock_provider.return_value = MagicMock()
+            mock_analyze.return_value = mock_serp
+            mock_optimize.return_value = mock_seo_result
+
+            response = client.post(
+                "/generate-blog",
+                json={
+                    "topic": "Test Topic",
+                    "keywords": ["seo", "test"],
+                    "seo_optimize": True,
+                    "conversation_id": "test-conv-seo",
+                },
+                headers={"X-API-Key": "test-key"},
+            )
+
+            assert response.status_code == 201
+            data = response.json()
+            assert data["success"] is True
+            assert "seo_score" in data["content"]
+            assert data["content"]["seo_score"]["overall_score"] == 85.0
+            assert data["content"]["seo_score"]["passed"] is True
+            mock_optimize.assert_called_once()
+
+    def test_seo_optimize_failure_continues_gracefully(self, client, sample_blog_post, mock_dependencies):
+        """Test that SEO optimization failure does not break blog generation."""
+        with patch("app.routes.blog.generate_blog_post") as mock_gen, \
+             patch("app.routes.blog.create_provider_from_env") as mock_provider, \
+             patch("app.routes.blog.analyze_serp") as mock_analyze:
+
+            mock_gen.return_value = sample_blog_post
+            mock_provider.return_value = MagicMock()
+            mock_analyze.side_effect = RuntimeError("SERP unavailable")
+
+            response = client.post(
+                "/generate-blog",
+                json={
+                    "topic": "Test Topic",
+                    "keywords": ["seo"],
+                    "seo_optimize": True,
+                    "conversation_id": "test-conv-seo-fail",
+                },
+                headers={"X-API-Key": "test-key"},
+            )
+
+            assert response.status_code == 201
+            data = response.json()
+            assert "seo_score" not in data["content"]
+
+    def test_generate_blog_with_fact_check(self, client, sample_blog_post, mock_dependencies):
+        """Test blog generation with fact-checking enabled."""
+        from src.types.fact_check import (
+            Claim, ClaimType, ClaimVerification, FactCheckResult, VerificationStatus,
+        )
+
+        mock_fc_result = FactCheckResult(
+            claims=[
+                ClaimVerification(
+                    claim=Claim(text="The sky is blue", claim_type=ClaimType.GENERAL),
+                    confidence=0.95,
+                    status=VerificationStatus.VERIFIED,
+                    supporting_sources=["https://example.com"],
+                    explanation="Confirmed by source",
+                ),
+            ],
+            overall_confidence=0.95,
+            verified_count=1,
+            unverified_count=0,
+            contradicted_count=0,
+            summary="All claims verified",
+        )
+
+        with patch("app.routes.blog.generate_blog_post") as mock_gen, \
+             patch("app.routes.blog.check_facts") as mock_fc:
+
+            mock_gen.return_value = sample_blog_post
+            mock_fc.return_value = mock_fc_result
+
+            response = client.post(
+                "/generate-blog",
+                json={
+                    "topic": "Test Topic",
+                    "fact_check": True,
+                    "conversation_id": "test-conv-fc",
+                },
+                headers={"X-API-Key": "test-key"},
+            )
+
+            assert response.status_code == 201
+            data = response.json()
+            assert "fact_check" in data["content"]
+            assert data["content"]["fact_check"]["overall_confidence"] == 0.95
+            assert data["content"]["fact_check"]["verified_count"] == 1
+            assert len(data["content"]["fact_check"]["claims"]) == 1
+            mock_fc.assert_called_once()
+
+    def test_fact_check_failure_continues_gracefully(self, client, sample_blog_post, mock_dependencies):
+        """Test that fact-check failure does not break blog generation."""
+        with patch("app.routes.blog.generate_blog_post") as mock_gen, \
+             patch("app.routes.blog.check_facts") as mock_fc:
+
+            mock_gen.return_value = sample_blog_post
+            mock_fc.side_effect = RuntimeError("LLM unavailable")
+
+            response = client.post(
+                "/generate-blog",
+                json={
+                    "topic": "Test Topic",
+                    "fact_check": True,
+                    "conversation_id": "test-conv-fc-fail",
+                },
+                headers={"X-API-Key": "test-key"},
+            )
+
+            assert response.status_code == 201
+            data = response.json()
+            assert "fact_check" not in data["content"]
+
+    def test_seo_optimize_with_custom_thresholds(self, client, sample_blog_post, mock_dependencies):
+        """Test SEO optimization with custom threshold parameters."""
+        from src.types.seo import ContentScore, SEOOptimizationResult, SERPAnalysis
+
+        mock_score = ContentScore(
+            overall_score=60.0, topic_coverage=55.0, term_usage=50.0,
+            structure_score=65.0, readability_score=60.0, word_count_score=55.0,
+        )
+        mock_seo_result = SEOOptimizationResult(
+            score=mock_score, passed=False, suggestions_applied=3, passes_used=2,
+        )
+
+        with patch("app.routes.blog.generate_blog_post") as mock_gen, \
+             patch("app.routes.blog.create_provider_from_env") as mock_provider, \
+             patch("app.routes.blog.analyze_serp") as mock_analyze, \
+             patch("app.routes.blog.optimize_until_threshold") as mock_optimize:
+
+            mock_gen.return_value = sample_blog_post
+            mock_provider.return_value = MagicMock()
+            mock_analyze.return_value = SERPAnalysis(keyword="test")
+            mock_optimize.return_value = mock_seo_result
+
+            response = client.post(
+                "/generate-blog",
+                json={
+                    "topic": "Test Topic",
+                    "keywords": ["test"],
+                    "seo_optimize": True,
+                    "seo_thresholds": {"overall_minimum": 50.0},
+                    "conversation_id": "test-conv-seo-thresh",
+                },
+                headers={"X-API-Key": "test-key"},
+            )
+
+            assert response.status_code == 201
+            data = response.json()
+            assert data["content"]["seo_score"]["passed"] is False
+            assert data["content"]["seo_score"]["passes_used"] == 2
+
+    def test_blog_with_sources_serialized(self, client, mock_dependencies):
+        """Test that blog post sources are included in response."""
+        from src.types.content import SourceCitation
+
+        blog_with_sources = BlogPost(
+            title="Sourced Blog",
+            description="Blog with sources",
+            date="2024-01-24",
+            tags=["test"],
+            sections=[
+                Section(
+                    title="Intro",
+                    subtopics=[SubTopic(title="Overview", content="Content here.")],
+                ),
+            ],
+            sources=[
+                SourceCitation(id=1, title="Source 1", url="https://example.com/1", snippet="Snippet 1", provider="google"),
+            ],
+        )
+
+        with patch("app.routes.blog.generate_blog_post") as mock_gen:
+            mock_gen.return_value = blog_with_sources
+
+            response = client.post(
+                "/generate-blog",
+                json={"topic": "Test", "conversation_id": "test-conv-src"},
+                headers={"X-API-Key": "test-key"},
+            )
+
+            assert response.status_code == 201
+            data = response.json()
+            assert "sources" in data["content"]
+            assert len(data["content"]["sources"]) == 1
+            assert data["content"]["sources"][0]["title"] == "Source 1"
+
+    def test_org_level_usage_tracking(self, sample_blog_post):
+        """Test that org-level usage is tracked when organization_id is present."""
+        from server import app
+        from src.organizations import AuthorizationContext
+        from app.dependencies import require_content_creation
+
+        org_ctx = AuthorizationContext(
+            user_id="test-user-id",
+            organization_id="org-123",
+        )
+
+        app.dependency_overrides[require_content_creation] = lambda: org_ctx
+        try:
+            with patch("app.routes.blog.verify_api_key") as mock_auth, \
+                 patch("app.routes.blog.check_generation_rate_limit", new_callable=AsyncMock), \
+                 patch("app.routes.blog.require_pro_tier", new_callable=AsyncMock), \
+                 patch("app.routes.blog.require_quota", new_callable=AsyncMock), \
+                 patch("app.routes.blog.increment_usage_for_operation", new_callable=AsyncMock) as mock_usage, \
+                 patch("app.routes.blog.conversations") as mock_conv, \
+                 patch("app.routes.blog.manager") as mock_ws, \
+                 patch("app.routes.blog.webhook_service") as mock_webhook, \
+                 patch("app.routes.blog.generate_blog_post") as mock_gen:
+
+                mock_auth.return_value = "test-user-id"
+                mock_conv.append = MagicMock()
+                mock_ws.send_message = AsyncMock()
+                mock_webhook.emit_content_generated = AsyncMock()
+                mock_gen.return_value = sample_blog_post
+
+                client = TestClient(app)
+                response = client.post(
+                    "/generate-blog",
+                    json={"topic": "Test Topic", "conversation_id": "test-conv-org"},
+                    headers={"X-API-Key": "test-key"},
+                )
+
+                assert response.status_code == 201
+                # Should have been called at least twice: org-level + user-level
+                assert mock_usage.call_count >= 2
+                op_types = [
+                    c.kwargs.get("operation_type", "")
+                    for c in mock_usage.call_args_list
+                ]
+                assert "blog_org" in op_types
+        finally:
+            app.dependency_overrides.pop(require_content_creation, None)
+
+    def test_attribute_error_returns_500(self, client, mock_dependencies):
+        """Test that AttributeError during generation returns 500."""
+        with patch("app.routes.blog.generate_blog_post") as mock_gen:
+            mock_gen.side_effect = AttributeError("missing attribute")
+
+            response = client.post(
+                "/generate-blog",
+                json={"topic": "Test Topic", "conversation_id": "test-conv-attr"},
+                headers={"X-API-Key": "test-key"},
+            )
+
+            assert response.status_code == 500
+
 class TestBlogEdgeCases:
     """Tests for edge cases in blog generation."""
 

@@ -106,4 +106,98 @@ describe('MembersList', () => {
     expect(screen.getByText('B')).toBeDefined() // bob
     expect(screen.getByText('C')).toBeDefined() // carol
   })
+
+  it('calls apiFetch with PATCH when role is changed', async () => {
+    const { apiFetch } = await import('../../../lib/api')
+    const onMemberUpdated = vi.fn()
+    render(<MembersList {...defaultProps} onMemberUpdated={onMemberUpdated} />)
+
+    // Change bob's role via the dropdown
+    const selects = screen.getAllByRole('combobox')
+    fireEvent.change(selects[0], { target: { value: 'viewer' } })
+
+    await waitFor(() => {
+      expect(apiFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/members/'),
+        expect.objectContaining({ method: 'PATCH' })
+      )
+    })
+    await waitFor(() => {
+      expect(onMemberUpdated).toHaveBeenCalled()
+    })
+  })
+
+  it('calls apiFetch with DELETE when remove is clicked', async () => {
+    const { apiFetch } = await import('../../../lib/api')
+    // Mock window.confirm to return true
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const onMemberUpdated = vi.fn()
+    render(<MembersList {...defaultProps} onMemberUpdated={onMemberUpdated} />)
+
+    // Click the first Remove button (should be for bob or carol)
+    const removeButtons = screen.getAllByText('Remove')
+    fireEvent.click(removeButtons[0])
+
+    await waitFor(() => {
+      expect(apiFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/members/'),
+        expect.objectContaining({ method: 'DELETE' })
+      )
+    })
+    await waitFor(() => {
+      expect(onMemberUpdated).toHaveBeenCalled()
+    })
+  })
+
+  it('does not remove member when confirm is cancelled', async () => {
+    const { apiFetch } = await import('../../../lib/api')
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    render(<MembersList {...defaultProps} />)
+
+    const removeButtons = screen.getAllByText('Remove')
+    fireEvent.click(removeButtons[0])
+
+    // apiFetch should not be called for DELETE since confirm was cancelled
+    const deleteCalls = (apiFetch as ReturnType<typeof vi.fn>).mock.calls.filter(
+      (call: unknown[]) => (call[1] as Record<string, string>)?.method === 'DELETE'
+    )
+    expect(deleteCalls).toHaveLength(0)
+  })
+
+  it('handles role change API error gracefully', async () => {
+    const { apiFetch } = await import('../../../lib/api')
+    ;(apiFetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Network error'))
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    render(<MembersList {...defaultProps} />)
+
+    const selects = screen.getAllByRole('combobox')
+    fireEvent.change(selects[0], { target: { value: 'viewer' } })
+
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Failed to update member role:',
+        expect.any(Error)
+      )
+    })
+    consoleSpy.mockRestore()
+  })
+
+  it('handles remove API error gracefully', async () => {
+    const { apiFetch } = await import('../../../lib/api')
+    ;(apiFetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Network error'))
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    render(<MembersList {...defaultProps} />)
+
+    const removeButtons = screen.getAllByText('Remove')
+    fireEvent.click(removeButtons[0])
+
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Failed to remove member:',
+        expect.any(Error)
+      )
+    })
+    consoleSpy.mockRestore()
+  })
 })
