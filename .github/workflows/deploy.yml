@@ -10,9 +10,7 @@ concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: false
 
-permissions:
-  contents: read
-  packages: write
+permissions: read-all
 
 env:
   REGISTRY: ghcr.io
@@ -146,6 +144,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.manual == 'true'
+    permissions:
+      contents: read
+      packages: write
     environment:
       name: production
     steps:

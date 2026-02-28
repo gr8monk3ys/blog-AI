@@ -10,9 +10,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-  security-events: write
+permissions: read-all
 
 env:
   PYTHON_VERSION: "3.12"
