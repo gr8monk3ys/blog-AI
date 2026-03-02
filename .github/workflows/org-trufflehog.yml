@@ -1,0 +1,14 @@
+name: org-trufflehog
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  trufflehog:
+    uses: gr8monk3ys/github/.github/workflows/reusable-trufflehog.yml@c23dda934900df22d45e268e1967390b1beaeab4
