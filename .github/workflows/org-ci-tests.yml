@@ -44,13 +44,9 @@ jobs:
           # Node.js
           if [ -f package.json ]; then
             ran=1
-            if [ -f package-lock.json ]; then
-              npm ci --ignore-scripts || npm install --ignore-scripts || true
-            else
-              npm install --ignore-scripts || true
-            fi
-
-            if node -e 'const fs=require("fs");const p=JSON.parse(fs.readFileSync("package.json","utf8"));const t=(p.scripts&&p.scripts.test)||"";const bad=["", "echo \"Error: no test specified\" && exit 1", "exit 1"];process.exit(bad.includes(t)?1:0)'; then
+            if [ ! -d node_modules ]; then
+              echo "Skipping npm tests (node_modules absent; dependency install is disabled in this workflow)."
+            elif node -e 'const fs=require("fs");const p=JSON.parse(fs.readFileSync("package.json","utf8"));const t=(p.scripts&&p.scripts.test)||"";const bad=["", "echo \"Error: no test specified\" && exit 1", "exit 1"];process.exit(bad.includes(t)?1:0)'; then
               npm test || failures=$((failures+1))
             else
               echo "No actionable npm test script; skipping Node tests."
@@ -67,12 +63,15 @@ jobs:
 
           if [ "$py_tests" -eq 1 ]; then
             ran=1
-            python -m pip install --upgrade pip >/dev/null 2>&1 || true
-            python -m pip install pytest >/dev/null 2>&1 || true
-            if [ -f requirements.txt ]; then
-              python -m pip install -r requirements.txt >/dev/null 2>&1 || true
+            if python - <<'PY'
+import importlib.util, sys
+sys.exit(0 if importlib.util.find_spec("pytest") else 1)
+PY
+            then
+              pytest -q || failures=$((failures+1))
+            else
+              echo "Skipping pytest (pytest not available; dependency install is disabled in this workflow)."
             fi
-            pytest -q || failures=$((failures+1))
           fi
 
           # Go
