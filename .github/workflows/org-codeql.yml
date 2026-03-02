@@ -1,0 +1,17 @@
+name: org-codeql
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  codeql:
+    uses: gr8monk3ys/github/.github/workflows/reusable-codeql.yml@0b7aae1dfa315ec799c78992d0744b3c5cc765eb

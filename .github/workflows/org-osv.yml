@@ -1,0 +1,14 @@
+name: org-osv
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  osv:
+    uses: gr8monk3ys/github/.github/workflows/reusable-osv.yml@0b7aae1dfa315ec799c78992d0744b3c5cc765eb

@@ -1,0 +1,14 @@
+name: org-trivy
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  trivy:
+    uses: gr8monk3ys/github/.github/workflows/reusable-trivy.yml@0b7aae1dfa315ec799c78992d0744b3c5cc765eb
