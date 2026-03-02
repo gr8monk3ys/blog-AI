@@ -7,11 +7,12 @@ on:
       - master
   workflow_dispatch:
 
-permissions:
-  contents: write
-  issues: write
-  pull-requests: write
+permissions: read-all
 
 jobs:
   release-please:
-    uses: gr8monk3ys/github/.github/workflows/reusable-release-please.yml@6de12536e72a12dc4c2b03ed233a951a26d4fe50
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    uses: gr8monk3ys/github/.github/workflows/reusable-release-please.yml@77dc97653c1c78b3df82df3a18c4061ddfce666d
