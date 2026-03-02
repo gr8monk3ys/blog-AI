@@ -11,4 +11,4 @@ permissions: read-all
 
 jobs:
   osv:
-    uses: gr8monk3ys/github/.github/workflows/reusable-osv.yml
+    uses: gr8monk3ys/github/.github/workflows/reusable-osv.yml@f5ea73a3d864afd83314aa96ea37306c0a0f16e1
