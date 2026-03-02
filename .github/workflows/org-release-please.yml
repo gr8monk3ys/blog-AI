@@ -15,4 +15,4 @@ jobs:
       contents: write
       issues: write
       pull-requests: write
-    uses: gr8monk3ys/github/.github/workflows/reusable-release-please.yml@77dc97653c1c78b3df82df3a18c4061ddfce666d
+    uses: gr8monk3ys/github/.github/workflows/reusable-release-please.yml

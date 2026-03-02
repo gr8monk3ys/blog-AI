@@ -14,4 +14,4 @@ permissions:
 
 jobs:
   codeql:
-    uses: gr8monk3ys/github/.github/workflows/reusable-codeql.yml@0b7aae1dfa315ec799c78992d0744b3c5cc765eb
+    uses: gr8monk3ys/github/.github/workflows/reusable-codeql.yml
