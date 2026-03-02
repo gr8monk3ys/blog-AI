@@ -15,4 +15,44 @@ jobs:
       contents: write
       issues: write
       pull-requests: write
-    uses: gr8monk3ys/github/.github/workflows/reusable-release-please.yml@f5ea73a3d864afd83314aa96ea37306c0a0f16e1
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      - name: Detect release strategy
+        id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+          strategy=""
+
+          if [ -f package.json ]; then
+            strategy="node"
+          elif [ -f pyproject.toml ] || [ -f setup.py ] || [ -f setup.cfg ] || [ -f requirements.txt ]; then
+            strategy="python"
+          elif [ -f go.mod ]; then
+            strategy="go"
+          elif [ -f Cargo.toml ]; then
+            strategy="rust"
+          fi
+
+          if [ -n "$strategy" ]; then
+            echo "supported=true" >> "$GITHUB_OUTPUT"
+            echo "release_type=$strategy" >> "$GITHUB_OUTPUT"
+            echo "Using release strategy: $strategy"
+          else
+            echo "supported=false" >> "$GITHUB_OUTPUT"
+            echo "No supported release strategy detected; skipping."
+          fi
+
+      - name: Run Release Please
+        if: steps.detect.outputs.supported == 'true'
+        uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          release-type: ${{ steps.detect.outputs.release_type }}
+
+      - name: Skip release
+        if: steps.detect.outputs.supported != 'true'
+        run: 'echo "Release Please skipped: no supported strategy."'

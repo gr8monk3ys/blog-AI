@@ -1,0 +1,97 @@
+name: org-ci-tests
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  ci-tests-minimum:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      - name: Setup Python
+        if: ${{ hashFiles('pyproject.toml', 'requirements*.txt', 'setup.py', 'tests/**/*.py', 'pytest.ini', 'tox.ini') != '' }}
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+
+      - name: Setup Node
+        if: ${{ hashFiles('package.json') != '' }}
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '20'
+
+      - name: Setup Go
+        if: ${{ hashFiles('go.mod') != '' }}
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff
+        with:
+          go-version: '1.22'
+
+      - name: Run Minimum CI Tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          failures=0
+          ran=0
+
+          # Node.js
+          if [ -f package.json ]; then
+            ran=1
+            if [ -f package-lock.json ]; then
+              npm ci --ignore-scripts || npm install --ignore-scripts || true
+            else
+              npm install --ignore-scripts || true
+            fi
+
+            if node -e 'const fs=require("fs");const p=JSON.parse(fs.readFileSync("package.json","utf8"));const t=(p.scripts&&p.scripts.test)||"";const bad=["", "echo \"Error: no test specified\" && exit 1", "exit 1"];process.exit(bad.includes(t)?1:0)'; then
+              npm test || failures=$((failures+1))
+            else
+              echo "No actionable npm test script; skipping Node tests."
+            fi
+          fi
+
+          # Python
+          py_tests=0
+          [ -d tests ] && py_tests=1
+          [ -f pytest.ini ] && py_tests=1
+          [ -f tox.ini ] && py_tests=1
+          if [ -f pyproject.toml ] && grep -qi pytest pyproject.toml; then py_tests=1; fi
+          if [ -f setup.cfg ] && grep -qi pytest setup.cfg; then py_tests=1; fi
+
+          if [ "$py_tests" -eq 1 ]; then
+            ran=1
+            python -m pip install --upgrade pip >/dev/null 2>&1 || true
+            python -m pip install pytest >/dev/null 2>&1 || true
+            if [ -f requirements.txt ]; then
+              python -m pip install -r requirements.txt >/dev/null 2>&1 || true
+            fi
+            pytest -q || failures=$((failures+1))
+          fi
+
+          # Go
+          if [ -f go.mod ]; then
+            ran=1
+            go test ./... || failures=$((failures+1))
+          fi
+
+          # Rust
+          if [ -f Cargo.toml ] && command -v cargo >/dev/null 2>&1; then
+            ran=1
+            cargo test --workspace --all-targets || failures=$((failures+1))
+          fi
+
+          if [ "$ran" -eq 0 ]; then
+            echo "No recognized test entrypoint discovered."
+          fi
+
+          if [ "$failures" -gt 0 ]; then
+            echo "$failures test command(s) failed."
+            exit 1
+          fi

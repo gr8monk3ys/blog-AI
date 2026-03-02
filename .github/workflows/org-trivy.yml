@@ -11,4 +11,17 @@ permissions: read-all
 
 jobs:
   trivy:
-    uses: gr8monk3ys/github/.github/workflows/reusable-trivy.yml@f5ea73a3d864afd83314aa96ea37306c0a0f16e1
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@97e0b3872f55f89b95b2f65b3dbab56962816478
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: table
+          severity: HIGH,CRITICAL
+          exit-code: '0'
+          ignore-unfixed: true

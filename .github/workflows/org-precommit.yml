@@ -11,4 +11,29 @@ permissions: read-all
 
 jobs:
   precommit:
-    uses: gr8monk3ys/github/.github/workflows/reusable-precommit.yml@f5ea73a3d864afd83314aa96ea37306c0a0f16e1
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      - name: Setup Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+
+      - name: Check pre-commit config exists
+        id: cfg
+        run: |
+          if [ -f .pre-commit-config.yaml ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run pre-commit
+        if: steps.cfg.outputs.present == 'true'
+        uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd
+
+      - name: Skip when no config
+        if: steps.cfg.outputs.present != 'true'
+        run: echo "No .pre-commit-config.yaml found; skipping."

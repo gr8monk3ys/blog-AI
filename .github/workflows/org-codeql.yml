@@ -14,4 +14,18 @@ permissions:
 
 jobs:
   codeql:
-    uses: gr8monk3ys/github/.github/workflows/reusable-codeql.yml@f5ea73a3d864afd83314aa96ea37306c0a0f16e1
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@45580472a5bb82c4681c4ac726cfdb60060c2ee1
+        with:
+          languages: python,javascript-typescript
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@45580472a5bb82c4681c4ac726cfdb60060c2ee1
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@45580472a5bb82c4681c4ac726cfdb60060c2ee1
