@@ -63,11 +63,7 @@ jobs:
 
           if [ "$py_tests" -eq 1 ]; then
             ran=1
-            if python - <<'PY'
-import importlib.util, sys
-sys.exit(0 if importlib.util.find_spec("pytest") else 1)
-PY
-            then
+            if python -c 'import importlib.util,sys; sys.exit(0 if importlib.util.find_spec("pytest") else 1)'; then
               pytest -q || failures=$((failures+1))
             else
               echo "Skipping pytest (pytest not available; dependency install is disabled in this workflow)."
