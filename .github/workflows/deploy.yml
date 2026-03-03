@@ -128,7 +128,7 @@ jobs:
       - name: Deploy to Vercel
         if: steps.vercel-preflight.outputs.can_deploy == 'true'
         id: vercel
-        uses: amondnet/vercel-action@16e87c0a08142b0d0d33b76aeaf20823c381b9b9
+        uses: amondnet/vercel-action@888da851026e0573da056b061931bcb765a915c4
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
