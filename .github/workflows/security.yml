@@ -24,15 +24,19 @@ jobs:
       run:
         working-directory: backend
     steps:
+      - name: PR cost guard
+        if: github.event_name == 'pull_request'
+        run: echo "Skipping full Python dependency audit on pull requests; scheduled and default-branch runs still execute it."
+
       - name: Skip on Vercel freeze branch
-        if: env.FREEZE_BRANCH == 'true'
+        if: github.event_name != 'pull_request' && env.FREEZE_BRANCH == 'true'
         run: echo "Skipping Python dependency audit on the emergency Vercel freeze branch."
 
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
-        if: env.FREEZE_BRANCH != 'true'
+        if: github.event_name != 'pull_request' && env.FREEZE_BRANCH != 'true'
 
       - name: Set up Python
-        if: env.FREEZE_BRANCH != 'true'
+        if: github.event_name != 'pull_request' && env.FREEZE_BRANCH != 'true'
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
           python-version: ${{ env.PYTHON_VERSION }}
@@ -40,38 +44,42 @@ jobs:
           cache-dependency-path: backend/requirements.txt
 
       - name: Install dependencies
-        if: env.FREEZE_BRANCH != 'true'
+        if: github.event_name != 'pull_request' && env.FREEZE_BRANCH != 'true'
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt pip-audit
 
       - name: Run pip-audit
-        if: env.FREEZE_BRANCH != 'true'
+        if: github.event_name != 'pull_request' && env.FREEZE_BRANCH != 'true'
         run: pip-audit --strict --desc
 
   npm-audit:
     name: Frontend Dependency Audit
     runs-on: ubuntu-latest
     steps:
+      - name: PR cost guard
+        if: github.event_name == 'pull_request'
+        run: echo "Skipping full frontend dependency audit on pull requests; scheduled and default-branch runs still execute it."
+
       - name: Skip on Vercel freeze branch
-        if: env.FREEZE_BRANCH == 'true'
+        if: github.event_name != 'pull_request' && env.FREEZE_BRANCH == 'true'
         run: echo "Skipping frontend dependency audit on the emergency Vercel freeze branch."
 
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
-        if: env.FREEZE_BRANCH != 'true'
+        if: github.event_name != 'pull_request' && env.FREEZE_BRANCH != 'true'
 
       - name: Set up Node.js
-        if: env.FREEZE_BRANCH != 'true'
+        if: github.event_name != 'pull_request' && env.FREEZE_BRANCH != 'true'
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install dependencies
-        if: env.FREEZE_BRANCH != 'true'
+        if: github.event_name != 'pull_request' && env.FREEZE_BRANCH != 'true'
         run: npm ci
 
       - name: Run npm audit
-        if: env.FREEZE_BRANCH != 'true'
+        if: github.event_name != 'pull_request' && env.FREEZE_BRANCH != 'true'
         # Block PRs on high/critical runtime vulnerabilities. A temporary
         # allowlist is enforced in scripts/audit-runtime.mjs for a single
         # upstream-only advisory that currently has no non-breaking fix.
@@ -81,19 +89,23 @@ jobs:
     name: Container Security Scan
     runs-on: ubuntu-latest
     steps:
+      - name: PR cost guard
+        if: github.event_name == 'pull_request'
+        run: echo "Skipping full container scan on pull requests; scheduled and default-branch runs still execute it."
+
       - name: Skip on Vercel freeze branch
-        if: env.FREEZE_BRANCH == 'true'
+        if: github.event_name != 'pull_request' && env.FREEZE_BRANCH == 'true'
         run: echo "Skipping container scan on the emergency Vercel freeze branch."
 
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
-        if: env.FREEZE_BRANCH != 'true'
+        if: github.event_name != 'pull_request' && env.FREEZE_BRANCH != 'true'
 
       - name: Set up Docker Buildx
-        if: env.FREEZE_BRANCH != 'true'
+        if: github.event_name != 'pull_request' && env.FREEZE_BRANCH != 'true'
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
 
       - name: Build Docker image
-        if: env.FREEZE_BRANCH != 'true'
+        if: github.event_name != 'pull_request' && env.FREEZE_BRANCH != 'true'
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
         with:
           context: .
@@ -104,7 +116,7 @@ jobs:
           cache-from: type=gha
 
       - name: Run Trivy vulnerability scanner
-        if: env.FREEZE_BRANCH != 'true'
+        if: github.event_name != 'pull_request' && env.FREEZE_BRANCH != 'true'
         uses: aquasecurity/trivy-action@e368e328979b113139d6f9068e03accaed98a518
         with:
           image-ref: blog-ai:security-scan

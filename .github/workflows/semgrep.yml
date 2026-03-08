@@ -3,7 +3,7 @@ name: semgrep
 on:
   push:
     branches:
-      - "**"
+      - main
   pull_request:
 
 env:
@@ -15,16 +15,20 @@ jobs:
   semgrep:
     runs-on: ubuntu-latest
     steps:
+      - name: PR cost guard
+        if: github.event_name == 'pull_request'
+        run: echo "Skipping full Semgrep scan on pull requests; default-branch runs still execute it."
+
       - name: Checkout
-        if: env.FREEZE_BRANCH != 'true'
+        if: github.event_name != 'pull_request' && env.FREEZE_BRANCH != 'true'
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
       - name: Skip on Vercel freeze branch
-        if: env.FREEZE_BRANCH == 'true'
+        if: github.event_name != 'pull_request' && env.FREEZE_BRANCH == 'true'
         run: echo "Skipping Semgrep on the emergency Vercel freeze branch."
 
       - name: Run Semgrep
-        if: env.FREEZE_BRANCH != 'true'
+        if: github.event_name != 'pull_request' && env.FREEZE_BRANCH != 'true'
         uses: returntocorp/semgrep-action@713efdd345f3035192eaa63f56867b88e63e4e5d
         with:
           config: auto

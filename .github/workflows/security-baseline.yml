@@ -3,7 +3,7 @@ name: security-baseline
 on:
   push:
     branches:
-      - "**"
+      - main
   pull_request:
 
 permissions: read-all

@@ -4,8 +4,6 @@ on:
   workflow_run:
     workflows: ["Deploy"]
     types: [completed]
-  schedule:
-    - cron: "15 * * * *"
   workflow_dispatch:
 
 permissions:

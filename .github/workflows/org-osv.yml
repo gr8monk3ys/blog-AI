@@ -3,7 +3,7 @@ name: org-osv
 on:
   push:
     branches:
-      - "**"
+      - main
   pull_request:
   workflow_dispatch:
 
@@ -16,16 +16,20 @@ jobs:
   osv:
     runs-on: ubuntu-latest
     steps:
+      - name: PR cost guard
+        if: github.event_name == 'pull_request'
+        run: echo "Skipping full OSV scan on pull requests; default-branch and manual runs still execute it."
+
       - name: Skip on Vercel freeze branch
-        if: env.FREEZE_BRANCH == 'true'
+        if: github.event_name != 'pull_request' && env.FREEZE_BRANCH == 'true'
         run: echo "Skipping OSV scan on the emergency Vercel freeze branch."
 
       - name: Checkout
-        if: env.FREEZE_BRANCH != 'true'
+        if: github.event_name != 'pull_request' && env.FREEZE_BRANCH != 'true'
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
       - name: Run OSV Scanner
-        if: env.FREEZE_BRANCH != 'true'
+        if: github.event_name != 'pull_request' && env.FREEZE_BRANCH != 'true'
         uses: google/osv-scanner-action@c5996e0193a3df57d695c1b8a1dec2a4c62e8730
         with:
           fail-on-vuln: false

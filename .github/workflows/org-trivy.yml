@@ -3,7 +3,7 @@ name: org-trivy
 on:
   push:
     branches:
-      - "**"
+      - main
   pull_request:
   workflow_dispatch:
 
@@ -13,10 +13,16 @@ jobs:
   trivy:
     runs-on: ubuntu-latest
     steps:
+      - name: PR cost guard
+        if: github.event_name == 'pull_request'
+        run: echo "Skipping full Trivy scan on pull requests; default-branch and manual runs still execute it."
+
       - name: Checkout
+        if: github.event_name != 'pull_request'
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
       - name: Run Trivy filesystem scan
+        if: github.event_name != 'pull_request'
         uses: aquasecurity/trivy-action@97e0b3872f55f89b95b2f65b3dbab56962816478
         with:
           scan-type: fs

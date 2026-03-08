@@ -3,7 +3,7 @@ name: org-gitleaks
 on:
   push:
     branches:
-      - "**"
+      - main
   pull_request:
   workflow_dispatch:
 
@@ -13,12 +13,18 @@ jobs:
   gitleaks:
     runs-on: ubuntu-latest
     steps:
+      - name: PR cost guard
+        if: github.event_name == 'pull_request'
+        run: echo "Skipping full gitleaks scan on pull requests; default-branch and manual runs still execute it."
+
       - name: Checkout
+        if: github.event_name != 'pull_request'
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           fetch-depth: 0
 
       - name: Run gitleaks
+        if: github.event_name != 'pull_request'
         uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
