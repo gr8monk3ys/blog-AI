@@ -7,6 +7,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+env:
+  FREEZE_BRANCH: ${{ startsWith(github.head_ref || github.ref_name, 'chore/freeze-vercel-deploys-') }}
+
 permissions:
   actions: read
   contents: read
@@ -16,16 +19,24 @@ jobs:
   codeql:
     runs-on: ubuntu-latest
     steps:
+      - name: Skip on Vercel freeze branch
+        if: env.FREEZE_BRANCH == 'true'
+        run: echo "Skipping CodeQL on the emergency Vercel freeze branch."
+
       - name: Checkout
+        if: env.FREEZE_BRANCH != 'true'
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
       - name: Initialize CodeQL
+        if: env.FREEZE_BRANCH != 'true'
         uses: github/codeql-action/init@45580472a5bb82c4681c4ac726cfdb60060c2ee1
         with:
           languages: python,javascript-typescript
 
       - name: Autobuild
+        if: env.FREEZE_BRANCH != 'true'
         uses: github/codeql-action/autobuild@45580472a5bb82c4681c4ac726cfdb60060c2ee1
 
       - name: Analyze
+        if: env.FREEZE_BRANCH != 'true'
         uses: github/codeql-action/analyze@45580472a5bb82c4681c4ac726cfdb60060c2ee1

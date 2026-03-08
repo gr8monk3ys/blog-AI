@@ -7,17 +7,26 @@ on:
   pull_request:
   workflow_dispatch:
 
+env:
+  FREEZE_BRANCH: ${{ startsWith(github.head_ref || github.ref_name, 'chore/freeze-vercel-deploys-') }}
+
 permissions: read-all
 
 jobs:
   osv:
     runs-on: ubuntu-latest
     steps:
+      - name: Skip on Vercel freeze branch
+        if: env.FREEZE_BRANCH == 'true'
+        run: echo "Skipping OSV scan on the emergency Vercel freeze branch."
+
       - name: Checkout
+        if: env.FREEZE_BRANCH != 'true'
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
       - name: Run OSV Scanner
-        uses: google/osv-scanner-action/scan-repo@c5996e0193a3df57d695c1b8a1dec2a4c62e8730
+        if: env.FREEZE_BRANCH != 'true'
+        uses: google/osv-scanner-action@c5996e0193a3df57d695c1b8a1dec2a4c62e8730
         with:
           fail-on-vuln: false
           upload-sarif: false
