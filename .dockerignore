@@ -1,27 +1,16 @@
-# =============================================================================
-# Docker Ignore File for Blog AI
-# Excludes files from Docker build context for faster builds and smaller images
-# =============================================================================
-
-# -----------------------------------------------------------------------------
 # Git
-# -----------------------------------------------------------------------------
 .git
 .gitignore
 .gitattributes
 .github
 
-# -----------------------------------------------------------------------------
-# Docker (prevent recursive inclusion)
-# -----------------------------------------------------------------------------
+# Docker
 Dockerfile
 Dockerfile.*
 docker-compose*.yml
 .dockerignore
 
-# -----------------------------------------------------------------------------
-# Environment and Secrets (CRITICAL - never include in images)
-# -----------------------------------------------------------------------------
+# Environment and secrets
 .env
 .env.*
 !.env.example
@@ -32,9 +21,7 @@ secrets/
 credentials/
 *.secret
 
-# -----------------------------------------------------------------------------
 # Python
-# -----------------------------------------------------------------------------
 __pycache__/
 *.py[cod]
 *$py.class
@@ -56,7 +43,6 @@ wheels/
 *.egg
 MANIFEST
 
-# Virtual environments
 venv/
 .venv/
 ENV/
@@ -65,7 +51,6 @@ env/
 env.bak/
 venv.bak/
 
-# Testing and coverage
 .pytest_cache/
 .coverage
 .coverage.*
@@ -77,18 +62,14 @@ coverage.xml
 *.py,cover
 .hypothesis/
 
-# Type checking
 .mypy_cache/
 .dmypy.json
 dmypy.json
 .pytype/
 
-# Profiling
 *.prof
 
-# -----------------------------------------------------------------------------
-# Node.js / Frontend
-# -----------------------------------------------------------------------------
+# Node / web
 node_modules/
 .next/
 out/
@@ -96,30 +77,17 @@ out/
 coverage/
 .turbo/
 playwright-report/
+apps/web/.next/
+apps/web/out/
+apps/web/coverage/
+apps/web/playwright-report/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+bun-debug.log*
 
-frontend/node_modules/
-frontend/.next/
-frontend/out/
-frontend/.cache/
-frontend/coverage/
-frontend/.turbo/
-
-# Package manager logs
-frontend/npm-debug.log*
-frontend/yarn-debug.log*
-frontend/yarn-error.log*
-frontend/.pnpm-debug.log*
-frontend/bun-debug.log*
-
-# Next.js specific
-frontend/.next/cache/
-
-# Storybook
-frontend/storybook-static/
-
-# -----------------------------------------------------------------------------
-# IDE and Editors
-# -----------------------------------------------------------------------------
+# Editors
 .idea/
 .vscode/
 *.swp
@@ -136,13 +104,10 @@ frontend/storybook-static/
 .tmproject
 .tm_properties
 
-# JetBrains
 *.iml
 .idea/
 
-# -----------------------------------------------------------------------------
-# Operating System
-# -----------------------------------------------------------------------------
+# OS
 .DS_Store
 .DS_Store?
 ._*
@@ -152,40 +117,21 @@ ehthumbs.db
 Thumbs.db
 Desktop.ini
 
-# -----------------------------------------------------------------------------
-# Testing and Development
-# -----------------------------------------------------------------------------
-tests/
-test/
-*_test.py
-test_*.py
+# Tests and development artifacts
 *.test.ts
 *.test.tsx
 *.spec.ts
 *.spec.tsx
-__tests__/
-__mocks__/
-
-# Fixtures and test data
-fixtures/
-test-data/
 test-results/
 
-# -----------------------------------------------------------------------------
-# Documentation (not needed in runtime)
-# -----------------------------------------------------------------------------
+# Docs
 docs/
 *.md
 !README.md
 LICENSE
-CHANGELOG*
-CONTRIBUTING*
-AUTHORS
 CODEOWNERS
 
-# -----------------------------------------------------------------------------
-# CI/CD Configuration
-# -----------------------------------------------------------------------------
+# CI
 .circleci/
 .travis.yml
 .gitlab-ci.yml
@@ -194,9 +140,7 @@ Jenkinsfile
 .github/workflows/
 bitbucket-pipelines.yml
 
-# -----------------------------------------------------------------------------
-# Miscellaneous
-# -----------------------------------------------------------------------------
+# Misc
 *.log
 *.logs
 logs/
@@ -206,12 +150,10 @@ tmp/
 temp/
 cache/
 
-# Build artifacts
 *.tar
 *.tar.gz
 *.zip
 
-# Backup files
 *.bak
 *.backup
 *~
