@@ -72,8 +72,11 @@ vi.mock('@clerk/nextjs', () => ({
   SignedIn: ({ children }: { children: ReactNode }) => <>{children}</>,
   SignedOut: ({ children }: { children: ReactNode }) => <>{children}</>,
   UserButton: () => <div data-testid="clerk-user-button" />,
+  SignIn: () => <div data-testid="clerk-sign-in" />,
+  SignUp: () => <div data-testid="clerk-sign-up" />,
   useUser: () => ({ isSignedIn: true, user: { id: 'test-user' } }),
   useAuth: () => ({
+    isLoaded: true,
     isSignedIn: true,
     userId: 'test-user',
     getToken: vi.fn().mockResolvedValue('mock-token'),
