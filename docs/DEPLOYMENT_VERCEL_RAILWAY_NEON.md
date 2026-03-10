@@ -19,14 +19,14 @@ Run migrations from your machine (or CI) using the direct URL:
 
 ```bash
 export DATABASE_URL_DIRECT="postgresql://user:password@host/db?sslmode=require"
-bun run db:migrate
+npm run db:migrate
 ```
 
 This applies `db/migrations/*.sql` and records applied files in `schema_migrations`.
 
 ## 3. Deploy Backend to Railway
 
-1. Create a new Railway service from the `backend/` directory.
+1. Create a new Railway service from the `apps/api/` directory.
 2. Set Railway environment variables:
    - `ENVIRONMENT=production`
    - `DATABASE_URL_DIRECT=...` (or `DATABASE_URL=...`)
@@ -41,7 +41,7 @@ This applies `db/migrations/*.sql` and records applied files in `schema_migratio
 
 ## 4. Deploy Frontend to Vercel
 
-1. Import the repo in Vercel and deploy the Next.js app (project root).
+1. Import the repo in Vercel and deploy from the repo root; the build is delegated to `apps/web`.
 2. Set Vercel environment variables:
    - `NEXT_PUBLIC_API_URL=https://<your-railway-domain>`
    - `NEXT_PUBLIC_WS_URL=wss://<your-railway-domain>` (optional; falls back from API URL)
@@ -63,4 +63,3 @@ Make sure the backend can validate tokens by setting:
 1. Vercel: visit `/history` and generate a tool output; confirm it appears in history (DB write).
 2. Vercel: visit `/analytics`; confirm charts load (backend reads from DB).
 3. Railway: hit `/health` and confirm DB connectivity is reported healthy when configured.
-
