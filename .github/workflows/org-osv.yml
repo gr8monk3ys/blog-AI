@@ -13,11 +13,7 @@ jobs:
   osv:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
-
-      - name: Run OSV Scanner
-        uses: google/osv-scanner-action@v2.3.3
-        with:
-          fail-on-vuln: false
-          upload-sarif: false
+      - name: Skip duplicate OSV wrapper
+        run: |
+          echo "Repository security coverage already runs in Security Audit."
+          echo "This org-level wrapper is kept as a compatibility check only."
