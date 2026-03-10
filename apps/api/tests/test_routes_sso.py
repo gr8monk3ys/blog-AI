@@ -18,6 +18,7 @@ import hashlib
 import secrets
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
+from urllib.parse import urlparse
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -221,7 +222,7 @@ class TestSAMLLogin:
             )
 
         assert response.status_code == 302
-        assert "idp.example.com" in response.headers["location"]
+        assert urlparse(response.headers["location"]).netloc == "idp.example.com"
 
     def test_saml_login_sets_auth_session_cookie(
         self, client, mock_sso_config_saml
@@ -500,7 +501,10 @@ class TestOIDCAuthorize:
             )
 
         assert response.status_code == 302
-        assert "accounts.google.com" in response.headers["location"]
+        assert (
+            urlparse(response.headers["location"]).netloc
+            == "accounts.google.com"
+        )
 
     def test_oidc_authorize_not_configured_returns_404(self, client):
         """OIDC authorize returns 404 when not configured."""

@@ -248,9 +248,7 @@ const BlogAIContent = {
         <strong>Generate with Blog AI</strong>
         <button class="blogai-menu-close" aria-label="Close menu">&times;</button>
       </div>
-      <div class="blogai-menu-preview">
-        "${this.truncateText(text, 100)}"
-      </div>
+      <div class="blogai-menu-preview"></div>
       <div class="blogai-menu-actions" role="group">
         ${actions.map(action => `
           <button
@@ -264,6 +262,11 @@ const BlogAIContent = {
         `).join('')}
       </div>
     `
+
+    const preview = menu.querySelector('.blogai-menu-preview')
+    if (preview) {
+      preview.textContent = `"${this.truncateText(text, 100)}"`
+    }
 
     // Position menu in center of viewport
     document.body.appendChild(menu)
