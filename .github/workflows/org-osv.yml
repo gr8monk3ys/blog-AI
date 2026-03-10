@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
       - name: Run OSV Scanner
-        uses: google/osv-scanner-action/scan-repo@c5996e0193a3df57d695c1b8a1dec2a4c62e8730
+        uses: google/osv-scanner-action@v2.3.3
         with:
           fail-on-vuln: false
           upload-sarif: false
