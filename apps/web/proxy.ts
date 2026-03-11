@@ -55,7 +55,7 @@ const configuredClerkMiddleware = clerkMiddleware(async (auth, req) => {
 
 export default function proxy(req: NextRequest, event: NextFetchEvent) {
   if (!hasValidClerkConfig) {
-    if (isProtectedRoute(req)) {
+    if (isProduction && isProtectedRoute(req)) {
       const authUrl = new URL('/auth', req.url)
       authUrl.searchParams.set('reason', 'auth-not-configured')
       return NextResponse.redirect(authUrl)
