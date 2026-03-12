@@ -16,6 +16,8 @@ const isVercelProductionBuild =
   process.env.NODE_ENV === 'production' &&
   isDeployBuild &&
   process.env.VERCEL_ENV === 'production'
+const useStrictScriptCsp =
+  process.env.VERCEL_ENV === 'production' || process.env.ENFORCE_STRICT_CSP === '1'
 
 if (isVercelProductionBuild) {
   if (!process.env.NEXT_PUBLIC_API_URL) {
@@ -109,6 +111,7 @@ const securityHeaders = [
       [
         "script-src 'self'",
         isDev ? "'unsafe-eval'" : '',
+        useStrictScriptCsp ? '' : "'unsafe-inline'",
         'https://*.clerk.accounts.dev',
         'https://cdn.clerk.io',
         'https://challenges.cloudflare.com',
@@ -220,6 +223,17 @@ const nextConfig = {
         ],
       },
     ]
+  },
+
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: '/',
+          destination: '/home.html',
+        },
+      ],
+    }
   },
 
   // Webpack configuration for production optimizations

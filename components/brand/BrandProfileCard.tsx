@@ -1,7 +1,7 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import { BrandProfile, INDUSTRIES } from '../../types/brand'
+import { m } from 'framer-motion'
+import { INDUSTRIES, type BrandProfile } from '../../types/brand'
 import {
   CheckCircleIcon,
   StarIcon,
@@ -30,7 +30,7 @@ export default function BrandProfileCard({
     : null
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
@@ -166,6 +166,6 @@ export default function BrandProfileCard({
           </button>
         )}
       </div>
-    </motion.div>
+    </m.div>
   )
 }

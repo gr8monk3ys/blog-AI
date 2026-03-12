@@ -41,6 +41,7 @@ export default function SiteFooter(): React.ReactElement {
                   <li key={link.href}>
                     <Link
                       href={link.href}
+                      prefetch={false}
                       className="text-sm text-gray-500 dark:text-gray-400 hover:text-amber-600 transition-colors"
                     >
                       {link.label}
@@ -54,10 +55,10 @@ export default function SiteFooter(): React.ReactElement {
 
         {/* Bottom bar */}
         <div className="mt-10 pt-6 border-t border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-gray-400 dark:text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             &copy; {new Date().getFullYear()} Blog AI. All rights reserved.
           </p>
-          <p className="text-xs text-gray-400 dark:text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Powered by GPT-4, Claude &amp; Gemini
           </p>
         </div>

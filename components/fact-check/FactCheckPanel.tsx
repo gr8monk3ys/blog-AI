@@ -7,6 +7,43 @@ interface FactCheckPanelProps {
   result: FactCheckResult
 }
 
+function toKeyedStrings(values: string[], prefix: string) {
+  const counts = new Map<string, number>()
+
+  return values.map((value) => {
+    const normalized = value.trim() || 'item'
+    const baseKey = `${prefix}-${normalized}`
+    const seen = counts.get(baseKey) ?? 0
+    counts.set(baseKey, seen + 1)
+
+    return {
+      key: seen === 0 ? baseKey : `${baseKey}-${seen + 1}`,
+      value,
+    }
+  })
+}
+
+function toKeyedClaims(claims: FactCheckResult['claims']) {
+  const counts = new Map<string, number>()
+
+  return claims.map((claim) => {
+    const baseKey = [
+      'claim',
+      claim.status,
+      claim.text.trim() || 'untitled',
+      claim.explanation?.trim() || 'no-explanation',
+      claim.supporting_sources.join('|') || 'no-sources',
+    ].join('-')
+    const seen = counts.get(baseKey) ?? 0
+    counts.set(baseKey, seen + 1)
+
+    return {
+      key: seen === 0 ? baseKey : `${baseKey}-${seen + 1}`,
+      claim,
+    }
+  })
+}
+
 const STATUS_CONFIG: Record<VerificationStatus, { label: string; color: string; bg: string }> = {
   verified: {
     label: 'Verified',
@@ -50,7 +87,8 @@ function ConfidenceBar({ confidence }: { confidence: number }) {
 }
 
 export default function FactCheckPanel({ result }: FactCheckPanelProps) {
-  const [expandedClaim, setExpandedClaim] = useState<number | null>(null)
+  const [expandedClaim, setExpandedClaim] = useState<string | null>(null)
+  const keyedClaims = toKeyedClaims(result.claims)
 
   const overallPercent = Math.round(result.overall_confidence * 100)
   const overallColor =
@@ -104,18 +142,19 @@ export default function FactCheckPanel({ result }: FactCheckPanelProps) {
           <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
             Claims ({result.claims.length})
           </h4>
-          {result.claims.map((claim, idx) => {
+          {keyedClaims.map(({ key, claim }) => {
             const config = STATUS_CONFIG[claim.status]
-            const isExpanded = expandedClaim === idx
+            const isExpanded = expandedClaim === key
+            const sources = toKeyedStrings(claim.supporting_sources, 'source')
 
             return (
               <div
-                key={idx}
+                key={key}
                 className="border border-gray-100 dark:border-gray-800 rounded-lg overflow-hidden"
               >
                 <button
                   type="button"
-                  onClick={() => setExpandedClaim(isExpanded ? null : idx)}
+                  onClick={() => setExpandedClaim(isExpanded ? null : key)}
                   className="w-full text-left px-3 py-2.5 flex items-start gap-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                 >
                   <span
@@ -147,12 +186,12 @@ export default function FactCheckPanel({ result }: FactCheckPanelProps) {
                           Sources:
                         </p>
                         <ul className="mt-1 space-y-0.5">
-                          {claim.supporting_sources.map((src, sIdx) => (
+                          {sources.map((src) => (
                             <li
-                              key={sIdx}
+                              key={src.key}
                               className="text-xs text-gray-500 dark:text-gray-400 truncate"
                             >
-                              {src}
+                              {src.value}
                             </li>
                           ))}
                         </ul>

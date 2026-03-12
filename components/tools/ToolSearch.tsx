@@ -1,7 +1,7 @@
 'use client'
 
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline'
-import { motion, AnimatePresence } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 
 interface ToolSearchProps {
   searchQuery: string
@@ -39,7 +39,7 @@ export default function ToolSearch({
         />
         <AnimatePresence>
           {searchQuery && (
-            <motion.button
+            <m.button
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
@@ -49,7 +49,7 @@ export default function ToolSearch({
               aria-label="Clear search"
             >
               <XMarkIcon className="h-5 w-5" aria-hidden="true" />
-            </motion.button>
+            </m.button>
           )}
         </AnimatePresence>
       </div>
@@ -57,7 +57,7 @@ export default function ToolSearch({
       {/* Result count indicator - with aria-live for screen reader announcements */}
       <AnimatePresence>
         {searchQuery && resultCount !== undefined && (
-          <motion.p
+          <m.p
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
@@ -73,7 +73,7 @@ export default function ToolSearch({
                 &ldquo;{searchQuery}&rdquo;
               </span>
             )}
-          </motion.p>
+          </m.p>
         )}
       </AnimatePresence>
     </div>

@@ -30,8 +30,8 @@ const getWsProtocol = (apiUrl: string): string => {
 // In production without the env var, warn loudly but fall back to localhost
 // so that `npm run build` still works locally.
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (() => {
-  if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined') {
-    console.error(
+  if (process.env.NODE_ENV !== 'production' && typeof window !== 'undefined') {
+    console.warn(
       '[api] NEXT_PUBLIC_API_URL is not set. ' +
       'API calls will fail. Set it to your backend URL (e.g. https://api.blogai.com).'
     )

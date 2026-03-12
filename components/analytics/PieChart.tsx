@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { motion } from 'framer-motion'
+import { LazyMotion, domAnimation, m } from 'framer-motion'
 import type { CategoryBreakdown } from '../../types/analytics'
 
 interface PieChartProps {
@@ -106,85 +106,87 @@ export default function PieChart({
           <p className="text-gray-500">No category data available</p>
         </div>
       ) : (
-        <div className="flex flex-col items-center">
-          {/* Pie Chart SVG */}
-          <div className="relative" style={{ width: size, height: size }}>
-            <svg viewBox={`0 0 ${size} ${size}`} className="w-full h-full">
-              {slices.map((slice, i) => (
-                <motion.path
-                  key={slice.category}
-                  d={slice.path}
-                  fill={slice.color}
-                  className="cursor-pointer hover:opacity-80 transition-opacity"
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: i * 0.1, duration: 0.3 }}
-                  style={{ transformOrigin: `${size / 2}px ${size / 2}px` }}
+        <LazyMotion features={domAnimation}>
+          <div className="flex flex-col items-center">
+            {/* Pie Chart SVG */}
+            <div className="relative" style={{ width: size, height: size }}>
+              <svg viewBox={`0 0 ${size} ${size}`} className="w-full h-full">
+                {slices.map((slice, i) => (
+                  <m.path
+                    key={slice.category}
+                    d={slice.path}
+                    fill={slice.color}
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: i * 0.1, duration: 0.3 }}
+                    style={{ transformOrigin: `${size / 2}px ${size / 2}px` }}
+                  >
+                    <title>
+                      {formatCategoryLabel(slice.category)}: {slice.count} (
+                      {slice.percentage.toFixed(1)}%)
+                    </title>
+                  </m.path>
+                ))}
+
+                {/* Center circle for donut effect */}
+                <circle
+                  cx={size / 2}
+                  cy={size / 2}
+                  r={size / 4}
+                  fill="white"
+                  className="pointer-events-none"
+                />
+
+                {/* Center text */}
+                <text
+                  x={size / 2}
+                  y={size / 2 - 8}
+                  textAnchor="middle"
+                  className="fill-gray-900 font-bold"
+                  fontSize="18"
                 >
-                  <title>
-                    {formatCategoryLabel(slice.category)}: {slice.count} (
-                    {slice.percentage.toFixed(1)}%)
-                  </title>
-                </motion.path>
-              ))}
-
-              {/* Center circle for donut effect */}
-              <circle
-                cx={size / 2}
-                cy={size / 2}
-                r={size / 4}
-                fill="white"
-                className="pointer-events-none"
-              />
-
-              {/* Center text */}
-              <text
-                x={size / 2}
-                y={size / 2 - 8}
-                textAnchor="middle"
-                className="fill-gray-900 font-bold"
-                fontSize="18"
-              >
-                {data.reduce((sum, d) => sum + d.count, 0).toLocaleString()}
-              </text>
-              <text
-                x={size / 2}
-                y={size / 2 + 12}
-                textAnchor="middle"
-                className="fill-gray-500"
-                fontSize="12"
-              >
-                Total
-              </text>
-            </svg>
-          </div>
-
-          {/* Legend */}
-          <div className="mt-6 w-full">
-            <div className="grid grid-cols-2 gap-3">
-              {data.slice(0, 8).map((item, i) => (
-                <motion.div
-                  key={item.category}
-                  className="flex items-center gap-2"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 + i * 0.05 }}
+                  {data.reduce((sum, d) => sum + d.count, 0).toLocaleString()}
+                </text>
+                <text
+                  x={size / 2}
+                  y={size / 2 + 12}
+                  textAnchor="middle"
+                  className="fill-gray-500"
+                  fontSize="12"
                 >
-                  <div
-                    className="w-3 h-3 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <span className="text-sm text-gray-600 truncate">
-                    {formatCategoryLabel(item.category)}
-                  </span>
-                  <span className="text-sm font-medium text-gray-900 ml-auto">
-                    {item.percentage.toFixed(0)}%
-                  </span>
-                </motion.div>
-              ))}
+                  Total
+                </text>
+              </svg>
+            </div>
+
+            {/* Legend */}
+            <div className="mt-6 w-full">
+              <div className="grid grid-cols-2 gap-3">
+                {data.slice(0, 8).map((item, i) => (
+                  <m.div
+                    key={item.category}
+                    className="flex items-center gap-2"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + i * 0.05 }}
+                  >
+                    <div
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className="text-sm text-gray-600 truncate">
+                      {formatCategoryLabel(item.category)}
+                    </span>
+                    <span className="text-sm font-medium text-gray-900 ml-auto">
+                      {item.percentage.toFixed(0)}%
+                    </span>
+                  </m.div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        </LazyMotion>
       )}
     </div>
   )

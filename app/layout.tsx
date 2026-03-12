@@ -1,14 +1,37 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import { ClerkProvider } from '@clerk/nextjs'
-import { Providers } from './providers'
+import Script from 'next/script'
+import getBaseUrl from '../lib/site-url'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'], display: 'swap' })
+const metadataBase = new URL(getBaseUrl())
 
 export const metadata: Metadata = {
-  title: 'Blog AI Generator',
-  description: 'AI-powered blog and book content generator',
+  metadataBase,
+  title: {
+    default: 'Blog AI',
+    template: '%s | Blog AI',
+  },
+  description: 'AI tools for blog posts, books, SEO briefs, and brand voice training.',
+  applicationName: 'Blog AI',
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    type: 'website',
+    siteName: 'Blog AI',
+    url: metadataBase,
+    title: 'Blog AI',
+    description: 'Generate blog posts, books, and marketing content with AI tuned to your brand voice.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Blog AI',
+    description: 'Generate blog posts, books, and marketing content with AI tuned to your brand voice.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 }
 
 export default function RootLayout({
@@ -16,8 +39,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-
   // Inline script to prevent flash of unstyled content (FOUC) on dark mode.
   // This is a static string with no user input — safe to use dangerouslySetInnerHTML.
   const themeScript =
@@ -27,17 +48,11 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-      </head>
-      <body className={inter.className}>
-        {publishableKey ? (
-          <ClerkProvider publishableKey={publishableKey}>
-            <Providers>{children}</Providers>
-          </ClerkProvider>
-        ) : (
-          <Providers>{children}</Providers>
-        )}
+      <body className="antialiased">
+        <Script id="theme-init" strategy="beforeInteractive">
+          {themeScript}
+        </Script>
+        {children}
       </body>
     </html>
   )

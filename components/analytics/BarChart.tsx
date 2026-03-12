@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import type { ToolUsageStat } from '../../types/analytics'
 import { getCategoryColor, getCategoryBgColor } from '../../types/analytics'
 
@@ -48,7 +48,7 @@ export default function BarChart({
             const bgColor = getCategoryBgColor(item.category)
 
             return (
-              <motion.div
+              <m.div
                 key={item.toolId}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -71,7 +71,7 @@ export default function BarChart({
                   </span>
                 </div>
                 <div className="relative h-6 bg-gray-100 rounded-lg overflow-hidden">
-                  <motion.div
+                  <m.div
                     className="absolute inset-y-0 left-0 rounded-lg"
                     style={{ backgroundColor: barColor }}
                     initial={{ width: 0 }}
@@ -82,7 +82,7 @@ export default function BarChart({
                     {item.percentage.toFixed(1)}%
                   </span>
                 </div>
-              </motion.div>
+              </m.div>
             )
           })}
         </div>

@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Blog AI | AI Content Generator for Blogs, Books, and Marketing</title>
+    <meta
+      name="description"
+      content="Create SEO-oriented blogs, books, and marketing content with brand voice controls and structured AI workflows."
+    />
+    <meta name="application-name" content="Blog AI" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="http://localhost:3000/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Blog AI" />
+    <meta property="og:title" content="Blog AI | AI Content Generator for Blogs, Books, and Marketing" />
+    <meta
+      property="og:description"
+      content="Create SEO-oriented blogs, books, and marketing content with brand voice controls and structured AI workflows."
+    />
+    <meta property="og:url" content="http://localhost:3000/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Blog AI | AI Content Generator for Blogs, Books, and Marketing" />
+    <meta
+      name="twitter:description"
+      content="Create SEO-oriented blogs, books, and marketing content with brand voice controls and structured AI workflows."
+    />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #fffaf0;
+        --surface: #ffffff;
+        --border: #fed7aa;
+        --border-strong: #e4e4e7;
+        --text: #18181b;
+        --muted: #52525b;
+        --accent: #b45309;
+        --accent-soft: #9a3412;
+        --dark: #18181b;
+        --dark-text: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .shell {
+        width: min(72rem, calc(100% - 2rem));
+        margin: 0 auto;
+      }
+
+      .site-header,
+      .site-footer {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .site-footer {
+        border-top: 1px solid var(--border);
+        border-bottom: 0;
+      }
+
+      .header-row,
+      .footer-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+        padding: 1rem 0;
+      }
+
+      .brand {
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+
+      .nav a,
+      .muted-link {
+        color: #44403c;
+        font-weight: 500;
+        text-decoration: none;
+      }
+
+      .hero {
+        padding: 5rem 0 3.5rem;
+        text-align: center;
+      }
+
+      .eyebrow {
+        display: inline-block;
+        padding: 0.5rem 0.85rem;
+        border: 1px solid #fdba74;
+        border-radius: 999px;
+        background: var(--surface);
+        color: var(--accent-soft);
+        font-size: 0.95rem;
+        font-weight: 600;
+      }
+
+      h1 {
+        margin: 1rem auto 0;
+        max-width: 14ch;
+        font-size: clamp(2.5rem, 6vw, 4.5rem);
+        line-height: 1.05;
+        letter-spacing: -0.04em;
+      }
+
+      h2 {
+        margin: 0.75rem 0 0;
+        font-size: clamp(1.7rem, 4vw, 2.2rem);
+        line-height: 1.15;
+      }
+
+      .lede,
+      .feature-copy,
+      .cta-copy {
+        margin: 1.25rem auto 0;
+        max-width: 42rem;
+        color: var(--muted);
+        font-size: 1.0625rem;
+        line-height: 1.7;
+      }
+
+      .button-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.875rem;
+        margin-top: 2rem;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.9rem 1.3rem;
+        border-radius: 0.9rem;
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .button-primary {
+        background: var(--accent);
+        color: #ffffff;
+      }
+
+      .button-secondary {
+        background: var(--surface);
+        color: var(--text);
+        border: 1px solid #d4d4d8;
+      }
+
+      .section {
+        padding: 0 0 4rem;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+        gap: 1rem;
+      }
+
+      .card {
+        border: 1px solid var(--border-strong);
+        border-radius: 1.5rem;
+        background: var(--surface);
+        padding: 1.5rem;
+      }
+
+      .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+      }
+
+      .stat-label,
+      .section-label {
+        margin-top: 0.5rem;
+        color: #71717a;
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .section-label {
+        margin-top: 0;
+        color: var(--accent);
+        text-align: center;
+      }
+
+      .section-copy {
+        max-width: 42rem;
+        margin: 0 auto 2rem;
+        text-align: center;
+      }
+
+      .cta-panel {
+        border-radius: 2rem;
+        background: var(--dark);
+        color: var(--dark-text);
+        padding: 2rem;
+        text-align: center;
+      }
+
+      .cta-panel .section-label {
+        color: #fcd34d;
+      }
+
+      .cta-copy {
+        color: #d4d4d8;
+      }
+
+      .button-dark {
+        background: transparent;
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .footer-row {
+        color: #71717a;
+        font-size: 0.95rem;
+      }
+
+      @media (max-width: 640px) {
+        .header-row,
+        .footer-row {
+          justify-content: center;
+          text-align: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="shell header-row">
+        <a class="brand" href="/">Blog AI</a>
+        <nav class="nav" aria-label="Primary">
+          <a href="/tool-directory">Directory</a>
+          <a href="/blog">Blog</a>
+          <a href="/pricing">Pricing</a>
+        </nav>
+        <a class="button button-primary" href="/auth">Sign in</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="shell">
+          <p class="eyebrow">AI content workflows tuned for publishing teams</p>
+          <h1>Content systems that move faster without sounding synthetic</h1>
+          <p class="lede">
+            Blog AI helps teams train a brand voice, generate structured drafts, and publish
+            search-ready content without stitching together five separate tools.
+          </p>
+          <div class="button-row">
+            <a class="button button-primary" href="/auth">Start creating</a>
+            <a class="button button-secondary" href="/pricing">See pricing</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="shell grid">
+          <article class="card">
+            <div class="stat-value">3</div>
+            <div class="stat-label">Model providers</div>
+          </article>
+          <article class="card">
+            <div class="stat-value">50+</div>
+            <div class="stat-label">Content templates</div>
+          </article>
+          <article class="card">
+            <div class="stat-value">1</div>
+            <div class="stat-label">Editorial workspace</div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="shell">
+          <div class="section-copy">
+            <p class="section-label">Workflow Coverage</p>
+            <h2>One tool for strategy, drafting, and distribution</h2>
+            <p class="feature-copy">
+              The product is built around the actual publishing loop, not a single prompt box.
+            </p>
+          </div>
+          <div class="grid">
+            <article class="card">
+              <h3>Train a consistent voice</h3>
+              <p class="feature-copy">
+                Capture examples, editorial rules, and positioning so every draft starts closer to
+                publish-ready.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Generate structured drafts</h3>
+              <p class="feature-copy">
+                Move from topic to outline to final copy without bouncing between separate AI and
+                SEO tools.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Ship with less friction</h3>
+              <p class="feature-copy">
+                Keep templates, history, and publishing workflows in one place so your team moves
+                faster.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="shell">
+          <div class="cta-panel">
+            <p class="section-label">Ready to publish</p>
+            <h2>Start with the free tier and tighten the workflow from there</h2>
+            <p class="cta-copy">
+              The fastest way to improve editorial throughput is to remove unnecessary friction
+              from the path to a finished page.
+            </p>
+            <div class="button-row">
+              <a class="button button-primary" href="/tool-directory">Explore the tool directory</a>
+              <a class="button button-dark" href="/blog">Read the blog</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="shell footer-row">
+        <span>© 2026 Blog AI. All rights reserved.</span>
+        <span>Powered by GPT-4, Claude &amp; Gemini</span>
+      </div>
+    </footer>
+  </body>
+</html>

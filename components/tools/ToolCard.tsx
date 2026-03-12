@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { Tool, TOOL_CATEGORIES } from '../../types/tools'
+import { m } from 'framer-motion'
+import { TOOL_CATEGORIES, type Tool } from '../../types/tools'
 import {
   DocumentTextIcon,
   EnvelopeIcon,
@@ -35,7 +35,7 @@ export default function ToolCard({ tool, index = 0 }: ToolCardProps) {
   const Icon = categoryIcons[tool.category] || DocumentTextIcon
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
@@ -115,6 +115,6 @@ export default function ToolCard({ tool, index = 0 }: ToolCardProps) {
           </div>
         </div>
       </Link>
-    </motion.div>
+    </m.div>
   )
 }

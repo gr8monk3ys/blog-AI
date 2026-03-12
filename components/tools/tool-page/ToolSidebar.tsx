@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import type { Tool } from '../../../types/tools'
 
 interface ToolSidebarProps {
@@ -75,7 +75,7 @@ function RelatedToolsCard({ tools }: { tools: Tool[] }) {
  */
 export default function ToolSidebar({ relatedTools }: ToolSidebarProps) {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.2 }}
@@ -83,6 +83,6 @@ export default function ToolSidebar({ relatedTools }: ToolSidebarProps) {
     >
       <TipsCard />
       <RelatedToolsCard tools={relatedTools} />
-    </motion.div>
+    </m.div>
   )
 }

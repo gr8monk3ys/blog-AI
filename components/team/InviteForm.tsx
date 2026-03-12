@@ -11,34 +11,67 @@ interface InviteFormProps {
 
 const INVITABLE_ROLES: OrganizationRole[] = ['admin', 'member', 'viewer']
 
+interface InviteFormState {
+  email: string
+  role: OrganizationRole
+  loading: boolean
+  feedback: {
+    type: 'error' | 'success' | null
+    message: string
+  }
+}
+
 export default function InviteForm({ orgId, onInviteSent }: InviteFormProps) {
-  const [email, setEmail] = useState('')
-  const [role, setRole] = useState<OrganizationRole>('member')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  const [state, setState] = useState<InviteFormState>({
+    email: '',
+    role: 'member',
+    loading: false,
+    feedback: {
+      type: null,
+      message: '',
+    },
+  })
+
+  const { email, role, loading, feedback } = state
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email.trim()) return
 
-    setLoading(true)
-    setError(null)
-    setSuccess(false)
+    setState((current) => ({
+      ...current,
+      loading: true,
+      feedback: { type: null, message: '' },
+    }))
 
     try {
       await apiFetch(API_ENDPOINTS.organizations.invite(orgId), {
         method: 'POST',
         body: JSON.stringify({ email: email.trim(), role }),
       })
-      setEmail('')
-      setSuccess(true)
+      setState((current) => ({
+        ...current,
+        email: '',
+        loading: false,
+        feedback: { type: 'success', message: 'Invite sent!' },
+      }))
       onInviteSent()
-      setTimeout(() => setSuccess(false), 3000)
+      setTimeout(() => {
+        setState((current) =>
+          current.feedback.type === 'success'
+            ? { ...current, feedback: { type: null, message: '' } }
+            : current
+        )
+      }, 3000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send invite')
-    } finally {
-      setLoading(false)
+      setState((current) => ({
+        ...current,
+        loading: false,
+        feedback: {
+          type: 'error',
+          message: err instanceof Error ? err.message : 'Failed to send invite',
+        },
+      }))
     }
   }
 
@@ -52,7 +85,12 @@ export default function InviteForm({ orgId, onInviteSent }: InviteFormProps) {
           id="invite-email"
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) =>
+            setState((current) => ({
+              ...current,
+              email: e.target.value,
+            }))
+          }
           className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
           placeholder="colleague@company.com"
           required
@@ -66,7 +104,12 @@ export default function InviteForm({ orgId, onInviteSent }: InviteFormProps) {
         <select
           id="invite-role"
           value={role}
-          onChange={(e) => setRole(e.target.value as OrganizationRole)}
+          onChange={(e) =>
+            setState((current) => ({
+              ...current,
+              role: e.target.value as OrganizationRole,
+            }))
+          }
           className="mt-1 block rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
         >
           {INVITABLE_ROLES.map((r) => (
@@ -83,8 +126,12 @@ export default function InviteForm({ orgId, onInviteSent }: InviteFormProps) {
         {loading ? 'Sending...' : 'Send Invite'}
       </button>
 
-      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-      {success && <p className="text-sm text-emerald-600 dark:text-emerald-400">Invite sent!</p>}
+      {feedback.type === 'error' && (
+        <p className="text-sm text-red-600 dark:text-red-400">{feedback.message}</p>
+      )}
+      {feedback.type === 'success' && (
+        <p className="text-sm text-emerald-600 dark:text-emerald-400">{feedback.message}</p>
+      )}
     </form>
   )
 }

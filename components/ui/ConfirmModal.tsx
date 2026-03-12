@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useRef, useEffect, useCallback } from 'react'
+import { Fragment, useRef } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import {
   ExclamationTriangleIcon,
@@ -68,26 +68,15 @@ export default function ConfirmModal({
   const cancelButtonRef = useRef<HTMLButtonElement>(null)
   const config = variantConfig[variant]
   const Icon = config.icon
-
-  // Handle Enter key press for confirmation
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      if (event.key === 'Enter' && isOpen) {
-        event.preventDefault()
-        onConfirm()
-      }
-    },
-    [isOpen, onConfirm]
-  )
-
-  useEffect(() => {
-    if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown)
-      return () => {
-        document.removeEventListener('keydown', handleKeyDown)
-      }
+  const handlePanelKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (
+      event.key === 'Enter' &&
+      !(event.target instanceof HTMLButtonElement)
+    ) {
+      event.preventDefault()
+      onConfirm()
     }
-  }, [isOpen, handleKeyDown])
+  }
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -126,6 +115,7 @@ export default function ConfirmModal({
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel
+                onKeyDown={handlePanelKeyDown}
                 className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all"
               >
                 <div className="flex items-start gap-4">

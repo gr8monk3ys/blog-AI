@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import {
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
@@ -28,7 +28,7 @@ export default function StatCard({
   const isPositiveChange = change !== undefined && change >= 0
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-6 hover:shadow-md transition-shadow"
@@ -79,6 +79,6 @@ export default function StatCard({
           )}
         </>
       )}
-    </motion.div>
+    </m.div>
   )
 }

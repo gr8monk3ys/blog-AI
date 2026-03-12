@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { LazyMotion, domAnimation, m } from 'framer-motion'
 import {
   CheckCircleIcon,
   ExclamationCircleIcon,
@@ -57,6 +57,22 @@ interface ContentScoreProps {
   scores: ContentScoreResult
   isLoading?: boolean
   showDetails?: boolean
+}
+
+function toKeyedStrings(values: string[], prefix: string) {
+  const counts = new Map<string, number>()
+
+  return values.map((value) => {
+    const normalized = value.trim() || 'item'
+    const baseKey = `${prefix}-${normalized}`
+    const seen = counts.get(baseKey) ?? 0
+    counts.set(baseKey, seen + 1)
+
+    return {
+      key: seen === 0 ? baseKey : `${baseKey}-${seen + 1}`,
+      value,
+    }
+  })
 }
 
 function getScoreColor(level: string): string {
@@ -134,7 +150,7 @@ function CircularProgress({
             className="fill-none stroke-gray-200"
           />
           {/* Progress circle */}
-          <motion.circle
+          <m.circle
             cx={size / 2}
             cy={size / 2}
             r={radius}
@@ -190,6 +206,7 @@ function DetailSection({
   suggestions: string[]
 }) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const keyedSuggestions = toKeyedStrings(suggestions, `${title.toLowerCase()}-suggestion`)
 
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden">
@@ -214,7 +231,7 @@ function DetailSection({
       </button>
 
       {isExpanded && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
@@ -238,16 +255,16 @@ function DetailSection({
                 <span className="text-xs font-medium text-gray-700">Suggestions</span>
               </div>
               <ul className="space-y-1.5">
-                {suggestions.map((suggestion, idx) => (
-                  <li key={idx} className="text-sm text-gray-600 flex items-start gap-2">
+                {keyedSuggestions.map((suggestion) => (
+                  <li key={suggestion.key} className="text-sm text-gray-600 flex items-start gap-2">
                     <span className="text-amber-500 mt-0.5">-</span>
-                    <span>{suggestion}</span>
+                    <span>{suggestion.value}</span>
                   </li>
                 ))}
               </ul>
             </div>
           )}
-        </motion.div>
+        </m.div>
       )}
     </div>
   )
@@ -291,100 +308,103 @@ export default function ContentScore({
     { label: 'Questions', value: scores.engagement.question_count },
     { label: 'Lists', value: scores.engagement.list_count },
   ]
+  const keyedTopImprovements = toKeyedStrings(scores.top_improvements ?? [], 'top-improvement')
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="bg-white rounded-xl border border-gray-200 overflow-hidden"
-    >
-      {/* Header with overall score */}
-      <div className="p-6 border-b border-gray-200">
-        <div className="flex items-start justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">Content Score</h3>
-            <p className="mt-1 text-sm text-gray-600">{scores.summary}</p>
+    <LazyMotion features={domAnimation}>
+      <m.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="bg-white rounded-xl border border-gray-200 overflow-hidden"
+      >
+        {/* Header with overall score */}
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Content Score</h3>
+              <p className="mt-1 text-sm text-gray-600">{scores.summary}</p>
+            </div>
+            <CircularProgress
+              score={scores.overall_score}
+              level={scores.overall_level}
+              size={70}
+              strokeWidth={6}
+              label="Overall"
+            />
           </div>
-          <CircularProgress
-            score={scores.overall_score}
-            level={scores.overall_level}
-            size={70}
-            strokeWidth={6}
-            label="Overall"
-          />
-        </div>
 
-        {/* Score breakdown circles */}
-        <div className="flex justify-center gap-8 mt-6 pt-4 border-t border-gray-100">
-          <CircularProgress
-            score={scores.readability.score}
-            level={scores.readability.level}
-            size={60}
-            strokeWidth={5}
-            label="Readability"
-          />
-          <CircularProgress
-            score={scores.seo.score}
-            level={scores.seo.level}
-            size={60}
-            strokeWidth={5}
-            label="SEO"
-          />
-          <CircularProgress
-            score={scores.engagement.score}
-            level={scores.engagement.level}
-            size={60}
-            strokeWidth={5}
-            label="Engagement"
-          />
-        </div>
-      </div>
-
-      {/* Top improvements */}
-      {scores.top_improvements && scores.top_improvements.length > 0 && (
-        <div className="px-6 py-4 bg-amber-50 border-b border-amber-100">
-          <div className="flex items-center gap-2 mb-2">
-            <LightBulbIcon className="w-5 h-5 text-amber-600" />
-            <span className="font-medium text-amber-900">Priority Improvements</span>
+          {/* Score breakdown circles */}
+          <div className="flex justify-center gap-8 mt-6 pt-4 border-t border-gray-100">
+            <CircularProgress
+              score={scores.readability.score}
+              level={scores.readability.level}
+              size={60}
+              strokeWidth={5}
+              label="Readability"
+            />
+            <CircularProgress
+              score={scores.seo.score}
+              level={scores.seo.level}
+              size={60}
+              strokeWidth={5}
+              label="SEO"
+            />
+            <CircularProgress
+              score={scores.engagement.score}
+              level={scores.engagement.level}
+              size={60}
+              strokeWidth={5}
+              label="Engagement"
+            />
           </div>
-          <ul className="space-y-1.5">
-            {scores.top_improvements.map((improvement, idx) => (
-              <li key={idx} className="text-sm text-amber-800 flex items-start gap-2">
-                <span className="font-medium">{idx + 1}.</span>
-                <span>{improvement}</span>
-              </li>
-            ))}
-          </ul>
         </div>
-      )}
 
-      {/* Detailed sections */}
-      {showDetails && (
-        <div className="p-4 space-y-3">
-          <DetailSection
-            title="Readability"
-            score={scores.readability.score}
-            level={scores.readability.level}
-            metrics={readabilityMetrics}
-            suggestions={scores.readability.suggestions}
-          />
-          <DetailSection
-            title="SEO"
-            score={scores.seo.score}
-            level={scores.seo.level}
-            metrics={seoMetrics}
-            suggestions={scores.seo.suggestions}
-          />
-          <DetailSection
-            title="Engagement"
-            score={scores.engagement.score}
-            level={scores.engagement.level}
-            metrics={engagementMetrics}
-            suggestions={scores.engagement.suggestions}
-          />
-        </div>
-      )}
-    </motion.div>
+        {/* Top improvements */}
+        {keyedTopImprovements.length > 0 && (
+          <div className="px-6 py-4 bg-amber-50 border-b border-amber-100">
+            <div className="flex items-center gap-2 mb-2">
+              <LightBulbIcon className="w-5 h-5 text-amber-600" />
+              <span className="font-medium text-amber-900">Priority Improvements</span>
+            </div>
+            <ul className="space-y-1.5">
+              {keyedTopImprovements.map((improvement, idx) => (
+                <li key={improvement.key} className="text-sm text-amber-800 flex items-start gap-2">
+                  <span className="font-medium">{idx + 1}.</span>
+                  <span>{improvement.value}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Detailed sections */}
+        {showDetails && (
+          <div className="p-4 space-y-3">
+            <DetailSection
+              title="Readability"
+              score={scores.readability.score}
+              level={scores.readability.level}
+              metrics={readabilityMetrics}
+              suggestions={scores.readability.suggestions}
+            />
+            <DetailSection
+              title="SEO"
+              score={scores.seo.score}
+              level={scores.seo.level}
+              metrics={seoMetrics}
+              suggestions={scores.seo.suggestions}
+            />
+            <DetailSection
+              title="Engagement"
+              score={scores.engagement.score}
+              level={scores.engagement.level}
+              metrics={engagementMetrics}
+              suggestions={scores.engagement.suggestions}
+            />
+          </div>
+        )}
+      </m.div>
+    </LazyMotion>
   )
 }

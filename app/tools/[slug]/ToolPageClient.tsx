@@ -50,7 +50,8 @@ function getErrorStatus(error: unknown): number | undefined {
  */
 function useToolPageContentView() {
   const params = useParams()
-  const slug = params.slug as string
+  const slugParam = params?.slug
+  const slug = Array.isArray(slugParam) ? slugParam[0] ?? '' : (slugParam ?? '')
   const [fromHistoryId, setFromHistoryId] = useState<string | null>(null)
 
   useEffect(() => {

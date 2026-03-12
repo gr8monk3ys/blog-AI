@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 import { StarIcon } from '@heroicons/react/24/outline'
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid'
 import { historyApi } from '../../lib/history-api'
@@ -87,7 +87,7 @@ export default function FavoriteButton({
       >
         <AnimatePresence mode="wait">
           {isFavorite ? (
-            <motion.div
+            <m.div
               key="filled"
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -98,9 +98,9 @@ export default function FavoriteButton({
                 className={`${sizeClasses[size]} ${isLoading ? 'animate-pulse' : ''}`}
                 aria-hidden="true"
               />
-            </motion.div>
+            </m.div>
           ) : (
-            <motion.div
+            <m.div
               key="outline"
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -111,7 +111,7 @@ export default function FavoriteButton({
                 className={`${sizeClasses[size]} ${isLoading ? 'animate-pulse' : ''}`}
                 aria-hidden="true"
               />
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
 
@@ -140,7 +140,7 @@ export default function FavoriteButton({
       {/* Error tooltip */}
       <AnimatePresence>
         {error && (
-          <motion.span
+          <m.span
             initial={{ opacity: 0, x: -5 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -5 }}
@@ -148,7 +148,7 @@ export default function FavoriteButton({
             role="alert"
           >
             {error}
-          </motion.span>
+          </m.span>
         )}
       </AnimatePresence>
     </div>

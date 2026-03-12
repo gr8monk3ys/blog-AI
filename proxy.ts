@@ -1,3 +1,5 @@
+import type { NextFetchEvent, NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
 const isProtectedRoute = createRouteMatcher([
@@ -14,6 +16,9 @@ const isProtectedRoute = createRouteMatcher([
 
 const clerkEnabled = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 const isProduction = process.env.NODE_ENV === 'production'
+const isHostedProduction =
+  isProduction &&
+  (process.env.VERCEL_ENV === 'production' || process.env.ENFORCE_PROXY_AUTH_CONFIG === '1')
 const suppressAuthWarning =
   process.env.SUPPRESS_PROXY_AUTH_WARNING === '1' ||
   process.env.PLAYWRIGHT_TEST === '1'
@@ -25,21 +30,21 @@ const hasValidClerkPublishableKey =
 const hasValidClerkSecretKey =
   clerkSecretKey.startsWith('sk_test_') || clerkSecretKey.startsWith('sk_live_')
 
-if (isProduction && !clerkEnabled) {
+if (isHostedProduction && !clerkEnabled) {
   throw new Error('NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is required in production')
 }
 
-if (isProduction && !hasValidClerkPublishableKey) {
+if (isHostedProduction && !hasValidClerkPublishableKey) {
   throw new Error(
     'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY must be a valid Clerk key in production (pk_test_... or pk_live_...)'
   )
 }
 
-if (isProduction && !clerkSecretKey) {
+if (isHostedProduction && !clerkSecretKey) {
   throw new Error('CLERK_SECRET_KEY is required in production')
 }
 
-if (isProduction && !hasValidClerkSecretKey) {
+if (isHostedProduction && !hasValidClerkSecretKey) {
   throw new Error(
     'CLERK_SECRET_KEY must be a valid Clerk key in production (sk_test_... or sk_live_...)'
   )
@@ -53,12 +58,23 @@ if (!clerkEnabled && !isProduction && !suppressAuthWarning) {
   )
 }
 
-export default clerkMiddleware(async (auth, req) => {
-  if (!clerkEnabled) return
+const protectedProxy = clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {
     await auth.protect()
   }
 })
+
+function noopProxy(): NextResponse {
+  return NextResponse.next()
+}
+
+export default function proxy(req: NextRequest, event: NextFetchEvent) {
+  if (!clerkEnabled) {
+    return noopProxy()
+  }
+
+  return protectedProxy(req, event)
+}
 
 export const config = {
   matcher: [

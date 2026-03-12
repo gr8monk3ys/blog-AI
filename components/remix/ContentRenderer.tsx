@@ -7,8 +7,49 @@ interface ContentRendererProps {
   result: RemixedContent
 }
 
+function toKeyedStrings(values: string[] | undefined, prefix: string) {
+  const counts = new Map<string, number>()
+
+  return (values ?? []).map((value, order) => {
+    const normalized = value.trim() || 'item'
+    const baseKey = `${prefix}-${normalized}`
+    const seen = counts.get(baseKey) ?? 0
+    counts.set(baseKey, seen + 1)
+
+    return {
+      key: seen === 0 ? baseKey : `${baseKey}-${seen + 1}`,
+      value,
+      order,
+    }
+  })
+}
+
+function toKeyedSections(
+  sections: { title: string; content: string }[] | undefined
+) {
+  const counts = new Map<string, number>()
+
+  return (sections ?? []).map((section) => {
+    const normalizedTitle = section.title.trim() || 'section'
+    const normalizedContent = section.content.trim() || 'content'
+    const baseKey = `section-${normalizedTitle}-${normalizedContent}`
+    const seen = counts.get(baseKey) ?? 0
+    counts.set(baseKey, seen + 1)
+
+    return {
+      key: seen === 0 ? baseKey : `${baseKey}-${seen + 1}`,
+      section,
+    }
+  })
+}
+
 function ContentRendererComponent({ result }: ContentRendererProps) {
   const content = result.content as Record<string, unknown>
+  const tweets = toKeyedStrings(content.tweets as string[] | undefined, 'tweet')
+  const hashtags = toKeyedStrings(content.hashtags as string[] | undefined, 'hashtag')
+  const sections = toKeyedSections(
+    content.sections as { title: string; content: string }[] | undefined
+  )
 
   switch (result.format as ContentFormatId) {
     case 'twitter_thread':
@@ -17,19 +58,19 @@ function ContentRendererComponent({ result }: ContentRendererProps) {
           <div className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-400">
             <p className="font-medium text-blue-900">{content.hook as string}</p>
           </div>
-          {(content.tweets as string[])?.map((tweet, i) => (
-            <div key={i} className="bg-gray-50 p-3 rounded-lg">
-              <span className="text-xs text-gray-500">{i + 1}.</span>
-              <p className="mt-1">{tweet}</p>
+          {tweets.map((tweet) => (
+            <div key={tweet.key} className="bg-gray-50 p-3 rounded-lg">
+              <span className="text-xs text-gray-500">{tweet.order + 1}.</span>
+              <p className="mt-1">{tweet.value}</p>
             </div>
           ))}
           <div className="bg-green-50 p-3 rounded-lg border-l-4 border-green-400">
             <p className="font-medium text-green-900">{content.cta as string}</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            {(content.hashtags as string[])?.map((tag, i) => (
-              <span key={i} className="text-blue-500 text-sm">
-                #{tag}
+            {hashtags.map((tag) => (
+              <span key={tag.key} className="text-blue-500 text-sm">
+                #{tag.value}
               </span>
             ))}
           </div>
@@ -43,9 +84,9 @@ function ContentRendererComponent({ result }: ContentRendererProps) {
           <div className="whitespace-pre-wrap">{content.body as string}</div>
           <p className="font-medium text-blue-600">{content.cta as string}</p>
           <div className="flex flex-wrap gap-2">
-            {(content.hashtags as string[])?.map((tag, i) => (
-              <span key={i} className="text-blue-500 text-sm">
-                #{tag}
+            {hashtags.map((tag) => (
+              <span key={tag.key} className="text-blue-500 text-sm">
+                #{tag.value}
               </span>
             ))}
           </div>
@@ -61,14 +102,12 @@ function ContentRendererComponent({ result }: ContentRendererProps) {
           </div>
           <p className="italic text-gray-600">{content.greeting as string}</p>
           <p>{content.intro as string}</p>
-          {(content.sections as { title: string; content: string }[])?.map(
-            (section, i) => (
-              <div key={i} className="border-l-2 border-gray-200 pl-4">
-                <h4 className="font-medium">{section.title}</h4>
-                <p className="text-gray-700">{section.content}</p>
-              </div>
-            )
-          )}
+          {sections.map(({ key, section }) => (
+            <div key={key} className="border-l-2 border-gray-200 pl-4">
+              <h4 className="font-medium">{section.title}</h4>
+              <p className="text-gray-700">{section.content}</p>
+            </div>
+          ))}
           <p className="font-medium text-blue-600">{content.cta as string}</p>
           <p className="text-gray-500">{content.signoff as string}</p>
         </div>

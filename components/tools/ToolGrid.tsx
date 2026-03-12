@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 import ToolCard from './ToolCard'
 import ToolSearch from './ToolSearch'
 import CategoryFilter from './CategoryFilter'
@@ -26,10 +26,9 @@ export default function ToolGrid({
   initialCategory = 'all',
 }: ToolGridProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<ToolCategory | 'all'>(
-    initialCategory
-  )
+  const [selectedCategoryOverride, setSelectedCategoryOverride] = useState<ToolCategory | 'all' | null>(null)
   const [showFreeOnly, setShowFreeOnly] = useState(false)
+  const selectedCategory = selectedCategoryOverride ?? initialCategory
 
   // Filter tools based on search, category, and free filter
   const filteredTools = useMemo(() => {
@@ -109,7 +108,7 @@ export default function ToolGrid({
             <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
               <CategoryFilter
                 selectedCategory={selectedCategory}
-                onCategoryChange={setSelectedCategory}
+                onCategoryChange={setSelectedCategoryOverride}
                 toolCounts={toolCounts}
               />
 
@@ -145,7 +144,7 @@ export default function ToolGrid({
       {/* Tools grid */}
       <AnimatePresence mode="wait">
         {sortedTools.length > 0 ? (
-          <motion.div
+          <m.div
             key="grid"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -155,9 +154,9 @@ export default function ToolGrid({
             {sortedTools.map((tool, index) => (
               <ToolCard key={tool.id} tool={tool} index={index} />
             ))}
-          </motion.div>
+          </m.div>
         ) : (
-          <motion.div
+          <m.div
             key="empty"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -178,14 +177,14 @@ export default function ToolGrid({
               type="button"
               onClick={() => {
                 setSearchQuery('')
-                setSelectedCategory('all')
+                setSelectedCategoryOverride('all')
                 setShowFreeOnly(false)
               }}
               className="mt-4 inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-colors"
             >
               Clear all filters
             </button>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

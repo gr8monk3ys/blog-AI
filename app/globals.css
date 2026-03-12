@@ -29,7 +29,22 @@
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(120deg, rgb(var(--background-start-rgb)) 0%, rgb(var(--background-end-rgb)) 70%);
-  font-family: "SF Pro Text", "Inter", system-ui, -apple-system, sans-serif;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .font-serif {
@@ -42,31 +57,4 @@ body {
   box-shadow: var(--glass-shadow);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-}
-
-/* Common dark-mode-aware utility patterns */
-@layer components {
-  .page-gradient {
-    @apply bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900;
-  }
-
-  .card-surface {
-    @apply bg-white border border-gray-200 dark:bg-gray-900 dark:border-gray-800;
-  }
-
-  .input-surface {
-    @apply bg-white border border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100;
-  }
-
-  .text-primary {
-    @apply text-gray-900 dark:text-gray-100;
-  }
-
-  .text-secondary {
-    @apply text-gray-600 dark:text-gray-400;
-  }
-
-  .text-muted {
-    @apply text-gray-500 dark:text-gray-500;
-  }
 }

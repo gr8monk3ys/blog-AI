@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import type {
   ContentFormatId,
   ContentFormatInfo,
@@ -56,7 +56,7 @@ function FormatSelectorComponent({
           const preview = previews.get(format.format)
 
           return (
-            <motion.button
+            <m.button
               key={format.format}
               onClick={() => onToggleFormat(format.format)}
               whileHover={{ scale: 1.02 }}
@@ -81,7 +81,7 @@ function FormatSelectorComponent({
                   {preview.sample_hook}
                 </p>
               )}
-            </motion.button>
+            </m.button>
           )
         })}
       </div>

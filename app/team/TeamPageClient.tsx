@@ -13,15 +13,30 @@ function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ')
 }
 
+interface TeamPageState {
+  orgs: Organization[]
+  activeOrgId: string | null
+  members: OrganizationMember[]
+  invites: OrganizationInvite[]
+  currentUserId: string
+  currentUserRole: 'owner' | 'admin' | 'member' | 'viewer'
+  showCreateModal: boolean
+  loading: boolean
+}
+
 export default function TeamPageClient() {
-  const [orgs, setOrgs] = useState<Organization[]>([])
-  const [activeOrg, setActiveOrg] = useState<Organization | null>(null)
-  const [members, setMembers] = useState<OrganizationMember[]>([])
-  const [invites, setInvites] = useState<OrganizationInvite[]>([])
-  const [currentUserId, setCurrentUserId] = useState('')
-  const [currentUserRole, setCurrentUserRole] = useState<'owner' | 'admin' | 'member' | 'viewer'>('member')
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [state, setState] = useState<TeamPageState>({
+    orgs: [],
+    activeOrgId: null,
+    members: [],
+    invites: [],
+    currentUserId: '',
+    currentUserRole: 'member',
+    showCreateModal: false,
+    loading: true,
+  })
+
+  const activeOrg = state.orgs.find((org) => org.id === state.activeOrgId) ?? null
 
   const fetchOrgs = useCallback(async () => {
     try {
@@ -29,17 +44,21 @@ export default function TeamPageClient() {
         API_ENDPOINTS.organizations.list
       )
       if (data.success) {
-        setOrgs(data.data)
-        if (data.data.length > 0 && !activeOrg) {
-          setActiveOrg(data.data[0] ?? null)
-        }
+        setState((current) => ({
+          ...current,
+          orgs: data.data,
+          activeOrgId:
+            current.activeOrgId && data.data.some((org) => org.id === current.activeOrgId)
+              ? current.activeOrgId
+              : (data.data[0]?.id ?? null),
+        }))
       }
     } catch {
       // No orgs yet — that's fine
     } finally {
-      setLoading(false)
+      setState((current) => ({ ...current, loading: false }))
     }
-  }, [activeOrg])
+  }, [])
 
   const fetchOrgDetails = useCallback(async () => {
     if (!activeOrg) return
@@ -53,11 +72,21 @@ export default function TeamPageClient() {
         ).catch(() => ({ success: true, data: [] })),
       ])
       if (membersRes.success) {
-        setMembers(membersRes.data)
-        if (membersRes.current_user_id) setCurrentUserId(membersRes.current_user_id)
-        if (membersRes.current_role) setCurrentUserRole(membersRes.current_role as typeof currentUserRole)
+        setState((current) => ({
+          ...current,
+          members: membersRes.data,
+          currentUserId: membersRes.current_user_id || current.currentUserId,
+          currentUserRole:
+            (membersRes.current_role as TeamPageState['currentUserRole'] | undefined) ||
+            current.currentUserRole,
+        }))
       }
-      if (invitesRes.success) setInvites(invitesRes.data)
+      if (invitesRes.success) {
+        setState((current) => ({
+          ...current,
+          invites: invitesRes.data,
+        }))
+      }
     } catch {
       // Ignore
     }
@@ -66,7 +95,7 @@ export default function TeamPageClient() {
   useEffect(() => { fetchOrgs() }, [fetchOrgs])
   useEffect(() => { fetchOrgDetails() }, [fetchOrgDetails])
 
-  if (loading) {
+  if (state.loading) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12">
         <div className="animate-pulse space-y-4">
@@ -85,7 +114,7 @@ export default function TeamPageClient() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Team</h1>
         </div>
         <button
-          onClick={() => setShowCreateModal(true)}
+          onClick={() => setState((current) => ({ ...current, showCreateModal: true }))}
           className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors"
         >
           <PlusIcon className="h-4 w-4" />
@@ -93,7 +122,7 @@ export default function TeamPageClient() {
         </button>
       </div>
 
-      {orgs.length === 0 ? (
+      {state.orgs.length === 0 ? (
         <div className="text-center py-16 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800">
           <UserGroupIcon className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-4 text-sm font-medium text-gray-900 dark:text-gray-100">No organizations</h3>
@@ -104,14 +133,19 @@ export default function TeamPageClient() {
       ) : (
         <>
           {/* Org selector */}
-          {orgs.length > 1 && (
+          {state.orgs.length > 1 && (
             <div className="mb-6">
               <select
-                value={activeOrg?.id || ''}
-                onChange={(e) => setActiveOrg(orgs.find((o) => o.id === e.target.value) || null)}
+                value={state.activeOrgId || ''}
+                onChange={(e) =>
+                  setState((current) => ({
+                    ...current,
+                    activeOrgId: e.target.value || null,
+                  }))
+                }
                 className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:border-amber-500 focus:ring-amber-500"
               >
-                {orgs.map((org) => (
+                {state.orgs.map((org) => (
                   <option key={org.id} value={org.id}>{org.name}</option>
                 ))}
               </select>
@@ -142,21 +176,21 @@ export default function TeamPageClient() {
                 <Tab.Panel>
                   <MembersList
                     orgId={activeOrg.id}
-                    members={members}
-                    currentUserId={currentUserId}
-                    currentUserRole={currentUserRole}
+                    members={state.members}
+                    currentUserId={state.currentUserId}
+                    currentUserRole={state.currentUserRole}
                     onMemberUpdated={fetchOrgDetails}
                   />
                 </Tab.Panel>
 
                 {/* Invites */}
                 <Tab.Panel className="space-y-6">
-                  {(currentUserRole === 'owner' || currentUserRole === 'admin') && (
+                  {(state.currentUserRole === 'owner' || state.currentUserRole === 'admin') && (
                     <InviteForm orgId={activeOrg.id} onInviteSent={fetchOrgDetails} />
                   )}
-                  {invites.length > 0 ? (
+                  {state.invites.length > 0 ? (
                     <div className="space-y-2">
-                      {invites.map((invite) => (
+                      {state.invites.map((invite) => (
                         <div
                           key={invite.id}
                           className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800"
@@ -202,8 +236,8 @@ export default function TeamPageClient() {
       )}
 
       <CreateOrgModal
-        open={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
+        open={state.showCreateModal}
+        onClose={() => setState((current) => ({ ...current, showCreateModal: false }))}
         onCreated={fetchOrgs}
       />
     </div>

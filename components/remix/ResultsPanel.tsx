@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useCallback } from 'react'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import type { RemixedContent, ContentFormatInfo } from '@/types/remix'
 import { QualityBadge } from './QualityBadge'
 import { ContentRenderer } from './ContentRenderer'
@@ -68,7 +68,7 @@ function ResultsPanelComponent({
   }
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       className="bg-white rounded-xl shadow-sm overflow-hidden"
@@ -153,7 +153,7 @@ function ResultsPanelComponent({
           </div>
         </div>
       )}
-    </motion.div>
+    </m.div>
   )
 }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { CheckIcon } from '@heroicons/react/24/outline'
 import type { ToastState } from './types'
 
@@ -17,7 +17,7 @@ export default function ToastNotification({ toast }: ToastNotificationProps) {
   }
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
@@ -49,6 +49,6 @@ export default function ToastNotification({ toast }: ToastNotificationProps) {
         )}
         <span className="text-sm font-medium">{toast.message}</span>
       </div>
-    </motion.div>
+    </m.div>
   )
 }
