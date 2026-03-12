@@ -558,15 +558,14 @@ app/
   routes/
     images.py                  # Image generation API routes
 
-frontend/
-  components/
-    images/
-      ImageGenerator.tsx       # Main image generation UI
-      ImagePromptBuilder.tsx   # Prompt construction interface
-      ImageTemplateSelector.tsx
-      ImageGallery.tsx         # Generated images gallery
-      ImageEditor.tsx          # Basic image editing
-      PlatformPreview.tsx      # Preview for different platforms
+components/
+  images/
+    ImageGenerator.tsx       # Main image generation UI
+    ImagePromptBuilder.tsx   # Prompt construction interface
+    ImageTemplateSelector.tsx
+    ImageGallery.tsx         # Generated images gallery
+    ImageEditor.tsx          # Basic image editing
+    PlatformPreview.tsx      # Preview for different platforms
 ```
 
 ### Third-Party Dependencies
@@ -1540,24 +1539,23 @@ app/
   routes/
     workflows.py                   # Workflow API routes
 
-frontend/
-  components/
-    workflows/
-      WorkflowCanvas.tsx           # Main React Flow canvas
-      NodePalette.tsx              # Draggable node types
-      PropertiesPanel.tsx          # Node configuration
-      ExecutionView.tsx            # Live execution status
+components/
+  workflows/
+    WorkflowCanvas.tsx           # Main React Flow canvas
+    NodePalette.tsx              # Draggable node types
+    PropertiesPanel.tsx          # Node configuration
+    ExecutionView.tsx            # Live execution status
 
-      nodes/                       # Custom React Flow nodes
-        BaseNode.tsx
-        TriggerNode.tsx
-        GenerationNode.tsx
-        ConditionNode.tsx
-        PublishNode.tsx
-        ...
+    nodes/                       # Custom React Flow nodes
+      BaseNode.tsx
+      TriggerNode.tsx
+      GenerationNode.tsx
+      ConditionNode.tsx
+      PublishNode.tsx
+      ...
 
-      WorkflowToolbar.tsx          # Save, run, schedule controls
-      WorkflowHistory.tsx          # Version history
+    WorkflowToolbar.tsx          # Save, run, schedule controls
+    WorkflowHistory.tsx          # Version history
       ExecutionHistory.tsx         # Past executions
       TemplateGallery.tsx          # Template browser
 ```
@@ -2499,18 +2497,17 @@ app/
   routes/
     fact_check.py                  # Fact-checking API routes
 
-frontend/
-  components/
-    fact-check/
-      FactCheckPanel.tsx           # Main fact-check UI
-      ClaimList.tsx                # List of extracted claims
-      VerificationCard.tsx         # Single claim verification
-      SourceCredibility.tsx        # Source credibility display
-      TrustBadge.tsx               # Trust level badge
-      CitationTooltip.tsx          # Hover citation display
-      BibliographyView.tsx         # Bibliography display
-      InlineAnnotation.tsx         # Inline citation styling
-      FactCheckSettings.tsx        # Settings panel
+components/
+  fact-check/
+    FactCheckPanel.tsx           # Main fact-check UI
+    ClaimList.tsx                # List of extracted claims
+    VerificationCard.tsx         # Single claim verification
+    SourceCredibility.tsx        # Source credibility display
+    TrustBadge.tsx               # Trust level badge
+    CitationTooltip.tsx          # Hover citation display
+    BibliographyView.tsx         # Bibliography display
+    InlineAnnotation.tsx         # Inline citation styling
+    FactCheckSettings.tsx        # Settings panel
 ```
 
 ### Third-Party Dependencies

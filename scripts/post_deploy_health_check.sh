@@ -8,12 +8,17 @@ LOG_LIMIT="${LOG_LIMIT:-200}"
 VERCEL_PROJECT="${VERCEL_PROJECT:-blog-ai}"
 VERCEL_SCOPE="${VERCEL_SCOPE:-gr8monk3ys-projects}"
 FAIL_ON_WARNINGS="${FAIL_ON_WARNINGS:-false}"
+USE_BUNX_VERCEL="${USE_BUNX_VERCEL:-false}"
 
 failures=0
 tmp_response="$(mktemp)"
 trap 'rm -f "$tmp_response"' EXIT
 
-vercel_base=(vercel)
+if [[ "$USE_BUNX_VERCEL" == "true" ]]; then
+  vercel_base=(bunx vercel@50.13.2)
+else
+  vercel_base=(vercel)
+fi
 if [[ -n "${VERCEL_TOKEN:-}" ]]; then
   vercel_base+=(--token "$VERCEL_TOKEN")
 fi

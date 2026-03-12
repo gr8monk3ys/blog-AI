@@ -62,7 +62,7 @@ jobs:
 
           while IFS= read -r file; do
             case "$file" in
-              app/*|components/*|lib/*|public/*|package.json|bun.lockb|next.config.mjs|tailwind.config.js|tsconfig.json)
+              app/*|components/*|lib/*|public/*|package.json|bun.lock|bunfig.toml|next.config.mjs|tailwind.config.js|tsconfig.json)
                 frontend=true
                 ;;
               backend/*)

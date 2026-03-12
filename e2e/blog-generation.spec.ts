@@ -1,17 +1,4 @@
-import { test, expect, type Page } from '@playwright/test'
-import { resolveProtectedRouteState, waitForAppToSettle } from './helpers'
-
-async function canAccessTools(page: Page): Promise<boolean> {
-  await page.goto('/tools')
-  const routeState = await resolveProtectedRouteState(page, /\/tools(?:\/|$)/)
-
-  if (routeState === 'auth') {
-    test.skip(true, 'Tools route requires authentication in this environment')
-    return false
-  }
-
-  return true
-}
+import { test, expect } from '@playwright/test'
 
 /**
  * E2E smoke tests for generation-related routes.

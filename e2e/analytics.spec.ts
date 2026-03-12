@@ -1,17 +1,4 @@
-import { test, expect, type Page } from '@playwright/test'
-import { resolveProtectedRouteState, waitForAppToSettle } from './helpers'
-
-async function canAccessAnalytics(page: Page) {
-  await page.goto('/analytics')
-  const routeState = await resolveProtectedRouteState(page, /\/analytics(?:\/|$)/)
-
-  if (routeState === 'auth') {
-    test.skip(true, 'Analytics route requires authentication in this environment')
-    return false
-  }
-
-  return true
-}
+import { test, expect } from '@playwright/test'
 
 /**
  * E2E smoke tests for analytics route.

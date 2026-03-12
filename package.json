@@ -2,6 +2,11 @@
   "name": "blog-ai-frontend",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "bun@1.3.10",
+  "engines": {
+    "bun": ">=1.3.10",
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,13 +14,14 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "type-check": "tsc --noEmit",
-    "db:migrate": "node scripts/migrate_db.mjs",
+    "db:migrate": "bun scripts/migrate_db.mjs",
     "analyze": "ANALYZE=true next build",
+    "audit:runtime": "bun scripts/audit-runtime.mjs",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "test:e2e:coverage": "node scripts/run_e2e_coverage.mjs",
+    "test:e2e:coverage": "bun scripts/run_e2e_coverage.mjs",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed"
   },
@@ -59,6 +65,9 @@
   },
   "overrides": {
     "glob": "^13.0.6",
-    "minimatch": "^10.2.2"
+    "minimatch": "^10.2.4",
+    "nanoid": "^3.3.11",
+    "rollup": "^4.59.0",
+    "serialize-javascript": "^7.0.4"
   }
 }

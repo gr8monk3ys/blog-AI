@@ -1,5 +1,4 @@
 'use client'
-/* eslint-disable react-doctor/no-giant-component, react-doctor/prefer-useReducer */
 
 import { useState } from 'react'
 

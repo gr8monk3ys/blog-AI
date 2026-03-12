@@ -640,19 +640,18 @@ app/
   routes/
     batch.py               # FastAPI endpoints for batch operations
 
-frontend/
-  components/
-    batch/
-      BatchJobMonitor.tsx    # Real-time job progress display
-      BatchJobList.tsx       # List of user's batch jobs
-      BatchItemTable.tsx     # Results table with pagination
-      CSVUploader.tsx        # Drag-drop CSV upload
-      CostEstimator.tsx      # Pre-submission cost display
-      ProviderSelector.tsx   # Multi-provider strategy selection
+components/
+  batch/
+    BatchJobMonitor.tsx    # Real-time job progress display
+    BatchJobList.tsx       # List of user's batch jobs
+    BatchItemTable.tsx     # Results table with pagination
+    CSVUploader.tsx        # Drag-drop CSV upload
+    CostEstimator.tsx      # Pre-submission cost display
+    ProviderSelector.tsx   # Multi-provider strategy selection
 
-  hooks/
-    useBatchJob.ts           # WebSocket subscription for job updates
-    useBatchJobList.ts       # Paginated job list fetching
+hooks/
+  useBatchJob.ts           # WebSocket subscription for job updates
+  useBatchJobList.ts       # Paginated job list fetching
 ```
 
 ### Dependencies to Add
@@ -673,7 +672,7 @@ fakeredis = "^2.20.0"      # Redis mocking
 ```
 
 ```json
-// frontend/package.json additions
+// package.json additions
 {
   "dependencies": {
     "react-dropzone": "^14.2.3",
@@ -2044,19 +2043,18 @@ app/
   routes/
     remix.py               # FastAPI endpoints
 
-frontend/
-  components/
-    remix/
-      RemixStudio.tsx        # Main remix interface
-      SourceContentInput.tsx # Content input with format detection
-      FormatSelector.tsx     # Target format selection
-      FormatPreview.tsx      # Preview remixed content
-      QualityIndicator.tsx   # Quality score display
-      RemixHistory.tsx       # Past remix operations
+components/
+  remix/
+    RemixStudio.tsx        # Main remix interface
+    SourceContentInput.tsx # Content input with format detection
+    FormatSelector.tsx     # Target format selection
+    FormatPreview.tsx      # Preview remixed content
+    QualityIndicator.tsx   # Quality score display
+    RemixHistory.tsx       # Past remix operations
 
-  hooks/
-    useRemix.ts              # Remix API hooks
-    useFormatDetection.ts    # Auto-detect source format
+hooks/
+  useRemix.ts              # Remix API hooks
+  useFormatDetection.ts    # Auto-detect source format
 ```
 
 ### Dependencies to Add
@@ -3432,20 +3430,19 @@ app/
   routes/
     brand_voice.py               # API endpoints
 
-frontend/
-  components/
-    brand/
-      VoiceTrainingPanel.tsx       # Training UI
-      ContentIngestionForm.tsx     # URL/file input
-      VoiceStatisticsDisplay.tsx   # Statistics visualization
-      VoiceStrengthSlider.tsx      # Strength control
-      VoicePreview.tsx             # Before/after comparison
-      ABTestCreator.tsx            # A/B test setup
-      ABTestResults.tsx            # Test results display
+components/
+  brand/
+    VoiceTrainingPanel.tsx       # Training UI
+    ContentIngestionForm.tsx     # URL/file input
+    VoiceStatisticsDisplay.tsx   # Statistics visualization
+    VoiceStrengthSlider.tsx      # Strength control
+    VoicePreview.tsx             # Before/after comparison
+    ABTestCreator.tsx            # A/B test setup
+    ABTestResults.tsx            # Test results display
 
-  hooks/
-    useVoiceTraining.ts            # Training status hooks
-    useVoiceApplication.ts         # Voice application hooks
+hooks/
+  useVoiceTraining.ts            # Training status hooks
+  useVoiceApplication.ts         # Voice application hooks
 ```
 
 ### Privacy Considerations
@@ -3601,7 +3598,7 @@ pinecone-client = { version = "^3.0.0", optional = true }
 ```
 
 ```json
-// frontend/package.json additions
+// package.json additions
 {
   "dependencies": {
     "react-diff-viewer-continued": "^3.3.0",

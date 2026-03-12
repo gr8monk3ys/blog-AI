@@ -1527,17 +1527,17 @@ kubectl -n blog-ai rollout undo deployment/blog-ai
 3. **Run Migrations**
 
 ```bash
-# Install Supabase CLI
-npm install -g supabase
+# Use the Supabase CLI without a global install
+bunx supabase@latest
 
 # Login
-supabase login
+bunx supabase@latest login
 
 # Link to your project
-supabase link --project-ref your-project-ref
+bunx supabase@latest link --project-ref your-project-ref
 
 # Push migrations
-supabase db push
+bunx supabase@latest db push
 
 # Or apply manually
 psql "$DATABASE_URL" -f supabase/migrations/001_create_generated_content.sql

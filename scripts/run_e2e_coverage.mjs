@@ -4,7 +4,7 @@ import path from 'node:path'
 
 const rootDir = process.cwd()
 const reportDir = path.join(rootDir, 'coverage', 'e2e')
-const npxBin = process.platform === 'win32' ? 'npx.cmd' : 'npx'
+const bunxBin = process.platform === 'win32' ? 'bunx.cmd' : 'bunx'
 const coverageThreshold = 85
 
 function run(command, args, { env = {}, captureStdout = false } = {}) {
@@ -31,7 +31,7 @@ function run(command, args, { env = {}, captureStdout = false } = {}) {
 await rm(reportDir, { recursive: true, force: true })
 await mkdir(reportDir, { recursive: true })
 
-const listResult = await run(npxBin, ['playwright', 'test', '--list'], {
+const listResult = await run(bunxBin, ['playwright', 'test', '--list'], {
   captureStdout: true,
 })
 if (listResult.code !== 0) {
@@ -44,7 +44,7 @@ if (!Number.isFinite(totalTests) || totalTests <= 0) {
   throw new Error('Unable to determine total e2e test count from Playwright --list output')
 }
 
-const runResult = await run(npxBin, ['playwright', 'test'])
+const runResult = await run(bunxBin, ['playwright', 'test'])
 const passedTests = runResult.code === 0 ? totalTests : 0
 const coveragePct = Number(((passedTests / totalTests) * 100).toFixed(2))
 

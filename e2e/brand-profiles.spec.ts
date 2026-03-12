@@ -1,17 +1,4 @@
-import { test, expect, type Page } from '@playwright/test'
-import { resolveProtectedRouteState, waitForAppToSettle } from './helpers'
-
-async function canAccessBrand(page: Page): Promise<boolean> {
-  await page.goto('/brand')
-  const routeState = await resolveProtectedRouteState(page, /\/brand(?:\/|$)/)
-
-  if (routeState === 'auth') {
-    test.skip(true, 'Brand route requires authentication in this environment')
-    return false
-  }
-
-  return true
-}
+import { test, expect } from '@playwright/test'
 
 /**
  * E2E smoke tests for brand profiles route.

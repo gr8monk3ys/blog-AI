@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test'
-import { authPromptLocator, resolveProtectedRouteState, waitForAppToSettle } from './helpers'
 
 /**
  * E2E smoke tests for key frontend routes.

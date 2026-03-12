@@ -22,11 +22,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Setup Node
+      - name: Setup Bun
         if: ${{ hashFiles('package.json') != '' }}
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238
+        uses: oven-sh/setup-bun@3d267786b128fe76c2f16a390aa2448b815359f3
         with:
-          node-version: '20'
+          bun-version: '1.3.10'
 
       - name: Setup Go
         if: ${{ hashFiles('go.mod') != '' }}
@@ -41,15 +41,15 @@ jobs:
           failures=0
           ran=0
 
-          # Node.js
+          # JavaScript / TypeScript
           if [ -f package.json ]; then
             ran=1
             if [ ! -d node_modules ]; then
-              echo "Skipping npm tests (node_modules absent; dependency install is disabled in this workflow)."
-            elif node -e 'const fs=require("fs");const p=JSON.parse(fs.readFileSync("package.json","utf8"));const t=(p.scripts&&p.scripts.test)||"";const bad=["", "echo \"Error: no test specified\" && exit 1", "exit 1"];process.exit(bad.includes(t)?1:0)'; then
-              npm test || failures=$((failures+1))
+              echo "Skipping Bun tests (node_modules absent; dependency install is disabled in this workflow)."
+            elif bun -e 'const fs=require("node:fs");const p=JSON.parse(fs.readFileSync("package.json","utf8"));const t=(p.scripts&&p.scripts.test)||"";const bad=["", "echo \"Error: no test specified\" && exit 1", "exit 1"];process.exit(bad.includes(t)?1:0)'; then
+              bun run test || failures=$((failures+1))
             else
-              echo "No actionable npm test script; skipping Node tests."
+              echo "No actionable Bun test script; skipping JS tests."
             fi
           fi
 
