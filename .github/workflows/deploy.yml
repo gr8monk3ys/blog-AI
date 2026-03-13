@@ -69,7 +69,7 @@ jobs:
 
           while IFS= read -r file; do
             case "$file" in
-              apps/web/*|package.json|package-lock.json|bun.lockb|apps/web/package.json)
+              apps/web/*|package.json|bun.lock|bunfig.toml|apps/web/package.json)
                 frontend=true
                 ;;
               apps/api/*)

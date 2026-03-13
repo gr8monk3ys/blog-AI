@@ -10,6 +10,8 @@ backend/coverage.xml
 # Test artifacts
 playwright-report/
 test-results/
+.playwright-cli/
+output/
 
 # Run logs
 backend/run_logs/*

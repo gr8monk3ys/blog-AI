@@ -2,32 +2,40 @@
   "name": "blog-ai-workspace",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "bun@1.3.10",
+  "engines": {
+    "bun": ">=1.3.10",
+    "node": ">=20"
+  },
   "workspaces": [
     "apps/web"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace @blog-ai/web",
-    "build": "npm run build --workspace @blog-ai/web",
-    "start": "npm run start --workspace @blog-ai/web",
-    "lint": "npm run lint --workspace @blog-ai/web",
-    "lint:fix": "npm run lint:fix --workspace @blog-ai/web",
-    "type-check": "npm run type-check --workspace @blog-ai/web",
-    "db:migrate": "node scripts/migrate_db.mjs",
-    "analyze": "npm run analyze --workspace @blog-ai/web",
-    "test": "npm run test --workspace @blog-ai/web",
-    "test:run": "npm run test:run --workspace @blog-ai/web",
-    "test:coverage": "npm run test:coverage --workspace @blog-ai/web",
-    "test:e2e": "npm run test:e2e --workspace @blog-ai/web",
-    "test:e2e:coverage": "npm run test:e2e:coverage --workspace @blog-ai/web",
-    "test:e2e:ui": "npm run test:e2e:ui --workspace @blog-ai/web",
-    "test:e2e:headed": "npm run test:e2e:headed --workspace @blog-ai/web",
+    "dev": "bun run --cwd apps/web dev",
+    "build": "bun run --cwd apps/web build",
+    "start": "bun run --cwd apps/web start",
+    "lint": "bun run --cwd apps/web lint",
+    "lint:fix": "bun run --cwd apps/web lint:fix",
+    "type-check": "bun run --cwd apps/web type-check",
+    "db:migrate": "bun scripts/migrate_db.mjs",
+    "analyze": "bun run --cwd apps/web analyze",
+    "audit:runtime": "bun scripts/audit-runtime.mjs",
+    "test": "bun run --cwd apps/web test",
+    "test:run": "bun run --cwd apps/web test:run",
+    "test:coverage": "bun run --cwd apps/web test:coverage",
+    "test:e2e": "bun run --cwd apps/web test:e2e",
+    "test:e2e:coverage": "bun run --cwd apps/web test:e2e:coverage",
+    "test:e2e:ui": "bun run --cwd apps/web test:e2e:ui",
+    "test:e2e:headed": "bun run --cwd apps/web test:e2e:headed",
     "test:api:smoke": "pytest apps/api/tests/test_ci_smoke.py apps/api/tests/test_feature_smoke.py -q",
     "test:api:blocking": "pytest apps/api/tests/test_feature_smoke.py apps/api/tests/test_routes_health.py -q",
     "test:api:full": "pytest apps/api/tests -q"
   },
   "overrides": {
     "glob": "^13.0.6",
-    "minimatch": "^10.2.3",
-    "rollup": "^4.59.0"
+    "minimatch": "^10.2.4",
+    "nanoid": "^3.3.11",
+    "rollup": "^4.59.0",
+    "serialize-javascript": "^7.0.4"
   }
 }

@@ -10,7 +10,7 @@ const isDev = process.env.NODE_ENV === 'development'
 
 // =============================================================================
 // Build-time environment validation for production deployments
-// Only enforced in CI/Vercel (not local `npm run build`)
+// Only enforced in CI/Vercel (not local `bun run build`)
 // =============================================================================
 const isDeployBuild = process.env.CI === 'true' || process.env.VERCEL === '1'
 const isVercelProductionBuild =
@@ -221,6 +221,17 @@ const nextConfig = {
         ],
       },
     ]
+  },
+
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: '/',
+          destination: '/home.html',
+        },
+      ],
+    }
   },
 
   // Webpack configuration for production optimizations

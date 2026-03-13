@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import HomePageClient from './HomePageClient'
+import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = {
   title: 'Blog AI | AI Content Generator for Blogs, Books, and Marketing',
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 }
 
 export default function HomePage() {
-  return <HomePageClient />
+  redirect('/home.html')
 }

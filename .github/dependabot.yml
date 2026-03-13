@@ -12,7 +12,7 @@ updates:
       production-dependencies:
         dependency-type: "production"
 
-  # Frontend npm dependencies
+  # Frontend JavaScript dependencies
   - package-ecosystem: "npm"
     directory: "/apps/web"
     schedule:

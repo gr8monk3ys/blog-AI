@@ -13,12 +13,12 @@ Use this before treating the product as launch-ready.
 
 ## Preflight
 
-1. `npm run lint`
-2. `npm run type-check`
-3. `npm run test:run`
-4. `npm run test:api:blocking`
-5. `npm run build`
-6. `npm audit`
+1. `bun run lint`
+2. `bun run type-check`
+3. `bun run test:run`
+4. `bun run test:api:blocking`
+5. `bun run build`
+6. `bun run audit:runtime`
 
 ## Manual Smoke Test
 

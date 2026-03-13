@@ -23,23 +23,25 @@ COPY .env.example ./
 # Expose backend port
 EXPOSE 8000
 
+FROM oven/bun:1.3.10 AS bun-runtime
+
 # -------------------------------------------
-FROM node:18-bookworm-slim AS frontend-build
+FROM oven/bun:1.3.10 AS frontend-build
 
 WORKDIR /app
 
 # Copy workspace manifests
-COPY package.json package-lock.json* bun.lockb* ./
+COPY package.json bun.lock bunfig.toml ./
 COPY apps/web/package.json ./apps/web/package.json
 
 # Install dependencies
-RUN npm ci 2>/dev/null || npm install
+RUN bun install --frozen-lockfile
 
 # Copy frontend source code
 COPY apps/web/ ./apps/web/
 
 # Build frontend
-RUN npm run build
+RUN bun run build
 
 # -------------------------------------------
 FROM python:3.12-slim@sha256:f3fa41d74a768c2fce8016b98c191ae8c1bacd8f1152870a3f9f87d350920b7c
@@ -56,19 +58,21 @@ COPY --from=frontend-build /app/apps/web/public /app/public
 COPY --from=frontend-build /app/node_modules /app/node_modules
 COPY --from=frontend-build /app/apps/web/package.json /app/package.json
 COPY --from=frontend-build /app/apps/web/next.config.mjs /app/next.config.mjs
+COPY --from=bun-runtime /usr/local/bin/bun /usr/local/bin/bun
 
 # Install additional packages needed for the final image
 RUN apt-get update && apt-get install -y --no-install-recommends \
     nodejs \
-    npm \
     && rm -rf /var/lib/apt/lists/*
+
+RUN ln -sf /usr/local/bin/bun /usr/local/bin/bunx
 
 # Create a script to start both services
 RUN echo '#!/bin/bash\n\
 # Start the backend server in the background\n\
 python server.py & \n\
 # Start the frontend server\n\
-npm run start\n\
+bun run start -- --hostname 0.0.0.0 --port 3000\n\
 ' > /app/start.sh && chmod +x /app/start.sh
 
 # Expose ports

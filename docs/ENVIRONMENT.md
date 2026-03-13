@@ -1,12 +1,18 @@
 # Environment Variables
 
-This is the short, current environment reference for the active monorepo layout.
+This is the short reference for the active monorepo layout and Bun-first workflow.
 
 ## Files
 
-- root `.env`: backend configuration
-- `apps/web/.env.local`: local frontend configuration
-- `.env.production.local`: production frontend configuration
+- root `.env`: backend and shared server-side configuration
+- `apps/web/.env.local`: local web configuration
+
+Start from:
+
+```bash
+cp .env.example .env
+cp .env.local.example apps/web/.env.local
+```
 
 ## Backend Essentials
 
@@ -18,7 +24,7 @@ ENVIRONMENT=development|staging|production
 ALLOWED_ORIGINS=http://localhost:3000,https://your-web-domain
 ```
 
-Required for persistent product behavior:
+Required for persistent behavior:
 
 ```bash
 DATABASE_URL=...
@@ -73,7 +79,7 @@ CLERK_SECRET_KEY=...
 DATABASE_URL=...
 ```
 
-Billing on the frontend:
+Optional frontend billing:
 
 ```bash
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=...

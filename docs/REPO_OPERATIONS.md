@@ -13,23 +13,23 @@ The maintenance problem is no longer repo sprawl. It is backlog discipline.
 Run these before merging anything non-trivial:
 
 ```bash
-npm run lint
-npm run type-check
-npm run test:run
-npm run test:api:smoke
-npm audit
+bun run lint
+bun run type-check
+bun run test:run
+bun run test:api:smoke
+bun run audit:runtime
 ```
 
 Use this when touching backend routing or startup behavior:
 
 ```bash
-npm run test:api:blocking
+bun run test:api:blocking
 ```
 
 Use this before release candidates or production deploy decisions:
 
 ```bash
-npm run test:api:full
+bun run test:api:full
 ```
 
 ## Weekly Triage
@@ -71,13 +71,15 @@ Dependabot must follow the monorepo layout:
 - `npm`: `/apps/web`
 - `github-actions`: `/`
 
+GitHub still labels JavaScript dependency updates as `npm`, even though local development and CI now use Bun.
+
 If alerts or update PRs look stale, check the manifest path first before assuming the repo is neglected.
 
 ## Security Notifications
 
 Use this order:
 
-1. `npm audit`
+1. `bun run audit:runtime`
 2. `pip-audit` in `apps/api`
 3. GitHub Dependabot alerts
 4. workflow scanners (`security.yml`, org-level scanners, CodeQL if enabled at repo/org level)

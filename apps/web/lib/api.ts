@@ -28,7 +28,7 @@ const getWsProtocol = (apiUrl: string): string => {
 
 // API URLs from environment variables with fallbacks for development.
 // In production without the env var, warn loudly but fall back to localhost
-// so that `npm run build` still works locally.
+// so that `bun run build` still works locally.
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (() => {
   if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined') {
     console.error(

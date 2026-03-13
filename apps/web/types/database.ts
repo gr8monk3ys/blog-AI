@@ -2,7 +2,7 @@
  * Supabase Database Types
  *
  * Auto-generated types for the database schema.
- * Regenerate with: npx supabase gen types typescript --project-id <project-id> > types/database.ts
+ * Regenerate with: bunx supabase@latest gen types typescript --project-id <project-id> > types/database.ts
  */
 
 export type Json =

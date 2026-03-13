@@ -24,19 +24,21 @@ COPY apps/api/requirements.txt ./
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
+FROM oven/bun:1.3.10 AS bun-runtime
+
 # -----------------------------------------------------------------------------
 # Stage 2: Frontend Builder
 # -----------------------------------------------------------------------------
-FROM node:20-bookworm-slim AS frontend-builder
+FROM oven/bun:1.3.10 AS frontend-builder
 
 WORKDIR /build
 
 # Install dependencies first (better layer caching)
-COPY package.json package-lock.json* bun.lockb* ./
+COPY package.json bun.lock bunfig.toml ./
 COPY apps/web/package.json ./apps/web/package.json
 
-# Use npm ci for reproducible builds (falls back to install if no lockfile)
-RUN npm ci 2>/dev/null || npm install
+# Use Bun's lockfile for reproducible builds
+RUN bun install --frozen-lockfile
 
 # Copy all frontend source files
 COPY apps/web/ ./apps/web/
@@ -46,13 +48,22 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Build the Next.js application
-RUN npm run build
-
-# Remove dev dependencies after build
-RUN npm prune --production
+RUN bun run build
 
 # -----------------------------------------------------------------------------
-# Stage 3: Production Runtime
+# Stage 3: Frontend Runtime Dependencies
+# -----------------------------------------------------------------------------
+FROM oven/bun:1.3.10 AS frontend-runtime-deps
+
+WORKDIR /build
+
+COPY package.json bun.lock bunfig.toml ./
+COPY apps/web/package.json ./apps/web/package.json
+
+RUN bun install --frozen-lockfile --production
+
+# -----------------------------------------------------------------------------
+# Stage 4: Production Runtime
 # -----------------------------------------------------------------------------
 FROM python:3.12-slim AS runtime
 
@@ -80,7 +91,6 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     nodejs \
-    npm \
     tini \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
@@ -97,9 +107,13 @@ COPY --chown=blogai:blogai apps/api/server.py ./
 # Copy frontend build artifacts
 COPY --from=frontend-builder --chown=blogai:blogai /build/apps/web/.next ./.next
 COPY --from=frontend-builder --chown=blogai:blogai /build/apps/web/public ./public
-COPY --from=frontend-builder --chown=blogai:blogai /build/node_modules ./node_modules
+COPY --from=frontend-runtime-deps --chown=blogai:blogai /build/node_modules ./node_modules
 COPY --from=frontend-builder --chown=blogai:blogai /build/apps/web/package.json ./package.json
 COPY --from=frontend-builder --chown=blogai:blogai /build/apps/web/next.config.mjs ./next.config.mjs
+COPY --from=frontend-builder --chown=blogai:blogai /build/bunfig.toml ./bunfig.toml
+COPY --from=bun-runtime --chown=blogai:blogai /usr/local/bin/bun /usr/local/bin/bun
+
+RUN ln -sf /usr/local/bin/bun /usr/local/bin/bunx
 
 # Create startup script with proper signal handling
 RUN cat > /app/entrypoint.sh << 'EOF'
@@ -130,7 +144,7 @@ BACKEND_PID=$!
 # Start frontend server
 echo "Starting frontend server on port ${FRONTEND_PORT:-3000}..."
 cd /app
-NODE_ENV=production npm run start -- -p ${FRONTEND_PORT:-3000} &
+NODE_ENV=production bun run start -- --hostname 0.0.0.0 --port ${FRONTEND_PORT:-3000} &
 FRONTEND_PID=$!
 
 # Wait for both processes

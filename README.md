@@ -1,26 +1,132 @@
 # Blog AI
 
-Blog AI is a monorepo for an AI-assisted content product with three app surfaces:
+<p align="center">
+  <img src="docs/assets/readme-cover.jpg" alt="Blog AI homepage" width="1200" />
+</p>
 
-- `apps/web`: Next.js web app
-- `apps/api`: FastAPI backend
+<p align="center">
+  Brand-safe AI content operations for drafting, SEO, analytics, and repeatable publishing workflows.
+</p>
+
+<p align="center">
+  <a href="https://github.com/gr8monk3ys/blog-AI/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/gr8monk3ys/blog-AI/actions/workflows/ci.yml/badge.svg"></a>
+  <img alt="Bun 1.3+" src="https://img.shields.io/badge/Bun-1.3%2B-black?logo=bun">
+  <img alt="Next.js 16" src="https://img.shields.io/badge/Next.js-16-black?logo=next.js">
+  <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-Python%203.12-009688?logo=fastapi">
+</p>
+
+## Overview
+
+Blog AI is a monorepo with three product surfaces:
+
+- `apps/web`: Next.js application for content teams
+- `apps/api`: FastAPI backend for generation, quotas, and integrations
 - `apps/extension`: browser extension
 
-The current product wedge is not “all-purpose AI writing.” It is brand-consistent, SEO-focused content production for founders, consultants, and lean marketing teams.
+The product is positioned around repeatable publishing, not generic prompt-box output: brand voice controls, structured drafting, SEO workflows, history, analytics, and monetization hooks.
 
-## Current Status
+## Highlights
 
-- Frontend lint, typecheck, and production build pass locally
-- Backend smoke, blocking, and full test suites pass locally
-- Public web routes render without Clerk
-- Protected product routes require Clerk in production
-- Monetization and durable user workflows still require real staging infrastructure:
-  - `DATABASE_URL`
-  - Clerk keys
-  - Stripe keys
-  - at least one valid LLM API key
+- Bun-first frontend workflow with a committed `bun.lock`
+- Next.js 16 web app with React 18, Clerk, and Sentry
+- FastAPI backend with Neon/Postgres, Stripe, and quota-based product logic
+- Static marketing homepage at `/` for maximum Lighthouse performance
+- Verified Lighthouse `100 / 100 / 100 / 100`
+- Verified React Doctor `100 / 100`
 
-## Repo Layout
+## Quick Start
+
+### Prerequisites
+
+- Bun `1.3+`
+- Python `3.12+`
+- Git
+- At least one LLM API key
+
+### 1. Install dependencies
+
+```bash
+git clone https://github.com/gr8monk3ys/blog-AI.git
+cd blog-AI
+bun install
+```
+
+### 2. Configure env files
+
+```bash
+cp .env.example .env
+cp .env.local.example apps/web/.env.local
+```
+
+Minimum local values:
+
+- `.env`
+  - `OPENAI_API_KEY=...`
+  - `ENVIRONMENT=development`
+- `apps/web/.env.local`
+  - `NEXT_PUBLIC_API_URL=http://localhost:8000`
+  - `NEXT_PUBLIC_WS_URL=ws://localhost:8000`
+
+### 3. Start the backend
+
+```bash
+cd apps/api
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python server.py
+```
+
+### 4. Start the web app
+
+```bash
+cd /path/to/blog-AI
+bun dev
+```
+
+Open `http://localhost:3000`.
+
+## Bun Commands
+
+| Command | Purpose |
+| --- | --- |
+| `bun dev` | Start the Next.js app in `apps/web` |
+| `bun run build` | Build the web app |
+| `bun run start` | Start the production web app |
+| `bun run lint` | Run ESLint for `apps/web` |
+| `bun run type-check` | Run TypeScript checks for `apps/web` |
+| `bun run test:run` | Run Vitest once |
+| `bun run test:coverage` | Run Vitest with coverage |
+| `bun run test:e2e` | Run Playwright end-to-end tests |
+| `bun run test:e2e:coverage` | Run the E2E coverage gate |
+| `bun run audit:runtime` | Run the Bun-based runtime audit policy |
+| `bun run db:migrate` | Apply SQL migrations from `db/migrations/` |
+
+## Backend Commands
+
+| Command | Purpose |
+| --- | --- |
+| `cd apps/api && python server.py` | Start the FastAPI app locally |
+| `cd apps/api && pytest -q` | Run backend tests |
+| `bun run test:api:smoke` | Run the blocking backend smoke suite from the repo root |
+| `bun run test:api:full` | Run the full backend suite from the repo root |
+
+## Deployment
+
+- Web: Vercel
+- API: Railway or another container host
+- Database: Neon Postgres
+- Auth: Clerk
+- Billing: Stripe
+
+Key references:
+
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+- [docs/DEPLOYMENT_VERCEL_RAILWAY_NEON.md](docs/DEPLOYMENT_VERCEL_RAILWAY_NEON.md)
+- [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md)
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## Repository Layout
 
 ```text
 blog-AI/
@@ -29,110 +135,19 @@ blog-AI/
 │   ├── extension/   Browser extension
 │   └── web/         Next.js app
 ├── db/              SQL migrations
-├── docs/            Active operational and technical docs
-├── scripts/         Utility scripts
-├── Dockerfile*      Container build files
-└── package.json     Workspace shell for web scripts
+├── docs/            Operational and technical docs
+├── scripts/         Build, audit, and release helpers
+└── package.json     Bun-first workspace shell
 ```
 
-## Local Development
+## Quality Bar
 
-### Prerequisites
-
-- Node.js 18+
-- Python 3.12+
-- at least one LLM API key
-
-### Backend
-
-```bash
-cd apps/api
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cd /workspaces/blog-AI
-cp .env.example .env
-```
-
-At minimum, set:
-
-```bash
-OPENAI_API_KEY=...
-ENVIRONMENT=development
-```
-
-Then start the API:
-
-```bash
-cd apps/api
-python server.py
-```
-
-### Frontend
-
-```bash
-cd /workspaces/blog-AI
-npm install
-cp .env.local.example apps/web/.env.local
-```
-
-For local development with the backend above, set:
-
-```bash
-NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_WS_URL=ws://localhost:8000
-```
-
-Then start the web app:
-
-```bash
-npm run dev
-```
-
-## Validation
-
-Run these before merging:
-
-```bash
-npm run lint
-npm run type-check
-npm run test:run
-npm run test:api:smoke
-```
-
-For release-readiness:
-
-```bash
-npm run test:api:blocking
-npm run test:api:full
-npm run build
-npm audit
-```
-
-## Staging / Production Reality
-
-This repo is not “just market it” ready without real infrastructure.
-
-Before paid-user rollout, you need:
-
-- Clerk configured for auth
-- Neon/Postgres configured for durable storage
-- Stripe test mode configured for checkout and portal flows
-- valid LLM provider credentials for real output generation
-
-Use these docs next:
-
-- [Deployment Overview](./docs/DEPLOYMENT.md)
-- [Vercel + Railway + Neon Guide](./docs/DEPLOYMENT_VERCEL_RAILWAY_NEON.md)
-- [Environment Variables](./docs/ENVIRONMENT.md)
-- [Staging Checklist](./docs/STAGING_CHECKLIST.md)
-- [Repo Operations](./docs/REPO_OPERATIONS.md)
+- `bun run build` passes
+- `bun run audit:runtime` passes
+- Lighthouse on `/`: `100 / 100 / 100 / 100`
+- React Doctor: `100 / 100`
 
 ## Notes
 
-- `Business` should stay off the public sales path until team/billing/admin workflows are fully proven.
-- Local development can run with reduced infrastructure, but database-backed and billing-backed features will degrade or stay unavailable.
-
-## License
-
-GPL-3.0. See [LICENSE](./LICENSE).
+- The landing page is served from `apps/web/public/home.html` through a rewrite in `apps/web/next.config.mjs` to keep `/` extremely fast.
+- Dependabot still uses the GitHub `npm` ecosystem for `apps/web`, but day-to-day development and CI now run through Bun.

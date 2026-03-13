@@ -19,7 +19,7 @@ Run migrations from your machine (or CI) using the direct URL:
 
 ```bash
 export DATABASE_URL_DIRECT="postgresql://user:password@host/db?sslmode=require"
-npm run db:migrate
+bun run db:migrate
 ```
 
 This applies `db/migrations/*.sql` and records applied files in `schema_migrations`.
