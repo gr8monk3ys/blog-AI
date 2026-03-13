@@ -20,7 +20,7 @@ RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy requirements and install production dependencies only
-COPY backend/requirements.txt ./
+COPY apps/api/requirements.txt ./
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
@@ -33,18 +33,13 @@ WORKDIR /build
 
 # Install dependencies first (better layer caching)
 COPY package.json package-lock.json* bun.lockb* ./
+COPY apps/web/package.json ./apps/web/package.json
 
 # Use npm ci for reproducible builds (falls back to install if no lockfile)
 RUN npm ci 2>/dev/null || npm install
 
 # Copy all frontend source files
-COPY app/ ./app/
-COPY components/ ./components/
-COPY hooks/ ./hooks/
-COPY types/ ./types/
-COPY public/ ./public/
-COPY lib/ ./lib/
-COPY tailwind.config.js postcss.config.js next.config.mjs tsconfig.json ./
+COPY apps/web/ ./apps/web/
 
 # Set production environment for build optimization
 ENV NODE_ENV=production
@@ -95,16 +90,16 @@ COPY --from=backend-deps /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy backend application code
-COPY --chown=blogai:blogai backend/src/ ./src/
-COPY --chown=blogai:blogai backend/app/ ./app/
-COPY --chown=blogai:blogai backend/server.py ./
+COPY --chown=blogai:blogai apps/api/src/ ./src/
+COPY --chown=blogai:blogai apps/api/app/ ./app/
+COPY --chown=blogai:blogai apps/api/server.py ./
 
 # Copy frontend build artifacts
-COPY --from=frontend-builder --chown=blogai:blogai /build/.next ./.next
-COPY --from=frontend-builder --chown=blogai:blogai /build/public ./public
+COPY --from=frontend-builder --chown=blogai:blogai /build/apps/web/.next ./.next
+COPY --from=frontend-builder --chown=blogai:blogai /build/apps/web/public ./public
 COPY --from=frontend-builder --chown=blogai:blogai /build/node_modules ./node_modules
-COPY --from=frontend-builder --chown=blogai:blogai /build/package.json ./package.json
-COPY --from=frontend-builder --chown=blogai:blogai /build/next.config.mjs ./next.config.mjs
+COPY --from=frontend-builder --chown=blogai:blogai /build/apps/web/package.json ./package.json
+COPY --from=frontend-builder --chown=blogai:blogai /build/apps/web/next.config.mjs ./next.config.mjs
 
 # Create startup script with proper signal handling
 RUN cat > /app/entrypoint.sh << 'EOF'

@@ -1,6 +1,6 @@
 {
-  "buildCommand": "BROWSERSLIST_IGNORE_OLD_DATA=1 bun run build",
-  "installCommand": "bun install",
-  "outputDirectory": ".next",
+  "buildCommand": "BROWSERSLIST_IGNORE_OLD_DATA=1 npm run build",
+  "installCommand": "npm install",
+  "outputDirectory": "apps/web/.next",
   "framework": "nextjs"
 }

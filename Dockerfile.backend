@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-COPY backend/requirements.txt ./
+COPY apps/api/requirements.txt ./
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
@@ -52,9 +52,9 @@ COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy backend application code
-COPY --chown=blogai:blogai backend/src/ ./src/
-COPY --chown=blogai:blogai backend/app/ ./app/
-COPY --chown=blogai:blogai backend/server.py ./
+COPY --chown=blogai:blogai apps/api/src/ ./src/
+COPY --chown=blogai:blogai apps/api/app/ ./app/
+COPY --chown=blogai:blogai apps/api/server.py ./
 
 # Create data directories
 RUN mkdir -p /app/data && chown -R blogai:blogai /app/data

@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: backend
+        working-directory: apps/api
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
@@ -32,7 +32,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-dependency-path: backend/requirements.txt
+          cache-dependency-path: apps/api/requirements.txt
 
       - name: Install dependencies
         run: |
@@ -76,7 +76,7 @@ jobs:
         if: always()
         with:
           name: backend-coverage
-          path: backend/coverage.xml
+          path: apps/api/coverage.xml
           retention-days: 14
 
   backend-regression:
@@ -85,7 +85,7 @@ jobs:
     continue-on-error: true
     defaults:
       run:
-        working-directory: backend
+        working-directory: apps/api
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
@@ -94,7 +94,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-dependency-path: backend/requirements.txt
+          cache-dependency-path: apps/api/requirements.txt
 
       - name: Install dependencies
         run: |
@@ -118,31 +118,28 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@3d267786b128fe76c2f16a390aa2448b815359f3
-
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: npm ci
 
       - name: Lint
-        run: bun run lint
+        run: npm run lint
 
       - name: Type check
-        run: bun run type-check
+        run: npm run type-check
 
       - name: Unit tests
-        run: bun run test:coverage
+        run: npm run test:coverage
 
       - name: Upload coverage report
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         if: always()
         with:
           name: frontend-coverage
-          path: coverage/
+          path: apps/web/coverage/
           retention-days: 14
 
       - name: Build
-        run: bun run build
+        run: npm run build
 
   frontend-e2e:
     name: Frontend E2E (Playwright)
@@ -173,7 +170,7 @@ jobs:
         if: always()
         with:
           name: frontend-e2e-coverage
-          path: coverage/e2e/
+          path: apps/web/coverage/e2e/
           retention-days: 14
 
       - name: Upload Playwright report
@@ -181,7 +178,7 @@ jobs:
         if: failure()
         with:
           name: playwright-report
-          path: playwright-report/
+          path: apps/web/playwright-report/
           retention-days: 7
 
   docker-build:

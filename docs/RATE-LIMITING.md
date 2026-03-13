@@ -406,6 +406,6 @@ User tier limits are tied to API keys:
 
 ## Related Documentation
 
-- [DEPLOYMENT.md](./DEPLOYMENT.md) - Production deployment
+- [DEPLOYMENT.md](./DEPLOYMENT.md) - Deployment overview
 - [MONITORING.md](./MONITORING.md) - Error tracking and alerting
 - [DATABASE.md](./DATABASE.md) - Schema including `tier_limits` table

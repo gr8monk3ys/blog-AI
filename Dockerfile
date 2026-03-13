@@ -6,7 +6,7 @@ WORKDIR /app
 RUN pip install poetry
 
 # Copy Poetry configuration files
-COPY backend/pyproject.toml backend/poetry.lock* ./
+COPY apps/api/pyproject.toml apps/api/poetry.lock* ./
 
 # Configure Poetry to not create a virtual environment
 RUN poetry config virtualenvs.create false
@@ -15,9 +15,9 @@ RUN poetry config virtualenvs.create false
 RUN poetry install --only main --no-root
 
 # Copy backend code
-COPY backend/src/ ./src/
-COPY backend/app/ ./app/
-COPY backend/server.py ./
+COPY apps/api/src/ ./src/
+COPY apps/api/app/ ./app/
+COPY apps/api/server.py ./
 COPY .env.example ./
 
 # Expose backend port
@@ -28,18 +28,15 @@ FROM node:18-bookworm-slim AS frontend-build
 
 WORKDIR /app
 
-# Copy frontend files
+# Copy workspace manifests
 COPY package.json package-lock.json* bun.lockb* ./
+COPY apps/web/package.json ./apps/web/package.json
 
 # Install dependencies
 RUN npm ci 2>/dev/null || npm install
 
 # Copy frontend source code
-COPY app/ ./app/
-COPY components/ ./components/
-COPY public/ ./public/
-COPY lib/ ./lib/
-COPY tailwind.config.js postcss.config.js next.config.mjs tsconfig.json ./
+COPY apps/web/ ./apps/web/
 
 # Build frontend
 RUN npm run build
@@ -54,10 +51,11 @@ COPY --from=backend /app /app
 COPY --from=backend /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 
 # Copy built frontend from frontend-build stage
-COPY --from=frontend-build /app/.next /app/.next
-COPY --from=frontend-build /app/public /app/public
+COPY --from=frontend-build /app/apps/web/.next /app/.next
+COPY --from=frontend-build /app/apps/web/public /app/public
 COPY --from=frontend-build /app/node_modules /app/node_modules
-COPY --from=frontend-build /app/package.json /app/package.json
+COPY --from=frontend-build /app/apps/web/package.json /app/package.json
+COPY --from=frontend-build /app/apps/web/next.config.mjs /app/next.config.mjs
 
 # Install additional packages needed for the final image
 RUN apt-get update && apt-get install -y --no-install-recommends \

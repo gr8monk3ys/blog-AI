@@ -69,10 +69,10 @@ jobs:
 
           while IFS= read -r file; do
             case "$file" in
-              app/*|components/*|lib/*|public/*|package.json|bun.lockb|next.config.mjs|tailwind.config.js|tsconfig.json)
+              apps/web/*|package.json|package-lock.json|bun.lockb|apps/web/package.json)
                 frontend=true
                 ;;
-              backend/*)
+              apps/api/*)
                 backend=true
                 ;;
             esac
