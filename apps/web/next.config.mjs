@@ -6,8 +6,6 @@ import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
-const isDev = process.env.NODE_ENV === 'development'
-
 // =============================================================================
 // Build-time environment validation for production deployments
 // Only enforced in CI/Vercel (not local `bun run build`)
@@ -100,36 +98,10 @@ const securityHeaders = [
     key: 'Permissions-Policy',
     value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
   },
-  {
-    // Content Security Policy
-    // In development, Next.js requires 'unsafe-eval' for fast refresh / HMR.
-    // In production we drop it and restrict sources to known origins only.
-    key: 'Content-Security-Policy',
-    value: [
-      "default-src 'self'",
-      [
-        "script-src 'self'",
-        isDev ? "'unsafe-eval'" : '',
-        'https://*.clerk.accounts.dev',
-        'https://cdn.clerk.io',
-        'https://challenges.cloudflare.com',
-      ].filter(Boolean).join(' '),
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: https://*.clerk.com https://*.unsplash.com blob:",
-      "font-src 'self' data:",
-      [
-        "connect-src 'self'",
-        'https://*.clerk.accounts.dev',
-        'https://api.clerk.io',
-        isDev ? 'ws://localhost:* wss://localhost:*' : '',
-        process.env.NEXT_PUBLIC_API_URL || '',
-      ].filter(Boolean).join(' '),
-      "frame-src 'self' https://*.clerk.accounts.dev https://challenges.cloudflare.com",
-      "frame-ancestors 'none'",
-      "base-uri 'self'",
-      "form-action 'self'",
-    ].join('; '),
-  },
+  // Content Security Policy is set dynamically by middleware.ts so that each
+  // request receives a unique nonce (replacing blanket 'unsafe-inline').
+  // Do NOT add a static CSP header here — it would conflict with the
+  // middleware-generated header.
 ]
 
 const nextConfig = {
