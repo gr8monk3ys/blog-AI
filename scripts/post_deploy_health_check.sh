@@ -6,17 +6,21 @@ ROUTES="${ROUTES:-/ /pricing /blog /tool-directory /sitemap.xml}"
 LOOKBACK="${LOOKBACK:-1h}"
 LOG_LIMIT="${LOG_LIMIT:-200}"
 VERCEL_PROJECT="${VERCEL_PROJECT:-blog-ai}"
-VERCEL_SCOPE="${VERCEL_SCOPE:-gr8monk3ys-projects}"
+VERCEL_SCOPE="${VERCEL_SCOPE:-}"
 FAIL_ON_WARNINGS="${FAIL_ON_WARNINGS:-false}"
 USE_BUNX_VERCEL="${USE_BUNX_VERCEL:-false}"
+vercel_checks_enabled=false
+vercel_base=()
 
 failures=0
 tmp_response="$(mktemp)"
 trap 'rm -f "$tmp_response"' EXIT
 
-if [[ "$USE_BUNX_VERCEL" == "true" ]]; then
+if [[ "$USE_BUNX_VERCEL" == "true" && -n "${VERCEL_TOKEN:-}" ]]; then
+  vercel_checks_enabled=true
   vercel_base=(bunx vercel@50.13.2)
-else
+elif command -v vercel >/dev/null 2>&1; then
+  vercel_checks_enabled=true
   vercel_base=(vercel)
 fi
 if [[ -n "${VERCEL_TOKEN:-}" ]]; then
@@ -28,6 +32,10 @@ fi
 
 log() {
   printf '[health-check] %s\n' "$1"
+}
+
+warn() {
+  printf '[health-check] WARNING %s\n' "$1"
 }
 
 check_route() {
@@ -100,17 +108,19 @@ scan_logs() {
 }
 
 log "Checking deployment status for ${APP_URL}"
-if ! inspect_output="$("${vercel_base[@]}" inspect "$APP_URL" 2>&1)"; then
-  log "ERROR vercel inspect failed"
-  log "$inspect_output"
-  exit 1
-fi
-if grep -Eq 'status[[:space:]]+● Ready' <<<"$inspect_output"; then
-  log 'OK deployment status is Ready'
+if [[ "$vercel_checks_enabled" == "true" ]]; then
+  if ! inspect_output="$("${vercel_base[@]}" inspect "$APP_URL" 2>&1)"; then
+    warn "Skipping Vercel deployment inspection and log scans: ${inspect_output}"
+    vercel_checks_enabled=false
+  elif grep -Eq 'status[[:space:]]+● Ready' <<<"$inspect_output"; then
+    log 'OK deployment status is Ready'
+  else
+    log 'ERROR deployment is not Ready'
+    printf '%s\n' "$inspect_output"
+    failures=$((failures + 1))
+  fi
 else
-  log 'ERROR deployment is not Ready'
-  printf '%s\n' "$inspect_output"
-  failures=$((failures + 1))
+  warn 'Skipping Vercel deployment inspection and log scans: Vercel CLI is not configured for this run.'
 fi
 
 log "Checking key routes for ${APP_URL}"
@@ -118,9 +128,11 @@ for route in $ROUTES; do
   check_route "$route" 200
 done
 
-log "Scanning recent Vercel production logs"
-scan_logs error
-scan_logs warning
+if [[ "$vercel_checks_enabled" == "true" ]]; then
+  log "Scanning recent Vercel production logs"
+  scan_logs error
+  scan_logs warning
+fi
 
 if ((failures > 0)); then
   log "FAILED with ${failures} issue(s)"

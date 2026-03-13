@@ -20,6 +20,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
+      - name: Validate release token
+        id: token-preflight
+        shell: bash
+        env:
+          RELEASE_PLEASE_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+        run: |
+          if [ -z "${RELEASE_PLEASE_TOKEN}" ]; then
+            echo "::warning::Skipping Release Please: missing RELEASE_PLEASE_TOKEN. The default GITHUB_TOKEN cannot create PRs in this repository."
+            echo "can_run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "can_run=true" >> "$GITHUB_OUTPUT"
+
       - name: Detect release strategy
         id: detect
         shell: bash
@@ -47,12 +61,18 @@ jobs:
           fi
 
       - name: Run Release Please
-        if: steps.detect.outputs.supported == 'true'
+        if: steps.detect.outputs.supported == 'true' && steps.token-preflight.outputs.can_run == 'true'
         uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           release-type: ${{ steps.detect.outputs.release_type }}
 
       - name: Skip release
-        if: steps.detect.outputs.supported != 'true'
-        run: 'echo "Release Please skipped: no supported strategy."'
+        if: steps.detect.outputs.supported != 'true' || steps.token-preflight.outputs.can_run != 'true'
+        shell: bash
+        run: |
+          if [ "${{ steps.detect.outputs.supported }}" != "true" ]; then
+            echo "Release Please skipped: no supported strategy."
+          else
+            echo "Release Please skipped: missing RELEASE_PLEASE_TOKEN."
+          fi
