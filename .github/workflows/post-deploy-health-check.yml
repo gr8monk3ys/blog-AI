@@ -43,7 +43,7 @@ jobs:
 
       - name: Set up Bun
         if: steps.health-check-mode.outputs.use_vercel_cli == 'true'
-        uses: oven-sh/setup-bun@3d267786b128fe76c2f16a390aa2448b815359f3
+        uses: oven-sh/setup-bun@ecf28ddc73e819eb6fa29df6b34ef8921c743461
         with:
           bun-version: "1.3.10"
 
