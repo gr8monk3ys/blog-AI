@@ -77,6 +77,11 @@ async def _check_redis() -> Dict[str, Any]:
         return {"status": "disconnected", "latency_ms": None}
 
 
+def _redacted_health_error(message: str) -> str:
+    """Return a stable public error message for health endpoints."""
+    return message
+
+
 def _get_llm_providers_status(settings: Settings) -> Dict[str, Any]:
     """Return configured/model info for each LLM provider without exposing keys."""
     llm = settings.llm
@@ -335,12 +340,12 @@ async def _get_full_database_status() -> Dict[str, Any]:
             "latency_ms": latency_ms,
             "tables_accessible": True,
         }
-    except Exception as e:
-        logger.warning("Database health check failed: %s", e)
+    except Exception:
+        logger.warning("Database health check failed", exc_info=True)
         return {
             "configured": True,
             "connected": False,
-            "error": str(e)[:100],
+            "error": _redacted_health_error("database health check failed"),
         }
 
 
@@ -388,14 +393,14 @@ def _get_full_stripe_status() -> Dict[str, Any]:
             "webhook_configured": bool(webhook_secret),
             "error": "stripe package not installed",
         }
-    except Exception as e:
-        logger.warning("Stripe health check failed: %s", e)
+    except Exception:
+        logger.warning("Stripe health check failed", exc_info=True)
         return {
             "configured": True,
             "connected": False,
             "mode": mode,
             "webhook_configured": bool(webhook_secret),
-            "error": str(e)[:100],
+            "error": _redacted_health_error("stripe health check failed"),
         }
 
 
@@ -412,13 +417,14 @@ def _get_full_sentry_status() -> Dict[str, Any]:
             "environment": environment if dsn else None,
             "dsn_set": bool(dsn),
         }
-    except Exception as e:
+    except Exception:
+        logger.warning("Sentry health check failed", exc_info=True)
         return {
             "configured": False,
             "active": False,
             "environment": None,
             "dsn_set": False,
-            "error": str(e)[:100],
+            "error": _redacted_health_error("sentry health check failed"),
         }
 
 
@@ -460,12 +466,12 @@ async def _get_full_redis_status() -> Dict[str, Any]:
             "connected": False,
             "error": "redis package not installed",
         }
-    except Exception as e:
-        logger.warning("Redis health check failed: %s", e)
+    except Exception:
+        logger.warning("Redis health check failed", exc_info=True)
         return {
             "configured": True,
             "connected": False,
-            "error": str(e)[:100],
+            "error": _redacted_health_error("redis health check failed"),
         }
 
 

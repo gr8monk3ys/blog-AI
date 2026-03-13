@@ -34,6 +34,18 @@ class ContentOptimizerError(Exception):
     pass
 
 
+def _parse_markdown_heading(line: str) -> Optional[str]:
+    """Parse a markdown heading without regex backtracking."""
+    candidate = line.strip()
+    level = 0
+    while level < len(candidate) and level < 6 and candidate[level] == "#":
+        level += 1
+    if level == 0 or level >= len(candidate) or not candidate[level].isspace():
+        return None
+    heading = candidate[level:].strip()
+    return heading or None
+
+
 def _normalize_text(text: str) -> str:
     """Normalize text for comparison: lowercase, strip markdown formatting."""
     normalized = re.sub(r"[#*_`\[\]()]", " ", text)
@@ -49,9 +61,9 @@ def _extract_headings(text: str) -> List[str]:
     """Extract markdown headings from content."""
     headings: List[str] = []
     for line in text.split("\n"):
-        match = re.match(r"^#{1,6}\s+(.+)$", line.strip())
-        if match:
-            headings.append(match.group(1).strip())
+        heading = _parse_markdown_heading(line)
+        if heading:
+            headings.append(heading)
     return headings
 
 

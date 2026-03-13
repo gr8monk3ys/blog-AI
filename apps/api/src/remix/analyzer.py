@@ -23,6 +23,17 @@ from src.utils.cache import get_content_analysis_cache
 logger = logging.getLogger(__name__)
 
 
+def _parse_markdown_heading(line: str) -> Optional[str]:
+    """Parse a markdown heading without regex backtracking."""
+    level = 0
+    while level < len(line) and level < 3 and line[level] == "#":
+        level += 1
+    if level == 0 or level >= len(line) or not line[level].isspace():
+        return None
+    heading = line[level:].strip()
+    return heading or None
+
+
 class ContentAnalyzer:
     """Analyzes content for remix transformation."""
 
@@ -173,14 +184,12 @@ class ContentAnalyzer:
         chunks: List[ContentChunk] = []
 
         # Split by headers (Markdown style)
-        # Using negated character class to prevent ReDoS
-        header_pattern = r'^(#{1,3})\s+([^\n]+)$'
         current_section = None
         current_content = []
 
         for line in text.split('\n'):
-            header_match = re.match(header_pattern, line)
-            if header_match:
+            heading = _parse_markdown_heading(line)
+            if heading:
                 # Save previous section
                 if current_content:
                     content_text = '\n'.join(current_content).strip()
@@ -193,7 +202,7 @@ class ContentAnalyzer:
                             word_count=len(content_text.split()),
                             source_section=current_section,
                         ))
-                current_section = header_match.group(2)
+                current_section = heading
                 current_content = []
             else:
                 current_content.append(line)

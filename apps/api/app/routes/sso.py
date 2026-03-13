@@ -21,7 +21,6 @@ import os
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
-from urllib.parse import urlencode
 import time as _time
 from urllib.parse import urlparse as _urlparse
 
@@ -80,13 +79,53 @@ _SSO_USER_PREFIX = "sso:user:"
 _MAX_MEMORY_SESSIONS = 500
 
 
-def _safe_redirect_url(url: str) -> str:
+def _sanitize_local_redirect_path(url: Optional[str]) -> str:
     if not url:
         return "/"
-    parsed = _urlparse(url)
+    cleaned = url.strip()
+    if not cleaned.startswith("/") or cleaned.startswith("//") or "\\" in cleaned:
+        return "/"
+    parsed = _urlparse(cleaned)
     if parsed.scheme or parsed.netloc:
         return "/"
-    return url
+    return cleaned
+
+
+def _validate_provider_redirect_url(url: str, expected_url: str) -> str:
+    parsed = _urlparse(url.strip())
+    expected_candidate = expected_url.strip() if isinstance(expected_url, str) else ""
+    expected = _urlparse(expected_candidate) if expected_candidate else None
+
+    if not parsed.scheme or not parsed.netloc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "Invalid identity provider redirect URL",
+                "error_code": "SSO_INVALID_REDIRECT_URL",
+            },
+        )
+
+    if expected is None or not expected.netloc:
+        return parsed.geturl()
+
+    if (
+        parsed.scheme.lower() != expected.scheme.lower()
+        or parsed.netloc.lower() != expected.netloc.lower()
+    ):
+        logger.warning(
+            "Blocked SSO redirect to unexpected host: expected %s, got %s",
+            expected.netloc,
+            parsed.netloc,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "Identity provider redirect validation failed",
+                "error_code": "SSO_REDIRECT_VALIDATION_FAILED",
+            },
+        )
+
+    return parsed.geturl()
 
 
 async def _get_redis():
@@ -470,9 +509,14 @@ async def saml_login(
         request_data = _get_request_info(request)
 
         # Initiate authentication
+        safe_relay_state = _sanitize_local_redirect_path(relay_state)
         redirect_url, session_data = await provider.initiate_authentication(
-            relay_state=relay_state,
+            relay_state=safe_relay_state,
             request_data=request_data,
+        )
+        redirect_url = _validate_provider_redirect_url(
+            redirect_url,
+            provider.saml_config.idp.sso_url,
         )
 
         # Save session data for callback validation
@@ -496,7 +540,7 @@ async def saml_login(
 
         logger.info(
             f"SAML login initiated for org {organization_id}, "
-            f"relay_state: {relay_state or 'none'}"
+            f"relay_state: {safe_relay_state or '/'}"
         )
 
         return response
@@ -600,8 +644,10 @@ async def saml_acs(
         if session_id:
             await _delete_auth_session(session_id)
 
-        # Determine redirect URL
-        redirect_url = _safe_redirect_url(relay_state or "/")
+        # Determine redirect URL from the validated server-side session only.
+        redirect_url = _sanitize_local_redirect_path(
+            session_data.get("relay_state") if session_data else None
+        )
 
         # Create response with session token
         response = RedirectResponse(
@@ -734,9 +780,14 @@ async def oidc_authorize(
         provider = OIDCProvider(organization_id, sso_config)
 
         # Initiate authentication
+        safe_redirect_uri = _sanitize_local_redirect_path(redirect_uri)
         auth_url, session_data = await provider.initiate_authentication(
-            relay_state=redirect_uri,
+            relay_state=safe_redirect_uri,
             login_hint=login_hint,
+        )
+        auth_url = _validate_provider_redirect_url(
+            auth_url,
+            provider.oidc_config.provider.authorization_endpoint or "",
         )
 
         # Save session data for callback validation
@@ -760,7 +811,7 @@ async def oidc_authorize(
 
         logger.info(
             f"OIDC authorization initiated for org {organization_id}, "
-            f"redirect_uri: {redirect_uri or 'default'}"
+            f"redirect_uri: {safe_redirect_uri or '/'}"
         )
 
         return response
@@ -884,8 +935,10 @@ async def oidc_callback(
         if session_id:
             await _delete_auth_session(session_id)
 
-        # Determine redirect URL
-        redirect_url = _safe_redirect_url(session_data.get("relay_state") or "/")
+        # Determine redirect URL from the validated server-side session only.
+        redirect_url = _sanitize_local_redirect_path(
+            session_data.get("relay_state") if session_data else None
+        )
 
         # Create response with session token
         response = RedirectResponse(

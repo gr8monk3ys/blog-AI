@@ -20,7 +20,7 @@ import logging
 import re
 from datetime import datetime
 from io import BytesIO
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -119,6 +119,102 @@ def _replace_markdown_image(match: re.Match) -> str:
     safe_src = html.escape(src_url, quote=True)
     return f'<img src="{safe_src}" alt="{safe_alt}" />'
 
+
+def _build_markdown_link_html(link_text: str, url: str) -> str:
+    safe_text = sanitize_html_content(link_text)
+    safe_url = html.escape(_sanitize_url(url), quote=True)
+    return f'<a href="{safe_url}">{safe_text}</a>'
+
+
+def _build_markdown_image_html(alt_text: str, src_url: str) -> str:
+    safe_alt = html.escape(alt_text, quote=True)
+    safe_src = html.escape(_sanitize_url(src_url), quote=True)
+    return f'<img src="{safe_src}" alt="{safe_alt}" />'
+
+
+def _replace_markdown_media(
+    text: str,
+    link_builder: Callable[[str, str], str],
+    image_builder: Callable[[str, str], str],
+) -> str:
+    """Replace simple markdown links and images using deterministic parsing."""
+    result: List[str] = []
+    index = 0
+    while index < len(text):
+        is_image = text.startswith("![", index)
+        is_link = text.startswith("[", index)
+
+        if not is_image and not is_link:
+            result.append(text[index])
+            index += 1
+            continue
+
+        label_start = index + (2 if is_image else 1)
+        label_end = text.find("]", label_start)
+        if label_end == -1 or label_end + 1 >= len(text) or text[label_end + 1] != "(":
+            result.append(text[index])
+            index += 1
+            continue
+
+        url_start = label_end + 2
+        url_end = text.find(")", url_start)
+        if url_end == -1:
+            result.append(text[index])
+            index += 1
+            continue
+
+        label = text[label_start:label_end]
+        url = text[url_start:url_end]
+        builder = image_builder if is_image else link_builder
+        result.append(builder(label, url))
+        index = url_end + 1
+
+    return "".join(result)
+
+
+def _parse_markdown_heading(line: str) -> Optional[Tuple[int, str]]:
+    level = 0
+    while level < len(line) and level < 6 and line[level] == "#":
+        level += 1
+    if level == 0 or level >= len(line) or not line[level].isspace():
+        return None
+    heading = line[level:].strip()
+    if not heading:
+        return None
+    return level, heading
+
+
+def _strip_markdown_headings(text: str) -> str:
+    lines = []
+    for line in text.split("\n"):
+        heading = _parse_markdown_heading(line)
+        lines.append(heading[1] if heading else line)
+    return "\n".join(lines)
+
+
+def _convert_markdown_headings_to_html(text: str) -> str:
+    lines = []
+    for line in text.split("\n"):
+        heading = _parse_markdown_heading(line)
+        if heading:
+            level, content = heading
+            lines.append(f"<h{level}>{content}</h{level}>")
+        else:
+            lines.append(line)
+    return "\n".join(lines)
+
+
+def _convert_markdown_blockquotes(text: str) -> str:
+    lines = []
+    for line in text.split("\n"):
+        if line.startswith("&gt;") and line[4:].startswith(" "):
+            lines.append(f"<blockquote>{line[4:].strip()}</blockquote>")
+        elif line.startswith(">") and line[1:].startswith(" "):
+            lines.append(f"<blockquote>{line[1:].strip()}</blockquote>")
+        else:
+            lines.append(line)
+    return "\n".join(lines)
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/export", tags=["export"])
@@ -174,16 +270,18 @@ def markdown_to_plain_text(content: str) -> str:
     """
     text = content
     # Remove headers
-    text = re.sub(r"^#{1,6}\s+", "", text, flags=re.MULTILINE)
+    text = _strip_markdown_headings(text)
     # Remove bold/italic - using negated character classes to prevent ReDoS
     text = re.sub(r"\*\*([^*]+)\*\*", r"\1", text)
     text = re.sub(r"\*([^*]+)\*", r"\1", text)
     text = re.sub(r"__([^_]+)__", r"\1", text)
     text = re.sub(r"_([^_]+)_", r"\1", text)
-    # Remove links but keep text - using negated character classes to prevent ReDoS
-    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
-    # Remove images - using negated character classes to prevent ReDoS
-    text = re.sub(r"!\[([^\]]*)\]\([^)]+\)", r"\1", text)
+    # Remove links and images but keep their visible text
+    text = _replace_markdown_media(
+        text,
+        lambda link_text, _url: link_text,
+        lambda alt_text, _url: alt_text,
+    )
     # Remove code blocks - using non-greedy quantifiers
     text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
     text = re.sub(r"`([^`]+)`", r"\1", text)
@@ -208,13 +306,8 @@ def markdown_to_html(content: str, title: str, metadata: Optional[Dict] = None) 
     # Escape raw content to prevent XSS, then apply markdown conversions
     html_content = html.escape(content, quote=True)
 
-    # Convert headers - using [^\n]+ instead of .+ to prevent ReDoS
-    html_content = re.sub(r"^######\s+([^\n]+)$", r"<h6>\1</h6>", html_content, flags=re.MULTILINE)
-    html_content = re.sub(r"^#####\s+([^\n]+)$", r"<h5>\1</h5>", html_content, flags=re.MULTILINE)
-    html_content = re.sub(r"^####\s+([^\n]+)$", r"<h4>\1</h4>", html_content, flags=re.MULTILINE)
-    html_content = re.sub(r"^###\s+([^\n]+)$", r"<h3>\1</h3>", html_content, flags=re.MULTILINE)
-    html_content = re.sub(r"^##\s+([^\n]+)$", r"<h2>\1</h2>", html_content, flags=re.MULTILINE)
-    html_content = re.sub(r"^#\s+([^\n]+)$", r"<h1>\1</h1>", html_content, flags=re.MULTILINE)
+    # Convert headers without regex backtracking
+    html_content = _convert_markdown_headings_to_html(html_content)
 
     # Convert bold and italic - using negated character classes to prevent ReDoS
     html_content = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", html_content)
@@ -222,13 +315,12 @@ def markdown_to_html(content: str, title: str, metadata: Optional[Dict] = None) 
     html_content = re.sub(r"__([^_]+)__", r"<strong>\1</strong>", html_content)
     html_content = re.sub(r"_([^_]+)_", r"<em>\1</em>", html_content)
 
-    # Convert links (with URL sanitization to prevent XSS via javascript: scheme)
-    # Using negated character classes to prevent ReDoS
-    html_content = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", _replace_markdown_link, html_content)
-
-    # Convert images (with URL sanitization to prevent XSS via javascript: scheme)
-    # Using negated character classes to prevent ReDoS
-    html_content = re.sub(r"!\[([^\]]*)\]\(([^)]+)\)", _replace_markdown_image, html_content)
+    # Convert links and images with deterministic parsing
+    html_content = _replace_markdown_media(
+        html_content,
+        _build_markdown_link_html,
+        _build_markdown_image_html,
+    )
 
     # Convert code blocks - using non-greedy quantifiers to prevent ReDoS
     def replace_code_block(match):
@@ -243,9 +335,8 @@ def markdown_to_html(content: str, title: str, metadata: Optional[Dict] = None) 
     # Convert inline code - using negated character class to prevent ReDoS
     html_content = re.sub(r"`([^`]+)`", r"<code>\1</code>", html_content)
 
-    # Convert blockquotes - handle both raw > and escaped &gt; (from html.escape)
-    html_content = re.sub(r"^&gt;\s+([^\n]+)$", r"<blockquote>\1</blockquote>", html_content, flags=re.MULTILINE)
-    html_content = re.sub(r"^>\s+([^\n]+)$", r"<blockquote>\1</blockquote>", html_content, flags=re.MULTILINE)
+    # Convert blockquotes without regex backtracking
+    html_content = _convert_markdown_blockquotes(html_content)
 
     # Convert unordered lists
     def process_lists(text):

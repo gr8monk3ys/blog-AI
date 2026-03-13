@@ -3,11 +3,10 @@ API Key authentication and storage.
 
 Security Notes:
 - API keys are hashed using bcrypt with automatic salting
-- Legacy SHA-256 hashes are supported for backward compatibility but log warnings
-- Constant-time comparison is used to prevent timing attacks
+- Legacy SHA-256 hashes are detected but are no longer accepted for auth
+- Bcrypt verification uses constant-time comparison internally
 """
 
-import hashlib
 import json
 import logging
 import os
@@ -41,8 +40,8 @@ class APIKeyStore:
 
     Security features:
     - Bcrypt hashing with automatic salt generation (cost factor 12)
-    - Backward compatibility with legacy SHA-256 hashes (with warnings)
-    - Constant-time comparison to prevent timing attacks
+    - Legacy SHA-256 hash detection so insecure keys can be rotated
+    - Constant-time verification via bcrypt.checkpw
     """
 
     # Bcrypt cost factor (work factor) - 12 is a good balance of security and performance
@@ -78,21 +77,6 @@ class APIKeyStore:
         """
         salt = bcrypt.gensalt(rounds=self.BCRYPT_ROUNDS)
         return bcrypt.hashpw(api_key.encode("utf-8"), salt).decode("utf-8")
-
-    def _hash_key_sha256(self, api_key: str) -> str:
-        """
-        Legacy SHA-256 hashing for backward compatibility verification only.
-
-        WARNING: This method is only used for verifying existing legacy hashes.
-        New keys should always use bcrypt via _hash_key().
-
-        Args:
-            api_key: The plain-text API key to hash.
-
-        Returns:
-            The SHA-256 hex digest.
-        """
-        return hashlib.sha256(api_key.encode()).hexdigest()
 
     def _is_legacy_hash(self, stored_hash: str) -> bool:
         """
@@ -136,22 +120,6 @@ class APIKeyStore:
             logger.warning(f"Bcrypt verification error: {e}")
             return False
 
-    def _verify_legacy_sha256(self, api_key: str, stored_hash: str) -> bool:
-        """
-        Verify an API key against a legacy SHA-256 hash.
-
-        Uses constant-time comparison to prevent timing attacks.
-
-        Args:
-            api_key: The plain-text API key to verify.
-            stored_hash: The SHA-256 hash to verify against.
-
-        Returns:
-            True if the key matches, False otherwise.
-        """
-        computed_hash = self._hash_key_sha256(api_key)
-        return secrets.compare_digest(stored_hash, computed_hash)
-
     def _load(self) -> None:
         """Load API keys from disk and identify legacy hashes."""
         if self.storage_path.exists():
@@ -170,8 +138,7 @@ class APIKeyStore:
                 if legacy_count > 0:
                     logger.warning(
                         f"Found {legacy_count} API key(s) using legacy SHA-256 hashing. "
-                        "These keys are vulnerable to rainbow table attacks. "
-                        "Users should regenerate their API keys for improved security."
+                        "These keys are disabled until they are rotated to bcrypt."
                     )
             except (json.JSONDecodeError, IOError) as e:
                 logger.error(f"Error loading API keys: {e}")
@@ -222,9 +189,8 @@ class APIKeyStore:
         """
         Verify an API key and return the associated user_id.
 
-        Supports both bcrypt (preferred) and legacy SHA-256 hashes for
-        backward compatibility. Uses constant-time comparison to prevent
-        timing attacks.
+        Only bcrypt hashes are accepted. Legacy SHA-256 hashes are
+        intentionally rejected and require key rotation.
 
         Args:
             api_key: The API key to verify.
@@ -234,52 +200,30 @@ class APIKeyStore:
         """
         for user_id, stored_hash in self._cache.items():
             if self._is_legacy_hash(stored_hash):
-                # Legacy SHA-256 hash - verify with constant-time comparison
-                if self._verify_legacy_sha256(api_key, stored_hash):
-                    logger.warning(
-                        f"User '{user_id}' authenticated with legacy SHA-256 hash. "
-                        "Recommend regenerating API key for improved security."
-                    )
-                    return user_id
-            else:
-                # Bcrypt hash - bcrypt.checkpw uses constant-time comparison
-                if self._verify_bcrypt(api_key, stored_hash):
-                    return user_id
+                continue
+
+            # Bcrypt hash - bcrypt.checkpw uses constant-time comparison
+            if self._verify_bcrypt(api_key, stored_hash):
+                return user_id
         return None
 
     def upgrade_legacy_hash(self, user_id: str, api_key: str) -> bool:
         """
-        Upgrade a legacy SHA-256 hash to bcrypt.
-
-        This method should be called after successful verification of a
-        legacy hash to transparently upgrade the user's key storage.
+        Legacy SHA-256 hashes are no longer upgraded in-place.
 
         Args:
             user_id: The user identifier.
-            api_key: The verified plain-text API key.
+            api_key: Unused. Retained for API compatibility.
 
         Returns:
-            True if upgrade was successful, False otherwise.
+            Always False. Legacy keys must be rotated out-of-band.
         """
-        if user_id not in self._cache:
-            return False
-
-        if user_id not in self._legacy_hash_users:
-            return False  # Already using bcrypt
-
-        # Verify the key first before upgrading
-        stored_hash = self._cache[user_id]
-        if not self._verify_legacy_sha256(api_key, stored_hash):
-            logger.error(f"Failed to upgrade hash for user '{user_id}': key verification failed")
-            return False
-
-        # Upgrade to bcrypt
-        new_hash = self._hash_key(api_key)
-        self._cache[user_id] = new_hash
-        self._legacy_hash_users.discard(user_id)
-        self._save()
-        logger.info(f"Upgraded API key hash for user '{user_id}' from SHA-256 to bcrypt")
-        return True
+        _ = api_key
+        if user_id in self._legacy_hash_users:
+            logger.warning(
+                "Legacy API key hashes must be rotated by revoking and recreating the key."
+            )
+        return False
 
     def has_legacy_hash(self, user_id: str) -> bool:
         """

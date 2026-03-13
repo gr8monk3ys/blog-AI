@@ -24,6 +24,8 @@ from src.config import Settings, get_settings
 
 logger = logging.getLogger(__name__)
 
+SAFE_LLM_PROVIDERS = frozenset({"openai", "anthropic", "gemini"})
+
 
 # =============================================================================
 # Custom Exceptions
@@ -293,11 +295,16 @@ def validate_config(
         try:
             settings = get_settings()
         except Exception as e:
-            logger.critical(f"Failed to load configuration: {e}")
+            error_kind = type(e).__name__
+            logger.critical("Failed to load configuration (%s)", error_kind)
             if fail_on_error:
-                raise ConfigurationError(f"Failed to load configuration: {e}") from e
+                raise ConfigurationError(
+                    "Failed to load configuration. Check environment variables and settings."
+                ) from e
             result = ValidationResult(is_valid=False)
-            result.add_error(f"Failed to load configuration: {e}")
+            result.add_error(
+                "Failed to load configuration. Check environment variables and settings."
+            )
             return result
 
     result = ValidationResult(is_valid=True)
@@ -343,17 +350,28 @@ def log_config_summary(settings: Optional[Settings] = None) -> None:
         settings = get_settings()
 
     summary = settings.get_config_summary()
+    safe_llm_providers = [
+        provider
+        for provider in summary["llm_providers"]
+        if provider in SAFE_LLM_PROVIDERS
+    ]
+    default_provider = summary["default_llm_provider"]
+    if default_provider in SAFE_LLM_PROVIDERS:
+        safe_default_provider = default_provider
+    elif default_provider:
+        safe_default_provider = "custom"
+    else:
+        safe_default_provider = "None"
 
     logger.info("=" * 60)
     logger.info("Blog AI Configuration Summary")
     logger.info("=" * 60)
     logger.info(f"Environment: {summary['environment']}")
-    logger.info(f"Dev API Key: {'set' if summary.get('dev_mode') else 'not set'}")
     logger.info(f"Log Level: {summary['log_level']}")
     logger.info("-" * 60)
     logger.info("Features:")
-    logger.info(f"  LLM Providers: {', '.join(summary['llm_providers']) or 'None'}")
-    logger.info(f"  Default Provider: {summary['default_llm_provider'] or 'None'}")
+    logger.info(f"  LLM Providers: {', '.join(safe_llm_providers) or 'None'}")
+    logger.info(f"  Default Provider: {safe_default_provider}")
     logger.info(f"  Database: {'Enabled' if summary.get('database_configured') else 'Disabled'}")
     logger.info(f"  Stripe Payments: {'Enabled' if summary['stripe_configured'] else 'Disabled'}")
     logger.info(f"  Stripe Webhooks: {'Enabled' if summary['stripe_webhooks_enabled'] else 'Disabled'}")
