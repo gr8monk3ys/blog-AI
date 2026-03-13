@@ -5,6 +5,7 @@ import { getSqlOrNull } from '../../../lib/db'
 import { FEEDBACK_TAGS, type FeedbackTag, type FeedbackTagStat } from '../../../types/feedback'
 
 const MAX_FEEDBACK_TEXT_LENGTH = 1000
+const MAX_CONTENT_ID_LENGTH = 256
 const MIN_RATING = 1
 const MAX_RATING = 5
 
@@ -57,6 +58,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (typeof content_id !== 'string' || content_id.trim().length === 0) {
     return NextResponse.json(
       { success: false, error: 'content_id is required and must be a non-empty string' },
+      { status: 400 }
+    )
+  }
+
+  if (content_id.length > MAX_CONTENT_ID_LENGTH) {
+    return NextResponse.json(
+      { success: false, error: `content_id must be at most ${MAX_CONTENT_ID_LENGTH} characters` },
       { status: 400 }
     )
   }
@@ -171,6 +179,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   if (!contentId) {
     return NextResponse.json(
       { success: false, error: 'content_id query parameter is required' },
+      { status: 400 }
+    )
+  }
+
+  if (contentId.length > MAX_CONTENT_ID_LENGTH) {
+    return NextResponse.json(
+      { success: false, error: `content_id must be at most ${MAX_CONTENT_ID_LENGTH} characters` },
       { status: 400 }
     )
   }

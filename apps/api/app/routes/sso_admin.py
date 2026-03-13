@@ -23,6 +23,17 @@ from pydantic import BaseModel, Field, field_validator
 
 from app.auth import verify_api_key
 from app.dependencies import get_organization_context, require_permission
+from app.error_handlers import sanitize_error_message
+from src.organizations.rbac import AuthorizationContext as _AuthCtxType
+
+
+def _verify_org_access(organization_id: str, auth_ctx: _AuthCtxType) -> None:
+    """Verify the path organization_id matches the authenticated user's org."""
+    if organization_id != auth_ctx.organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": "Organization ID mismatch"},
+        )
 from app.middleware import require_business_tier
 from src.auth.sso.oidc_service import OIDCService, OIDCServiceError
 from src.auth.sso.persistence import (
@@ -368,6 +379,7 @@ async def configure_saml(
     This endpoint validates the SAML configuration and stores it for the organization.
     The IdP certificate is validated for format and expiration.
     """
+    _verify_org_access(organization_id, auth_ctx)
     try:
         # Build base URL for SP configuration
         base_url = _build_base_url(organization_id)
@@ -474,7 +486,7 @@ async def configure_saml(
         logger.exception(f"Failed to configure SAML for org {organization_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"error": f"Failed to configure SAML: {e}"},
+            detail={"error": f"Failed to configure SAML: {sanitize_error_message(str(e))}"},
         )
 
 
@@ -505,6 +517,7 @@ async def configure_oidc(
     This endpoint validates the OIDC configuration and stores it for the organization.
     If a discovery URL is provided, endpoints are automatically discovered.
     """
+    _verify_org_access(organization_id, auth_ctx)
     from pydantic import SecretStr
 
     try:
@@ -597,7 +610,7 @@ async def configure_oidc(
         logger.exception(f"Failed to configure OIDC for org {organization_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"error": f"Failed to configure OIDC: {e}"},
+            detail={"error": f"Failed to configure OIDC: {sanitize_error_message(str(e))}"},
         )
 
 
@@ -625,6 +638,7 @@ async def get_sso_config(
 
     Returns configuration without sensitive data (certificates, secrets).
     """
+    _verify_org_access(organization_id, auth_ctx)
     sso_config = await _load_sso_config(organization_id)
 
     if not sso_config:
@@ -683,6 +697,7 @@ async def delete_sso_config(
     This will disable SSO and remove all configuration.
     Active SSO sessions will be terminated.
     """
+    _verify_org_access(organization_id, auth_ctx)
     sso_config = await _load_sso_config(organization_id)
 
     if not sso_config:
@@ -738,6 +753,7 @@ async def toggle_sso_enabled(
 
     Requires: organization.update permission (owner, admin).
     """
+    _verify_org_access(organization_id, auth_ctx)
     sso_config = await _load_sso_config(organization_id)
 
     if not sso_config:
@@ -789,6 +805,7 @@ async def test_sso_config(
     - Endpoint availability
     - Attribute mapping validation
     """
+    _verify_org_access(organization_id, auth_ctx)
     sso_config = await _load_sso_config(organization_id)
 
     if not sso_config:
@@ -890,6 +907,7 @@ async def list_attribute_mappings(
 
     Requires: organization.update permission (owner, admin).
     """
+    _verify_org_access(organization_id, auth_ctx)
     sso_config = await _load_sso_config(organization_id)
 
     if not sso_config:
@@ -973,6 +991,7 @@ async def update_attribute_mappings(
 
     Requires: organization.update permission (owner, admin).
     """
+    _verify_org_access(organization_id, auth_ctx)
     sso_config = await _load_sso_config(organization_id)
 
     if not sso_config:
@@ -1041,6 +1060,7 @@ async def list_sso_sessions(
 
     Requires: audit.view permission (owner, admin).
     """
+    _verify_org_access(organization_id, auth_ctx)
     db_result = await db_list_active_user_sessions(
         organization_id=organization_id,
         limit=limit,
@@ -1114,6 +1134,7 @@ async def revoke_sso_session(
 
     Requires: members.manage permission (owner, admin).
     """
+    _verify_org_access(organization_id, auth_ctx)
     from app.routes.sso import _sso_user_sessions
 
     deleted_from_db = await db_delete_user_session_for_org(session_id, organization_id)
@@ -1159,6 +1180,7 @@ async def revoke_all_sso_sessions(
     This is useful when you need to force all users to re-authenticate,
     such as after a security incident or configuration change.
     """
+    _verify_org_access(organization_id, auth_ctx)
     from app.routes.sso import _sso_user_sessions
 
     db_revoked_count = await db_delete_user_sessions_for_org(organization_id)

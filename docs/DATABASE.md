@@ -25,30 +25,26 @@ This document provides comprehensive documentation of the Blog AI database schem
 | 001 | `001_create_generated_content.sql` | OK | Core generated content table |
 | 002 | `002_create_tool_usage.sql` | OK | Tool usage statistics |
 | 003 | `003_create_conversations.sql` | OK | Conversation history storage |
-| 004 | `004_add_favorites.sql` | **DUPLICATE** | Favorites functionality |
-| 004 | `004_create_templates.sql` | **DUPLICATE** | Reusable templates |
+| 004 | `004_add_favorites.sql` | OK | Favorites functionality |
 | 005 | `005_create_brand_profiles.sql` | OK | Brand voice profiles |
 | 006 | `006_enhance_brand_voice_training.sql` | OK | Voice samples and fingerprints |
 | 007 | `007_usage_quotas.sql` | OK | Subscription quotas and usage tracking |
 | 008 | `008_stripe_integration.sql` | OK | Stripe payment integration |
+| 009 | `009_content_versions.sql` | OK | Content version history |
+| 010 | `010_knowledge_base.sql` | OK | Knowledge base storage |
+| 011 | `011_organizations.sql` | OK | Organization support |
+| 012 | `012_blog_posts.sql` | OK | Blog post management |
+| 013 | `013_create_templates.sql` | OK | Reusable templates |
+| 014 | `014_plagiarism_checks.sql` | OK | Plagiarism detection |
+| 015 | `015_performance_analytics.sql` | OK | Performance analytics |
+| 016 | `016_social_scheduling.sql` | OK | Social media scheduling |
+| 017 | `017_sso.sql` | OK | Single sign-on support |
+| 018 | `018_content_feedback.sql` | OK | Content feedback system |
+| 019 | `019_webhook_event_log.sql` | OK | Webhook event logging |
 
 ### Issues Found
 
-#### 1. Duplicate Migration Number (004)
-**Severity: HIGH**
-
-Two migrations share the same number `004`:
-- `004_add_favorites.sql` - Adds favorites functionality to `generated_content`
-- `004_create_templates.sql` - Creates the `templates` table
-
-**Resolution Required:**
-One of these should be renumbered. Recommended fix:
-```bash
-# Rename templates migration to 004a or rename to 004b_create_templates.sql
-mv 004_create_templates.sql 004b_create_templates.sql
-```
-
-#### 2. No Rollback Support
+#### 1. No Rollback Support
 **Severity: MEDIUM**
 
 None of the migrations include DOWN/rollback statements. This makes it difficult to:
@@ -64,7 +60,7 @@ DROP TABLE IF EXISTS generated_content;
 DROP FUNCTION IF EXISTS update_updated_at_column();
 ```
 
-#### 3. Circular Dependency Potential
+#### 2. Circular Dependency Potential
 **Severity: LOW**
 
 Migration `006_enhance_brand_voice_training.sql` adds a foreign key from `brand_profiles` to `voice_fingerprints`, but `voice_fingerprints` also references `brand_profiles`. This is handled correctly (FK added via ALTER TABLE), but requires careful ordering.
@@ -812,22 +808,13 @@ erDiagram
 
 ## Known Issues
 
-### 1. Duplicate Migration Number (004) - HIGH PRIORITY
-
-**Problem:** Two migrations share number 004, which can cause:
-- Unpredictable execution order
-- Migration tools may skip one file
-- Deployment failures in some environments
-
-**Fix:** Rename `004_create_templates.sql` to `004b_create_templates.sql` or renumber it to `009`.
-
-### 2. Missing Rollback Scripts - MEDIUM PRIORITY
+### 1. Missing Rollback Scripts - MEDIUM PRIORITY
 
 **Problem:** No DOWN migrations exist, making rollbacks impossible.
 
 **Recommendation:** Create a `rollback/` directory with corresponding rollback scripts.
 
-### 3. Potential RLS Gaps - LOW PRIORITY
+### 2. Potential RLS Gaps - LOW PRIORITY
 
 **Observations:**
 - `generated_content` SELECT policy allows any anon user to read content if user_hash IS NOT NULL (not checking if it matches)

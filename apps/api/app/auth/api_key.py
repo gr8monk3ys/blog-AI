@@ -198,14 +198,16 @@ class APIKeyStore:
         Returns:
             The user_id if valid, None otherwise.
         """
+        result = None
         for user_id, stored_hash in self._cache.items():
             if self._is_legacy_hash(stored_hash):
                 continue
 
             # Bcrypt hash - bcrypt.checkpw uses constant-time comparison
             if self._verify_bcrypt(api_key, stored_hash):
-                return user_id
-        return None
+                if result is None:
+                    result = user_id
+        return result
 
     def upgrade_legacy_hash(self, user_id: str, api_key: str) -> bool:
         """
