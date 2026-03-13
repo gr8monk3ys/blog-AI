@@ -9,6 +9,9 @@ on:
 
 permissions: read-all
 
+env:
+  GITLEAKS_VERSION: "8.30.0"
+
 jobs:
   gitleaks:
     runs-on: ubuntu-latest
@@ -18,8 +21,48 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install gitleaks
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl --fail --silent --show-error --location \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${archive}" \
+            --output "${RUNNER_TEMP}/${archive}"
+          tar -xzf "${RUNNER_TEMP}/${archive}" -C "${RUNNER_TEMP}" gitleaks
+          chmod +x "${RUNNER_TEMP}/gitleaks"
+          echo "${RUNNER_TEMP}" >> "${GITHUB_PATH}"
+
+      - name: Determine gitleaks range
+        id: gitleaks-range
+        shell: bash
+        run: |
+          set -euo pipefail
+          event_name="${GITHUB_EVENT_NAME}"
+          log_opts="-1"
+
+          if [ "${event_name}" = "push" ]; then
+            base_ref="$(python3 -c 'import json, os; print(json.load(open(os.environ["GITHUB_EVENT_PATH"]))["before"])')"
+            head_ref="$(python3 -c 'import json, os; print(json.load(open(os.environ["GITHUB_EVENT_PATH"]))["after"])')"
+            if [ "${base_ref}" != "${head_ref}" ] && [ "${base_ref}" != "0000000000000000000000000000000000000000" ]; then
+              log_opts="--no-merges --first-parent ${base_ref}^..${head_ref}"
+            fi
+          elif [ "${event_name}" = "pull_request" ]; then
+            base_ref="$(python3 -c 'import json, os; print(json.load(open(os.environ["GITHUB_EVENT_PATH"]))["pull_request"]["base"]["sha"])')"
+            head_ref="$(python3 -c 'import json, os; print(json.load(open(os.environ["GITHUB_EVENT_PATH"]))["pull_request"]["head"]["sha"])')"
+            log_opts="--no-merges --first-parent ${base_ref}^..${head_ref}"
+          fi
+
+          {
+            echo "log_opts<<EOF"
+            echo "${log_opts}"
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
+
       - name: Run gitleaks
-        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7
+        shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_ENABLE_COMMENTS: false
+          GITLEAKS_LOG_OPTS: ${{ steps.gitleaks-range.outputs.log_opts }}
+        run: |
+          set -euo pipefail
+          gitleaks git --no-banner --redact --exit-code 1 --log-opts="${GITLEAKS_LOG_OPTS}" .
