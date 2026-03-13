@@ -4,25 +4,53 @@ Create or reset a local API key for development/testing.
 Usage:
   python scripts/create_api_key.py --user-id local_dev
   python scripts/create_api_key.py --user-id local_dev --reset
-  python scripts/create_api_key.py --user-id local_dev --output-file .local/local_dev.api-key
 """
 
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
+import shutil
+import subprocess
 
 from app.auth.api_key import api_key_store, get_or_create_api_key
 
 
-def _default_output_file(user_id: str) -> Path:
-    return Path(".local/api-keys") / f"{user_id}.txt"
+def _store_key_securely(user_id: str, key: str) -> str:
+    security_cmd = shutil.which("security")
+    if security_cmd:
+        service_name = f"blog-ai.api-key.{user_id}"
+        subprocess.run(
+            [
+                security_cmd,
+                "add-generic-password",
+                "-U",
+                "-a",
+                user_id,
+                "-s",
+                service_name,
+                "-w",
+                key,
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return (
+            "API key stored in the macOS Keychain. "
+            f"Service: {service_name}, Account: {user_id}"
+        )
 
+    clipboard_cmd = shutil.which("pbcopy")
+    if clipboard_cmd:
+        subprocess.run(
+            [clipboard_cmd],
+            input=key,
+            check=True,
+            text=True,
+        )
+        return "API key copied to the clipboard."
 
-def _write_key_file(path: Path, key: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(f"{key}\n", encoding="utf-8")
-    path.chmod(0o600)
+    raise RuntimeError("No secure output mechanism is available on this machine.")
 
 
 def main() -> int:
@@ -33,10 +61,6 @@ def main() -> int:
         action="store_true",
         help="Revoke existing key before creating a new one",
     )
-    parser.add_argument(
-        "--output-file",
-        help="Write the generated API key to this file with 0600 permissions",
-    )
     args = parser.parse_args()
 
     if args.reset:
@@ -44,9 +68,7 @@ def main() -> int:
 
     key = get_or_create_api_key(args.user_id)
     if key:
-        output_path = Path(args.output_file) if args.output_file else _default_output_file(args.user_id)
-        _write_key_file(output_path, key)
-        print(f"API key written to {output_path} with 0600 permissions.")
+        print(_store_key_securely(args.user_id, key))
         return 0
 
     print(

@@ -349,42 +349,33 @@ def log_config_summary(settings: Optional[Settings] = None) -> None:
     if settings is None:
         settings = get_settings()
 
-    summary = settings.get_config_summary()
-    safe_llm_providers = [
-        provider
-        for provider in summary["llm_providers"]
-        if provider in SAFE_LLM_PROVIDERS
-    ]
-    default_provider = summary["default_llm_provider"]
-    if default_provider in SAFE_LLM_PROVIDERS:
-        safe_default_provider = default_provider
-    elif default_provider:
-        safe_default_provider = "custom"
-    else:
-        safe_default_provider = "None"
+    environment = "production" if settings.security.is_production else "development"
+    safe_log_level = settings.logging.log_level.upper()
+    if safe_log_level not in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}:
+        safe_log_level = "CUSTOM"
+    llm_provider_status = "Enabled" if settings.llm.has_any_provider else "Disabled"
 
     logger.info("=" * 60)
     logger.info("Blog AI Configuration Summary")
     logger.info("=" * 60)
-    logger.info(f"Environment: {summary['environment']}")
-    logger.info(f"Log Level: {summary['log_level']}")
+    logger.info(f"Environment: {environment}")
+    logger.info(f"Log Level: {safe_log_level}")
     logger.info("-" * 60)
     logger.info("Features:")
-    logger.info(f"  LLM Providers: {', '.join(safe_llm_providers) or 'None'}")
-    logger.info(f"  Default Provider: {safe_default_provider}")
-    logger.info(f"  Database: {'Enabled' if summary.get('database_configured') else 'Disabled'}")
-    logger.info(f"  Stripe Payments: {'Enabled' if summary['stripe_configured'] else 'Disabled'}")
-    logger.info(f"  Stripe Webhooks: {'Enabled' if summary['stripe_webhooks_enabled'] else 'Disabled'}")
-    logger.info(f"  Sentry Monitoring: {'Enabled' if summary['sentry_configured'] else 'Disabled'}")
-    logger.info(f"  Redis Cache: {'Enabled' if summary['redis_configured'] else 'Disabled'}")
-    logger.info(f"  Research APIs: {'Enabled' if summary['research_apis_configured'] else 'Disabled'}")
+    logger.info(f"  LLM Providers: {llm_provider_status}")
+    logger.info(f"  Database: {'Enabled' if settings.is_database_configured else 'Disabled'}")
+    logger.info(f"  Stripe Payments: {'Enabled' if settings.is_stripe_configured else 'Disabled'}")
+    logger.info(f"  Stripe Webhooks: {'Enabled' if settings.stripe.has_webhook_secret else 'Disabled'}")
+    logger.info(f"  Sentry Monitoring: {'Enabled' if settings.is_sentry_configured else 'Disabled'}")
+    logger.info(f"  Redis Cache: {'Enabled' if settings.is_redis_configured else 'Disabled'}")
+    logger.info(f"  Research APIs: {'Enabled' if settings.has_research_api else 'Disabled'}")
     logger.info("-" * 60)
     logger.info("Security:")
-    logger.info(f"  Rate Limiting: {'Enabled' if summary['rate_limiting_enabled'] else 'Disabled'}")
-    logger.info(f"  Security Middleware: {'Enabled' if summary['security_enabled'] else 'Disabled'}")
-    logger.info(f"  HTTPS Redirect: {'Enabled' if summary['https_redirect'] else 'Disabled'}")
-    logger.info(f"  HSTS: {'Enabled' if summary['hsts_enabled'] else 'Disabled'}")
-    logger.info(f"  Allowed Origins: {len(summary['allowed_origins'])} configured")
+    logger.info(f"  Rate Limiting: {'Enabled' if settings.rate_limit.rate_limit_enabled else 'Disabled'}")
+    logger.info(f"  Security Middleware: {'Enabled' if settings.security.security_enabled else 'Disabled'}")
+    logger.info(f"  HTTPS Redirect: {'Enabled' if settings.security.https_redirect_enabled else 'Disabled'}")
+    logger.info(f"  HSTS: {'Enabled' if settings.security.hsts_enabled else 'Disabled'}")
+    logger.info(f"  Allowed Origins: {len(settings.security.origins_list)} configured")
     logger.info("=" * 60)
 
     # Startup feature availability banner
