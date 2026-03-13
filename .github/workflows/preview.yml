@@ -1,0 +1,166 @@
+name: Preview Deployment
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  BUN_VERSION: "1.3.10"
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Deploy a Vercel preview for the PR
+  # ---------------------------------------------------------------------------
+  preview:
+    name: Deploy Preview (Vercel)
+    runs-on: ubuntu-latest
+    environment:
+      name: preview
+      url: ${{ steps.vercel.outputs.preview-url }}
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Validate Vercel credentials
+        id: vercel-preflight
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          missing=0
+          for key in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID; do
+            if [ -z "${!key}" ]; then
+              echo "::warning::Skipping preview deploy: missing ${key}."
+              missing=1
+            fi
+          done
+
+          if [ "$missing" -eq 0 ]; then
+            echo "can_deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "can_deploy=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy Preview to Vercel
+        if: steps.vercel-preflight.outputs.can_deploy == 'true'
+        id: vercel
+        uses: amondnet/vercel-action@16e87c0a08142b0d0d33b76aeaf20823c381b9b9
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./
+          # No --prod flag: this creates a preview deployment
+          github-comment: false
+
+      - name: Comment preview URL on PR
+        if: steps.vercel-preflight.outputs.can_deploy == 'true' && steps.vercel.outputs.preview-url
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        env:
+          PREVIEW_URL: ${{ steps.vercel.outputs.preview-url }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_REF: ${{ github.head_ref }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        with:
+          script: |
+            const previewUrl = process.env.PREVIEW_URL;
+            const sha = process.env.HEAD_SHA.slice(0, 7);
+            const branch = process.env.HEAD_REF;
+            const runUrl = process.env.RUN_URL;
+            const marker = '<!-- vercel-preview-comment -->';
+
+            const body = [
+              marker,
+              `### Vercel Preview Deployment`,
+              '',
+              `| Name | Status | URL |`,
+              `| :--- | :----- | :-- |`,
+              `| **blog-ai** | Ready | [Visit Preview](${previewUrl}) |`,
+              '',
+              `**Commit:** \`${sha}\``,
+              `**Branch:** \`${branch}\``,
+              '',
+              `> Built by the [Preview Deployment](${runUrl}) workflow.`,
+            ].join('\n');
+
+            // Find and update an existing preview comment, or create a new one.
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              per_page: 100,
+            });
+
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Comment on missing credentials
+        if: steps.vercel-preflight.outputs.can_deploy == 'false'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        with:
+          script: |
+            const runUrl = process.env.RUN_URL;
+            const marker = '<!-- vercel-preview-comment -->';
+
+            const body = [
+              marker,
+              `### Vercel Preview Deployment`,
+              '',
+              '> Preview deployment was **skipped** because one or more Vercel secrets',
+              '> (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`) are not configured.',
+              `> See the [workflow run](${runUrl}) for details.`,
+            ].join('\n');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              per_page: 100,
+            });
+
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
