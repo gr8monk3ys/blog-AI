@@ -9,8 +9,8 @@ export default defineConfig({
   // Directory containing test files
   testDir: './e2e',
 
-  // Keep route warmup deterministic; parallel startup in dev mode was flaky.
-  fullyParallel: false,
+  // Run tests within each file in parallel — all specs are stateless smoke tests.
+  fullyParallel: true,
 
   // Fail the build on CI if you accidentally left test.only in the source code
   forbidOnly: !!process.env.CI,
@@ -18,8 +18,8 @@ export default defineConfig({
   // Retry on CI only
   retries: process.env.CI ? 2 : 0,
 
-  // Use serial workers for stable dev-server route compilation during smoke tests.
-  workers: 1,
+  // 2 parallel workers in CI to balance speed vs dev-server load; auto-detect locally.
+  workers: process.env.CI ? 2 : undefined,
 
   // Reporter to use
   reporter: process.env.CI

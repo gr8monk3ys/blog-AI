@@ -364,8 +364,14 @@ class RedisBackend(RateLimitBackend):
     """
     Redis-based rate limit backend for distributed deployments.
 
-    Uses sorted sets with timestamp scores for efficient sliding window.
-    Automatically handles connection failures with graceful degradation.
+    Uses sorted sets with timestamp scores for efficient sliding window
+    rate limiting. Each request is stored as a unique member (timestamp +
+    random suffix) with the timestamp as the score, ensuring concurrent
+    requests within the same microsecond are counted separately.
+
+    Reuses the project's singleton RedisClient from src.storage.redis_client
+    for connection pooling, health checks, and reconnection support.
+    Falls back gracefully when Redis is unavailable.
     """
 
     def __init__(self, redis_url: str, key_prefix: str = "ratelimit:"):
@@ -373,60 +379,85 @@ class RedisBackend(RateLimitBackend):
         Initialize the Redis backend.
 
         Args:
-            redis_url: Redis connection URL.
-            key_prefix: Prefix for all rate limit keys.
+            redis_url: Redis connection URL (used only if the singleton
+                       RedisClient has not been initialised yet).
+            key_prefix: Prefix for all rate limit keys in Redis.
         """
         self._redis_url = redis_url
         self._key_prefix = key_prefix
-        self._client = None
         self._connected = False
-        self._init_client()
-
-    def _init_client(self) -> None:
-        """Initialize the Redis client."""
-        try:
-            import redis.asyncio as redis
-
-            self._client = redis.from_url(
-                self._redis_url,
-                encoding="utf-8",
-                decode_responses=True,
-            )
-            self._connected = True
-            logger.info("Redis rate limit backend initialized")
-        except ImportError:
-            logger.warning("redis package not installed, Redis backend unavailable")
-            self._connected = False
-        except Exception as e:
-            logger.error(f"Failed to initialize Redis client: {e}")
-            self._connected = False
+        self._connection_verified = False
 
     def _get_key(self, key: str) -> str:
         """Get the full Redis key with prefix."""
         return f"{self._key_prefix}{key}"
 
+    async def _get_client(self):
+        """
+        Get a live Redis client, verifying the connection on first use.
+
+        Returns:
+            An async Redis client instance.
+
+        Raises:
+            ConnectionError: If Redis is not available.
+        """
+        from src.storage.redis_client import redis_client
+
+        client = await redis_client.get_client()
+        if client is None:
+            self._connected = False
+            raise ConnectionError("Redis not available")
+
+        if not self._connection_verified:
+            try:
+                await client.ping()
+                self._connected = True
+                self._connection_verified = True
+                logger.info("Redis rate limit backend connection verified")
+            except Exception as e:
+                self._connected = False
+                raise ConnectionError(f"Redis ping failed: {e}") from e
+
+        return client
+
+    @staticmethod
+    def _unique_member(timestamp: float) -> str:
+        """
+        Generate a unique sorted-set member for a request.
+
+        Using only the timestamp string as the member causes silent
+        overwrites when two requests share the same timestamp (sorted
+        set members must be unique).  Appending a random suffix avoids
+        this collision while keeping the score as the real timestamp for
+        window queries.
+        """
+        import uuid
+
+        return f"{timestamp}:{uuid.uuid4().hex[:8]}"
+
     async def record_request(
         self, key: str, timestamp: float, window_seconds: int
     ) -> Tuple[int, float]:
         """Record a request using Redis sorted set."""
-        if not self._connected or not self._client:
-            raise ConnectionError("Redis not connected")
+        client = await self._get_client()
 
         redis_key = self._get_key(key)
         cutoff = timestamp - window_seconds
+        member = self._unique_member(timestamp)
 
         try:
             # Use pipeline for atomic operations
-            async with self._client.pipeline(transaction=True) as pipe:
+            async with client.pipeline(transaction=True) as pipe:
                 # Remove expired entries
                 pipe.zremrangebyscore(redis_key, "-inf", cutoff)
-                # Add current request with timestamp as score
-                pipe.zadd(redis_key, {str(timestamp): timestamp})
+                # Add current request – unique member, timestamp as score
+                pipe.zadd(redis_key, {member: timestamp})
                 # Get count of entries in window
                 pipe.zcard(redis_key)
                 # Get oldest entry
                 pipe.zrange(redis_key, 0, 0, withscores=True)
-                # Set expiry on the key (window + buffer)
+                # Set TTL on the key (window + buffer)
                 pipe.expire(redis_key, window_seconds + 60)
 
                 results = await pipe.execute()
@@ -438,6 +469,8 @@ class RedisBackend(RateLimitBackend):
             return count, oldest
 
         except Exception as e:
+            self._connection_verified = False
+            self._connected = False
             logger.error(f"Redis error recording request: {e}")
             raise
 
@@ -445,31 +478,36 @@ class RedisBackend(RateLimitBackend):
         self, key: str, timestamp: float, window_seconds: int
     ) -> int:
         """Get request count from Redis sorted set."""
-        if not self._connected or not self._client:
-            raise ConnectionError("Redis not connected")
+        client = await self._get_client()
 
         redis_key = self._get_key(key)
         cutoff = timestamp - window_seconds
 
         try:
             # Count entries with score > cutoff
-            count = await self._client.zcount(redis_key, cutoff, "+inf")
+            count = await client.zcount(redis_key, cutoff, "+inf")
             return count
         except Exception as e:
+            self._connection_verified = False
+            self._connected = False
             logger.error(f"Redis error getting request count: {e}")
             raise
 
     async def cleanup(self, key: str, timestamp: float, window_seconds: int) -> None:
         """Remove expired entries from Redis sorted set."""
-        if not self._connected or not self._client:
+        try:
+            client = await self._get_client()
+        except ConnectionError:
             return
 
         redis_key = self._get_key(key)
         cutoff = timestamp - window_seconds
 
         try:
-            await self._client.zremrangebyscore(redis_key, "-inf", cutoff)
+            await client.zremrangebyscore(redis_key, "-inf", cutoff)
         except Exception as e:
+            self._connection_verified = False
+            self._connected = False
             logger.warning(f"Redis cleanup error: {e}")
 
 
