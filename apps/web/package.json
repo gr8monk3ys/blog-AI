@@ -20,8 +20,8 @@
     "test:e2e:headed": "playwright test --headed"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.38.2",
-    "@headlessui/react": "^1.7.19",
+    "@clerk/nextjs": "^7.0.4",
+    "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.1.1",
     "@neondatabase/serverless": "^1.0.2",
     "@sentry/nextjs": "^10.36.0",
@@ -33,10 +33,10 @@
     "framer-motion": "^12.34.3",
     "next": "16.1.6",
     "postcss": "^8",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "tailwindcss": "^3.4.19",
-    "uuid": "^9.0.1"
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwindcss": "^4.2.1",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
