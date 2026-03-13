@@ -136,6 +136,17 @@ export function markdownToHtml(md: string): string {
   return html.join('\n')
 }
 
+/** Validate that a URL uses http: or https: protocol; return '#' otherwise. */
+function safeUrl(url: string): string {
+  try {
+    const parsed = new URL(url, 'https://placeholder.invalid')
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return '#'
+    return url
+  } catch {
+    return '#'
+  }
+}
+
 /** Apply inline formatting (bold, italic, code, links, images). */
 function inlineFormat(text: string): string {
   let result = escapeHtml(text)
@@ -143,13 +154,13 @@ function inlineFormat(text: string): string {
   // Images: ![alt](url)
   result = result.replace(
     /!\[([^\]]*)\]\(([^)]+)\)/g,
-    '<img src="$2" alt="$1" class="max-w-full rounded my-2" />'
+    (_, alt, url) => `<img src="${safeUrl(url)}" alt="${alt}" class="max-w-full rounded my-2" />`
   )
 
   // Links: [text](url)
   result = result.replace(
     /\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2" class="text-amber-700 hover:text-amber-800 underline" target="_blank" rel="noreferrer">$1</a>'
+    (_, text, url) => `<a href="${safeUrl(url)}" class="text-amber-700 hover:text-amber-800 underline" target="_blank" rel="noreferrer">${text}</a>`
   )
 
   // Inline code

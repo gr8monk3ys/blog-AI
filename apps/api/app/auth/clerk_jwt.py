@@ -15,7 +15,7 @@ Configuration:
 from __future__ import annotations
 
 import os
-from functools import lru_cache
+import time
 from typing import Any, Dict, Optional
 
 import jwt
@@ -45,9 +45,23 @@ def is_clerk_jwt_configured() -> bool:
     return bool(os.environ.get("CLERK_JWKS_URL"))
 
 
-@lru_cache(maxsize=4)
+_jwks_cache: dict[str, tuple[PyJWKClient, float]] = {}
+_JWKS_CACHE_TTL = 3600  # 1 hour
+
+
 def _get_jwks_client(jwks_url: str) -> PyJWKClient:
-    return PyJWKClient(jwks_url)
+    now = time.time()
+    if jwks_url in _jwks_cache:
+        client, cached_at = _jwks_cache[jwks_url]
+        if now - cached_at < _JWKS_CACHE_TTL:
+            return client
+    client = PyJWKClient(jwks_url)
+    _jwks_cache[jwks_url] = (client, now)
+    # Evict expired entries
+    expired = [k for k, (_, t) in _jwks_cache.items() if now - t >= _JWKS_CACHE_TTL]
+    for k in expired:
+        del _jwks_cache[k]
+    return client
 
 
 def verify_clerk_session_token(token: str) -> Dict[str, Any]:

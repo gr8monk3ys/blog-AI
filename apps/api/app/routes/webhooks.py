@@ -251,8 +251,7 @@ async def list_webhooks(
     )
 
     # Get total count
-    all_subs = await webhook_storage.list_user_subscriptions(scope_id, limit=1000)
-    total = len(all_subs)
+    total = await webhook_storage.count_user_subscriptions(user_id=scope_id)
 
     return {
         "subscriptions": [s.model_dump() for s in subscriptions],

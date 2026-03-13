@@ -331,6 +331,37 @@ class WebhookStorage:
         # Apply pagination
         return subscriptions[offset : offset + limit]
 
+    async def count_user_subscriptions(self, user_id: str) -> int:
+        """
+        Count subscriptions owned by a user without fetching all records.
+
+        Mirrors the merge logic of list_user_subscriptions: when using fallback,
+        returns the higher of Redis and in-memory counts.
+
+        Args:
+            user_id: User ID to count subscriptions for
+
+        Returns:
+            Total number of subscriptions for the user
+        """
+        redis = await self._get_redis()
+        count = 0
+
+        if redis:
+            try:
+                user_key = f"{USER_SUBSCRIPTIONS_PREFIX}{user_id}"
+                count = await redis.scard(user_key)
+            except Exception as e:
+                logger.warning(f"Redis count_user_subscriptions error: {str(e)}, falling back to memory")
+                count = 0
+
+        # Merge with in-memory fallback (mirrors list_user_subscriptions logic)
+        if not count or self._using_fallback:
+            fallback_count = len(self._fallback_user_subs.get(user_id, []))
+            count = max(count, fallback_count)
+
+        return count
+
     async def get_subscriptions_for_event(
         self,
         event_type: WebhookEventType,
