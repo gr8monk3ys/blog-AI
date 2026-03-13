@@ -13,6 +13,7 @@
   <img alt="Bun 1.3+" src="https://img.shields.io/badge/Bun-1.3%2B-black?logo=bun">
   <img alt="Next.js 16" src="https://img.shields.io/badge/Next.js-16-black?logo=next.js">
   <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-Python%203.12-009688?logo=fastapi">
+  <a href="LICENSE"><img alt="License: AGPL-3.0" src="https://img.shields.io/badge/License-AGPL--3.0-blue.svg"></a>
 </p>
 
 ## Overview

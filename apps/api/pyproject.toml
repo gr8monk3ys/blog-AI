@@ -3,7 +3,7 @@ name = "blog-ai"
 version = "0.1.0"
 description = "AI-driven solution for generating blog posts and books"
 authors = ["Lorenzo"]
-license = "GNU General Public License"
+license = "AGPL-3.0-only"
 readme = "README.md"
 
 [tool.poetry.dependencies]
