@@ -41,7 +41,8 @@ describe('SiteHeader', () => {
         { label: 'Blog', href: '/blog' },
         { label: 'Brand Voice', href: '/brand' },
         { label: 'Bulk', href: '/bulk' },
-        { label: 'Generate', href: '/tools' },
+        { label: 'Generate', href: '/generate' },
+        { label: 'Tools', href: '/tools' },
         { label: 'Templates', href: '/templates' },
         { label: 'Team', href: '/team' },
       ]
@@ -143,6 +144,7 @@ describe('SiteHeader', () => {
       expect(labels).toContain('Brand Voice')
       expect(labels).toContain('Bulk')
       expect(labels).toContain('Generate')
+      expect(labels).toContain('Tools')
       expect(labels).toContain('Templates')
       expect(labels).toContain('Team')
     })
