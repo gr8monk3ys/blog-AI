@@ -4,6 +4,7 @@ import { useState, useId } from 'react'
 import ContentGenerator from '../../components/ContentGenerator'
 import ExportMenu from '../../components/ExportMenu'
 import SEOScorePanel from '../../components/seo/SEOScorePanel'
+import FactCheckResults from '../../components/content-generator/FactCheckResults'
 import type { ContentGenerationResponse, BlogContent } from '../../types/content'
 
 function blogContentToPlainText(content: BlogContent): string {
@@ -145,6 +146,11 @@ export default function GeneratePageClient() {
             {/* SEO Score Panel (conditional) */}
             {blogContent.seo_score && (
               <SEOScorePanel score={blogContent.seo_score} />
+            )}
+
+            {/* Fact Check Results (conditional) */}
+            {blogContent.fact_check && (
+              <FactCheckResults result={blogContent.fact_check} />
             )}
           </div>
         )}
