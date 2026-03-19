@@ -404,13 +404,32 @@ export default function PricingPage() {
                   </div>
 
                   {/* CTA Button */}
-                  <button
-                    onClick={() => tier.id !== currentTier && handleUpgrade(tier.id)}
-                    disabled={tier.id === currentTier || upgrading !== null}
-                    className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${getButtonStyle(tier.id)} disabled:opacity-50`}
-                  >
-                    {getButtonText(tier.id)}
-                  </button>
+                  {(() => {
+                    const stripePriceId =
+                      billingCycle === 'monthly'
+                        ? tier.stripe_price_id_monthly
+                        : tier.stripe_price_id_yearly
+                    const stripeAvailable = tier.id === 'free' || Boolean(stripePriceId)
+                    if (stripeAvailable) {
+                      return (
+                        <button
+                          onClick={() => tier.id !== currentTier && handleUpgrade(tier.id)}
+                          disabled={tier.id === currentTier || upgrading !== null}
+                          className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${getButtonStyle(tier.id)} disabled:opacity-50`}
+                        >
+                          {getButtonText(tier.id)}
+                        </button>
+                      )
+                    }
+                    return (
+                      <a
+                        href="mailto:support@blogai.com"
+                        className={`w-full py-3 px-4 rounded-lg font-medium transition-all text-center block ${getButtonStyle(tier.id)}`}
+                      >
+                        Contact Us
+                      </a>
+                    )
+                  })()}
 
                   {/* Features */}
                   <div className="mt-8">
