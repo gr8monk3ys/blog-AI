@@ -585,7 +585,7 @@ class KnowledgeBaseSettings(BaseSettings):
     )
 
     enable_knowledge_base: bool = Field(
-        default=False,
+        default=True,
         description="Enable the Knowledge Base feature",
     )
     kb_vector_store: Literal["chromadb", "pinecone", "pgvector"] = Field(

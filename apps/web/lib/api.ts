@@ -182,6 +182,15 @@ export const API_ENDPOINTS = {
     removeMember: (orgId: string, userId: string) =>
       `${API_V1_BASE_URL}/organizations/${orgId}/members/${userId}`,
   },
+  // Knowledge Base (RAG) endpoints
+  knowledge: {
+    documents: `${API_V1_BASE_URL}/knowledge/documents`,
+    document: (docId: string) => `${API_V1_BASE_URL}/knowledge/documents/${docId}`,
+    chunks: (docId: string) => `${API_V1_BASE_URL}/knowledge/documents/${docId}/chunks`,
+    upload: `${API_V1_BASE_URL}/knowledge/documents`,
+    search: `${API_V1_BASE_URL}/knowledge/search`,
+    stats: `${API_V1_BASE_URL}/knowledge/stats`,
+  },
   // Content editing endpoints
   editSection: `${API_BASE_URL}/edit-section`,
   saveBook: `${API_BASE_URL}/save-book`,
