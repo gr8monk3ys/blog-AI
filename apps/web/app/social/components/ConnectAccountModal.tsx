@@ -45,6 +45,7 @@ export default function ConnectAccountModal({ onClose, onConnected, showToast }:
 
       // Listen for callback message
       const handler = (event: MessageEvent) => {
+        if (event.origin !== window.location.origin) return
         if (event.data?.type === 'social-oauth-success') {
           window.removeEventListener('message', handler)
           popup?.close()
