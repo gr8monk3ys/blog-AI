@@ -4,7 +4,7 @@ import { getClerkUserIdOrNull } from '../../lib/clerk-auth'
 import BulkGenerationPageClient from './BulkGenerationPageClient'
 
 export const metadata: Metadata = {
-  title: 'Bulk Generation | Blog AI',
+  title: 'Bulk Generation',
   description:
     'Generate multiple pieces of content in one run with CSV upload, provider strategy controls, and export options.',
 }

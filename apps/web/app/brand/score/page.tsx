@@ -4,7 +4,7 @@ import { getClerkUserIdOrNull } from '../../../lib/clerk-auth'
 import ScorePageClient from './ScorePageClient'
 
 export const metadata: Metadata = {
-  title: 'Score Content | Brand Voice | Blog AI',
+  title: 'Score Content — Brand Voice',
   description: 'Score your content against your trained brand voice profile.',
 }
 

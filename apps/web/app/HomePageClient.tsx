@@ -241,7 +241,6 @@ interface Capability {
   title: string
   description: string
   tier: 'Starter+' | 'Pro'
-  comingSoon?: boolean
 }
 
 const CAPABILITIES: Capability[] = [
@@ -256,7 +255,6 @@ const CAPABILITIES: Capability[] = [
     title: 'AI Image Generation',
     description: 'DALL-E 3 and Stability AI illustrations generated alongside your content.',
     tier: 'Pro',
-    comingSoon: true,
   },
   {
     icon: GlobeAltIcon,
@@ -281,7 +279,6 @@ const CAPABILITIES: Capability[] = [
     title: 'Webhooks & Integrations',
     description: 'Zapier-compatible webhooks with HMAC signing for content pipeline automation.',
     tier: 'Pro',
-    comingSoon: true,
   },
 ]
 
@@ -778,11 +775,6 @@ function CapabilitiesShowcase(): React.ReactElement {
                   >
                     {cap.tier}
                   </span>
-                  {cap.comingSoon && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100/80 text-gray-500 dark:bg-gray-800/60 dark:text-gray-400">
-                      Coming Soon
-                    </span>
-                  )}
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                   {cap.description}

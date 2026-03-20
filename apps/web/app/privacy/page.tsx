@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import PrivacyPageClient from './PrivacyPageClient'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | Blog AI',
+  title: 'Privacy Policy',
   description:
     'Learn how Blog AI collects, uses, and protects your personal information.',
 }

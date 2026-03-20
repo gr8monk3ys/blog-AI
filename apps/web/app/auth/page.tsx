@@ -6,7 +6,7 @@ import { SignIn } from '../../lib/clerk-ui'
 // Back-compat route: the app previously used /auth for Supabase email/password.
 // Keep /auth as a Clerk Sign In page.
 export const metadata: Metadata = {
-  title: 'Authentication | Blog AI',
+  title: 'Authentication',
   description: 'Sign in to Blog AI and access your content generation workspace.',
 }
 

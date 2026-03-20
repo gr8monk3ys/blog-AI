@@ -4,7 +4,7 @@ import SiteHeader from '../../../components/SiteHeader'
 import { SignUp } from '../../../lib/clerk-ui'
 
 export const metadata: Metadata = {
-  title: 'Sign Up | Blog AI',
+  title: 'Sign Up',
   description: 'Create your Blog AI account and start generating content with AI-powered workflows.',
 }
 

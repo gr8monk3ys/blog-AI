@@ -55,3 +55,18 @@ export interface PlagiarismCheckResponse {
   error?: string | null
 }
 
+export interface ProviderQuota {
+  provider: PlagiarismProvider
+  remaining_credits: number
+  credits_per_check: number
+  daily_limit: number
+  daily_used: number
+  reset_time: string | null
+  is_available: boolean
+}
+
+export interface PlagiarismQuotaResponse {
+  providers: ProviderQuota[]
+  recommended_provider: PlagiarismProvider | null
+}
+

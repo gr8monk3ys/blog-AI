@@ -4,7 +4,7 @@ import { getClerkUserIdOrNull } from '../../lib/clerk-auth'
 import KnowledgePage from './KnowledgePage'
 
 export const metadata: Metadata = {
-  title: 'Knowledge Base | Blog AI',
+  title: 'Knowledge Base',
   description:
     'Upload company documents (style guides, product specs) so the AI references them during blog generation.',
 }

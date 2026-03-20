@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { Inter } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import { Providers } from './providers'
 import { ClerkProvider } from '../lib/clerk-ui'
 import './globals.css'
@@ -8,8 +10,24 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'], display: 'swap' })
 
 export const metadata: Metadata = {
-  title: 'Blog AI Generator',
-  description: 'AI-powered blog and book content generator',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://blogai.com'),
+  title: {
+    default: 'Blog AI — Brand-Consistent AI Content',
+    template: '%s | Blog AI',
+  },
+  description:
+    'Train your brand voice, run repeatable SEO content workflows, and generate publish-ready drafts faster.',
+  openGraph: {
+    type: 'website',
+    siteName: 'Blog AI',
+    locale: 'en_US',
+    title: 'Blog AI — Brand-Consistent AI Content',
+    description:
+      'Train your brand voice, run repeatable SEO content workflows, and generate publish-ready drafts faster.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+  },
 }
 
 export default async function RootLayout({
@@ -43,6 +61,8 @@ export default async function RootLayout({
         ) : (
           <Providers>{children}</Providers>
         )}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )

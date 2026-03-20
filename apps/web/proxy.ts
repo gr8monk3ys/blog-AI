@@ -11,6 +11,13 @@ const isProtectedRoute = createRouteMatcher([
   '/tools(.*)',
   '/templates(.*)',
   '/onboarding(.*)',
+  '/plagiarism(.*)',
+  '/images(.*)',
+  '/settings(.*)',
+  '/social(.*)',
+  '/generate(.*)',
+  '/knowledge(.*)',
+  '/team(.*)',
 ])
 
 const clerkEnabled = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY

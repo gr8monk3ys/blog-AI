@@ -4,7 +4,7 @@ import { getClerkUserIdOrNull } from '../../lib/clerk-auth'
 import RemixPageClient from './RemixPageClient'
 
 export const metadata: Metadata = {
-  title: 'Content Remix | Blog AI',
+  title: 'Content Remix',
   description:
     'Transform existing content into new formats with AI while preserving intent, tone, and brand voice.',
 }

@@ -4,7 +4,7 @@ import SiteHeader from '../../../components/SiteHeader'
 import { SignIn } from '../../../lib/clerk-ui'
 
 export const metadata: Metadata = {
-  title: 'Sign In | Blog AI',
+  title: 'Sign In',
   description: 'Sign in to your Blog AI account to access content generation tools and workspace data.',
 }
 

@@ -4,7 +4,7 @@ import SiteFooter from '../../components/SiteFooter'
 import { loadBlogPosts } from '../../lib/blog-index'
 
 export const metadata = {
-  title: 'Blog | Blog AI',
+  title: 'Blog',
   description: 'AI content strategy, SEO workflows, and scaling content with tools.',
 }
 
