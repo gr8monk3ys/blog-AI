@@ -80,6 +80,8 @@ function buildCspHeader(nonce: string): string {
       isDev ? "'unsafe-eval'" : '',
       'https://*.clerk.accounts.dev',
       'https://cdn.clerk.io',
+      'https://*.clerk.com',
+      process.env.NEXT_PUBLIC_CLERK_DOMAIN ? `https://${process.env.NEXT_PUBLIC_CLERK_DOMAIN}` : '',
       'https://challenges.cloudflare.com',
     ]
       .filter(Boolean)
@@ -100,13 +102,22 @@ function buildCspHeader(nonce: string): string {
       "connect-src 'self'",
       'https://*.clerk.accounts.dev',
       'https://api.clerk.io',
+      'https://*.clerk.com',
+      process.env.NEXT_PUBLIC_CLERK_DOMAIN ? `https://${process.env.NEXT_PUBLIC_CLERK_DOMAIN}` : '',
+      process.env.NEXT_PUBLIC_CLERK_DOMAIN ? `wss://${process.env.NEXT_PUBLIC_CLERK_DOMAIN}` : '',
       isDev ? 'ws://localhost:* wss://localhost:*' : '',
       process.env.NEXT_PUBLIC_API_URL || '',
     ]
       .filter(Boolean)
       .join(' '),
 
-    "frame-src 'self' https://*.clerk.accounts.dev https://challenges.cloudflare.com",
+    [
+      "frame-src 'self'",
+      'https://*.clerk.accounts.dev',
+      'https://*.clerk.com',
+      process.env.NEXT_PUBLIC_CLERK_DOMAIN ? `https://${process.env.NEXT_PUBLIC_CLERK_DOMAIN}` : '',
+      'https://challenges.cloudflare.com',
+    ].filter(Boolean).join(' '),
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
