@@ -195,16 +195,6 @@ const nextConfig = {
     ]
   },
 
-  async rewrites() {
-    return {
-      beforeFiles: [
-        {
-          source: '/',
-          destination: '/home.html',
-        },
-      ],
-    }
-  },
 
   // Webpack configuration for production optimizations
   webpack: (config, { dev, isServer }) => {
