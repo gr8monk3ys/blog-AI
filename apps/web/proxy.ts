@@ -21,6 +21,7 @@ const isProtectedRoute = createRouteMatcher([
 ])
 
 const clerkEnabled = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+const clerkDomain = process.env.NEXT_PUBLIC_CLERK_DOMAIN?.trim() || ''
 const isDev = process.env.NODE_ENV === 'development'
 const isProduction = process.env.NODE_ENV === 'production'
 const suppressAuthWarning =
@@ -81,7 +82,7 @@ function buildCspHeader(nonce: string): string {
       'https://*.clerk.accounts.dev',
       'https://cdn.clerk.io',
       'https://*.clerk.com',
-      process.env.NEXT_PUBLIC_CLERK_DOMAIN ? `https://${process.env.NEXT_PUBLIC_CLERK_DOMAIN}` : '',
+      clerkDomain ? `https://${clerkDomain}` : '',
       'https://challenges.cloudflare.com',
     ]
       .filter(Boolean)
@@ -103,8 +104,8 @@ function buildCspHeader(nonce: string): string {
       'https://*.clerk.accounts.dev',
       'https://api.clerk.io',
       'https://*.clerk.com',
-      process.env.NEXT_PUBLIC_CLERK_DOMAIN ? `https://${process.env.NEXT_PUBLIC_CLERK_DOMAIN}` : '',
-      process.env.NEXT_PUBLIC_CLERK_DOMAIN ? `wss://${process.env.NEXT_PUBLIC_CLERK_DOMAIN}` : '',
+      clerkDomain ? `https://${clerkDomain}` : '',
+      clerkDomain ? `wss://${clerkDomain}` : '',
       isDev ? 'ws://localhost:* wss://localhost:*' : '',
       process.env.NEXT_PUBLIC_API_URL || '',
     ]
@@ -115,7 +116,7 @@ function buildCspHeader(nonce: string): string {
       "frame-src 'self'",
       'https://*.clerk.accounts.dev',
       'https://*.clerk.com',
-      process.env.NEXT_PUBLIC_CLERK_DOMAIN ? `https://${process.env.NEXT_PUBLIC_CLERK_DOMAIN}` : '',
+      clerkDomain ? `https://${clerkDomain}` : '',
       'https://challenges.cloudflare.com',
     ].filter(Boolean).join(' '),
     "frame-ancestors 'none'",
