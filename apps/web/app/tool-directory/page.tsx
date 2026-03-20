@@ -10,7 +10,7 @@ import {
 import { toolsApi, toFrontendTools } from '../../lib/tools-api'
 
 export const metadata = {
-  title: 'Tool Directory | Blog AI',
+  title: 'Tool Directory',
   description:
     'Browse the complete directory of AI writing tools, calculators, and templates to build scalable content.',
 }

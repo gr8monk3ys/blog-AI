@@ -4,7 +4,7 @@ import { getClerkUserIdOrNull } from '../../lib/clerk-auth'
 import HistoryPageClient from './HistoryPageClient'
 
 export const metadata: Metadata = {
-  title: 'Content History | Blog AI',
+  title: 'Content History',
   description:
     'Browse, filter, and manage your previously generated AI content, including favorites and recent outputs.',
 }

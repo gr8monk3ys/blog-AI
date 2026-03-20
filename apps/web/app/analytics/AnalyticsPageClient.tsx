@@ -139,6 +139,27 @@ function useAnalyticsPageView() {
 
       {/* Main Content */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Empty State */}
+        {!loading &&
+          overviewStats !== null &&
+          overviewStats.totalGenerations === 0 &&
+          toolUsage.length === 0 &&
+          timelineData.length === 0 ? (
+          <m.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="py-16"
+          >
+            <div className="glass-card rounded-2xl p-8 text-center">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">No content generated yet</p>
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                Create your first blog post to see analytics here.
+              </p>
+            </div>
+          </m.div>
+        ) : (
+          <>
         {/* Overview Stats */}
         <m.div
           initial={{ opacity: 0, y: 20 }}
@@ -255,6 +276,8 @@ function useAnalyticsPageView() {
             </button>
           </div>
         </m.div>
+          </>
+        )}
       </section>
 
       <SiteFooter />

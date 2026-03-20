@@ -4,7 +4,7 @@ import { getClerkUserIdOrNull } from '../../lib/clerk-auth'
 import BrandPageClient from './BrandPageClient'
 
 export const metadata: Metadata = {
-  title: 'Brand Voice Profiles | Blog AI',
+  title: 'Brand Voice Profiles',
   description:
     'Create and manage brand voice profiles to keep generated content aligned with your tone and audience.',
 }

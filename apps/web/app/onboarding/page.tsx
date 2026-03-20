@@ -5,7 +5,7 @@ import { getClerkUserIdOrNull } from '../../lib/clerk-auth'
 import OnboardingPageClient from './OnboardingPageClient'
 
 export const metadata: Metadata = {
-  title: 'Onboarding | Blog AI',
+  title: 'Onboarding',
   description:
     'Set up your Blog AI workspace and preferences to personalize your content generation experience.',
 }

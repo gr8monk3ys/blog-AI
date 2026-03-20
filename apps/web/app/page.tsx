@@ -2,7 +2,9 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = {
-  title: 'Blog AI | AI Content Generator for Blogs, Books, and Marketing',
+  title: {
+    absolute: 'Blog AI | AI Content Generator for Blogs, Books, and Marketing',
+  },
   description:
     'Create SEO-optimized blogs, books, and marketing content with AI tools, brand voice controls, and multi-provider model support.',
 }

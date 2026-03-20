@@ -57,15 +57,15 @@ class LLMSettings(BaseSettings):
 
     # Model selection
     openai_model: str = Field(
-        default="gpt-4",
+        default="gpt-4o",
         description="OpenAI model to use",
     )
     anthropic_model: str = Field(
-        default="claude-3-opus-20240229",
+        default="claude-sonnet-4-20250514",
         description="Anthropic model to use",
     )
     gemini_model: str = Field(
-        default="gemini-1.5-flash-latest",
+        default="gemini-2.0-flash",
         description="Gemini model to use",
     )
 
@@ -575,6 +575,57 @@ class StorageSettings(BaseSettings):
 # =============================================================================
 
 
+class KnowledgeBaseSettings(BaseSettings):
+    """Configuration for the Knowledge Base / RAG system."""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    enable_knowledge_base: bool = Field(
+        default=True,
+        description="Enable the Knowledge Base feature",
+    )
+    kb_vector_store: Literal["chromadb", "pinecone", "pgvector"] = Field(
+        default="pgvector",
+        description="Vector store provider for KB embeddings",
+    )
+    kb_embedding_provider: Literal["openai", "voyage", "cohere"] = Field(
+        default="openai",
+        description="Embedding provider for KB",
+    )
+    kb_embedding_model: str = Field(
+        default="text-embedding-3-small",
+        description="Embedding model name",
+    )
+    kb_chunk_size: int = Field(
+        default=512,
+        ge=100,
+        le=2048,
+        description="Target chunk size in tokens",
+    )
+    kb_chunk_overlap: int = Field(
+        default=50,
+        ge=0,
+        le=500,
+        description="Overlap between chunks in tokens",
+    )
+
+    # Tier limits: document count
+    kb_free_max_docs: int = Field(default=2, ge=0)
+    kb_free_max_storage_mb: int = Field(default=5, ge=0)
+    kb_starter_max_docs: int = Field(default=20, ge=0)
+    kb_starter_max_storage_mb: int = Field(default=50, ge=0)
+    # Pro: unlimited (enforced as very large numbers)
+
+    @property
+    def is_enabled(self) -> bool:
+        """Check if the knowledge base feature is enabled."""
+        return self.enable_knowledge_base
+
+
 class RedisSettings(BaseSettings):
     """Configuration for Redis (optional caching/queuing)."""
 
@@ -626,6 +677,7 @@ class Settings(BaseSettings):
     sentry: SentrySettings = Field(default_factory=SentrySettings)
     storage: StorageSettings = Field(default_factory=StorageSettings)
     redis: RedisSettings = Field(default_factory=RedisSettings)
+    knowledge_base: KnowledgeBaseSettings = Field(default_factory=KnowledgeBaseSettings)
 
     # ==========================================================================
     # Feature Detection Properties
@@ -655,6 +707,11 @@ class Settings(BaseSettings):
     def is_redis_configured(self) -> bool:
         """Check if Redis is available."""
         return self.redis.is_configured
+
+    @property
+    def is_knowledge_base_enabled(self) -> bool:
+        """Check if the Knowledge Base feature is enabled."""
+        return self.knowledge_base.is_enabled
 
     @property
     def has_llm_provider(self) -> bool:
@@ -704,6 +761,8 @@ class Settings(BaseSettings):
             "hsts_enabled": self.security.hsts_enabled,
             "allowed_origins": self.security.origins_list,
             "log_level": self.logging.log_level,
+            "knowledge_base_enabled": self.is_knowledge_base_enabled,
+            "knowledge_base_vector_store": self.knowledge_base.kb_vector_store,
         }
 
 
@@ -763,6 +822,16 @@ class Settings(BaseSettings):
                     'ALLOWED_ORIGINS contains localhost entries in production. '
                     'Remove localhost/127.0.0.1 origins for production deployments.'
                 )
+
+        # --- Redis ---
+        if not os.environ.get("REDIS_URL"):
+            msg = (
+                "REDIS_URL is not set. Bulk jobs and webhooks require Redis in production."
+            )
+            if is_prod:
+                errors.append(msg)
+            else:
+                _logger.warning(msg)
 
         # --- Stripe (warn only) ---
         if not self.stripe.stripe_secret_key:

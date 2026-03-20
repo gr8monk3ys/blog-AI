@@ -4,7 +4,7 @@ import { getClerkUserIdOrNull } from '../../lib/clerk-auth'
 import AnalyticsPageClient from './AnalyticsPageClient'
 
 export const metadata: Metadata = {
-  title: 'Analytics | Blog AI',
+  title: 'Analytics',
   description:
     'Track content generation trends, tool usage, and performance insights across your Blog AI workspace.',
 }

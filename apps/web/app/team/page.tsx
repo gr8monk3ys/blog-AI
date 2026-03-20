@@ -4,7 +4,7 @@ import { getClerkUserIdOrNull } from '../../lib/clerk-auth'
 import TeamPageClient from './TeamPageClient'
 
 export const metadata: Metadata = {
-  title: 'Team | Blog AI',
+  title: 'Team',
   description: 'Manage your organization, team members, invitations, and billing.',
 }
 

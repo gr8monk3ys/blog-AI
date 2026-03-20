@@ -4,7 +4,7 @@ import { getClerkUserIdOrNull } from '../../lib/clerk-auth'
 import TemplatesPageClient from './TemplatesPageClient'
 
 export const metadata: Metadata = {
-  title: 'Templates | Blog AI',
+  title: 'Templates',
   description:
     'Use ready-to-run content templates for marketing, social, email, and blog workflows.',
 }

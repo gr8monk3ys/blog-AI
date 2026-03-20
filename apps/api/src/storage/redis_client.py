@@ -24,7 +24,14 @@ class RedisClient:
 
     def __init__(self) -> None:
         """Initialize RedisClient with configuration from environment."""
-        self.redis_url = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+        self.redis_url = os.environ.get("REDIS_URL")
+        if not self.redis_url:
+            if os.environ.get("APP_ENV") == "production":
+                raise RuntimeError(
+                    "REDIS_URL is required in production. "
+                    "Bulk jobs and webhook subscriptions require Redis for persistence."
+                )
+            self.redis_url = "redis://localhost:6379/0"
         self._client: Optional[redis.Redis] = None
         self._is_available: bool = False
         self._connection_error: Optional[str] = None

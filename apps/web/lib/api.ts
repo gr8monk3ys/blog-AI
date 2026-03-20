@@ -182,6 +182,53 @@ export const API_ENDPOINTS = {
     removeMember: (orgId: string, userId: string) =>
       `${API_V1_BASE_URL}/organizations/${orgId}/members/${userId}`,
   },
+  // Knowledge Base (RAG) endpoints
+  knowledge: {
+    documents: `${API_V1_BASE_URL}/knowledge/documents`,
+    document: (docId: string) => `${API_V1_BASE_URL}/knowledge/documents/${docId}`,
+    chunks: (docId: string) => `${API_V1_BASE_URL}/knowledge/documents/${docId}/chunks`,
+    upload: `${API_V1_BASE_URL}/knowledge/documents`,
+    search: `${API_V1_BASE_URL}/knowledge/search`,
+    stats: `${API_V1_BASE_URL}/knowledge/stats`,
+  },
+  // Image generation endpoints
+  images: {
+    generate: `${API_V1_BASE_URL}/images/generate`,
+    generateForBlog: `${API_V1_BASE_URL}/images/generate-for-blog`,
+    styles: `${API_V1_BASE_URL}/images/styles`,
+    health: `${API_V1_BASE_URL}/images/health`,
+  },
+  // Webhook management endpoints
+  webhooks: {
+    list: `${API_V1_BASE_URL}/webhooks`,
+    subscribe: `${API_V1_BASE_URL}/webhooks/subscribe`,
+    get: (id: string) => `${API_V1_BASE_URL}/webhooks/${id}`,
+    update: (id: string) => `${API_V1_BASE_URL}/webhooks/${id}`,
+    delete: (id: string) => `${API_V1_BASE_URL}/webhooks/${id}`,
+    activate: (id: string) => `${API_V1_BASE_URL}/webhooks/${id}/activate`,
+    deactivate: (id: string) => `${API_V1_BASE_URL}/webhooks/${id}/deactivate`,
+    test: `${API_V1_BASE_URL}/webhooks/test`,
+    eventTypes: `${API_V1_BASE_URL}/webhooks/events/types`,
+  },
+  // Social media scheduling endpoints
+  social: {
+    accounts: `${API_BASE_URL}/api/social/accounts`,
+    connectAccount: (platform: string) => `${API_BASE_URL}/api/social/accounts/connect/${platform}`,
+    oauthCallback: (platform: string) => `${API_BASE_URL}/api/social/accounts/callback/${platform}`,
+    disconnectAccount: (accountId: string) => `${API_BASE_URL}/api/social/accounts/${accountId}`,
+    scheduledPosts: `${API_BASE_URL}/api/social/posts/scheduled`,
+    schedulePost: `${API_BASE_URL}/api/social/posts/schedule`,
+    updatePost: (postId: string) => `${API_BASE_URL}/api/social/posts/${postId}`,
+    cancelPost: (postId: string) => `${API_BASE_URL}/api/social/posts/${postId}`,
+    campaigns: `${API_BASE_URL}/api/social/campaigns`,
+    campaign: (id: string) => `${API_BASE_URL}/api/social/campaigns/${id}`,
+    pauseCampaign: (id: string) => `${API_BASE_URL}/api/social/campaigns/${id}/pause`,
+    resumeCampaign: (id: string) => `${API_BASE_URL}/api/social/campaigns/${id}/resume`,
+    cancelCampaign: (id: string) => `${API_BASE_URL}/api/social/campaigns/${id}`,
+    campaignAnalytics: (id: string) => `${API_BASE_URL}/api/social/campaigns/${id}/analytics`,
+    optimalTimes: `${API_BASE_URL}/api/social/optimal-times`,
+    suggestTime: `${API_BASE_URL}/api/social/suggest-time`,
+  },
   // Content editing endpoints
   editSection: `${API_BASE_URL}/edit-section`,
   saveBook: `${API_BASE_URL}/save-book`,

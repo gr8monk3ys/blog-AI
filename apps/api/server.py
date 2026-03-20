@@ -641,7 +641,73 @@ else:
     logger.info("Debug endpoints disabled in production environment")
 
 
+# =============================================================================
+# Migration Runner
+# =============================================================================
+
+from pathlib import Path
+
+
+def get_pending_migrations(migrations_dir: str) -> list[Path]:
+    """Return migration SQL files sorted by name, excluding rollbacks."""
+    migrations_path = Path(migrations_dir)
+    if not migrations_path.exists():
+        return []
+    return sorted(
+        f for f in migrations_path.glob("*.sql")
+        if "rollback" not in f.name
+    )
+
+
+async def apply_migrations(database_url: str, migrations_dir: str = "migrations") -> int:
+    """Apply pending migrations. Returns count of migrations applied."""
+    import asyncpg
+
+    migrations = get_pending_migrations(migrations_dir)
+    if not migrations:
+        return 0
+
+    conn = await asyncpg.connect(database_url)
+    try:
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS _migrations (
+                name TEXT PRIMARY KEY,
+                applied_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """)
+
+        applied = set(
+            row["name"] for row in
+            await conn.fetch("SELECT name FROM _migrations")
+        )
+
+        count = 0
+        for migration in migrations:
+            if migration.name not in applied:
+                sql = migration.read_text()
+                await conn.execute(sql)
+                await conn.execute(
+                    "INSERT INTO _migrations (name) VALUES ($1)",
+                    migration.name
+                )
+                logger.info(f"Applied migration: {migration.name}")
+                count += 1
+
+        return count
+    finally:
+        await conn.close()
+
+
 if __name__ == "__main__":
+    if "--migrate" in sys.argv:
+        db_url = os.environ.get("DATABASE_URL")
+        if not db_url:
+            print("ERROR: DATABASE_URL is required for migrations")
+            sys.exit(1)
+        count = asyncio.run(apply_migrations(db_url))
+        print(f"Applied {count} migration(s)")
+        sys.exit(0)
+
     reload_enabled = os.environ.get("UVICORN_RELOAD", "false").lower() == "true"
     # Railway (and many other PaaS) provide `PORT`.
     port = int(os.environ.get("PORT") or os.environ.get("BACKEND_PORT", "8000"))

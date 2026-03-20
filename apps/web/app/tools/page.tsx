@@ -5,7 +5,7 @@ import { getClerkUserIdOrNull } from '../../lib/clerk-auth'
 import ToolsPageClient from './ToolsPageClient'
 
 export const metadata: Metadata = {
-  title: 'AI Tools | Blog AI',
+  title: 'AI Tools',
   description:
     'Browse AI writing tools by category and launch purpose-built workflows for blogs, email, social, and more.',
 }
