@@ -41,24 +41,24 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.4",
+    "@eslint/js": "^10.0.1",
     "@next/bundle-analyzer": "^16.1.6",
     "@playwright/test": "^1.58.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "@types/node": "^25",
-    "@types/react": "^18.3.28",
-    "@types/react-dom": "^18.3.7",
-    "@types/uuid": "^9.0.8",
-    "@vitejs/plugin-react": "^5.1.4",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@types/uuid": "^11.0.0",
+    "@vitejs/plugin-react": "^6.0.1",
     "@vitest/coverage-v8": "^4.0.18",
-    "eslint": "^9.39.4",
-    "eslint-config-next": "16.1.6",
+    "eslint": "^10.1.0",
+    "eslint-config-next": "16.2.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "globals": "^17.4.0",
-    "jsdom": "^28.1.0",
-    "typescript": "^5",
+    "jsdom": "^29.0.1",
+    "typescript": "^6",
     "vitest": "^4.0.18"
   }
 }
