@@ -180,7 +180,7 @@ jobs:
             type=raw,value=latest
 
       - name: Build and push backend image
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294
         env:
           BUILD_DATE_VALUE: ${{ github.event.repository.updated_at }}
           GIT_SHA_VALUE: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
