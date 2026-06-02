@@ -52,10 +52,10 @@ export default defineConfig({
       // (see docs/REMEDIATION_PLAN.md P1.1/P1.2). Do NOT lower these to make a
       // red build green — add tests instead.
       thresholds: {
-        branches: 8,
-        functions: 9,
-        lines: 9,
-        statements: 9,
+        branches: 9,
+        functions: 10,
+        lines: 10,
+        statements: 10,
       },
     },
   },

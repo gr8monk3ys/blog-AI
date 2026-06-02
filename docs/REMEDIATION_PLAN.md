@@ -14,7 +14,7 @@ Living tracker for the codebase remediation effort. Status legend:
 
 | ID | Item | Status |
 |----|------|--------|
-| P1.1 | Frontend coverage `all: true` + ratchet to real baseline | DONE |
+| P1.1 | Frontend coverage `all: true` + ratchet to real baseline | DONE — floor ratcheted 9→10% after surfacing existing `lib/api.ts` coverage (was excluded; actually ~74%) + new csv tests |
 | P1.2 | Backfill tests for highest-risk untested surfaces | IN PROGRESS — 19 rate-limiter tests + 6 batch-provider tests + 7 frontend csv tests (all 3 surfaces had 0); fixed a pre-existing stripe-mock test-isolation bug; more surfaces TODO |
 | P1.3 | Expand backend coverage gate beyond 5 routes | DONE — added ratchet floor (50%) for organizations/sso/export/research; gate now covers 9 modules |
 
