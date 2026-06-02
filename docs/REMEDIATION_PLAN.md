@@ -15,7 +15,7 @@ Living tracker for the codebase remediation effort. Status legend:
 | ID | Item | Status |
 |----|------|--------|
 | P1.1 | Frontend coverage `all: true` + ratchet to real baseline | DONE |
-| P1.2 | Backfill tests for highest-risk untested surfaces | TODO (ongoing) |
+| P1.2 | Backfill tests for highest-risk untested surfaces | IN PROGRESS — added 15 rate-limiter unit tests (was 0); more surfaces TODO |
 | P1.3 | Expand backend coverage gate beyond 5 routes | DONE — added ratchet floor (50%) for organizations/sso/export/research; gate now covers 9 modules |
 
 ## P2 — Maintainability (god-file refactors)
@@ -23,7 +23,7 @@ Living tracker for the codebase remediation effort. Status legend:
 | ID | File | Status |
 |----|------|--------|
 | P2.1 | `marketing_templates.py` (1944) → fields/categories/per-category modules | DONE — assembler is 42 lines; 7 category modules (≤369 lines); registry SHA verified identical |
-| P2.2 | `rate_limit.py` (1288) → backends/models/shared base | TODO |
+| P2.2 | `rate_limit.py` (1288) → backends/models/shared base | PARTIAL — backends extracted to `rate_limit_backends.py` (1288→1014 lines), covered by new tests + full suite. Remaining: dedupe `RateLimiter`/`GenerationRateLimiter` (needs check/middleware test coverage first) |
 | P2.3 | `batch.py` (1312) → providers/item_processor/csv/lifecycle+export routers | TODO |
 | P2.4 | `BulkGenerationPageClient.tsx` (1164) → constants/csv/hooks/components | TODO |
 | P2.5 | `HomePageClient.tsx` (858) → data/animations/sections | DONE — extracted `_home/data.ts` + `_home/animations.ts` (858→622 lines) |
