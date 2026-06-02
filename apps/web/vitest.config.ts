@@ -14,8 +14,18 @@ export default defineConfig({
     exclude: ['e2e/**', 'node_modules/**'],
     coverage: {
       provider: 'v8',
-      all: false,
-      reporter: ['text', 'json', 'html'],
+      // Measure every source file, not just the ones a test happens to import.
+      // Previously `all: false` meant untested files were invisible to the gate,
+      // so the reported percentages described only the tested slice of the app.
+      all: true,
+      include: [
+        'app/**/*.{ts,tsx}',
+        'components/**/*.{ts,tsx}',
+        'hooks/**/*.{ts,tsx}',
+        'lib/**/*.{ts,tsx}',
+        'proxy.ts',
+      ],
+      reporter: ['text', 'json', 'html', 'text-summary'],
       exclude: [
         'node_modules/',
         '.next/',
@@ -23,20 +33,29 @@ export default defineConfig({
         '**/*.d.ts',
         '**/*.config.*',
         '**/types/**',
+        // Next.js framework files with no meaningful logic to unit test.
+        'app/**/layout.tsx',
+        'app/**/loading.tsx',
+        'app/**/not-found.tsx',
+        'app/**/error.tsx',
+        'app/**/sitemap.ts',
+        'app/**/robots.ts',
         'e2e/**',
         '../api/**',
         '../extension/**',
         '../../supabase/**',
-        // Covered separately in dedicated suites; heavily mocked in unit tests.
-        'components/brand/**',
-        'hooks/useLlmConfig.tsx',
-        'lib/api.ts',
       ],
+      // Ratchet policy: these reflect the REAL baseline measured with all:true
+      // (~10% — the previous all:false gate only saw the ~600 statements tests
+      // imported, hiding ~90% of the app) and only ever move UP. Target:
+      // branches 70 / functions+lines+statements 85 as tests are backfilled
+      // (see docs/REMEDIATION_PLAN.md P1.1/P1.2). Do NOT lower these to make a
+      // red build green — add tests instead.
       thresholds: {
-        branches: 70,
-        functions: 85,
-        lines: 85,
-        statements: 85,
+        branches: 8,
+        functions: 9,
+        lines: 9,
+        statements: 9,
       },
     },
   },
