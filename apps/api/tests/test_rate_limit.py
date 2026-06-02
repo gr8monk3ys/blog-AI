@@ -14,12 +14,13 @@ import pytest
 from app.middleware.rate_limit import (
     DEFAULT_RATE_LIMITS,
     TIER_RATE_LIMITS,
+    GenerationRateLimiter,
     InMemoryBackend,
+    RateLimiter,
     TierRateLimits,
     _load_generation_tier_limits,
 )
 from src.types.usage import SubscriptionTier
-
 
 # ---------------------------------------------------------------------------
 # TierRateLimits validation
@@ -35,10 +36,10 @@ def test_tier_rate_limits_valid():
 @pytest.mark.parametrize(
     "per_minute, per_hour",
     [
-        (0, 100),       # per_minute must be positive
-        (-1, 100),      # negative per_minute
-        (10, 0),        # per_hour must be positive
-        (10, 5),        # per_hour must be >= per_minute
+        (0, 100),  # per_minute must be positive
+        (-1, 100),  # negative per_minute
+        (10, 0),  # per_hour must be positive
+        (10, 5),  # per_hour must be >= per_minute
     ],
 )
 def test_tier_rate_limits_invalid(per_minute, per_hour):
@@ -145,3 +146,59 @@ async def test_in_memory_cleanup_drops_expired_entries():
     await backend.record_request("user:z", t, window_seconds=60)
     await backend.cleanup("user:z", t + 120, window_seconds=60)
     assert await backend.get_request_count("user:z", t + 120, window_seconds=60) == 0
+
+
+# ---------------------------------------------------------------------------
+# RateLimiter / GenerationRateLimiter check_rate_limit behavior
+# ---------------------------------------------------------------------------
+
+
+async def test_general_rate_limiter_allows_under_limit_blocks_over():
+    backend = InMemoryBackend()
+    limiter = RateLimiter(backend=backend)
+    # FREE general tier: 10 per minute.
+    limit = TIER_RATE_LIMITS[SubscriptionTier.FREE].per_minute
+    for _ in range(limit):
+        result = await limiter.check_rate_limit("u1", SubscriptionTier.FREE)
+        assert result.allowed is True
+    blocked = await limiter.check_rate_limit("u1", SubscriptionTier.FREE)
+    assert blocked.allowed is False
+    assert blocked.window == "minute"
+    assert blocked.retry_after is not None and blocked.retry_after >= 1
+
+
+async def test_generation_rate_limiter_is_tighter_than_general():
+    backend = InMemoryBackend()
+    gen = GenerationRateLimiter(backend=backend)
+    # FREE generation tier defaults to 5 per minute (tighter than general's 10).
+    for _ in range(5):
+        assert (await gen.check_rate_limit("u2", SubscriptionTier.FREE)).allowed is True
+    assert (await gen.check_rate_limit("u2", SubscriptionTier.FREE)).allowed is False
+
+
+async def test_general_and_generation_buckets_are_separate():
+    # Sharing one backend, the two limiters must not contend because their
+    # window keys are prefixed differently ("" vs "gen:").
+    backend = InMemoryBackend()
+    general = RateLimiter(backend=backend)
+    gen = GenerationRateLimiter(backend=backend)
+
+    # Exhaust the generation limit (5/min for FREE).
+    for _ in range(5):
+        await gen.check_rate_limit("shared", SubscriptionTier.FREE)
+    assert (
+        await gen.check_rate_limit("shared", SubscriptionTier.FREE)
+    ).allowed is False
+
+    # The general limiter for the same user is unaffected.
+    assert (
+        await general.check_rate_limit("shared", SubscriptionTier.FREE)
+    ).allowed is True
+
+
+async def test_remaining_decrements_per_request():
+    backend = InMemoryBackend()
+    limiter = RateLimiter(backend=backend)
+    first = await limiter.check_rate_limit("u3", SubscriptionTier.FREE)
+    second = await limiter.check_rate_limit("u3", SubscriptionTier.FREE)
+    assert first.remaining > second.remaining

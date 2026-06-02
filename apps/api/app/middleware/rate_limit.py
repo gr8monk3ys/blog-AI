@@ -240,13 +240,22 @@ from .rate_limit_backends import (  # noqa: E402
 # =============================================================================
 
 
-class RateLimiter:
+class _BaseRateLimiter:
     """
-    Production rate limiter with tier-based limits and automatic backend selection.
+    Shared sliding-window rate limiter.
 
-    Implements sliding window log algorithm for accurate rate limiting.
-    Checks both per-minute and per-hour limits.
+    Subclasses configure the window-key prefix, Redis key prefix, tier-limit
+    table, and a label for logging. Both the general request limiter and the
+    generation limiter share this implementation (sliding window log algorithm,
+    Redis backend with in-memory fallback, per-minute and per-hour windows).
     """
+
+    # Overridden by subclasses.
+    _window_key_prefix: str = ""
+    _redis_key_prefix: str = "ratelimit:"
+    _tier_limits: Dict[SubscriptionTier, TierRateLimits] = TIER_RATE_LIMITS
+    _default_limits: TierRateLimits = DEFAULT_RATE_LIMITS
+    _label: str = "Rate limiter"
 
     def __init__(
         self,
@@ -254,11 +263,9 @@ class RateLimiter:
         redis_url: Optional[str] = None,
     ):
         """
-        Initialize the rate limiter.
-
         Args:
-            backend: Optional backend override.
-            redis_url: Optional Redis URL. If not provided, checks REDIS_URL env var.
+            backend: Optional backend override (useful for tests).
+            redis_url: Optional Redis URL. Falls back to the REDIS_URL env var.
         """
         self._backend: Optional[RateLimitBackend] = backend
         self._fallback_backend: Optional[InMemoryBackend] = None
@@ -267,22 +274,28 @@ class RateLimiter:
             self._init_backend(redis_url)
 
     def _init_backend(self, redis_url: Optional[str] = None) -> None:
-        """Initialize the appropriate backend."""
+        """Initialize the appropriate backend (Redis with in-memory fallback)."""
         url = redis_url or os.environ.get("REDIS_URL")
 
         if url:
             try:
-                self._backend = RedisBackend(url)
-                logger.info("Rate limiter using Redis backend")
+                self._backend = RedisBackend(url, key_prefix=self._redis_key_prefix)
+                logger.info(f"{self._label} using Redis backend")
             except Exception as e:
-                logger.warning(f"Failed to init Redis backend: {e}, using in-memory")
+                logger.warning(
+                    f"Failed to init Redis backend for {self._label}: {e}, "
+                    "using in-memory"
+                )
                 self._backend = InMemoryBackend()
         else:
             self._backend = InMemoryBackend()
-            logger.info("Rate limiter using in-memory backend")
+            logger.info(f"{self._label} using in-memory backend")
 
-        # Keep a fallback ready for Redis failures
+        # Keep a fallback ready for Redis failures.
         self._fallback_backend = InMemoryBackend()
+
+    def _window_key(self, user_id: str, window_name: str) -> str:
+        return f"{self._window_key_prefix}{user_id}:{window_name}"
 
     async def _check_window(
         self,
@@ -291,25 +304,14 @@ class RateLimiter:
         window_seconds: int,
         limit: int,
     ) -> RateLimitResult:
-        """
-        Check rate limit for a specific time window.
-
-        Args:
-            user_id: The user identifier.
-            window_name: Window identifier (e.g., "minute", "hour").
-            window_seconds: Window size in seconds.
-            limit: Maximum requests allowed in window.
-
-        Returns:
-            RateLimitResult with current status.
-        """
+        """Check the rate limit for a single time window."""
         now = time.time()
-        key = f"{user_id}:{window_name}"
+        key = self._window_key(user_id, window_name)
 
         try:
             count, oldest = await self._backend.record_request(key, now, window_seconds)
         except Exception as e:
-            logger.warning(f"Backend error, using fallback: {e}")
+            logger.warning(f"{self._label} backend error, using fallback: {e}")
             count, oldest = await self._fallback_backend.record_request(
                 key, now, window_seconds
             )
@@ -342,78 +344,66 @@ class RateLimiter:
         tier: SubscriptionTier,
     ) -> RateLimitResult:
         """
-        Check rate limits for a user based on their tier.
-
-        Checks both per-minute and per-hour limits, returning the most
-        restrictive result.
-
-        Args:
-            user_id: The user identifier.
-            tier: The user's subscription tier.
-
-        Returns:
-            RateLimitResult. If allowed is False, includes retry_after.
+        Check both per-minute and per-hour limits, returning the most
+        restrictive result. If allowed is False, includes retry_after.
         """
-        limits = TIER_RATE_LIMITS.get(tier, DEFAULT_RATE_LIMITS)
+        limits = self._tier_limits.get(tier, self._default_limits)
 
-        # Check per-minute limit first (more likely to be hit)
+        # Check per-minute limit first (more likely to be hit).
         minute_result = await self._check_window(
             user_id=user_id,
             window_name="minute",
             window_seconds=60,
             limit=limits.per_minute,
         )
-
         if not minute_result.allowed:
             return minute_result
 
-        # Check per-hour limit
         hour_result = await self._check_window(
             user_id=user_id,
             window_name="hour",
             window_seconds=3600,
             limit=limits.per_hour,
         )
-
         if not hour_result.allowed:
             return hour_result
 
-        # Return minute result (has more relevant remaining/reset info)
+        # Minute result has the more relevant remaining/reset info.
         return minute_result
+
+
+class RateLimiter(_BaseRateLimiter):
+    """
+    Production request rate limiter with tier-based per-minute/per-hour limits
+    and automatic backend selection (Redis with in-memory fallback).
+    """
+
+    _window_key_prefix = ""
+    _redis_key_prefix = "ratelimit:"
+    _tier_limits = TIER_RATE_LIMITS
+    _default_limits = DEFAULT_RATE_LIMITS
+    _label = "Rate limiter"
 
     async def get_current_usage(
         self,
         user_id: str,
         tier: SubscriptionTier,
     ) -> Dict[str, Dict]:
-        """
-        Get current usage without recording a request.
-
-        Useful for displaying rate limit status to users.
-
-        Args:
-            user_id: The user identifier.
-            tier: The user's subscription tier.
-
-        Returns:
-            Dictionary with minute and hour usage statistics.
-        """
+        """Get current usage without recording a request."""
         now = time.time()
-        limits = TIER_RATE_LIMITS.get(tier, DEFAULT_RATE_LIMITS)
+        limits = self._tier_limits.get(tier, self._default_limits)
 
+        minute_key = self._window_key(user_id, "minute")
+        hour_key = self._window_key(user_id, "hour")
         try:
-            minute_count = await self._backend.get_request_count(
-                f"{user_id}:minute", now, 60
-            )
-            hour_count = await self._backend.get_request_count(
-                f"{user_id}:hour", now, 3600
-            )
+            minute_count = await self._backend.get_request_count(minute_key, now, 60)
+            hour_count = await self._backend.get_request_count(hour_key, now, 3600)
         except Exception:
             minute_count = await self._fallback_backend.get_request_count(
-                f"{user_id}:minute", now, 60
+                minute_key, now, 60
             )
             hour_count = await self._fallback_backend.get_request_count(
-                f"{user_id}:hour", now, 3600
+                hour_key, now, 3600
             )
 
         return {
@@ -804,153 +794,21 @@ async def get_rate_limit_status(
 # =============================================================================
 
 
-class GenerationRateLimiter:
+class GenerationRateLimiter(_BaseRateLimiter):
     """
-    Rate limiter specifically for content generation endpoints.
+    Rate limiter for content-generation endpoints.
 
-    Uses a separate set of tier-based limits that are tighter than general
-    request rate limits, because generation endpoints trigger expensive LLM
-    calls. Keys are prefixed with "gen:" to keep buckets separate from the
-    general rate limiter.
-
-    Shares the same backend infrastructure (Redis with in-memory fallback)
-    as the general RateLimiter.
+    Uses tighter, generation-specific tier limits (these endpoints trigger
+    expensive LLM calls) and a separate key namespace ("gen:" window prefix,
+    "gen_ratelimit:" Redis prefix) so its buckets never collide with the
+    general request limiter.
     """
 
-    def __init__(
-        self,
-        backend: Optional[RateLimitBackend] = None,
-        redis_url: Optional[str] = None,
-    ):
-        """
-        Initialize the generation rate limiter.
-
-        Args:
-            backend: Optional backend override for testing.
-            redis_url: Optional Redis URL. Falls back to REDIS_URL env var.
-        """
-        self._backend: Optional[RateLimitBackend] = backend
-        self._fallback_backend: Optional[InMemoryBackend] = None
-
-        if self._backend is None:
-            self._init_backend(redis_url)
-
-    def _init_backend(self, redis_url: Optional[str] = None) -> None:
-        """Initialize the appropriate backend."""
-        url = redis_url or os.environ.get("REDIS_URL")
-
-        if url:
-            try:
-                self._backend = RedisBackend(url, key_prefix="gen_ratelimit:")
-                logger.info("Generation rate limiter using Redis backend")
-            except Exception as e:
-                logger.warning(
-                    f"Failed to init Redis backend for generation rate limiter: {e}, "
-                    "using in-memory"
-                )
-                self._backend = InMemoryBackend()
-        else:
-            self._backend = InMemoryBackend()
-            logger.info("Generation rate limiter using in-memory backend")
-
-        self._fallback_backend = InMemoryBackend()
-
-    async def _check_window(
-        self,
-        user_id: str,
-        window_name: str,
-        window_seconds: int,
-        limit: int,
-    ) -> RateLimitResult:
-        """
-        Check generation rate limit for a specific time window.
-
-        Args:
-            user_id: The user identifier.
-            window_name: Window identifier (e.g., "minute", "hour").
-            window_seconds: Window size in seconds.
-            limit: Maximum generation requests allowed in window.
-
-        Returns:
-            RateLimitResult with current status.
-        """
-        now = time.time()
-        key = f"gen:{user_id}:{window_name}"
-
-        try:
-            count, oldest = await self._backend.record_request(key, now, window_seconds)
-        except Exception as e:
-            logger.warning(f"Generation rate limit backend error, using fallback: {e}")
-            count, oldest = await self._fallback_backend.record_request(
-                key, now, window_seconds
-            )
-
-        remaining = max(0, limit - count)
-        reset_at = int(oldest + window_seconds)
-
-        if count > limit:
-            retry_after = max(1, reset_at - int(now))
-            return RateLimitResult(
-                allowed=False,
-                limit=limit,
-                remaining=0,
-                reset_at=reset_at,
-                window=window_name,
-                retry_after=retry_after,
-            )
-
-        return RateLimitResult(
-            allowed=True,
-            limit=limit,
-            remaining=remaining,
-            reset_at=reset_at,
-            window=window_name,
-        )
-
-    async def check_rate_limit(
-        self,
-        user_id: str,
-        tier: SubscriptionTier,
-    ) -> RateLimitResult:
-        """
-        Check generation rate limits for a user based on their tier.
-
-        Checks both per-minute and per-hour generation limits, returning
-        the most restrictive result.
-
-        Args:
-            user_id: The user identifier.
-            tier: The user's subscription tier.
-
-        Returns:
-            RateLimitResult. If allowed is False, includes retry_after.
-        """
-        limits = GENERATION_TIER_RATE_LIMITS.get(tier, DEFAULT_GENERATION_RATE_LIMITS)
-
-        # Check per-minute limit first (more likely to be hit)
-        minute_result = await self._check_window(
-            user_id=user_id,
-            window_name="minute",
-            window_seconds=60,
-            limit=limits.per_minute,
-        )
-
-        if not minute_result.allowed:
-            return minute_result
-
-        # Check per-hour limit
-        hour_result = await self._check_window(
-            user_id=user_id,
-            window_name="hour",
-            window_seconds=3600,
-            limit=limits.per_hour,
-        )
-
-        if not hour_result.allowed:
-            return hour_result
-
-        # Return minute result (has more relevant remaining/reset info)
-        return minute_result
+    _window_key_prefix = "gen:"
+    _redis_key_prefix = "gen_ratelimit:"
+    _tier_limits = GENERATION_TIER_RATE_LIMITS
+    _default_limits = DEFAULT_GENERATION_RATE_LIMITS
+    _label = "Generation rate limiter"
 
 
 _generation_rate_limiter: Optional[GenerationRateLimiter] = None
