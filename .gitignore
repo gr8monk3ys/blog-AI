@@ -90,6 +90,3 @@ frontend_legacy/
 # Next.js build output
 frontend/.next/
 .vercel
-
-# Local test virtualenv (remediation work)
-apps/api/.venv-test/
