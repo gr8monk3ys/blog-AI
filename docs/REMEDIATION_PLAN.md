@@ -16,7 +16,7 @@ gauges tell the truth**, not rewriting. Phases are ordered by real-world risk.
 |---|------|--------|
 | 0.1 | Land PR #102 (makes `main` backend CI honestly green) | IN PROGRESS |
 | 0.2 | **Critical Clerk auth-bypass CVE** (GHSA-vqx2-fgx2-5wq9) | DONE — bumped to @clerk/nextjs 6.39.5; 25→18 high/critical |
-| 0.3 | Remaining dep CVEs (next, vite, vitest, undici, flatted, postcss, uuid, brace-expansion) | TODO — safe bumps + overrides; track any needing major jumps |
+| 0.3 | Remaining dep CVEs | DONE — next 16.2.7, vitest 4.1.8, vite/undici/flatted overrides; picomatch (dev-only ReDoS) allowlisted. `audit:runtime` gate now passes; 0 blocking high/critical (down from 25) |
 | 0.4 | Schema unification (see P0.1 / `docs/SCHEMA_AUDIT.md`) + CI schema-smoke guard | NEEDS-STAGING |
 | 0.5 | Vercel preview: provide `VERCEL_TOKEN` secret or make check non-required | NEEDS-OWNER |
 

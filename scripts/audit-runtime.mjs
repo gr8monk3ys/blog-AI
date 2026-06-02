@@ -4,7 +4,16 @@ import { spawnSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 
 const BLOCKING_SEVERITIES = new Set(['high', 'critical'])
-const ALLOWED_ADVISORY_IDS = new Set(['GHSA-3PPC-4F35-3M26'])
+const ALLOWED_ADVISORY_IDS = new Set([
+  'GHSA-3PPC-4F35-3M26',
+  // picomatch ReDoS via extglob quantifiers. Reachable only through build/dev
+  // tooling globs (tailwindcss -> chokidar/micromatch, fast-glob); no production
+  // runtime exposure. The patched 2.3.2 is within the parents' ^2 range but
+  // can't be forced without clashing with the ^4.x consumers (bun lacks scoped
+  // overrides). Accepted dev-only risk; revisit when micromatch moves off
+  // picomatch 2.x. See docs/REMEDIATION_PLAN.md (Phase 0.3).
+  'GHSA-C2C7-RCM5-VVQJ',
+])
 
 function extractAdvisoryId(value) {
   if (!value || typeof value !== 'string') return null
