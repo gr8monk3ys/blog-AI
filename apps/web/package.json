@@ -20,7 +20,7 @@
     "test:e2e:headed": "playwright test --headed"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.38.2",
+    "@clerk/nextjs": "^6.39.5",
     "@headlessui/react": "^1.7.19",
     "@heroicons/react": "^2.1.1",
     "@neondatabase/serverless": "^1.0.2",
