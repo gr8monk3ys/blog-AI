@@ -15,6 +15,7 @@ export default function AnalyticsTab() {
 
   useEffect(() => {
     fetchCampaigns()
+    // Mount-only fetch; fetchCampaigns is intentionally excluded to avoid refetch loops.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

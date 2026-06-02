@@ -11,6 +11,7 @@ export default function SocialCallbackPage() {
 
   useEffect(() => {
     handleCallback()
+    // OAuth callback runs exactly once on mount; deps intentionally empty.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

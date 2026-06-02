@@ -32,10 +32,10 @@ Living tracker for the codebase remediation effort. Status legend:
 
 | ID | Item | Status |
 |----|------|--------|
-| P3.1 | Tier `.env.example` (required vs optional) | TODO |
-| P3.2 | Audit the 7 `eslint-disable`s | TODO |
-| P3.3 | Document Next 16 / React 18 pin + React 19 follow-up | TODO |
-| P3.4 | Consolidate rollback docs (after P0.1) | TODO |
+| P3.1 | Tier `.env.example` (required vs optional) | DONE — quick-start block added |
+| P3.2 | Audit the 7 `eslint-disable`s | DONE — all intentional; justifications added |
+| P3.3 | Document Next 16 / React 18 pin + React 19 follow-up | DONE |
+| P3.4 | Consolidate rollback docs (after P0.1) | TODO (blocked on P0.1 cutover) |
 
 ## Sequencing
 

@@ -101,6 +101,8 @@ function useHistoryPageView() {
   // Refetch when filters change
   useEffect(() => {
     fetchHistory()
+    // Keyed on `filters` only; fetchHistory is a stable closure and including
+    // it would re-run the effect on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters])
 
