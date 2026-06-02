@@ -26,7 +26,7 @@ Living tracker for the codebase remediation effort. Status legend:
 | P2.2 | `rate_limit.py` (1288) → backends/models/shared base | TODO |
 | P2.3 | `batch.py` (1312) → providers/item_processor/csv/lifecycle+export routers | TODO |
 | P2.4 | `BulkGenerationPageClient.tsx` (1164) → constants/csv/hooks/components | TODO |
-| P2.5 | `HomePageClient.tsx` (858) → data/animations/sections | TODO |
+| P2.5 | `HomePageClient.tsx` (858) → data/animations/sections | DONE — extracted `_home/data.ts` + `_home/animations.ts` (858→622 lines) |
 
 ## P3 — Onboarding & hygiene
 
