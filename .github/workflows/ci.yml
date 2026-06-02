@@ -72,6 +72,32 @@ jobs:
           RATE_LIMIT_ENABLED: "false"
           OPENAI_API_KEY: "test"
 
+      # Broader critical-route floor. These modules are not yet at 85%, so they
+      # have their own ratchet floor that only moves UP as tests are backfilled
+      # (see docs/REMEDIATION_PLAN.md P1.2/P1.3). This expands regression
+      # protection from 5 to 9 route modules. Do not lower --cov-fail-under.
+      - name: Enforce broader critical-route coverage floor (ratchet)
+        run: |
+          pytest \
+            tests/test_routes_organizations.py \
+            tests/test_routes_sso.py \
+            tests/test_routes_export.py \
+            tests/test_routes_research.py \
+            --cov=app.routes.organizations \
+            --cov=app.routes.sso \
+            --cov=app.routes.export \
+            --cov=app.routes.research \
+            --cov-fail-under=50 \
+            --cov-report=term-missing \
+            -q
+        env:
+          DEV_MODE: "true"
+          DEV_API_KEY: "test-key"
+          ENVIRONMENT: "development"
+          SENTRY_ENVIRONMENT: "development"
+          RATE_LIMIT_ENABLED: "false"
+          OPENAI_API_KEY: "test"
+
       - name: Upload coverage report
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         if: always()
