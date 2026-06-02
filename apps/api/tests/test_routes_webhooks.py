@@ -290,6 +290,7 @@ class TestListWebhooks:
             mock_storage.list_user_subscriptions = AsyncMock(
                 return_value=[sample_subscription]
             )
+            mock_storage.count_user_subscriptions = AsyncMock(return_value=1)
 
             response = client.get(
                 "/webhooks",
@@ -311,6 +312,7 @@ class TestListWebhooks:
             "app.routes.webhooks.webhook_storage"
         ) as mock_storage:
             mock_storage.list_user_subscriptions = AsyncMock(return_value=[])
+            mock_storage.count_user_subscriptions = AsyncMock(return_value=0)
 
             response = client.get(
                 "/webhooks",

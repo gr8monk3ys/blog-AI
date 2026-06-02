@@ -81,9 +81,8 @@ jobs:
           retention-days: 14
 
   backend-regression:
-    name: Backend Regression (non-blocking)
+    name: Backend Regression (blocking)
     runs-on: ubuntu-latest
-    continue-on-error: true
     defaults:
       run:
         working-directory: apps/api
