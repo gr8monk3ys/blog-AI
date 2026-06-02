@@ -88,6 +88,8 @@ router = APIRouter(prefix="/batch", tags=["batch"])
 # Get the typed job store for enhanced batch generation
 _job_store = get_batch_job_store()
 
+from .batch_csv import CSV_TEMPLATE, parse_csv_to_items  # noqa: E402
+
 # Provider selection helpers live in batch_providers.py; re-imported here.
 from .batch_providers import (  # noqa: E402
     _default_provider,
@@ -605,47 +607,10 @@ async def import_csv_batch(
             preferred_provider, default=_default_provider()
         )
 
-        # Read CSV content
+        # Read and parse CSV content
         content = await file.read()
         content_str = content.decode("utf-8")
-        reader = csv.DictReader(io.StringIO(content_str))
-
-        # Parse rows
-        items: List[BatchItemInput] = []
-        for row_num, row in enumerate(reader, start=2):  # Start at 2 (after header)
-            if "topic" not in row or not row["topic"].strip():
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Row {row_num}: Missing required 'topic' column",
-                )
-
-            # Parse keywords (comma-separated)
-            keywords = []
-            if row.get("keywords"):
-                keywords = [k.strip() for k in row["keywords"].split(",") if k.strip()]
-
-            items.append(
-                BatchItemInput(
-                    topic=row["topic"].strip(),
-                    keywords=keywords,
-                    tone=row.get("tone", "professional").strip(),
-                    content_type=row.get("content_type", "blog").strip(),
-                    custom_instructions=row.get("custom_instructions", "").strip()
-                    or None,
-                )
-            )
-
-        if not items:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="CSV file is empty or has no valid rows",
-            )
-
-        if len(items) > 100:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Maximum 100 items per batch. Found {len(items)}.",
-            )
+        items = parse_csv_to_items(content_str)
 
         # Create enhanced request
         configured = get_settings().llm.available_providers
@@ -761,13 +726,8 @@ async def import_csv_batch(
 @router.get("/template/csv")
 async def get_csv_template() -> Response:
     """Get a CSV template for batch import."""
-    template = """topic,keywords,tone,content_type,custom_instructions
-"AI in Healthcare","AI,healthcare,medical,diagnosis",professional,blog,
-"The Future of Remote Work","remote work,productivity,work from home",informative,blog,
-"Sustainable Technology Trends","green tech,sustainability,environment",casual,blog,Focus on practical tips
-"""
     return Response(
-        content=template,
+        content=CSV_TEMPLATE,
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=batch_template.csv"},
     )

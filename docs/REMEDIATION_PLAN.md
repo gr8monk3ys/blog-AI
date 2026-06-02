@@ -24,7 +24,7 @@ Living tracker for the codebase remediation effort. Status legend:
 |----|------|--------|
 | P2.1 | `marketing_templates.py` (1944) → fields/categories/per-category modules | DONE — assembler is 42 lines; 7 category modules (≤369 lines); registry SHA verified identical |
 | P2.2 | `rate_limit.py` (1288) → backends/models/shared base | DONE — backends → `rate_limit_backends.py`; `RateLimiter`/`GenerationRateLimiter` deduped onto shared `_BaseRateLimiter` (1288→880 lines). 19 rate-limiter tests; full suite green |
-| P2.3 | `batch.py` (1312) → providers/item_processor/csv/lifecycle+export routers | PARTIAL — provider-selection helpers extracted to `batch_providers.py` (1312→1245 lines) + 6 new unit tests. Remaining: item_processor/csv extraction, router split |
+| P2.3 | `batch.py` (1312) → providers/item_processor/csv/lifecycle+export routers | PARTIAL — extracted `batch_providers.py` (6 tests) and `batch_csv.py` (7 tests); batch.py 1312→1265 lines. Remaining: item_processor extraction, lifecycle/export router split (needs route tests first) |
 | P2.4 | `BulkGenerationPageClient.tsx` (1164) → constants/csv/hooks/components | PARTIAL — extracted `constants.ts` + pure `csv.ts` (1164→1074 lines) + 7 vitest tests for parseCSV/createDraftItem. Remaining: split the page-view hook and the 600-line render into components |
 | P2.5 | `HomePageClient.tsx` (858) → data/animations/sections | DONE — extracted `_home/data.ts` + `_home/animations.ts` (858→622 lines) |
 
