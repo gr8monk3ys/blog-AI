@@ -3,6 +3,53 @@
 Living tracker for the codebase remediation effort. Status legend:
 `TODO` · `IN PROGRESS` · `DONE` · `NEEDS-STAGING` (requires a live/staging DB to validate before cutover).
 
+---
+
+## Comprehensive Roadmap (v2)
+
+Diagnosis: the repo has the apparatus of a production SaaS on top of an
+ambitious, heavily-scaffolded prototype. The work is **finishing and making the
+gauges tell the truth**, not rewriting. Phases are ordered by real-world risk.
+
+### Phase 0 — Truth & safety (stop the bleeding)
+| # | Item | Status |
+|---|------|--------|
+| 0.1 | Land PR #102 (makes `main` backend CI honestly green) | IN PROGRESS |
+| 0.2 | **Critical Clerk auth-bypass CVE** (GHSA-vqx2-fgx2-5wq9) | DONE — bumped to @clerk/nextjs 6.39.5; 25→18 high/critical |
+| 0.3 | Remaining dep CVEs (next, vite, vitest, undici, flatted, postcss, uuid, brace-expansion) | TODO — safe bumps + overrides; track any needing major jumps |
+| 0.4 | Schema unification (see P0.1 / `docs/SCHEMA_AUDIT.md`) + CI schema-smoke guard | NEEDS-STAGING |
+| 0.5 | Vercel preview: provide `VERCEL_TOKEN` secret or make check non-required | NEEDS-OWNER |
+
+### Phase 1 — Decide the fate of half-features (kill the ghosts)
+| # | Item | Status |
+|---|------|--------|
+| 1.1 | Knowledge base: finish the Supabase→Neon/pgvector migration **or** remove it (un-xfail/un-fixme when done) | TODO |
+| 1.2 | Ghost-hunt sweep: orphaned pages, TDD tests for unwritten code, unreachable routes → finish/remove/keep list | TODO |
+
+### Phase 2 — Make the gauges tell the truth
+| # | Item | Status |
+|---|------|--------|
+| 2.1 | Ratchet coverage up toward 70/85 as tests land | ONGOING |
+| 2.2 | Backfill money/security paths (payments, Stripe webhooks, SSO, quotas) | TODO |
+| 2.3 | Accessibility sweep: header/footer as siblings of `<main>` repo-wide + landmark checks | IN PROGRESS (3 pages done in #102) |
+
+### Phase 3 — Finish the structural refactors (with nets)
+| # | Item | Status |
+|---|------|--------|
+| 3.1 | `BulkGenerationPageClient` — write bulk-flow component tests, then split the ~1,030-line hook/JSX | TODO |
+| 3.2 | `batch.py` router split (lifecycle vs export) — route tests first | TODO |
+| 3.3 | Remaining 1,000+ line modules — test-net first | TODO |
+
+### Phase 4 — Keep it honest (durable hygiene)
+| # | Item | Status |
+|---|------|--------|
+| 4.1 | Dependency automation (Dependabot grouping) so the CVE backlog can't silently rebuild | TODO |
+| 4.2 | Docs-vs-reality reconciliation (`DATABASE.md`, drop unverified "100/100" claims) | TODO |
+| 4.3 | Re-enable branch protection once `main` is genuinely green | NEEDS-OWNER |
+
+---
+## Original tracker (P0–P3) — completed-work record
+
 ## P0 — Correctness / single source of truth
 
 | ID | Item | Status |
