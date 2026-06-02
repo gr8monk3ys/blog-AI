@@ -36,6 +36,7 @@
     "minimatch": "^10.2.4",
     "nanoid": "^3.3.11",
     "rollup": "^4.59.0",
-    "serialize-javascript": "^7.0.4"
+    "serialize-javascript": "^7.0.4",
+    "vite": "^7.3.5"
   }
 }
