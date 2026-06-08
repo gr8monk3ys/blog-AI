@@ -76,6 +76,7 @@ function ProfileSelectorComponent({
       mounted = false
     }
 
+    // Mount-only load with a `mounted` guard; deps intentionally empty.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

@@ -19,6 +19,7 @@ const navLinks: NavLink[] = [
   { href: '/bulk', label: 'Bulk', authRequired: true },
   { href: '/generate', label: 'Generate', authRequired: true },
   { href: '/tools', label: 'Tools', authRequired: true },
+  { href: '/knowledge', label: 'Knowledge Base', authRequired: true },
   { href: '/templates', label: 'Templates', authRequired: true },
   { href: '/images', label: 'Images', authRequired: true },
   { href: '/social', label: 'Social', authRequired: true },

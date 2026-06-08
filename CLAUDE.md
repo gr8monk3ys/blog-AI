@@ -122,12 +122,21 @@ The frontend uses `NEXT_PUBLIC_API_URL` (default `http://localhost:8000` in dev)
 - **`apps/web/.env.local`** — Frontend-specific (API URL, Clerk keys, Sentry DSN).
 - Minimum local dev: `OPENAI_API_KEY` in `.env`, `NEXT_PUBLIC_API_URL=http://localhost:8000` in `apps/web/.env.local`.
 
+### Version constraints (intentional pins)
+
+- **Next.js 16 + React 18.3**: Next 16 generally targets React 19, but this repo
+  pins React 18.3 deliberately. Evaluate a React 19 upgrade as a tracked follow-up
+  rather than bumping ad hoc.
+- **Node `22.x`**: hard-pinned in `package.json` engines to stop Vercel
+  auto-upgrading to Node 24 (which broke a prior build). Do not widen this range
+  without re-validating the Vercel build.
+
 ## Conventions
 
 - **Package manager**: Bun for the frontend workspace. Python pip/poetry for the backend.
 - **Commit messages**: Conventional prefixes (`feat:`, `fix:`, `docs:`, `chore:`).
 - **Python formatting**: Black (line-length 88) + isort (black profile) + Ruff. Pre-commit hooks enforce this.
 - **TypeScript linting**: ESLint flat config (`eslint.config.mjs`) with `@typescript-eslint`, Next.js core-web-vitals, and react-hooks rules. `no-explicit-any` is warn-level.
-- **Testing**: Vitest (jsdom) for frontend unit tests, Playwright for E2E, pytest for backend. Coverage thresholds: branches 70%, functions/lines/statements 85%.
+- **Testing**: Vitest (jsdom) for frontend unit tests, Playwright for E2E, pytest for backend. Frontend coverage uses `all: true` (measures every source file) with a **ratchet floor** set to the current real baseline (~10%) that only moves up toward the branches 70% / functions+lines+statements 85% target — never lower the thresholds to make a build pass (see `docs/REMEDIATION_PLAN.md`).
 - **Turbopack**: Default bundler in dev. E2E tests use `--webpack` flag for stability.
 - **Clerk auth is optional in dev**: When `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` is unset, all routes are publicly accessible. Protected routes are enforced only when Clerk is configured.

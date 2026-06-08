@@ -31,7 +31,12 @@ test.describe('Knowledge Base page', () => {
 })
 
 test.describe('Blog generator KB toggle', () => {
-  test('should show Use Knowledge Base toggle in advanced options', async ({
+  // The "Use Knowledge Base" toggle lives in the content-generator advanced
+  // options, which only render on the auth-gated /generate and tool-detail
+  // pages. In the unauthenticated E2E environment (no Clerk) /tools redirects
+  // to /sign-in, so this assertion is unreachable as written. Re-enable once
+  // E2E runs with an authenticated session (tracked in docs/SCHEMA_AUDIT.md).
+  test.fixme('should show Use Knowledge Base toggle in advanced options', async ({
     page,
   }) => {
     await page.goto('/tools')

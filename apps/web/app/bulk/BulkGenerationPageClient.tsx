@@ -23,8 +23,6 @@ import {
 import {
   BulkGenerationItem,
   BulkJobStartResponse,
-  CSVRow,
-  ParsedCSVData,
   ProviderStrategy,
   CostEstimate,
   ExportFormat,
@@ -35,101 +33,13 @@ import UsageIndicator, { useUsageCheck } from '../../components/UsageIndicator'
 import { API_ENDPOINTS, getDefaultHeaders } from '../../lib/api'
 import { useLlmConfig } from '../../hooks/useLlmConfig'
 import type { LlmProviderType } from '../../types/llm'
-
-const TONE_OPTIONS = [
-  { value: 'informative', label: 'Informative' },
-  { value: 'conversational', label: 'Conversational' },
-  { value: 'professional', label: 'Professional' },
-  { value: 'friendly', label: 'Friendly' },
-  { value: 'authoritative', label: 'Authoritative' },
-  { value: 'technical', label: 'Technical' },
-]
-
-const PROVIDER_META: Record<LlmProviderType, { label: string; cost: string }> = {
-  openai: { label: 'OpenAI', cost: '$$$' },
-  anthropic: { label: 'Anthropic', cost: '$$' },
-  gemini: { label: 'Gemini', cost: '$' },
-}
-
-const STRATEGY_OPTIONS: { value: ProviderStrategy; label: string; description: string }[] = [
-  { value: 'single', label: 'Single Provider', description: 'Use one provider for all items' },
-  { value: 'round_robin', label: 'Round Robin', description: 'Rotate through all providers' },
-  { value: 'cost_optimized', label: 'Cost Optimized', description: 'Use cheapest provider available' },
-  { value: 'quality_optimized', label: 'Quality Optimized', description: 'Use highest quality provider' },
-]
-
-const EXPORT_OPTIONS: { value: ExportFormat; label: string; icon: string }[] = [
-  { value: 'json', label: 'JSON', icon: '{ }' },
-  { value: 'csv', label: 'CSV', icon: '📊' },
-  { value: 'markdown', label: 'Markdown', icon: '📝' },
-  { value: 'zip', label: 'ZIP (all files)', icon: '📦' },
-]
-
-interface BulkDraftItem extends BulkGenerationItem {
-  localId: string
-}
-
-function createDraftItem(
-  topic = '',
-  keywords: string[] = [],
-  tone = 'informative'
-): BulkDraftItem {
-  return {
-    localId: uuidv4(),
-    topic,
-    keywords,
-    tone,
-  }
-}
-
-function parseCSV(csvText: string): ParsedCSVData {
-  const lines = csvText.trim().split('\n')
-  const errors: string[] = []
-  const rows: CSVRow[] = []
-
-  if (lines.length === 0) {
-    return { rows: [], errors: ['Empty CSV file'], headers: [] }
-  }
-
-  // Parse header
-  const headerLine = lines[0]
-  if (!headerLine) {
-    return { rows: [], errors: ['Empty CSV file'], headers: [] }
-  }
-  const headers = headerLine.split(',').map((h) => h.trim().toLowerCase())
-
-  const topicIndex = headers.indexOf('topic')
-  const keywordsIndex = headers.indexOf('keywords')
-  const toneIndex = headers.indexOf('tone')
-
-  if (topicIndex === -1) {
-    errors.push('CSV must have a "topic" column')
-    return { rows: [], errors, headers }
-  }
-
-  // Parse data rows
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i]
-    if (!line || !line.trim()) continue
-
-    // Simple CSV parsing (doesn't handle quoted commas)
-    const values = line.split(',').map((v) => v.trim())
-
-    const topic = values[topicIndex]
-    if (!topic) {
-      errors.push(`Row ${i + 1}: Missing topic`)
-      continue
-    }
-
-    rows.push({
-      topic,
-      keywords: keywordsIndex !== -1 ? values[keywordsIndex] : undefined,
-      tone: toneIndex !== -1 ? values[toneIndex] : undefined,
-    })
-  }
-
-  return { rows, errors, headers }
-}
+import {
+  TONE_OPTIONS,
+  PROVIDER_META,
+  STRATEGY_OPTIONS,
+  EXPORT_OPTIONS,
+} from './constants'
+import { createDraftItem, parseCSV, type BulkDraftItem } from './csv'
 
 function useBulkGenerationPageView() {
   const [conversationId] = useState(() => uuidv4())
