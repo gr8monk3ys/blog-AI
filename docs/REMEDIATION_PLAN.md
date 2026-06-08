@@ -23,14 +23,14 @@ gauges tell the truth**, not rewriting. Phases are ordered by real-world risk.
 ### Phase 1 — Decide the fate of half-features (kill the ghosts)
 | # | Item | Status |
 |---|------|--------|
-| 1.1 | Knowledge base: finish the Supabase→Neon/pgvector migration **or** remove it (un-xfail/un-fixme when done) | TODO |
-| 1.2 | Ghost-hunt sweep: orphaned pages, TDD tests for unwritten code, unreachable routes → finish/remove/keep list | TODO |
+| 1.1 | Knowledge base: finish or remove | DONE (decision: **leave flagged off**) — investigation showed it's integrated RAG (chat), already defaults `ENABLE_KNOWLEDGE_BASE=false`, no CVEs, tests already quarantined. Removal would destroy capability for no safety gain; finishing the pgvector storage layer is a future *product* decision. |
+| 1.2 | Ghost-hunt sweep | DONE — the KB was the only true ghost; other not-in-nav pages (settings/history/admin/privacy/terms) are intentional (footer/user-menu access). |
 
 ### Phase 2 — Make the gauges tell the truth
 | # | Item | Status |
 |---|------|--------|
 | 2.1 | Ratchet coverage up toward 70/85 as tests land | ONGOING |
-| 2.2 | Backfill money/security paths (payments, Stripe webhooks, SSO, quotas) | TODO |
+| 2.2 | Backfill money/security paths (payments, Stripe webhooks, SSO, quotas) | IN PROGRESS — added subscription-route tests (33%→89%) + webhook HMAC-signature tests. Next: webhook delivery/storage, SSO services (19–24%), reconcile path. |
 | 2.3 | Accessibility sweep: header/footer as siblings of `<main>` repo-wide + landmark checks | IN PROGRESS (3 pages done in #102) |
 
 ### Phase 3 — Finish the structural refactors (with nets)
