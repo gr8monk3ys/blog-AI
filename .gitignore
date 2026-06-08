@@ -63,6 +63,7 @@ var/
 venv/
 ENV/
 .venv
+.venv*
 env/
 
 # Node.js
