@@ -1,5 +1,14 @@
 # Database Schema Documentation
 
+> **⚠️ ACCURACY WARNING:** The migration inventory below describes
+> `supabase/migrations/`, but **nothing currently applies those files** — the
+> only automated runner (`bun run db:migrate`) applies `db/migrations/`, and
+> several tables are additionally created by runtime DDL in the API. The four
+> schema sources are divergent. Until the consolidation lands, treat
+> [`SCHEMA_AUDIT.md`](./SCHEMA_AUDIT.md) as the authoritative description of
+> how schema is actually produced, and do **not** use this document to
+> provision a new environment.
+
 This document provides comprehensive documentation of the Blog AI database schema, including all tables, relationships, indexes, and Row Level Security (RLS) policies.
 
 ## Table of Contents

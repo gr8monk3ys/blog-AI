@@ -43,8 +43,8 @@ gauges tell the truth**, not rewriting. Phases are ordered by real-world risk.
 ### Phase 4 — Keep it honest (durable hygiene)
 | # | Item | Status |
 |---|------|--------|
-| 4.1 | Dependency automation (Dependabot grouping) so the CVE backlog can't silently rebuild | TODO |
-| 4.2 | Docs-vs-reality reconciliation (`DATABASE.md`, drop unverified "100/100" claims) | TODO |
+| 4.1 | Dependency automation (Dependabot grouping) so the CVE backlog can't silently rebuild | DONE — security updates now grouped into a single batched PR for pip + npm |
+| 4.2 | Docs-vs-reality reconciliation (`DATABASE.md`, drop unverified "100/100" claims) | DONE — README claims replaced with CI-enforced quality bar (dropped unverified Lighthouse/React-Doctor scores + stale home.html note); `DATABASE.md` carries an accuracy warning pointing to `SCHEMA_AUDIT.md` until the P0.1 consolidation lands |
 | 4.3 | Re-enable branch protection once `main` is genuinely green | NEEDS-OWNER |
 
 ---

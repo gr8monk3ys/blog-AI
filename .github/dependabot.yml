@@ -11,6 +11,13 @@ updates:
         dependency-type: "development"
       production-dependencies:
         dependency-type: "production"
+      # Batch security fixes into a single PR so they can't be starved by the
+      # low version-update PR limit and the CVE backlog can't silently rebuild
+      # (see docs/REMEDIATION_PLAN.md Phase 4.1).
+      security-updates:
+        applies-to: security-updates
+        patterns:
+          - "*"
 
   # Frontend JavaScript dependencies
   - package-ecosystem: "npm"
@@ -23,6 +30,10 @@ updates:
         dependency-type: "development"
       production-dependencies:
         dependency-type: "production"
+      security-updates:
+        applies-to: security-updates
+        patterns:
+          - "*"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"

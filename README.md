@@ -31,9 +31,9 @@ The product is positioned around repeatable publishing, not generic prompt-box o
 - Bun-first frontend workflow with a committed `bun.lock`
 - Next.js 16 web app with React 18, Clerk, and Sentry
 - FastAPI backend with Neon/Postgres, Stripe, and quota-based product logic
-- Static marketing homepage at `/` for maximum Lighthouse performance
-- Verified Lighthouse `100 / 100 / 100 / 100`
-- Verified React Doctor `100 / 100`
+- Blocking CI: full backend pytest suite, frontend lint/type/unit/E2E, and a
+  dependency-audit gate that fails on any high/critical advisory
+- Coverage measured honestly (`all: true`) with ratchet floors that only move up
 
 ## Quick Start
 
@@ -143,12 +143,16 @@ blog-AI/
 
 ## Quality Bar
 
-- `bun run build` passes
-- `bun run audit:runtime` passes
-- Lighthouse on `/`: `100 / 100 / 100 / 100`
-- React Doctor: `100 / 100`
+Enforced by CI on every PR (see `.github/workflows/ci.yml`):
+
+- `bun run lint`, `bun run type-check`, and `bun run build` pass
+- Vitest unit suite passes with coverage at or above the ratchet floor
+- Playwright E2E suite passes
+- Full backend pytest suite passes (blocking), plus per-route coverage gates
+- `bun run audit:runtime` passes — zero unallowlisted high/critical advisories
 
 ## Notes
 
-- The landing page is served from `apps/web/public/home.html` through a rewrite in `apps/web/next.config.mjs` to keep `/` extremely fast.
+- The React homepage is rendered by `HomePageClient` at `/` (a previous
+  static `home.html` rewrite was removed; see git history).
 - Dependabot still uses the GitHub `npm` ecosystem for `apps/web`, but day-to-day development and CI now run through Bun.
