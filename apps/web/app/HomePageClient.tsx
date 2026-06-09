@@ -54,8 +54,9 @@ export default function Home(): React.ReactElement {
   const isClerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 
   return (
-    <main className="min-h-screen">
+    <>
       <SiteHeader />
+      <main className="min-h-screen">
 
       {/* ----------------------------------------------------------------- */}
       {/* Hero Section                                                      */}
@@ -373,8 +374,9 @@ export default function Home(): React.ReactElement {
         </div>
       </section>
 
+      </main>
       <SiteFooter />
-    </main>
+    </>
   )
 }
 

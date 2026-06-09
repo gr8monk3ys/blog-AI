@@ -49,8 +49,9 @@ export default async function ToolCategoryPage({ params }: CategoryPageProps) {
   const tools = await loadTools(categoryId)
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-neutral-50 via-white to-neutral-100">
+    <>
       <SiteHeader />
+      <main className="min-h-screen bg-gradient-to-b from-neutral-50 via-white to-neutral-100">
 
       <header className="border-b border-neutral-200 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -125,8 +126,9 @@ export default async function ToolCategoryPage({ params }: CategoryPageProps) {
         </div>
       </section>
 
+      </main>
       <SiteFooter />
-    </main>
+    </>
   )
 }
 
