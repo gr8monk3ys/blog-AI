@@ -70,6 +70,7 @@ from app.middleware import (
 from app.routes import (
     analytics_router,
     batch_router,
+    batch_export_router,
     blog_router,
     book_router,
     brand_voice_router,
@@ -503,6 +504,7 @@ app.include_router(health_router)
 # Main API routes (at root level for backward compatibility)
 app.include_router(analytics_router)
 app.include_router(batch_router)
+app.include_router(batch_export_router)
 app.include_router(brand_voice_router)
 app.include_router(chat_router)
 app.include_router(content_router)
@@ -560,6 +562,7 @@ api_v1_router = APIRouter(prefix="/api/v1", tags=["v1"])
 # Add versioned routes
 api_v1_router.include_router(analytics_router)
 api_v1_router.include_router(batch_router)
+api_v1_router.include_router(batch_export_router)
 api_v1_router.include_router(brand_voice_router)
 api_v1_router.include_router(chat_router)
 api_v1_router.include_router(content_router)

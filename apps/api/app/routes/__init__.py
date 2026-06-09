@@ -2,6 +2,7 @@
 
 from .analytics import router as analytics_router
 from .batch import router as batch_router
+from .batch_export import router as batch_export_router
 from .blog import router as blog_router
 from .book import router as book_router
 from .brand_voice import router as brand_voice_router
@@ -36,6 +37,7 @@ from .zapier import router as zapier_router
 __all__ = [
     "analytics_router",
     "batch_router",
+    "batch_export_router",
     "blog_router",
     "book_router",
     "brand_voice_router",
