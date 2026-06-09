@@ -37,7 +37,7 @@ gauges tell the truth**, not rewriting. Phases are ordered by real-world risk.
 | # | Item | Status |
 |---|------|--------|
 | 3.1 | `BulkGenerationPageClient` — write bulk-flow component tests, then split the ~1,030-line hook/JSX | TODO |
-| 3.2 | `batch.py` router split (lifecycle vs export) — route tests first | TODO |
+| 3.2 | `batch.py` router split (lifecycle vs export) — route tests first | DONE — 15 route-level characterization tests added first (status/results/cancel/list/estimate/template/export incl. ownership scoping + state gating), then the 233-line export endpoint moved to `batch_export.py` (own router, same paths). batch.py 1312→834 overall |
 | 3.3 | Remaining 1,000+ line modules — test-net first | TODO |
 
 ### Phase 4 — Keep it honest (durable hygiene)
@@ -71,7 +71,7 @@ gauges tell the truth**, not rewriting. Phases are ordered by real-world risk.
 |----|------|--------|
 | P2.1 | `marketing_templates.py` (1944) → fields/categories/per-category modules | DONE — assembler is 42 lines; 7 category modules (≤369 lines); registry SHA verified identical |
 | P2.2 | `rate_limit.py` (1288) → backends/models/shared base | DONE — backends → `rate_limit_backends.py`; `RateLimiter`/`GenerationRateLimiter` deduped onto shared `_BaseRateLimiter` (1288→880 lines). 19 rate-limiter tests; full suite green |
-| P2.3 | `batch.py` (1312) → providers/item_processor/csv/lifecycle+export routers | PARTIAL — extracted `batch_providers.py` (6 tests), `batch_csv.py` (7 tests), and `batch_item_processor.py`; batch.py 1312→1076 lines. Remaining: lifecycle/export router split (needs route tests first) |
+| P2.3 | `batch.py` (1312) → providers/item_processor/csv/lifecycle+export routers | PARTIAL — extracted `batch_providers.py` (6 tests), `batch_csv.py` (7 tests), and `batch_item_processor.py`; batch.py 1312→1076 lines. Export router split DONE (see Phase 3.2); batch.py 1312→834 |
 | P2.4 | `BulkGenerationPageClient.tsx` (1164) → constants/csv/hooks/components | PARTIAL — extracted `constants.ts` + pure `csv.ts` (1164→1074 lines) + 7 vitest tests for parseCSV/createDraftItem. Remaining: split the page-view hook and the 600-line render into components |
 | P2.5 | `HomePageClient.tsx` (858) → data/animations/sections | DONE — extracted `_home/data.ts` + `_home/animations.ts` (858→622 lines) |
 
