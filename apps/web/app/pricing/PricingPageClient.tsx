@@ -235,8 +235,9 @@ export default function PricingPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+    <>
       <SiteHeader />
+      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
 
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-16">
@@ -588,7 +589,8 @@ export default function PricingPage() {
         </div>
       </section>
 
+      </main>
       <SiteFooter />
-    </main>
+    </>
   )
 }
