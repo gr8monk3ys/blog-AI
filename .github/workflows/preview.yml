@@ -58,7 +58,7 @@ jobs:
       - name: Deploy Preview to Vercel
         if: steps.vercel-preflight.outputs.can_deploy == 'true'
         id: vercel
-        uses: amondnet/vercel-action@16e87c0a08142b0d0d33b76aeaf20823c381b9b9
+        uses: amondnet/vercel-action@de09aeac2ace6599ec9b11ef87558759a496bac4 # v42.3.0
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
