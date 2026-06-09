@@ -54,3 +54,55 @@ def test_different_secret_changes_signature():
     a = webhook_service._generate_signature("p", "secret-a", "1")
     b = webhook_service._generate_signature("p", "secret-b", "1")
     assert a != b
+
+
+# ---------------------------------------------------------------------------
+# Delivery-prep helpers: header building and retry backoff
+# ---------------------------------------------------------------------------
+
+from src.types.webhooks import WebhookEventType
+from src.webhooks.webhook_service import (
+    WEBHOOK_RETRY_BASE_DELAY,
+    WEBHOOK_RETRY_MAX_DELAY,
+    WEBHOOK_USER_AGENT,
+)
+
+
+def test_build_headers_includes_identity_and_signature():
+    headers = webhook_service._build_headers(
+        payload='{"a":1}',
+        secret="topsecret",
+        event_id="evt-1",
+        event_type=WebhookEventType.CONTENT_GENERATED,
+    )
+    assert headers["Content-Type"] == "application/json"
+    assert headers["User-Agent"] == WEBHOOK_USER_AGENT
+    assert headers["X-Webhook-ID"] == "evt-1"
+    assert headers["X-Webhook-Event"] == "content.generated"
+    # Stripe-style signature header: t=<ts>,v1=<sig>, with ts matching the
+    # X-Webhook-Timestamp header so receivers can verify what was signed.
+    sig_header = headers["X-Webhook-Signature"]
+    ts = headers["X-Webhook-Timestamp"]
+    assert sig_header.startswith(f"t={ts},v1=")
+    expected = webhook_service._generate_signature('{"a":1}', "topsecret", ts)
+    assert sig_header == f"t={ts},v1={expected}"
+
+
+def test_build_headers_omits_signature_without_secret():
+    headers = webhook_service._build_headers(
+        payload="{}",
+        secret="",
+        event_id="evt-2",
+        event_type=WebhookEventType.CONTENT_GENERATED,
+    )
+    assert "X-Webhook-Signature" not in headers
+
+
+def test_retry_delay_grows_exponentially_and_caps():
+    # Base 1s doubling: attempt n is in [2^(n-1), 2^(n-1)*1.25] before the cap.
+    for attempt in (1, 2, 3, 4):
+        base = WEBHOOK_RETRY_BASE_DELAY * (2 ** (attempt - 1))
+        delay = webhook_service._calculate_retry_delay(attempt)
+        assert base <= delay <= int(base * 1.25) + 1
+    # Very high attempts are capped at the max delay.
+    assert webhook_service._calculate_retry_delay(20) <= WEBHOOK_RETRY_MAX_DELAY

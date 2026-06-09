@@ -30,7 +30,7 @@ gauges tell the truth**, not rewriting. Phases are ordered by real-world risk.
 | # | Item | Status |
 |---|------|--------|
 | 2.1 | Ratchet coverage up toward 70/85 as tests land | ONGOING |
-| 2.2 | Backfill money/security paths (payments, Stripe webhooks, SSO, quotas) | IN PROGRESS — added subscription-route tests (33%→89%) + webhook HMAC-signature tests. Next: webhook delivery/storage, SSO services (19–24%), reconcile path. |
+| 2.2 | Backfill money/security paths (payments, Stripe webhooks, SSO, quotas) | IN PROGRESS — subscription routes (33%→89%) + webhook HMAC tests landed in #103; SSO identity mappers (SAML 19%→36%, OIDC 19%→37%) this PR. Next: webhook delivery/storage, reconcile path. |
 | 2.3 | Accessibility sweep: header/footer as siblings of `<main>` repo-wide + landmark checks | IN PROGRESS (3 pages done in #102) |
 
 ### Phase 3 — Finish the structural refactors (with nets)
