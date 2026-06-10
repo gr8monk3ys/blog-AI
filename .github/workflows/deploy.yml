@@ -128,7 +128,7 @@ jobs:
       - name: Deploy to Vercel
         if: steps.vercel-preflight.outputs.can_deploy == 'true'
         id: vercel
-        uses: amondnet/vercel-action@16e87c0a08142b0d0d33b76aeaf20823c381b9b9
+        uses: amondnet/vercel-action@de09aeac2ace6599ec9b11ef87558759a496bac4 # v42.3.0
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
@@ -161,7 +161,7 @@ jobs:
           ref: main
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
@@ -180,7 +180,7 @@ jobs:
             type=raw,value=latest
 
       - name: Build and push backend image
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         env:
           BUILD_DATE_VALUE: ${{ github.event.repository.updated_at }}
           GIT_SHA_VALUE: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
