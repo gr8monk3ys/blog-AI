@@ -7,10 +7,21 @@
 > gate (`scripts/schema_smoke.sql`, run by the `schema-smoke` job) now boots a fresh
 > Postgres, applies `db/migrations/`, and fails if any code-referenced table/column is
 > missing — so a fresh install is verified deterministically and the schema can't silently
-> re-fragment. The full multi-source *runner cutover* (folding the supabase-only analytics/
-> social/seo/plagiarism domains and the pgvector knowledge-base tables) remains gated on
-> validating against a live/staging database — see "Cutover plan" below. Do **not** repoint
-> the runner onto the supabase set in production until that validation passes.
+> re-fragment.
+>
+> **Correction (supersedes the "UNION" target below):** the remaining `supabase/`-only
+> domain tables are **not** Neon-runner gaps and must **not** be folded into `db/migrations/`.
+> Code investigation (see "The supabase-only domains are a second datastore") showed the
+> modules that use those tables — analytics, SEO, recommendations, dashboards, content
+> versioning, knowledge base — talk to a **separate Supabase project** via the `supabase-py`
+> client (`create_client(SUPABASE_URL, SUPABASE_KEY)`), with an **in-memory / disabled
+> fallback** when Supabase is unconfigured. They never touch the Neon `DATABASE_URL`. All
+> three are **off by default** (`ENABLE_PERFORMANCE_ANALYTICS`, `ENABLE_CONTENT_VERSIONING`,
+> `ENABLE_KNOWLEDGE_BASE` = false) and `server.py` already labels them "Supabase-dependent
+> modules … disabled by default for a Neon-only SaaS until they're migrated." So the Neon
+> runner is already **complete** for everything the asyncpg code needs (the `schema-smoke`
+> gate proves it); the real resolution for those features is **porting the modules from
+> `supabase-py` to asyncpg/Neon** — a tracked product decision, not a migration cutover.
 >
 > **Fresh-install correctness fix:** `src/knowledge/quota.py` queried a non-existent
 > `user_subscriptions` table (silently falling back to the `free` tier); it now reads the
@@ -56,47 +67,62 @@ The two large sets target **different schemas** for the same domains, and each i
 - **Knowledge base is a third variant:** `apps/api/migrations/` defines
   `kb_documents` + `kb_embeddings`; `supabase/` defines `kb_documents` + `kb_chunks`.
 
-### Consequence
+### Consequence (for the Neon/asyncpg code path)
 
-`bun run db:migrate` applies **only** the 5-file `db/` set. A fresh Neon/Postgres
-environment provisioned via the documented command is therefore **missing the social,
-analytics, SEO, plagiarism, knowledge-base, conversations, and content-version tables**.
-Those features only work if `supabase/` migrations were applied out-of-band (e.g. the
-Supabase CLI) or if a table happens to be lazily created by runtime DDL. Provisioning is
-non-deterministic and depends on deploy lineage and Python import order.
+`bun run db:migrate` applies **only** the `db/` set. The tables the **Neon/asyncpg** code
+path needs are now all in that set (core content, brand voice, payments/quotas, blog_posts,
+organizations/workflows/research/SSO runtime tables, and — since
+`006_stripe_webhook_events.sql` — the Stripe webhook log + `payment_status`). The
+`schema-smoke` CI gate asserts this on every run, so a fresh Neon install is complete and
+deterministic for the always-on product.
 
-## Target: the schema the **code** needs = the UNION
+The `supabase/`-only domain tables (social, analytics, SEO, plagiarism, knowledge base,
+conversations, content versions, …) are a **different story** — see below.
 
-The consolidated schema must contain:
+## The supabase-only domains are a second datastore (not a Neon-runner gap)
 
-1. The `db/`-lineage tables (core content, brand voice, payments, quotas, blog_posts).
-2. The runtime-DDL tables, **folded into migrations** and removed from app startup:
-   `app_sso_*`, `app_workflows`, `app_workflow_executions`, `research_queries`,
-   `research_sources`, `organizations`, `organization_members`, `organization_invites`,
-   `audit_logs`.
-3. The `supabase/`-only domain tables (analytics, social, seo, plagiarism, knowledge,
-   conversations, tool_usage, content_versions, content_feedback, tier_limits, etc.) —
-   **using the `kb_chunks` knowledge-base variant or the `kb_embeddings` variant,
-   whichever the `knowledge` route code actually queries** (confirm during consolidation).
-4. **Dropped:** the legacy `sso_*` tables from `supabase/` (superseded by `app_sso_*`).
+The original "Target = UNION" plan (folding the `supabase/`-only tables into `db/migrations/`)
+was based on a wrong assumption: that those tables belong in Neon. They do not. The modules
+that use them query a **separate Supabase project** through the `supabase-py` client, never
+the Neon pool:
 
-## Cutover plan (NEEDS-STAGING)
+| Module (route, default flag) | DB access | Tables (defined in) |
+|------------------------------|-----------|---------------------|
+| `src/analytics/*` (performance, SEO, dashboard, recommendations) — `ENABLE_PERFORMANCE_ANALYTICS=false` | `create_client(SUPABASE_URL, SUPABASE_KEY)`; returns `None`/no-op when unset | `content_performance`, `performance_events`, `performance_snapshots`, `seo_rankings`, `content_recommendations` (`supabase/015`) |
+| `src/content/version_service.py` — `ENABLE_CONTENT_VERSIONING=false` | Supabase client + `client.rpc(...)`; **in-memory** fallback when unset | `content_versions` (`supabase/009`) |
+| `src/knowledge/*` — `ENABLE_KNOWLEDGE_BASE=false` | Supabase client + a pluggable `VectorStore` | `kb_documents` (`supabase/010`) |
 
-1. **Snapshot the live prod schema** (`pg_dump --schema-only`) — this is ground truth for
-   what already exists in production.
-2. **Diff** the live schema against each of the four sources to learn which lineage prod
-   actually ran.
-3. **Build a single ordered `db/migrations/` sequence** = union above, renumbered with no
-   collisions, each migration written idempotently (`CREATE TABLE IF NOT EXISTS`,
-   guarded `ALTER`) so it is safe to run against an already-populated prod DB.
-4. **Convert runtime DDL** in the four Python modules into migrations; replace the
-   in-code `CREATE TABLE` with a startup assertion (or a `DEV_MODE`-only bootstrap).
-5. **Archive** `supabase/migrations/` and `apps/api/migrations/` under a clearly-labelled
-   `legacy/` path (or delete once prod parity is confirmed). Leave one tree.
-6. **Add a CI guard** (`schema-smoke`): boot an ephemeral Postgres, run `db:migrate`, then
-   assert every table the code `SELECT`s from exists. Permanently prevents re-fragmentation.
-7. **Rewrite `docs/DATABASE.md`** to reflect the single inventory; delete the stale
-   "Missing Migrations" section.
+Evidence: those service files have **0** `get_pool`/`asyncpg` references and 19–39
+`client.table`/`client.rpc` references each; `server.py` labels the block "Supabase-dependent
+modules … disabled by default for a Neon-only SaaS until they're migrated."
+
+Everything else in the old `supabase/`-only list (`conversations`, `tool_usage`, `users`,
+`content_feedback`, `voice_scores`, `tier_limits`, `plagiarism_*`, `post_analytics`,
+`social_*`, `scheduled_posts`, `organization_plan_limits`, `role_permissions`, `kb_chunks`,
+`kb_embeddings`) is **not queried by any code** — dead schema.
+
+### Resolution (a product decision, not a migration cutover)
+
+For each Supabase-dependent feature, pick one — there is nothing to "cut over" in the runner:
+
+1. **Keep on Supabase** (status quo): the feature requires a Supabase project with
+   `supabase/migrations` applied via the Supabase CLI and `SUPABASE_URL`/`SUPABASE_KEY` set;
+   otherwise it runs in-memory or stays disabled. Document the requirement.
+2. **Port to Neon/asyncpg**: rewrite the module to use the asyncpg pool (and convert its
+   `client.rpc(...)` Postgres functions to SQL), then add the tables to `db/migrations/` and
+   `scripts/schema_smoke.sql`. This is the path to a true single datastore, but it's a
+   module rewrite per feature, not a schema edit.
+3. **Remove**: if a feature isn't on the roadmap, delete the module + its `supabase/` tables.
+
+Until one of the above is chosen per feature, **do not** add these tables to `db/migrations/` —
+doing so creates dead Neon tables while the code still reads Supabase.
+
+### Still valid regardless of the above
+- **Dropped:** the legacy `sso_*` tables from `supabase/` (superseded by `app_sso_*`).
+- **Runtime DDL** (`app_sso_*`, `app_workflows`, `research_*`, `organizations*`, `audit_logs`)
+  is created both by `db/migrations/` and lazily by Python at startup; folding the startup
+  DDL fully into migrations (and replacing it with a startup assertion) is still worthwhile
+  hygiene, independent of the Supabase question.
 
 ## Methodology
 
