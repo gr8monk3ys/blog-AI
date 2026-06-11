@@ -19,11 +19,11 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 
 from src.types.version import (
+    DEFAULT_AUTO_VERSION_CONFIG,
     AutoVersionConfig,
     ChangeType,
     ContentVersion,
     ContentVersionSummary,
-    DEFAULT_AUTO_VERSION_CONFIG,
     VersionComparison,
     VersionStatistics,
 )
@@ -251,8 +251,12 @@ def generate_unified_diff(
     )
 
     diff_lines = list(diff)
-    additions = sum(1 for line in diff_lines if line.startswith("+") and not line.startswith("+++"))
-    deletions = sum(1 for line in diff_lines if line.startswith("-") and not line.startswith("---"))
+    additions = sum(
+        1 for line in diff_lines if line.startswith("+") and not line.startswith("+++")
+    )
+    deletions = sum(
+        1 for line in diff_lines if line.startswith("-") and not line.startswith("---")
+    )
 
     return "".join(diff_lines), additions, deletions
 
@@ -520,7 +524,9 @@ class InMemoryVersionService(BaseVersionService):
         word_diff = abs(new_word_count - latest.word_count)
         char_diff = abs(new_char_count - latest.character_count)
 
-        return word_diff >= config.min_word_change or char_diff >= config.min_char_change
+        return (
+            word_diff >= config.min_word_change or char_diff >= config.min_char_change
+        )
 
     async def is_content_in_organization(
         self,
@@ -568,6 +574,394 @@ class InMemoryVersionService(BaseVersionService):
         return True
 
 
+class NeonVersionService(BaseVersionService):
+    """Postgres/Neon-backed version service using the shared asyncpg pool.
+
+    Persists to the content_versions and content_version_organizations tables
+    (db/migrations/007). Mirrors InMemoryVersionService semantics but durably,
+    and is the production path for the Neon-only deployment.
+    """
+
+    def __init__(self) -> None:
+        logger.info("Initialized Neon (asyncpg) version service")
+
+    @staticmethod
+    def _row_to_version(row) -> ContentVersion:
+        return ContentVersion(
+            id=str(row["id"]),
+            content_id=row["content_id"],
+            version_number=row["version_number"],
+            content=row["content"],
+            content_hash=row["content_hash"],
+            diff_from_previous=row["diff_from_previous"],
+            change_type=ChangeType(row["change_type"]),
+            change_summary=row["change_summary"],
+            word_count=row["word_count"],
+            character_count=row["character_count"],
+            created_by=row["created_by"],
+            created_at=row["created_at"],
+            is_current=row["is_current"],
+        )
+
+    async def _pool(self):
+        from ..db import get_pool
+
+        pool = await get_pool()
+        if pool is None:
+            raise RuntimeError(
+                "Neon version service selected but no database pool is available "
+                "(DATABASE_URL not configured)."
+            )
+        return pool
+
+    async def create_version(
+        self,
+        content_id: str,
+        content: str,
+        change_type: ChangeType = ChangeType.MANUAL,
+        change_summary: Optional[str] = None,
+        created_by: Optional[str] = None,
+    ) -> Tuple[str, int, str, bool]:
+        """Create a new version (idempotent on an unchanged latest hash)."""
+        content_hash = calculate_content_hash(content)
+        pool = await self._pool()
+
+        async with pool.acquire() as conn:
+            async with conn.transaction():
+                latest = await conn.fetchrow(
+                    """
+                    SELECT id, version_number, content, content_hash
+                    FROM content_versions
+                    WHERE content_id = $1
+                    ORDER BY version_number DESC
+                    LIMIT 1
+                    """,
+                    content_id,
+                )
+
+                # De-dupe: re-saving identical content is a no-op.
+                if latest is not None and latest["content_hash"] == content_hash:
+                    return (
+                        str(latest["id"]),
+                        latest["version_number"],
+                        content_hash,
+                        True,
+                    )
+
+                version_number = (latest["version_number"] + 1) if latest else 1
+
+                diff_from_previous = None
+                if latest is not None:
+                    diff_from_previous, _, _ = generate_unified_diff(
+                        latest["content"],
+                        content,
+                        latest["version_number"],
+                        version_number,
+                    )
+
+                await conn.execute(
+                    "UPDATE content_versions SET is_current = false WHERE content_id = $1",
+                    content_id,
+                )
+
+                new_id = await conn.fetchval(
+                    """
+                    INSERT INTO content_versions (
+                        content_id, version_number, content, content_hash,
+                        diff_from_previous, change_type, change_summary,
+                        word_count, character_count, created_by, is_current
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true)
+                    RETURNING id
+                    """,
+                    content_id,
+                    version_number,
+                    content,
+                    content_hash,
+                    diff_from_previous,
+                    change_type.value,
+                    change_summary,
+                    calculate_word_count(content),
+                    len(content),
+                    created_by,
+                )
+
+        logger.info(
+            f"Created version {version_number} for content {content_id} "
+            f"(type: {change_type.value})"
+        )
+        return str(new_id), version_number, content_hash, False
+
+    async def get_versions(
+        self,
+        content_id: str,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> Tuple[List[ContentVersionSummary], int]:
+        """Get paginated version history (newest first) plus total count."""
+        pool = await self._pool()
+        async with pool.acquire() as conn:
+            total = await conn.fetchval(
+                "SELECT COUNT(*) FROM content_versions WHERE content_id = $1",
+                content_id,
+            )
+            rows = await conn.fetch(
+                """
+                SELECT id, version_number, content, content_hash, change_type,
+                       change_summary, word_count, character_count, created_by,
+                       created_at, is_current
+                FROM content_versions
+                WHERE content_id = $1
+                ORDER BY version_number DESC
+                LIMIT $2 OFFSET $3
+                """,
+                content_id,
+                limit,
+                offset,
+            )
+
+        summaries = [
+            ContentVersionSummary(
+                id=str(row["id"]),
+                version_number=row["version_number"],
+                content_preview=row["content"][:200],
+                content_hash=row["content_hash"],
+                change_type=ChangeType(row["change_type"]),
+                change_summary=row["change_summary"],
+                word_count=row["word_count"],
+                character_count=row["character_count"],
+                created_by=row["created_by"],
+                created_at=row["created_at"],
+                is_current=row["is_current"],
+            )
+            for row in rows
+        ]
+        return summaries, int(total or 0)
+
+    async def get_version(
+        self,
+        content_id: str,
+        version_number: int,
+    ) -> Optional[ContentVersion]:
+        """Get a specific version."""
+        pool = await self._pool()
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """
+                SELECT id, content_id, version_number, content, content_hash,
+                       diff_from_previous, change_type, change_summary,
+                       word_count, character_count, created_by, created_at,
+                       is_current
+                FROM content_versions
+                WHERE content_id = $1 AND version_number = $2
+                """,
+                content_id,
+                version_number,
+            )
+        return self._row_to_version(row) if row else None
+
+    async def restore_version(
+        self,
+        content_id: str,
+        version_number: int,
+        restored_by: Optional[str] = None,
+    ) -> Tuple[bool, str, int, int, str]:
+        """Restore a previous version by creating a new version from it."""
+        version = await self.get_version(content_id, version_number)
+        if not version:
+            return (False, "", 0, version_number, f"Version {version_number} not found")
+
+        version_id, new_version_number, _, _ = await self.create_version(
+            content_id=content_id,
+            content=version.content,
+            change_type=ChangeType.RESTORE,
+            change_summary=f"Restored from version {version_number}",
+            created_by=restored_by,
+        )
+        return (
+            True,
+            version_id,
+            new_version_number,
+            version_number,
+            f"Successfully restored to version {version_number} (new version: {new_version_number})",
+        )
+
+    async def compare_versions(
+        self,
+        content_id: str,
+        version_1: int,
+        version_2: int,
+    ) -> Optional[VersionComparison]:
+        """Compare two versions."""
+        v1 = await self.get_version(content_id, version_1)
+        v2 = await self.get_version(content_id, version_2)
+        if not v1 or not v2:
+            return None
+
+        unified_diff, additions, deletions = generate_unified_diff(
+            v1.content, v2.content, v1.version_number, v2.version_number
+        )
+        return VersionComparison(
+            version_1=v1,
+            version_2=v2,
+            word_count_diff=v2.word_count - v1.word_count,
+            character_count_diff=v2.character_count - v1.character_count,
+            unified_diff=unified_diff,
+            additions=additions,
+            deletions=deletions,
+        )
+
+    async def get_statistics(
+        self,
+        content_id: str,
+    ) -> Optional[VersionStatistics]:
+        """Aggregate version statistics for content."""
+        pool = await self._pool()
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT version_number, word_count, change_type, created_at
+                FROM content_versions
+                WHERE content_id = $1
+                ORDER BY version_number ASC
+                """,
+                content_id,
+            )
+        if not rows:
+            return None
+
+        total_word_change = 0
+        prev_word_count = 0
+        for row in rows:
+            total_word_change += abs(row["word_count"] - prev_word_count)
+            prev_word_count = row["word_count"]
+
+        return VersionStatistics(
+            content_id=content_id,
+            total_versions=len(rows),
+            current_version=rows[-1]["version_number"],
+            first_created_at=rows[0]["created_at"],
+            last_updated_at=rows[-1]["created_at"],
+            total_word_change=total_word_change,
+            avg_word_count=sum(r["word_count"] for r in rows) / len(rows),
+            manual_saves=sum(
+                1 for r in rows if r["change_type"] == ChangeType.MANUAL.value
+            ),
+            auto_saves=sum(
+                1 for r in rows if r["change_type"] == ChangeType.AUTO.value
+            ),
+            restores=sum(
+                1 for r in rows if r["change_type"] == ChangeType.RESTORE.value
+            ),
+        )
+
+    async def should_auto_version(
+        self,
+        content_id: str,
+        new_content: str,
+        config: Optional[AutoVersionConfig] = None,
+    ) -> bool:
+        """Check whether an automatic version should be created."""
+        if config is None:
+            config = DEFAULT_AUTO_VERSION_CONFIG
+        if not config.enabled:
+            return False
+
+        pool = await self._pool()
+        async with pool.acquire() as conn:
+            last_auto = await conn.fetchval(
+                """
+                SELECT MAX(created_at) FROM content_versions
+                WHERE content_id = $1 AND change_type = 'auto'
+                """,
+                content_id,
+            )
+            if last_auto is not None:
+                time_since = datetime.now(last_auto.tzinfo) - last_auto
+                if time_since.total_seconds() < config.min_time_between_versions:
+                    return False
+
+            recent_auto = await conn.fetchval(
+                """
+                SELECT COUNT(*) FROM content_versions
+                WHERE content_id = $1 AND change_type = 'auto'
+                  AND created_at > NOW() - INTERVAL '1 hour'
+                """,
+                content_id,
+            )
+            if int(recent_auto or 0) >= config.max_versions_per_hour:
+                return False
+
+            latest = await conn.fetchrow(
+                """
+                SELECT word_count, character_count FROM content_versions
+                WHERE content_id = $1
+                ORDER BY version_number DESC LIMIT 1
+                """,
+                content_id,
+            )
+
+        if latest is None:
+            return True
+
+        word_diff = abs(calculate_word_count(new_content) - latest["word_count"])
+        char_diff = abs(len(new_content) - latest["character_count"])
+        return (
+            word_diff >= config.min_word_change or char_diff >= config.min_char_change
+        )
+
+    async def is_content_in_organization(
+        self,
+        content_id: str,
+        organization_id: Optional[str],
+    ) -> bool:
+        """Check the registered organization for this content."""
+        if not organization_id:
+            return False
+        pool = await self._pool()
+        async with pool.acquire() as conn:
+            mapped = await conn.fetchval(
+                "SELECT organization_id FROM content_version_organizations WHERE content_id = $1",
+                content_id,
+            )
+        return mapped is not None and mapped == organization_id
+
+    async def register_content_organization(
+        self,
+        content_id: str,
+        organization_id: Optional[str],
+    ) -> bool:
+        """Register ownership on first use; reject a conflicting re-registration."""
+        if not organization_id:
+            return False
+        pool = await self._pool()
+        async with pool.acquire() as conn:
+            existing = await conn.fetchval(
+                """
+                INSERT INTO content_version_organizations (content_id, organization_id)
+                VALUES ($1, $2)
+                ON CONFLICT (content_id) DO NOTHING
+                RETURNING organization_id
+                """,
+                content_id,
+                organization_id,
+            )
+            if existing is not None:
+                return True  # freshly inserted
+            current = await conn.fetchval(
+                "SELECT organization_id FROM content_version_organizations WHERE content_id = $1",
+                content_id,
+            )
+        if current == organization_id:
+            return True
+        logger.warning(
+            "Content ownership conflict (content_id=%s, existing_org=%s, requested_org=%s).",
+            content_id,
+            current,
+            organization_id,
+        )
+        return False
+
+
 class SupabaseVersionService(BaseVersionService):
     """Supabase-backed version service for production."""
 
@@ -588,7 +982,9 @@ class SupabaseVersionService(BaseVersionService):
             self._client = create_client(self._supabase_url, self._supabase_key)
             return self._client
         except ImportError:
-            logger.error("Supabase Python client not installed. Run: pip install supabase")
+            logger.error(
+                "Supabase Python client not installed. Run: pip install supabase"
+            )
             raise RuntimeError("Supabase client not available")
         except Exception as e:
             logger.error(f"Failed to create Supabase client: {e}")
@@ -697,7 +1093,9 @@ class SupabaseVersionService(BaseVersionService):
                     word_count=row["word_count"],
                     character_count=row["character_count"],
                     created_by=row["created_by"],
-                    created_at=datetime.fromisoformat(row["created_at"].replace("Z", "+00:00")),
+                    created_at=datetime.fromisoformat(
+                        row["created_at"].replace("Z", "+00:00")
+                    ),
                     is_current=row["is_current"],
                 )
                 for row in result.data
@@ -742,7 +1140,9 @@ class SupabaseVersionService(BaseVersionService):
                 word_count=row["word_count"],
                 character_count=row["character_count"],
                 created_by=row["created_by"],
-                created_at=datetime.fromisoformat(row["created_at"].replace("Z", "+00:00")),
+                created_at=datetime.fromisoformat(
+                    row["created_at"].replace("Z", "+00:00")
+                ),
                 is_current=row["is_current"],
             )
 
@@ -865,12 +1265,20 @@ class SupabaseVersionService(BaseVersionService):
                 content_id=content_id,
                 total_versions=row["total_versions"],
                 current_version=row["current_version"],
-                first_created_at=datetime.fromisoformat(
-                    row["first_created_at"].replace("Z", "+00:00")
-                ) if row["first_created_at"] else None,
-                last_updated_at=datetime.fromisoformat(
-                    row["last_updated_at"].replace("Z", "+00:00")
-                ) if row["last_updated_at"] else None,
+                first_created_at=(
+                    datetime.fromisoformat(
+                        row["first_created_at"].replace("Z", "+00:00")
+                    )
+                    if row["first_created_at"]
+                    else None
+                ),
+                last_updated_at=(
+                    datetime.fromisoformat(
+                        row["last_updated_at"].replace("Z", "+00:00")
+                    )
+                    if row["last_updated_at"]
+                    else None
+                ),
                 total_word_change=row["total_word_change"],
                 avg_word_count=float(row["avg_word_count"] or 0),
                 manual_saves=row["manual_saves"],
@@ -971,10 +1379,20 @@ class ContentVersionService:
         if cls._instance is not None:
             return cls._instance
 
+        # Prefer the Neon/asyncpg store (the app's primary datastore). Fall back
+        # to Supabase only if explicitly configured, then to in-memory.
+        database_url = os.environ.get("DATABASE_URL_DIRECT") or os.environ.get(
+            "DATABASE_URL"
+        )
         supabase_url = os.environ.get("SUPABASE_URL")
-        supabase_key = os.environ.get("SUPABASE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY")
+        supabase_key = os.environ.get("SUPABASE_KEY") or os.environ.get(
+            "SUPABASE_SERVICE_KEY"
+        )
 
-        if supabase_url and supabase_key:
+        if database_url:
+            cls._instance = NeonVersionService()
+            logger.info("Using Neon (asyncpg) storage for content versions")
+        elif supabase_url and supabase_key:
             try:
                 cls._instance = SupabaseVersionService(supabase_url, supabase_key)
                 logger.info("Using Supabase storage for content versions")
@@ -986,7 +1404,7 @@ class ContentVersionService:
                 cls._instance = InMemoryVersionService()
         else:
             logger.info(
-                "Supabase not configured. Using in-memory storage for content versions."
+                "No database configured. Using in-memory storage for content versions."
             )
             cls._instance = InMemoryVersionService()
 

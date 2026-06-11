@@ -326,6 +326,62 @@ jobs:
           set -euo pipefail
           psql -h localhost -U postgres -d blogai -v ON_ERROR_STOP=1 -f scripts/schema_smoke.sql
 
+  backend-db-tests:
+    name: Backend DB Tests (Postgres)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: blogai
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: apps/api/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest pytest-asyncio
+
+      # Apply db/migrations so the asyncpg-backed services have their tables.
+      - name: Apply db/migrations
+        working-directory: .
+        env:
+          PGPASSWORD: postgres
+        run: |
+          set -euo pipefail
+          for f in db/migrations/*.sql; do
+            psql -h localhost -U postgres -d blogai -v ON_ERROR_STOP=1 -q -f "${f}"
+          done
+
+      # Run the DB-backed integration tests against the real Postgres. These
+      # skip in the no-DB backend-tests job; here they exercise the asyncpg
+      # service implementations end to end.
+      - name: Run DB-backed tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/blogai
+          DEV_MODE: "true"
+          OPENAI_API_KEY: "test"
+        run: |
+          pytest tests/test_version_service.py -q
+
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
