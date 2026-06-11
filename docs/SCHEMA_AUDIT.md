@@ -1,8 +1,20 @@
 # Schema Source-of-Truth Audit (P0.1)
 
-> **Status:** Analysis complete. The migration *runner cutover* is gated on validating
-> the consolidated schema against a live/staging database (see "Cutover plan" below).
-> Do **not** repoint the runner in production until that validation passes.
+> **Status:** Analysis complete. **Money-path gap closed** — the Stripe webhook
+> idempotency log (`stripe_webhook_events`) and the `stripe_subscriptions.payment_status`
+> column, previously only in the never-applied `supabase/migrations/019`, are now in the
+> runner-applied set (`db/migrations/006_stripe_webhook_events.sql`). A CI **schema-smoke**
+> gate (`scripts/schema_smoke.sql`, run by the `schema-smoke` job) now boots a fresh
+> Postgres, applies `db/migrations/`, and fails if any code-referenced table/column is
+> missing — so a fresh install is verified deterministically and the schema can't silently
+> re-fragment. The full multi-source *runner cutover* (folding the supabase-only analytics/
+> social/seo/plagiarism domains and the pgvector knowledge-base tables) remains gated on
+> validating against a live/staging database — see "Cutover plan" below. Do **not** repoint
+> the runner onto the supabase set in production until that validation passes.
+>
+> **Fresh-install correctness fix:** `src/knowledge/quota.py` queried a non-existent
+> `user_subscriptions` table (silently falling back to the `free` tier); it now reads the
+> real, populated `stripe_subscriptions` table.
 
 ## Problem
 
