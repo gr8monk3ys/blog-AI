@@ -26,6 +26,42 @@ export function createDraftItem(
   }
 }
 
+// Parse a single CSV line into its fields, honoring double-quoted cells so that
+// commas inside quotes (e.g. a quoted keywords list) are not treated as field
+// separators. Escaped quotes ("") inside a quoted field collapse to a single ".
+export function parseCSVLine(line: string): string[] {
+  const fields: string[] = []
+  let current = ''
+  let inQuotes = false
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i]
+
+    if (inQuotes) {
+      if (char === '"') {
+        if (line[i + 1] === '"') {
+          current += '"'
+          i++ // skip the escaped quote
+        } else {
+          inQuotes = false
+        }
+      } else {
+        current += char
+      }
+    } else if (char === '"') {
+      inQuotes = true
+    } else if (char === ',') {
+      fields.push(current)
+      current = ''
+    } else {
+      current += char
+    }
+  }
+
+  fields.push(current)
+  return fields.map((f) => f.trim())
+}
+
 export function parseCSV(csvText: string): ParsedCSVData {
   const lines = csvText.trim().split('\n')
   const errors: string[] = []
@@ -40,7 +76,7 @@ export function parseCSV(csvText: string): ParsedCSVData {
   if (!headerLine) {
     return { rows: [], errors: ['Empty CSV file'], headers: [] }
   }
-  const headers = headerLine.split(',').map((h) => h.trim().toLowerCase())
+  const headers = parseCSVLine(headerLine).map((h) => h.toLowerCase())
 
   const topicIndex = headers.indexOf('topic')
   const keywordsIndex = headers.indexOf('keywords')
@@ -56,8 +92,8 @@ export function parseCSV(csvText: string): ParsedCSVData {
     const line = lines[i]
     if (!line || !line.trim()) continue
 
-    // Simple CSV parsing (doesn't handle quoted commas)
-    const values = line.split(',').map((v) => v.trim())
+    // Quote-aware parsing so commas inside a quoted keywords cell survive.
+    const values = parseCSVLine(line)
 
     const topic = values[topicIndex]
     if (!topic) {
