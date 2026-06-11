@@ -283,6 +283,49 @@ jobs:
           set -euo pipefail
           gitleaks git --no-banner --redact --exit-code 1 --log-opts="${GITLEAKS_LOG_OPTS}" .
 
+  schema-smoke:
+    name: Schema Smoke (fresh-install migration)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: blogai
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      # Apply the db/migrations set the way the runner (scripts/migrate_db.mjs)
+      # does — in sorted order — using psql. We use psql rather than the runner
+      # itself because the runner's @neondatabase/serverless driver talks to Neon
+      # over WebSocket and can't reach a plain Postgres service. This still
+      # validates the SQL and ordering, which is where the schema risk lives.
+      - name: Apply db/migrations to a fresh database
+        env:
+          PGPASSWORD: postgres
+        run: |
+          set -euo pipefail
+          for f in db/migrations/*.sql; do
+            echo "Applying ${f}"
+            psql -h localhost -U postgres -d blogai -v ON_ERROR_STOP=1 -q -f "${f}"
+          done
+
+      # Fail if the migrated schema is missing any table/column the backend code
+      # references. Prevents the schema from silently re-fragmenting.
+      - name: Assert code-referenced tables exist
+        env:
+          PGPASSWORD: postgres
+        run: |
+          set -euo pipefail
+          psql -h localhost -U postgres -d blogai -v ON_ERROR_STOP=1 -f scripts/schema_smoke.sql
+
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
