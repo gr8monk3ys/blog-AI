@@ -13,35 +13,33 @@ Features:
 - Multi-tenant support with user isolation
 """
 
-import asyncio
+import json
 import logging
 import os
 import time
-import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from ..types.knowledge import (
     ChunkingConfig,
     Citation,
     Document,
     DocumentChunk,
+    DocumentMetadata,
     DocumentType,
-    DocumentUploadRequest,
     DocumentUploadResponse,
     EmbeddingConfig,
     EmbeddingProvider,
     KnowledgeBaseStats,
     KnowledgeContext,
-    KnowledgeSearchRequest,
     SearchFilter,
     SearchResponse,
     SearchResult,
     VectorStoreConfig,
     VectorStoreProvider,
 )
-from .document_processor import DocumentProcessor, DocumentProcessingError
-from .embeddings import EmbeddingGenerator, EmbeddingError
+from .document_processor import DocumentProcessingError, DocumentProcessor
+from .embeddings import EmbeddingError, EmbeddingGenerator
 from .vector_store import VectorStore, VectorStoreError, create_vector_store
 
 logger = logging.getLogger(__name__)
@@ -97,8 +95,22 @@ class KnowledgeService:
         self.supabase = supabase_client
         self._initialized = False
 
-        # In-memory document metadata cache (for when Supabase is not available)
+        # In-memory document metadata cache (used only when neither the Neon
+        # pool nor Supabase is available).
         self._document_cache: Dict[str, Document] = {}
+
+    async def _metadata_pool(self):
+        """Return the Neon asyncpg pool for kb_documents metadata, or None.
+
+        Neon is the primary metadata store (DATABASE_URL); Supabase and the
+        in-memory cache remain fallbacks for environments without it.
+        """
+        try:
+            from ..db import get_pool
+
+            return await get_pool()
+        except Exception:  # pragma: no cover - defensive
+            return None
 
     @classmethod
     def from_env(cls) -> "KnowledgeService":
@@ -401,9 +413,11 @@ class KnowledgeService:
                 page_number=result.page_number,
                 section_title=result.section_title,
                 relevance_score=result.score,
-                excerpt=result.content[:200] + "..."
-                if len(result.content) > 200
-                else result.content,
+                excerpt=(
+                    result.content[:200] + "..."
+                    if len(result.content) > 200
+                    else result.content
+                ),
             )
             citations.append(citation)
 
@@ -453,7 +467,7 @@ class KnowledgeService:
         # Add citation reference
         citation_refs = "\n\nSource References:\n"
         for citation in citations:
-            ref = f"- {citation.id}: \"{citation.document_title}\""
+            ref = f'- {citation.id}: "{citation.document_title}"'
             if citation.page_number:
                 ref += f" (p. {citation.page_number})"
             if citation.section_title:
@@ -515,6 +529,25 @@ class KnowledgeService:
         Returns:
             List of Document objects
         """
+        pool = await self._metadata_pool()
+        if pool:
+            try:
+                async with pool.acquire() as conn:
+                    rows = await conn.fetch(
+                        """
+                        SELECT * FROM kb_documents
+                        WHERE user_id = $1
+                        ORDER BY created_at DESC
+                        LIMIT $2 OFFSET $3
+                        """,
+                        user_id,
+                        limit,
+                        offset,
+                    )
+                return [self._row_to_document(dict(row)) for row in rows]
+            except Exception as e:
+                logger.error(f"Failed to list documents from Neon: {e}")
+
         if self.supabase:
             try:
                 response = (
@@ -538,16 +571,12 @@ class KnowledgeService:
 
         # Fallback to in-memory cache
         user_docs = [
-            doc
-            for doc in self._document_cache.values()
-            if doc.user_id == user_id
+            doc for doc in self._document_cache.values() if doc.user_id == user_id
         ]
         user_docs.sort(key=lambda d: d.created_at, reverse=True)
         return user_docs[offset : offset + limit]
 
-    async def get_document(
-        self, document_id: str, user_id: str
-    ) -> Optional[Document]:
+    async def get_document(self, document_id: str, user_id: str) -> Optional[Document]:
         """
         Get a specific document by ID.
 
@@ -558,6 +587,19 @@ class KnowledgeService:
         Returns:
             Document if found and owned by user, None otherwise
         """
+        pool = await self._metadata_pool()
+        if pool:
+            try:
+                async with pool.acquire() as conn:
+                    row = await conn.fetchrow(
+                        "SELECT * FROM kb_documents WHERE id = $1 AND user_id = $2",
+                        document_id,
+                        user_id,
+                    )
+                return self._row_to_document(dict(row)) if row else None
+            except Exception as e:
+                logger.error(f"Failed to get document from Neon: {e}")
+
         if self.supabase:
             try:
                 response = (
@@ -635,7 +677,48 @@ class KnowledgeService:
             )
 
     async def _store_document_metadata(self, document: Document) -> None:
-        """Store document metadata in Supabase or cache."""
+        """Store document metadata in Neon, Supabase, or the in-memory cache."""
+        pool = await self._metadata_pool()
+        if pool:
+            try:
+                async with pool.acquire() as conn:
+                    await conn.execute(
+                        """
+                        INSERT INTO kb_documents (
+                            id, user_id, filename, title, file_type,
+                            file_size_bytes, page_count, chunk_count, status,
+                            metadata, created_at, updated_at
+                        ) VALUES (
+                            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11, $12
+                        )
+                        ON CONFLICT (id) DO UPDATE SET
+                            filename = EXCLUDED.filename,
+                            title = EXCLUDED.title,
+                            file_type = EXCLUDED.file_type,
+                            file_size_bytes = EXCLUDED.file_size_bytes,
+                            page_count = EXCLUDED.page_count,
+                            chunk_count = EXCLUDED.chunk_count,
+                            status = EXCLUDED.status,
+                            metadata = EXCLUDED.metadata,
+                            updated_at = EXCLUDED.updated_at
+                        """,
+                        document.id,
+                        document.user_id,
+                        document.filename,
+                        document.metadata.title,
+                        document.metadata.file_type.value,
+                        document.metadata.file_size_bytes,
+                        document.metadata.page_count,
+                        document.chunk_count,
+                        document.status,
+                        json.dumps(document.metadata.custom_metadata or {}),
+                        document.created_at,
+                        document.updated_at,
+                    )
+                return
+            except Exception as e:
+                logger.warning(f"Failed to store document in Neon: {e}")
+
         if self.supabase:
             try:
                 self.supabase.table("kb_documents").upsert(
@@ -661,15 +744,26 @@ class KnowledgeService:
         # Fallback to in-memory cache
         self._document_cache[document.id] = document
 
-    async def _delete_document_metadata(
-        self, document_id: str, user_id: str
-    ) -> None:
-        """Delete document metadata from Supabase or cache."""
+    async def _delete_document_metadata(self, document_id: str, user_id: str) -> None:
+        """Delete document metadata from Neon, Supabase, or the cache."""
+        pool = await self._metadata_pool()
+        if pool:
+            try:
+                async with pool.acquire() as conn:
+                    await conn.execute(
+                        "DELETE FROM kb_documents WHERE id = $1 AND user_id = $2",
+                        document_id,
+                        user_id,
+                    )
+                return
+            except Exception as e:
+                logger.warning(f"Failed to delete document from Neon: {e}")
+
         if self.supabase:
             try:
-                self.supabase.table("kb_documents").delete().eq(
-                    "id", document_id
-                ).eq("user_id", user_id).execute()
+                self.supabase.table("kb_documents").delete().eq("id", document_id).eq(
+                    "user_id", user_id
+                ).execute()
                 return
             except Exception as e:
                 logger.warning(f"Failed to delete document from Supabase: {e}")
@@ -705,15 +799,35 @@ class KnowledgeService:
 
         return results
 
+    @staticmethod
+    def _coerce_dt(value: Any) -> datetime:
+        """Accept a datetime (asyncpg timestamptz) or ISO string (Supabase)."""
+        if isinstance(value, datetime):
+            return value
+        if isinstance(value, str):
+            try:
+                return datetime.fromisoformat(value)
+            except ValueError:
+                return datetime.now()
+        return datetime.now()
+
     def _row_to_document(self, row: Dict[str, Any]) -> Document:
         """Convert a database row to a Document object."""
+        # jsonb comes back as a str from asyncpg and as a dict from Supabase.
+        custom = row.get("metadata", {})
+        if isinstance(custom, str):
+            try:
+                custom = json.loads(custom)
+            except (ValueError, TypeError):
+                custom = {}
+
         metadata = DocumentMetadata(
             title=row.get("title", row.get("filename", "")),
             source=row.get("filename", ""),
             file_type=DocumentType(row.get("file_type", "txt")),
             file_size_bytes=row.get("file_size_bytes", 0),
             page_count=row.get("page_count"),
-            custom_metadata=row.get("metadata", {}),
+            custom_metadata=custom or {},
         )
 
         return Document(
@@ -724,12 +838,8 @@ class KnowledgeService:
             metadata=metadata,
             status=row.get("status", "ready"),
             chunk_count=row.get("chunk_count", 0),
-            created_at=datetime.fromisoformat(row["created_at"])
-            if row.get("created_at")
-            else datetime.now(),
-            updated_at=datetime.fromisoformat(row["updated_at"])
-            if row.get("updated_at")
-            else datetime.now(),
+            created_at=self._coerce_dt(row.get("created_at")),
+            updated_at=self._coerce_dt(row.get("updated_at")),
         )
 
     async def close(self) -> None:
