@@ -79,6 +79,21 @@ class StripeService:
         """Check if Stripe is properly configured."""
         return bool(self._api_key)
 
+    @property
+    def has_configured_plans(self) -> bool:
+        """Return True when at least one plan price ID is configured.
+
+        Distinguishes an operator misconfiguration (Stripe key set but no
+        STRIPE_PRICE_ID_* values) from a client sending an unknown price_id, so
+        checkout can surface a clear, actionable error instead of a confusing
+        'invalid price_id' for every plan.
+        """
+        for ids in self._price_ids.values():
+            for pid in ids.values():
+                if pid:
+                    return True
+        return False
+
     def _ensure_configured(self) -> None:
         """Raise an error if Stripe is not configured."""
         if not self.is_configured:

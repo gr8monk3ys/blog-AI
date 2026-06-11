@@ -80,6 +80,23 @@ async def create_checkout_session(
 
     # SECURITY: only allow checkout for configured plan price IDs.
     if not stripe_service.is_configured_price_id(request.price_id):
+        # Pre-flight: disambiguate an operator misconfiguration (Stripe key set
+        # but no STRIPE_PRICE_ID_* values) from a client sending an unknown
+        # price_id. Without this, a server with no plans returns "invalid
+        # price_id" for every plan — a confusing dead end at checkout.
+        if not stripe_service.has_configured_plans:
+            logger.error(
+                "Checkout requested but no Stripe plan price IDs are configured "
+                "(set STRIPE_PRICE_ID_STARTER / _PRO / _BUSINESS)."
+            )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={
+                    "error": "Subscription plans are not available right now. "
+                    "Please try again later.",
+                    "success": False,
+                },
+            )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"error": "Invalid price_id", "success": False},

@@ -60,12 +60,24 @@ class TestPaymentCheckoutRoute(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("not configured", detail_text(response))
 
+    @patch("app.routes.payments.stripe_service._price_ids", {"pro": {"month": "price_pro_month"}})
     @patch("app.routes.payments.stripe_service.is_configured_price_id", return_value=False)
     @patch("app.routes.payments.stripe_service._api_key", "sk_test_123")
     def test_checkout_rejects_unconfigured_price_id(self, _mock_price):
+        # Server has plans configured, but the client sent an unknown price_id.
         response = self.client.post("/api/payments/create-checkout-session", json=CHECKOUT_PAYLOAD)
         self.assertEqual(response.status_code, 400)
         self.assertIn("invalid price_id", detail_text(response))
+
+    @patch("app.routes.payments.stripe_service._price_ids", {})
+    @patch("app.routes.payments.stripe_service.is_configured_price_id", return_value=False)
+    @patch("app.routes.payments.stripe_service._api_key", "sk_test_123")
+    def test_checkout_returns_503_when_no_plans_configured(self, _mock_price):
+        # Stripe key is set but no STRIPE_PRICE_ID_* values — operator
+        # misconfiguration should surface distinctly, not as "invalid price_id".
+        response = self.client.post("/api/payments/create-checkout-session", json=CHECKOUT_PAYLOAD)
+        self.assertEqual(response.status_code, 503)
+        self.assertIn("not available", detail_text(response))
 
     @patch("app.routes.payments.stripe_service.get_tier_for_price_id", return_value=SubscriptionTier.FREE)
     @patch("app.routes.payments.stripe_service.is_configured_price_id", return_value=True)
