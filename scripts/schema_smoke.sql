@@ -25,6 +25,8 @@ DECLARE
     'app_workflows',
     'audit_logs',
     'blog_posts',
+    'content_versions',
+    'content_version_organizations',
     'brand_profiles',
     'generated_content',
     'organization_invites',
