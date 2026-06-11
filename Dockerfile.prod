@@ -87,8 +87,11 @@ RUN groupadd --system --gid 1001 blogai && \
 
 WORKDIR /app
 
-# Install runtime dependencies only
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install runtime dependencies only. Apply available base-image security
+# updates first (e.g. openssl/libssl3 CVE fixes) so the published image picks
+# up patched system packages rather than shipping the base image's snapshot.
+RUN apt-get update && apt-get upgrade -y \
+    && apt-get install -y --no-install-recommends \
     curl \
     nodejs \
     tini \
