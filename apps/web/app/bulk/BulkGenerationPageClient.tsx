@@ -264,7 +264,9 @@ function useBulkGenerationPageView() {
         const newItems: BulkDraftItem[] = rows.map((row) =>
           createDraftItem(
             row.topic,
-            row.keywords ? row.keywords.split(';').map((k) => k.trim()) : [],
+            row.keywords
+              ? row.keywords.split(',').map((k) => k.trim()).filter(Boolean)
+              : [],
             row.tone || sharedTone
           )
         )
@@ -425,7 +427,7 @@ function useBulkGenerationPageView() {
 
   // Download CSV template
   const downloadTemplate = () => {
-    const template = 'topic,keywords,tone\n"Example blog topic","keyword1;keyword2;keyword3","informative"\n"Another topic","seo;marketing","professional"'
+    const template = 'topic,keywords,tone\n"Example blog topic","keyword1,keyword2,keyword3","informative"\n"Another topic","seo,marketing","professional"'
     const blob = new Blob([template], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')

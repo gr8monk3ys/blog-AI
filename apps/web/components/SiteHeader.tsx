@@ -10,7 +10,16 @@ interface NavLink {
   href: string
   label: string
   authRequired: boolean
+  /** When set, the link only appears if this build-time flag is enabled. */
+  flag?: boolean
 }
+
+// The Knowledge Base surface is gated behind a backend feature flag
+// (ENABLE_KNOWLEDGE_BASE, default off). Mirror that on the frontend with
+// NEXT_PUBLIC_ENABLE_KNOWLEDGE_BASE so we don't advertise a route that the
+// backend will reject. Defaults to off to match the backend.
+const knowledgeBaseEnabled =
+  process.env.NEXT_PUBLIC_ENABLE_KNOWLEDGE_BASE === 'true'
 
 const navLinks: NavLink[] = [
   { href: '/pricing', label: 'Pricing', authRequired: false },
@@ -19,12 +28,12 @@ const navLinks: NavLink[] = [
   { href: '/bulk', label: 'Bulk', authRequired: true },
   { href: '/generate', label: 'Generate', authRequired: true },
   { href: '/tools', label: 'Tools', authRequired: true },
-  { href: '/knowledge', label: 'Knowledge Base', authRequired: true },
+  { href: '/knowledge', label: 'Knowledge Base', authRequired: true, flag: knowledgeBaseEnabled },
   { href: '/templates', label: 'Templates', authRequired: true },
   { href: '/images', label: 'Images', authRequired: true },
   { href: '/social', label: 'Social', authRequired: true },
   { href: '/team', label: 'Team', authRequired: true },
-]
+].filter((link) => link.flag !== false)
 
 const publicLinks = navLinks.filter((link) => !link.authRequired)
 const authLinks = navLinks.filter((link) => link.authRequired)

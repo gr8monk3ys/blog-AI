@@ -41,7 +41,7 @@ async def _get_user_tier(user_id: str) -> str:
             async with pool.acquire() as conn:
                 row = await conn.fetchrow(
                     """
-                    SELECT tier FROM user_subscriptions
+                    SELECT tier FROM stripe_subscriptions
                     WHERE user_id = $1 AND status = 'active'
                     ORDER BY created_at DESC LIMIT 1
                     """,

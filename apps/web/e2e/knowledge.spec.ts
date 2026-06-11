@@ -22,11 +22,16 @@ test.describe('Knowledge Base page', () => {
     await expect(emptyState.or(docTable)).toBeVisible()
   })
 
-  test('should have Knowledge Base link in navigation', async ({ page }) => {
+  test('hides the Knowledge Base nav link when the feature flag is off', async ({
+    page,
+  }) => {
+    // The Knowledge Base backend ships flagged off (ENABLE_KNOWLEDGE_BASE=false),
+    // so the nav link is gated behind NEXT_PUBLIC_ENABLE_KNOWLEDGE_BASE, which is
+    // unset in the E2E environment. The header should not advertise the route.
     await page.goto('/')
-    const navLink = page.getByRole('link', { name: /knowledge base/i })
-    // Link may be in desktop or mobile nav
-    await expect(navLink.first()).toBeVisible()
+    await expect(
+      page.getByRole('link', { name: /knowledge base/i })
+    ).toHaveCount(0)
   })
 })
 
