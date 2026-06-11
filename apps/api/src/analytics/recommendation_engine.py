@@ -11,15 +11,13 @@ This engine provides:
 import logging
 import os
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from ..types.performance import (
     ContentFormat,
-    ContentPerformance,
     ContentRecommendation,
     FormatRecommendation,
-    PerformanceTimeRange,
     RecommendationType,
     TimingRecommendation,
     TopicRecommendation,
@@ -61,26 +59,22 @@ class RecommendationEngine:
         self._min_data_points = min_data_points
 
     def _get_supabase(self) -> Optional[Any]:
-        """Get or create Supabase client."""
+        """Return the Neon (asyncpg) query client, or None if no DB is configured.
+
+        Named for back-compat; recommendations/analytics are now stored in Neon
+        (db/migrations/009). The client mirrors the Supabase builder API with an
+        awaitable ``execute()``.
+        """
         if self._supabase is not None:
             return self._supabase
 
-        supabase_url = os.environ.get("SUPABASE_URL")
-        supabase_key = os.environ.get("SUPABASE_SERVICE_KEY")
+        if os.environ.get("DATABASE_URL") or os.environ.get("DATABASE_URL_DIRECT"):
+            from .neon_query import NeonQueryClient
 
-        if not supabase_url or not supabase_key:
-            return None
-
-        try:
-            from supabase import create_client
-
-            self._supabase = create_client(supabase_url, supabase_key)
+            self._supabase = NeonQueryClient()
             return self._supabase
-        except ImportError:
-            return None
-        except Exception as e:
-            logger.error(f"Failed to create Supabase client: {e}")
-            return None
+
+        return None
 
     # =========================================================================
     # Topic Recommendations
@@ -109,16 +103,21 @@ class RecommendationEngine:
 
         try:
             # Get high-performing content
-            query = supabase.table("content_performance").select(
-                "content_id, title, content_type, views, shares, conversions, metadata"
-            ).order("views", desc=True).limit(50)
+            query = (
+                supabase.table("content_performance")
+                .select(
+                    "content_id, title, content_type, views, shares, conversions, metadata"
+                )
+                .order("views", desc=True)
+                .limit(50)
+            )
 
             if organization_id:
                 query = query.eq("organization_id", organization_id)
             if user_id:
                 query = query.eq("user_id", user_id)
 
-            result = query.execute()
+            result = await query.execute()
 
             if not result.data or len(result.data) < self._min_data_points:
                 return self._get_default_topic_recommendations(limit)
@@ -160,17 +159,21 @@ class RecommendationEngine:
             logger.error(f"Failed to get topic recommendations: {e}")
             return self._get_default_topic_recommendations(limit)
 
-    def _analyze_topics(self, content_data: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    def _analyze_topics(
+        self, content_data: List[Dict[str, Any]]
+    ) -> Dict[str, Dict[str, Any]]:
         """Analyze topics from content data."""
-        topic_scores = defaultdict(lambda: {
-            "score": 0,
-            "count": 0,
-            "total_views": 0,
-            "total_shares": 0,
-            "avg_views": 0,
-            "keywords": [],
-            "content_ids": [],
-        })
+        topic_scores = defaultdict(
+            lambda: {
+                "score": 0,
+                "count": 0,
+                "total_views": 0,
+                "total_shares": 0,
+                "avg_views": 0,
+                "keywords": [],
+                "content_ids": [],
+            }
+        )
 
         for item in content_data:
             # Extract topics from title and metadata
@@ -214,12 +217,60 @@ class RecommendationEngine:
 
         # Remove common words and extract key phrases
         stop_words = {
-            "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for",
-            "of", "with", "by", "from", "is", "are", "was", "were", "be", "been",
-            "being", "have", "has", "had", "do", "does", "did", "will", "would",
-            "could", "should", "may", "might", "must", "shall", "can", "how",
-            "what", "when", "where", "why", "which", "who", "whom", "this",
-            "that", "these", "those", "your", "our", "my", "their", "its",
+            "the",
+            "a",
+            "an",
+            "and",
+            "or",
+            "but",
+            "in",
+            "on",
+            "at",
+            "to",
+            "for",
+            "of",
+            "with",
+            "by",
+            "from",
+            "is",
+            "are",
+            "was",
+            "were",
+            "be",
+            "been",
+            "being",
+            "have",
+            "has",
+            "had",
+            "do",
+            "does",
+            "did",
+            "will",
+            "would",
+            "could",
+            "should",
+            "may",
+            "might",
+            "must",
+            "shall",
+            "can",
+            "how",
+            "what",
+            "when",
+            "where",
+            "why",
+            "which",
+            "who",
+            "whom",
+            "this",
+            "that",
+            "these",
+            "those",
+            "your",
+            "our",
+            "my",
+            "their",
+            "its",
         }
 
         words = title.lower().split()
@@ -252,11 +303,19 @@ class RecommendationEngine:
             return "medium"
         return "low"
 
-    def _get_default_topic_recommendations(self, limit: int) -> List[TopicRecommendation]:
+    def _get_default_topic_recommendations(
+        self, limit: int
+    ) -> List[TopicRecommendation]:
         """Return default topic recommendations when data is insufficient."""
         defaults = [
-            ("AI and Machine Learning Trends", ["ai", "machine learning", "automation"]),
-            ("Content Marketing Strategies", ["content marketing", "seo", "engagement"]),
+            (
+                "AI and Machine Learning Trends",
+                ["ai", "machine learning", "automation"],
+            ),
+            (
+                "Content Marketing Strategies",
+                ["content marketing", "seo", "engagement"],
+            ),
             ("Productivity Tips", ["productivity", "efficiency", "workflow"]),
             ("Industry Best Practices", ["best practices", "tips", "guide"]),
             ("Future of Technology", ["technology", "innovation", "trends"]),
@@ -306,9 +365,11 @@ class RecommendationEngine:
 
         try:
             # Get content with performance data
-            query = supabase.table("content_performance").select(
-                "content_id, views, shares, published_at, metadata"
-            ).not_.is_("published_at", "null")
+            query = (
+                supabase.table("content_performance")
+                .select("content_id, views, shares, published_at, metadata")
+                .not_.is_("published_at", "null")
+            )
 
             if organization_id:
                 query = query.eq("organization_id", organization_id)
@@ -317,7 +378,7 @@ class RecommendationEngine:
             if content_type:
                 query = query.eq("content_type", content_type)
 
-            result = query.execute()
+            result = await query.execute()
 
             if not result.data or len(result.data) < self._min_data_points:
                 return self._get_default_timing_recommendations()
@@ -329,7 +390,9 @@ class RecommendationEngine:
             recommendations = []
 
             # Best day recommendation
-            best_day = max(timing_data["by_day"].items(), key=lambda x: x[1]["avg_engagement"])
+            best_day = max(
+                timing_data["by_day"].items(), key=lambda x: x[1]["avg_engagement"]
+            )
             recommendations.append(
                 TimingRecommendation(
                     recommendation_type=RecommendationType.TIMING,
@@ -399,12 +462,16 @@ class RecommendationEngine:
         for data in by_day.values():
             if data["count"] > 0:
                 data["avg_views"] = data["total_views"] / data["count"]
-                data["avg_engagement"] = (data["avg_views"] + data["total_shares"] * 10) / data["count"]
+                data["avg_engagement"] = (
+                    data["avg_views"] + data["total_shares"] * 10
+                ) / data["count"]
 
         for data in by_hour.values():
             if data["count"] > 0:
                 data["avg_views"] = data["total_views"] / data["count"]
-                data["avg_engagement"] = (data["avg_views"] + data["total_shares"] * 10) / data["count"]
+                data["avg_engagement"] = (
+                    data["avg_views"] + data["total_shares"] * 10
+                ) / data["count"]
 
         # Find best hour
         best_hour = 9  # Default
@@ -476,25 +543,31 @@ class RecommendationEngine:
             if organization_id:
                 query = query.eq("organization_id", organization_id)
 
-            result = query.execute()
+            result = await query.execute()
 
             if not result.data or len(result.data) < self._min_data_points:
                 return self._get_default_format_recommendations()
 
             # Calculate performance by format
-            format_performance = defaultdict(lambda: {
-                "count": 0,
-                "total_views": 0,
-                "total_shares": 0,
-                "total_conversions": 0,
-            })
+            format_performance = defaultdict(
+                lambda: {
+                    "count": 0,
+                    "total_views": 0,
+                    "total_shares": 0,
+                    "total_conversions": 0,
+                }
+            )
 
             for item in result.data:
                 content_type = item.get("content_type", "blog")
                 format_performance[content_type]["count"] += 1
                 format_performance[content_type]["total_views"] += item.get("views", 0)
-                format_performance[content_type]["total_shares"] += item.get("shares", 0)
-                format_performance[content_type]["total_conversions"] += item.get("conversions", 0)
+                format_performance[content_type]["total_shares"] += item.get(
+                    "shares", 0
+                )
+                format_performance[content_type]["total_conversions"] += item.get(
+                    "conversions", 0
+                )
 
             # Calculate averages
             for data in format_performance.values():
@@ -526,7 +599,9 @@ class RecommendationEngine:
                         confidence=min(data["count"] / 20, 0.9),
                         priority=i + 1,
                         recommended_format=content_format,
-                        transformation_suggestions=self._get_format_suggestions(content_format),
+                        transformation_suggestions=self._get_format_suggestions(
+                            content_format
+                        ),
                     )
                 )
 
@@ -582,7 +657,9 @@ class RecommendationEngine:
                 confidence=0.8,
                 priority=1,
                 recommended_format=ContentFormat.BLOG,
-                transformation_suggestions=self._get_format_suggestions(ContentFormat.BLOG),
+                transformation_suggestions=self._get_format_suggestions(
+                    ContentFormat.BLOG
+                ),
             ),
             FormatRecommendation(
                 recommendation_type=RecommendationType.FORMAT,
@@ -591,7 +668,9 @@ class RecommendationEngine:
                 confidence=0.75,
                 priority=2,
                 recommended_format=ContentFormat.SOCIAL,
-                transformation_suggestions=self._get_format_suggestions(ContentFormat.SOCIAL),
+                transformation_suggestions=self._get_format_suggestions(
+                    ContentFormat.SOCIAL
+                ),
             ),
         ]
 
@@ -620,18 +699,23 @@ class RecommendationEngine:
 
         try:
             # Get rankings with improvement potential
-            query = supabase.table("seo_rankings").select("*").gte("position", 11).lte("position", 30)
+            query = (
+                supabase.table("seo_rankings")
+                .select("*")
+                .gte("position", 11)
+                .lte("position", 30)
+            )
 
             if organization_id:
                 query = query.eq("organization_id", organization_id)
 
             query = query.order("search_volume", desc=True).limit(limit)
-            result = query.execute()
+            result = await query.execute()
 
             recommendations = []
             seen_keywords = set()
 
-            for record in (result.data or []):
+            for record in result.data or []:
                 keyword = record.get("keyword")
                 if not keyword or keyword in seen_keywords:
                     continue
@@ -754,7 +838,7 @@ class RecommendationEngine:
                 delete_query = delete_query.eq("organization_id", organization_id)
             if user_id:
                 delete_query = delete_query.eq("user_id", user_id)
-            delete_query.execute()
+            await delete_query.execute()
 
             # Insert new recommendations
             for rec in recommendations:
@@ -769,9 +853,11 @@ class RecommendationEngine:
                     "organization_id": organization_id,
                     "user_id": user_id,
                     "created_at": rec.created_at.isoformat(),
-                    "expires_at": rec.expires_at.isoformat() if rec.expires_at else None,
+                    "expires_at": (
+                        rec.expires_at.isoformat() if rec.expires_at else None
+                    ),
                 }
-                supabase.table("content_recommendations").insert(data).execute()
+                await supabase.table("content_recommendations").insert(data).execute()
 
         except Exception as e:
             logger.error(f"Failed to store recommendations: {e}")

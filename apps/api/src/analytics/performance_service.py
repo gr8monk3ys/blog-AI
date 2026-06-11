@@ -62,28 +62,24 @@ class PerformanceService:
         self._initialized = False
 
     def _get_supabase(self) -> Optional[Any]:
-        """Get or create Supabase client."""
+        """Return the Neon (asyncpg) query client, or None if no DB is configured.
+
+        Named for back-compat with existing call sites; analytics is now backed
+        by Neon (db/migrations/009) rather than a separate Supabase project. The
+        returned client mirrors the Supabase query-builder API but its
+        ``execute()`` is awaitable.
+        """
         if self._supabase is not None:
             return self._supabase
 
-        supabase_url = os.environ.get("SUPABASE_URL")
-        supabase_key = os.environ.get("SUPABASE_SERVICE_KEY")
+        if os.environ.get("DATABASE_URL") or os.environ.get("DATABASE_URL_DIRECT"):
+            from .neon_query import NeonQueryClient
 
-        if not supabase_url or not supabase_key:
-            logger.warning("Supabase not configured for performance tracking")
-            return None
-
-        try:
-            from supabase import create_client
-
-            self._supabase = create_client(supabase_url, supabase_key)
+            self._supabase = NeonQueryClient()
             return self._supabase
-        except ImportError:
-            logger.warning("Supabase client not installed")
-            return None
-        except Exception as e:
-            logger.error(f"Failed to create Supabase client: {e}")
-            return None
+
+        logger.warning("Analytics datastore not configured (set DATABASE_URL)")
+        return None
 
     def _get_cache_key(self, prefix: str, *args: Any) -> str:
         """Generate a cache key from prefix and arguments."""
@@ -105,7 +101,9 @@ class PerformanceService:
             logger.debug(f"Cache miss or error: {e}")
         return None
 
-    async def _set_cached(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
+    async def _set_cached(
+        self, key: str, value: Any, ttl: Optional[int] = None
+    ) -> None:
         """Set a cached value."""
         if not self._redis:
             return
@@ -157,12 +155,14 @@ class PerformanceService:
                 "referrer": event.referrer,
             }
 
-            supabase.table("performance_events").insert(data).execute()
+            await supabase.table("performance_events").insert(data).execute()
 
             # Update content_performance aggregate
             await self._update_content_performance(event)
 
-            logger.debug(f"Tracked {event.event_type.value} event for content {event.content_id}")
+            logger.debug(
+                f"Tracked {event.event_type.value} event for content {event.content_id}"
+            )
             return True
 
         except Exception as e:
@@ -340,7 +340,7 @@ class PerformanceService:
 
         try:
             # Get or create performance record
-            result = (
+            result = await (
                 supabase.table("content_performance")
                 .select("*")
                 .eq("content_id", event.content_id)
@@ -361,16 +361,20 @@ class PerformanceService:
                     # Update platform-specific shares
                     shares_by_platform = record.get("shares_by_platform", {})
                     platform = event.platform or "unknown"
-                    shares_by_platform[platform] = shares_by_platform.get(platform, 0) + 1
+                    shares_by_platform[platform] = (
+                        shares_by_platform.get(platform, 0) + 1
+                    )
                     updates["shares_by_platform"] = shares_by_platform
                 elif event.event_type == MetricType.CONVERSION:
                     updates["conversions"] = record.get("conversions", 0) + 1
                     if event.metadata.get("revenue"):
-                        updates["revenue"] = record.get("revenue", 0) + event.metadata["revenue"]
+                        updates["revenue"] = (
+                            record.get("revenue", 0) + event.metadata["revenue"]
+                        )
                 elif event.event_type == MetricType.BACKLINK:
                     updates["backlinks"] = record.get("backlinks", 0) + 1
 
-                supabase.table("content_performance").update(updates).eq(
+                await supabase.table("content_performance").update(updates).eq(
                     "content_id", event.content_id
                 ).execute()
             else:
@@ -380,13 +384,17 @@ class PerformanceService:
                     "content_type": event.metadata.get("content_type", "blog"),
                     "title": event.metadata.get("title", "Untitled"),
                     "views": 1 if event.event_type == MetricType.VIEW else 0,
-                    "unique_views": 1 if event.event_type == MetricType.UNIQUE_VIEW else 0,
+                    "unique_views": (
+                        1 if event.event_type == MetricType.UNIQUE_VIEW else 0
+                    ),
                     "shares": 1 if event.event_type == MetricType.SHARE else 0,
-                    "conversions": 1 if event.event_type == MetricType.CONVERSION else 0,
+                    "conversions": (
+                        1 if event.event_type == MetricType.CONVERSION else 0
+                    ),
                     "first_tracked_at": datetime.utcnow().isoformat(),
                     "last_tracked_at": datetime.utcnow().isoformat(),
                 }
-                supabase.table("content_performance").insert(new_record).execute()
+                await supabase.table("content_performance").insert(new_record).execute()
 
         except Exception as e:
             logger.error(f"Failed to update content performance: {e}")
@@ -418,7 +426,7 @@ class PerformanceService:
             return None
 
         try:
-            result = (
+            result = await (
                 supabase.table("content_performance")
                 .select("*")
                 .eq("content_id", content_id)
@@ -476,7 +484,9 @@ class PerformanceService:
             logger.error(f"Failed to get content performance: {e}")
             return None
 
-    async def create_daily_snapshot(self, content_id: str) -> Optional[PerformanceSnapshot]:
+    async def create_daily_snapshot(
+        self, content_id: str
+    ) -> Optional[PerformanceSnapshot]:
         """
         Create a daily performance snapshot for trending.
 
@@ -504,7 +514,9 @@ class PerformanceService:
         supabase = self._get_supabase()
         if supabase:
             try:
-                supabase.table("performance_snapshots").insert(snapshot.to_dict()).execute()
+                await supabase.table("performance_snapshots").insert(
+                    snapshot.to_dict()
+                ).execute()
             except Exception as e:
                 logger.error(f"Failed to save snapshot: {e}")
                 return None
@@ -534,7 +546,9 @@ class PerformanceService:
         Returns:
             PerformanceSummary object.
         """
-        cache_key = self._get_cache_key("summary", time_range.value, organization_id, user_id)
+        cache_key = self._get_cache_key(
+            "summary", time_range.value, organization_id, user_id
+        )
 
         if use_cache:
             cached = await self._get_cached(cache_key)
@@ -557,7 +571,7 @@ class PerformanceService:
                 query = query.eq("user_id", user_id)
 
             query = query.gte("last_tracked_at", start_date.isoformat())
-            result = query.execute()
+            result = await query.execute()
 
             if not result.data:
                 return self._get_empty_summary(time_range)
@@ -568,11 +582,25 @@ class PerformanceService:
             total_shares = sum(r.get("shares", 0) for r in result.data)
             total_conversions = sum(r.get("conversions", 0) for r in result.data)
 
-            time_on_page_values = [r.get("time_on_page_seconds", 0) for r in result.data if r.get("time_on_page_seconds")]
-            bounce_rates = [r.get("bounce_rate", 0) for r in result.data if r.get("bounce_rate") is not None]
+            time_on_page_values = [
+                r.get("time_on_page_seconds", 0)
+                for r in result.data
+                if r.get("time_on_page_seconds")
+            ]
+            bounce_rates = [
+                r.get("bounce_rate", 0)
+                for r in result.data
+                if r.get("bounce_rate") is not None
+            ]
 
-            avg_time_on_page = sum(time_on_page_values) / len(time_on_page_values) if time_on_page_values else 0
-            avg_bounce_rate = sum(bounce_rates) / len(bounce_rates) if bounce_rates else 0
+            avg_time_on_page = (
+                sum(time_on_page_values) / len(time_on_page_values)
+                if time_on_page_values
+                else 0
+            )
+            avg_bounce_rate = (
+                sum(bounce_rates) / len(bounce_rates) if bounce_rates else 0
+            )
 
             # Calculate engagement scores
             engagement_scores = []
@@ -590,7 +618,11 @@ class PerformanceService:
                 )
                 engagement_scores.append(perf.engagement_score)
 
-            avg_engagement = sum(engagement_scores) / len(engagement_scores) if engagement_scores else 0
+            avg_engagement = (
+                sum(engagement_scores) / len(engagement_scores)
+                if engagement_scores
+                else 0
+            )
 
             # Get top performing content
             top_content = sorted(
@@ -626,7 +658,9 @@ class PerformanceService:
             logger.error(f"Failed to get performance summary: {e}")
             return self._get_empty_summary(time_range)
 
-    def _get_empty_summary(self, time_range: PerformanceTimeRange) -> PerformanceSummary:
+    def _get_empty_summary(
+        self, time_range: PerformanceTimeRange
+    ) -> PerformanceSummary:
         """Return an empty summary."""
         return PerformanceSummary(
             time_range=time_range,
@@ -640,7 +674,9 @@ class PerformanceService:
             avg_engagement_score=0.0,
         )
 
-    def _get_date_range(self, time_range: PerformanceTimeRange) -> Tuple[datetime, datetime]:
+    def _get_date_range(
+        self, time_range: PerformanceTimeRange
+    ) -> Tuple[datetime, datetime]:
         """Convert time range to date range."""
         now = datetime.utcnow()
 
@@ -679,22 +715,25 @@ class PerformanceService:
             previous_end = current_start
 
             # Get current period data
-            current_query = supabase.table("content_performance").select(
-                "views, unique_views, shares, conversions"
-            ).gte("last_tracked_at", current_start.isoformat())
+            current_query = (
+                supabase.table("content_performance")
+                .select("views, unique_views, shares, conversions")
+                .gte("last_tracked_at", current_start.isoformat())
+            )
 
             if organization_id:
                 current_query = current_query.eq("organization_id", organization_id)
             if user_id:
                 current_query = current_query.eq("user_id", user_id)
 
-            current_result = current_query.execute()
+            current_result = await current_query.execute()
 
             # Get previous period data
-            previous_query = supabase.table("content_performance").select(
-                "views, unique_views, shares, conversions"
-            ).gte("last_tracked_at", previous_start.isoformat()).lt(
-                "last_tracked_at", previous_end.isoformat()
+            previous_query = (
+                supabase.table("content_performance")
+                .select("views, unique_views, shares, conversions")
+                .gte("last_tracked_at", previous_start.isoformat())
+                .lt("last_tracked_at", previous_end.isoformat())
             )
 
             if organization_id:
@@ -702,7 +741,7 @@ class PerformanceService:
             if user_id:
                 previous_query = previous_query.eq("user_id", user_id)
 
-            previous_result = previous_query.execute()
+            previous_result = await previous_query.execute()
 
             # Calculate aggregates
             current_data = current_result.data or []
@@ -763,10 +802,10 @@ class PerformanceService:
             query = query.order(sort_by, desc=True)
             query = query.limit(limit)
 
-            result = query.execute()
+            result = await query.execute()
 
             content_list = []
-            for record in (result.data or []):
+            for record in result.data or []:
                 performance = ContentPerformance(
                     content_id=record["content_id"],
                     content_type=record.get("content_type", "blog"),
@@ -823,7 +862,7 @@ class PerformanceService:
             # Get snapshots for the time range
             start_date, end_date = self._get_date_range(time_range)
 
-            result = (
+            result = await (
                 supabase.table("performance_snapshots")
                 .select("*")
                 .eq("content_id", content_id)
@@ -858,8 +897,16 @@ class PerformanceService:
             first_half = data_points[:midpoint]
             second_half = data_points[midpoint:]
 
-            previous_avg = sum(d["value"] for d in first_half) / len(first_half) if first_half else 0
-            current_avg = sum(d["value"] for d in second_half) / len(second_half) if second_half else 0
+            previous_avg = (
+                sum(d["value"] for d in first_half) / len(first_half)
+                if first_half
+                else 0
+            )
+            current_avg = (
+                sum(d["value"] for d in second_half) / len(second_half)
+                if second_half
+                else 0
+            )
 
             return PerformanceTrend.calculate(
                 metric_name=metric,

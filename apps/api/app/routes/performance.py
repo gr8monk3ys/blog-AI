@@ -10,8 +10,6 @@ Provides endpoints for:
 """
 
 import logging
-import os
-from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -34,14 +32,23 @@ class TrackEventRequest(BaseModel):
 
     content_id: str = Field(..., description="Unique identifier for the content")
     event_type: Literal[
-        "view", "unique_view", "time_on_page", "scroll_depth",
-        "bounce", "share", "click", "conversion", "comment"
+        "view",
+        "unique_view",
+        "time_on_page",
+        "scroll_depth",
+        "bounce",
+        "share",
+        "click",
+        "conversion",
+        "comment",
     ] = Field(..., description="Type of event to track")
     value: float = Field(default=1.0, description="Event value")
     user_id: Optional[str] = Field(default=None, description="User identifier")
     session_id: Optional[str] = Field(default=None, description="Session identifier")
     platform: Optional[str] = Field(default=None, description="Platform (for shares)")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata"
+    )
 
 
 class TrackViewRequest(BaseModel):
@@ -59,8 +66,12 @@ class TrackEngagementRequest(BaseModel):
     """Request to track engagement metrics."""
 
     content_id: str
-    time_on_page: Optional[float] = Field(default=None, ge=0, description="Time in seconds")
-    scroll_depth: Optional[float] = Field(default=None, ge=0, le=1, description="Scroll depth 0-1")
+    time_on_page: Optional[float] = Field(
+        default=None, ge=0, description="Time in seconds"
+    )
+    scroll_depth: Optional[float] = Field(
+        default=None, ge=0, le=1, description="Scroll depth 0-1"
+    )
     is_bounce: bool = False
     user_id: Optional[str] = None
     session_id: Optional[str] = None
@@ -70,7 +81,9 @@ class TrackShareRequest(BaseModel):
     """Request to track a content share."""
 
     content_id: str
-    platform: str = Field(..., description="Platform shared to (twitter, facebook, linkedin, etc.)")
+    platform: str = Field(
+        ..., description="Platform shared to (twitter, facebook, linkedin, etc.)"
+    )
     user_id: Optional[str] = None
 
 
@@ -78,7 +91,9 @@ class TrackConversionRequest(BaseModel):
     """Request to track a conversion."""
 
     content_id: str
-    conversion_type: str = Field(..., description="Type of conversion (signup, purchase, download)")
+    conversion_type: str = Field(
+        ..., description="Type of conversion (signup, purchase, download)"
+    )
     value: float = Field(default=1.0, ge=0)
     revenue: Optional[float] = Field(default=None, ge=0)
     user_id: Optional[str] = None
@@ -336,7 +351,9 @@ async def track_engagement(
 
         return {
             "success": success,
-            "message": "Engagement tracked" if success else "Engagement tracking failed",
+            "message": (
+                "Engagement tracked" if success else "Engagement tracking failed"
+            ),
         }
 
     except Exception as e:
@@ -404,7 +421,9 @@ async def track_conversion(
 
         return {
             "success": success,
-            "message": "Conversion tracked" if success else "Conversion tracking failed",
+            "message": (
+                "Conversion tracked" if success else "Conversion tracking failed"
+            ),
             "conversion_type": request.conversion_type,
         }
 
@@ -459,8 +478,16 @@ async def get_content_performance(
             conversion_rate=performance.conversion_rate,
             revenue=performance.revenue,
             engagement_score=performance.engagement_score,
-            published_at=performance.published_at.isoformat() if performance.published_at else None,
-            last_tracked_at=performance.last_tracked_at.isoformat() if performance.last_tracked_at else None,
+            published_at=(
+                performance.published_at.isoformat()
+                if performance.published_at
+                else None
+            ),
+            last_tracked_at=(
+                performance.last_tracked_at.isoformat()
+                if performance.last_tracked_at
+                else None
+            ),
             url=performance.url,
         )
 
@@ -534,7 +561,9 @@ async def get_performance_summary(
 async def get_top_performing_content(
     limit: int = Query(default=10, ge=1, le=100),
     time_range: str = Query(default="30d", pattern="^(7d|30d|90d|365d|all)$"),
-    sort_by: str = Query(default="views", pattern="^(views|shares|conversions|engagement_score)$"),
+    sort_by: str = Query(
+        default="views", pattern="^(views|shares|conversions|engagement_score)$"
+    ),
     organization_id: Optional[str] = Query(default=None),
     user_id: str = Depends(verify_api_key),
 ):
@@ -599,7 +628,9 @@ async def get_top_performing_content(
 @router.get("/trends/{content_id}", response_model=PerformanceTrendResponse)
 async def get_performance_trends(
     content_id: str,
-    metric: str = Query(default="views", pattern="^(views|shares|conversions|engagement_score)$"),
+    metric: str = Query(
+        default="views", pattern="^(views|shares|conversions|engagement_score)$"
+    ),
     time_range: str = Query(default="30d", pattern="^(7d|30d|90d)$"),
     user_id: str = Depends(verify_api_key),
 ):
@@ -653,7 +684,9 @@ async def get_performance_trends(
 async def get_seo_rankings(
     content_id: str,
     url: str = Query(..., description="Content URL to analyze"),
-    keywords: Optional[str] = Query(default=None, description="Comma-separated keywords to track"),
+    keywords: Optional[str] = Query(
+        default=None, description="Comma-separated keywords to track"
+    ),
     user_id: str = Depends(verify_api_key),
 ):
     """
@@ -671,7 +704,7 @@ async def get_seo_rankings(
             )
 
         keyword_list = keywords.split(",") if keywords else None
-        analysis = tracker.analyze_content_seo(
+        analysis = await tracker.analyze_content_seo(
             content_id=content_id,
             url=url,
             keywords=keyword_list,
@@ -724,7 +757,7 @@ async def get_keyword_ranking_history(
     try:
         tracker = get_seo_tracker()
 
-        history = tracker.get_ranking_history(
+        history = await tracker.get_ranking_history(
             keyword=keyword,
             target_url=url,
             days=days,

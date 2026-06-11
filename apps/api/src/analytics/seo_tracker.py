@@ -18,7 +18,6 @@ import requests
 from ..types.performance import (
     SEOAnalysis,
     SEORanking,
-    TrendDirection,
 )
 
 logger = logging.getLogger(__name__)
@@ -62,26 +61,22 @@ class SEOTracker:
         self._default_language = default_language
 
     def _get_supabase(self) -> Optional[Any]:
-        """Get or create Supabase client."""
+        """Return the Neon (asyncpg) query client, or None if no DB is configured.
+
+        Named for back-compat; SEO rankings are now stored in Neon
+        (db/migrations/009). The client mirrors the Supabase builder API with an
+        awaitable ``execute()``.
+        """
         if self._supabase is not None:
             return self._supabase
 
-        supabase_url = os.environ.get("SUPABASE_URL")
-        supabase_key = os.environ.get("SUPABASE_SERVICE_KEY")
+        if os.environ.get("DATABASE_URL") or os.environ.get("DATABASE_URL_DIRECT"):
+            from .neon_query import NeonQueryClient
 
-        if not supabase_url or not supabase_key:
-            return None
-
-        try:
-            from supabase import create_client
-
-            self._supabase = create_client(supabase_url, supabase_key)
+            self._supabase = NeonQueryClient()
             return self._supabase
-        except ImportError:
-            return None
-        except Exception as e:
-            logger.error(f"Failed to create Supabase client: {e}")
-            return None
+
+        return None
 
     @property
     def is_configured(self) -> bool:
@@ -92,7 +87,7 @@ class SEOTracker:
     # Keyword Ranking Tracking
     # =========================================================================
 
-    def check_keyword_ranking(
+    async def check_keyword_ranking(
         self,
         keyword: str,
         target_url: str,
@@ -163,7 +158,7 @@ class SEOTracker:
                 )
 
             # Get previous ranking for comparison
-            previous_ranking = self._get_previous_ranking(keyword, target_url)
+            previous_ranking = await self._get_previous_ranking(keyword, target_url)
             previous_position = previous_ranking.position if previous_ranking else None
             change = (previous_position - position) if previous_position else 0
 
@@ -182,7 +177,7 @@ class SEOTracker:
             )
 
             # Store the ranking
-            self._store_ranking(ranking, target_url)
+            await self._store_ranking(ranking, target_url)
 
             return ranking
 
@@ -193,7 +188,7 @@ class SEOTracker:
         except Exception as e:
             raise SEOTrackerError(f"Error checking keyword ranking: {str(e)}")
 
-    def track_multiple_keywords(
+    async def track_multiple_keywords(
         self,
         keywords: List[str],
         target_url: str,
@@ -214,7 +209,7 @@ class SEOTracker:
 
         for keyword in keywords:
             try:
-                ranking = self.check_keyword_ranking(
+                ranking = await self.check_keyword_ranking(
                     keyword=keyword,
                     target_url=target_url,
                     location=location,
@@ -241,7 +236,7 @@ class SEOTracker:
         except Exception:
             return url.lower()
 
-    def _get_previous_ranking(
+    async def _get_previous_ranking(
         self,
         keyword: str,
         target_url: str,
@@ -252,7 +247,7 @@ class SEOTracker:
             return None
 
         try:
-            result = (
+            result = await (
                 supabase.table("seo_rankings")
                 .select("*")
                 .eq("keyword", keyword)
@@ -280,7 +275,7 @@ class SEOTracker:
 
         return None
 
-    def _store_ranking(self, ranking: SEORanking, target_url: str) -> None:
+    async def _store_ranking(self, ranking: SEORanking, target_url: str) -> None:
         """Store a ranking in the database."""
         supabase = self._get_supabase()
         if not supabase:
@@ -300,7 +295,7 @@ class SEOTracker:
                 "location": ranking.location,
             }
 
-            supabase.table("seo_rankings").insert(data).execute()
+            await supabase.table("seo_rankings").insert(data).execute()
         except Exception as e:
             logger.error(f"Failed to store ranking: {e}")
 
@@ -319,7 +314,7 @@ class SEOTracker:
     # Ranking History
     # =========================================================================
 
-    def get_ranking_history(
+    async def get_ranking_history(
         self,
         keyword: str,
         target_url: Optional[str] = None,
@@ -354,10 +349,10 @@ class SEOTracker:
             if target_url:
                 query = query.eq("url", target_url)
 
-            result = query.execute()
+            result = await query.execute()
 
             rankings = []
-            for record in (result.data or []):
+            for record in result.data or []:
                 rankings.append(
                     SEORanking(
                         keyword=record["keyword"],
@@ -378,7 +373,7 @@ class SEOTracker:
             logger.error(f"Failed to get ranking history: {e}")
             return []
 
-    def get_content_rankings(
+    async def get_content_rankings(
         self,
         content_id: str,
         days: int = 30,
@@ -400,7 +395,7 @@ class SEOTracker:
         try:
             start_date = datetime.utcnow() - timedelta(days=days)
 
-            result = (
+            result = await (
                 supabase.table("seo_rankings")
                 .select("*")
                 .eq("content_id", content_id)
@@ -410,7 +405,7 @@ class SEOTracker:
             )
 
             rankings = []
-            for record in (result.data or []):
+            for record in result.data or []:
                 rankings.append(
                     SEORanking(
                         keyword=record["keyword"],
@@ -475,7 +470,7 @@ class SEOTracker:
 
             # Build URL to position map
             rankings = {}
-            target_domain = self._extract_domain(target_url)
+            self._extract_domain(target_url)
             all_urls = [target_url] + competitor_urls
 
             for i, result in enumerate(organic_results, start=1):
@@ -537,7 +532,7 @@ class SEOTracker:
     # Opportunity Detection
     # =========================================================================
 
-    def detect_opportunities(
+    async def detect_opportunities(
         self,
         content_id: str,
         min_position: int = 11,
@@ -563,7 +558,7 @@ class SEOTracker:
 
         try:
             # Get recent rankings for the content
-            result = (
+            result = await (
                 supabase.table("seo_rankings")
                 .select("*")
                 .eq("content_id", content_id)
@@ -577,25 +572,27 @@ class SEOTracker:
             opportunities = []
             seen_keywords = set()
 
-            for record in (result.data or []):
+            for record in result.data or []:
                 keyword = record["keyword"]
                 if keyword in seen_keywords:
                     continue
                 seen_keywords.add(keyword)
 
-                opportunities.append({
-                    "keyword": keyword,
-                    "current_position": record["position"],
-                    "search_volume": record.get("search_volume"),
-                    "difficulty": record.get("difficulty"),
-                    "potential_impact": self._calculate_impact(
-                        record["position"],
-                        record.get("search_volume", 0),
-                    ),
-                    "recommendation": self._get_improvement_recommendation(
-                        record["position"],
-                    ),
-                })
+                opportunities.append(
+                    {
+                        "keyword": keyword,
+                        "current_position": record["position"],
+                        "search_volume": record.get("search_volume"),
+                        "difficulty": record.get("difficulty"),
+                        "potential_impact": self._calculate_impact(
+                            record["position"],
+                            record.get("search_volume", 0),
+                        ),
+                        "recommendation": self._get_improvement_recommendation(
+                            record["position"],
+                        ),
+                    }
+                )
 
             # Sort by potential impact
             opportunities.sort(key=lambda x: x.get("potential_impact", 0), reverse=True)
@@ -613,8 +610,16 @@ class SEOTracker:
 
         # CTR estimates by position
         ctr_by_position = {
-            1: 0.30, 2: 0.15, 3: 0.10, 4: 0.07, 5: 0.05,
-            6: 0.04, 7: 0.03, 8: 0.03, 9: 0.02, 10: 0.02,
+            1: 0.30,
+            2: 0.15,
+            3: 0.10,
+            4: 0.07,
+            5: 0.05,
+            6: 0.04,
+            7: 0.03,
+            8: 0.03,
+            9: 0.02,
+            10: 0.02,
         }
 
         current_ctr = ctr_by_position.get(position, 0.01)
@@ -638,7 +643,7 @@ class SEOTracker:
     # SEO Analysis
     # =========================================================================
 
-    def analyze_content_seo(
+    async def analyze_content_seo(
         self,
         content_id: str,
         url: str,
@@ -662,7 +667,7 @@ class SEOTracker:
         if keywords:
             for keyword in keywords:
                 try:
-                    ranking = self.check_keyword_ranking(keyword, url)
+                    ranking = await self.check_keyword_ranking(keyword, url)
                     if ranking:
                         ranking.content_id = content_id
                         rankings.append(ranking)
@@ -670,8 +675,12 @@ class SEOTracker:
                     logger.warning(f"Failed to check ranking for '{keyword}': {e}")
 
         # Get historical rankings
-        historical_rankings = self.get_content_rankings(content_id)
-        all_rankings = rankings + [r for r in historical_rankings if r.keyword not in [rk.keyword for rk in rankings]]
+        historical_rankings = await self.get_content_rankings(content_id)
+        all_rankings = rankings + [
+            r
+            for r in historical_rankings
+            if r.keyword not in [rk.keyword for rk in rankings]
+        ]
 
         # Calculate average position
         positions = [r.position for r in all_rankings if r.position > 0]
@@ -681,7 +690,7 @@ class SEOTracker:
         top_keywords = [r.keyword for r in all_rankings if 0 < r.position <= 10]
 
         # Detect opportunities
-        opportunities = self.detect_opportunities(content_id)
+        opportunities = await self.detect_opportunities(content_id)
 
         return SEOAnalysis(
             content_id=content_id,
