@@ -1,0 +1,16 @@
+{
+  "name": "Blog AI",
+  "short_name": "Blog AI",
+  "description": "Brand-consistent AI content for lean marketing teams",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#d97706",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
