@@ -8,10 +8,13 @@
 -- Usage (after applying db/migrations against the target database):
 --   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/schema_smoke.sql
 --
+-- kb_documents (knowledge-base metadata) is in the runner as of migration 008
+-- and asserted above; the kb_usage_stats view is created alongside it.
+--
 -- Intentionally NOT required here:
---   * kb_documents / kb_embeddings / kb_usage_stats — gated behind
---     ENABLE_KNOWLEDGE_BASE and need the pgvector extension, so they live in
---     apps/api/migrations/002_knowledge_base.sql, outside the default runner.
+--   * Vector-embedding storage (kb_chunks/kb_embeddings) — the knowledge base
+--     stores vectors in the pluggable VectorStore (Chroma/Pinecone), not Neon;
+--     a pgvector backend would need the pgvector extension.
 --   * webhook_* (outbound webhooks) — the webhook store is Redis/memory backed;
 --     no code references those tables.
 
@@ -27,6 +30,7 @@ DECLARE
     'blog_posts',
     'content_versions',
     'content_version_organizations',
+    'kb_documents',
     'brand_profiles',
     'generated_content',
     'organization_invites',
