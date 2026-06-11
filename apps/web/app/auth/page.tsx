@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import SiteFooter from '../../components/SiteFooter'
 import SiteHeader from '../../components/SiteHeader'
 import { SignIn } from '../../lib/clerk-ui'
@@ -24,10 +25,25 @@ export default function AuthPage() {
             {publishableKey ? (
               <SignIn routing="path" path="/auth" signUpUrl="/sign-up" />
             ) : (
-              <p className="text-sm text-gray-600">
-                Clerk is not configured. Set `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and
-                `CLERK_SECRET_KEY` to enable sign-in.
-              </p>
+              <div className="text-center space-y-4">
+                <h1 className="text-xl font-semibold text-gray-900">
+                  No sign-in required
+                </h1>
+                <p className="text-sm text-gray-600">
+                  This deployment runs without authentication, so the full
+                  workspace is open. Jump straight in — no account needed.
+                </p>
+                <Link
+                  href="/generate"
+                  className="inline-flex items-center justify-center rounded-lg bg-amber-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-amber-700"
+                >
+                  Open the workspace
+                </Link>
+                <p className="text-xs text-gray-400">
+                  To require accounts, set <code>NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</code>{' '}
+                  and <code>CLERK_SECRET_KEY</code>.
+                </p>
+              </div>
             )}
           </div>
         </div>
