@@ -46,16 +46,22 @@ export default defineConfig({
         '../../supabase/**',
       ],
       // Ratchet policy: these reflect the REAL baseline measured with all:true
-      // (~10% — the previous all:false gate only saw the ~600 statements tests
+      // (the previous all:false gate only saw the ~600 statements tests
       // imported, hiding ~90% of the app) and only ever move UP. Target:
       // branches 70 / functions+lines+statements 85 as tests are backfilled
       // (see docs/REMEDIATION_PLAN.md P1.1/P1.2). Do NOT lower these to make a
       // red build green — add tests instead.
+      //
+      // Escalation: when measured coverage clears the next whole percent with a
+      // safe margin, raise the corresponding floor here so the ratchet actually
+      // tightens. Last raised to match measured lines 12.5% / statements 12.3% /
+      // functions 11.8% / branches 10.4% (bulk CSV tests). Branches/functions
+      // sit just under the next integer, so they hold until the next backfill.
       thresholds: {
         branches: 10,
         functions: 11,
-        lines: 11,
-        statements: 11,
+        lines: 12,
+        statements: 12,
       },
     },
   },

@@ -704,19 +704,15 @@ async def list_batch_jobs(
     # Use organization_id for scoping if available, fallback to user_id (multi-tenant isolation)
     scope_id = auth_ctx.organization_id or auth_ctx.user_id
     status_str = status_filter.value if status_filter else None
-    jobs = await _job_store.list_jobs(
-        user_id=scope_id,
-        status=status_str,
-        limit=limit,
-        offset=offset,
-    )
 
-    # Note: The job_store.list_jobs already returns paginated results
-    # We need to get total count separately for proper pagination info
+    # The store fetches the full owned set internally on every call, so fetch
+    # once and paginate in-process instead of scanning twice (one page query +
+    # one count query). The cap matches the previous count query's bound.
     all_jobs = await _job_store.list_jobs(
         user_id=scope_id, status=status_str, limit=1000, offset=0
     )
     total = len(all_jobs)
+    jobs = all_jobs[offset : offset + limit]
 
     return {
         "jobs": [j.model_dump() for j in jobs],

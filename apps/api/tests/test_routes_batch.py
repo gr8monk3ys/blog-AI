@@ -194,7 +194,9 @@ class TestListJobs(BatchRouteTestCase):
     def test_list_returns_pagination_shape(self):
         jobs = [make_job(job_id=f"job-{i}") for i in range(3)]
         store = MagicMock()
-        store.list_jobs = AsyncMock(side_effect=[jobs[:2], jobs])
+        # A single fetch returns the full owned set; the route paginates it
+        # in-process (no second count scan).
+        store.list_jobs = AsyncMock(return_value=jobs)
         with patch("app.routes.batch._job_store", store):
             resp = self.client.get("/batch/jobs?limit=2&offset=0")
         assert resp.status_code == 200
@@ -202,6 +204,8 @@ class TestListJobs(BatchRouteTestCase):
         assert len(data["jobs"]) == 2
         assert data["total"] == 3
         assert data["has_more"] is True
+        # Exactly one store scan, not two.
+        assert store.list_jobs.await_count == 1
 
 
 if __name__ == "__main__":
