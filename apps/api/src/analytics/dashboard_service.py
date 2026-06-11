@@ -18,10 +18,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Literal, Optional, Tuple
 
 from ..types.performance import (
-    ContentPerformance,
-    PerformanceSummary,
     PerformanceTimeRange,
-    PerformanceTrend,
     TrendDirection,
 )
 
@@ -124,26 +121,22 @@ class DashboardService:
         self._cache_ttl = cache_ttl
 
     def _get_supabase(self) -> Optional[Any]:
-        """Get or create Supabase client."""
+        """Return the Neon (asyncpg) query client, or None if no DB is configured.
+
+        Named for back-compat; the dashboard reads analytics from Neon
+        (db/migrations/009). The client mirrors the Supabase builder API with an
+        awaitable ``execute()``.
+        """
         if self._supabase is not None:
             return self._supabase
 
-        supabase_url = os.environ.get("SUPABASE_URL")
-        supabase_key = os.environ.get("SUPABASE_SERVICE_KEY")
+        if os.environ.get("DATABASE_URL") or os.environ.get("DATABASE_URL_DIRECT"):
+            from .neon_query import NeonQueryClient
 
-        if not supabase_url or not supabase_key:
-            return None
-
-        try:
-            from supabase import create_client
-
-            self._supabase = create_client(supabase_url, supabase_key)
+            self._supabase = NeonQueryClient()
             return self._supabase
-        except ImportError:
-            return None
-        except Exception as e:
-            logger.error(f"Failed to create Supabase client: {e}")
-            return None
+
+        return None
 
     # =========================================================================
     # Dashboard Data Generation
@@ -168,7 +161,9 @@ class DashboardService:
         """
         # Get current and previous period data
         current_data = await self._get_period_data(time_range, organization_id, user_id)
-        previous_data = await self._get_previous_period_data(time_range, organization_id, user_id)
+        previous_data = await self._get_previous_period_data(
+            time_range, organization_id, user_id
+        )
 
         # Build metrics cards
         metrics = self._build_metrics(current_data, previous_data, time_range)
@@ -177,10 +172,14 @@ class DashboardService:
         charts = await self._build_charts(time_range, organization_id, user_id)
 
         # Get top content
-        top_content = await self._get_top_content_list(organization_id, user_id, limit=5)
+        top_content = await self._get_top_content_list(
+            organization_id, user_id, limit=5
+        )
 
         # Get recent activity
-        recent_activity = await self._get_recent_activity(organization_id, user_id, limit=10)
+        recent_activity = await self._get_recent_activity(
+            organization_id, user_id, limit=10
+        )
 
         return DashboardData(
             metrics=metrics,
@@ -203,16 +202,20 @@ class DashboardService:
         try:
             start_date, end_date = self._get_date_range(time_range)
 
-            query = supabase.table("content_performance").select(
-                "views, unique_views, shares, conversions, time_on_page_seconds, bounce_rate"
-            ).gte("last_tracked_at", start_date.isoformat())
+            query = (
+                supabase.table("content_performance")
+                .select(
+                    "views, unique_views, shares, conversions, time_on_page_seconds, bounce_rate"
+                )
+                .gte("last_tracked_at", start_date.isoformat())
+            )
 
             if organization_id:
                 query = query.eq("organization_id", organization_id)
             if user_id:
                 query = query.eq("user_id", user_id)
 
-            result = query.execute()
+            result = await query.execute()
 
             if not result.data:
                 return self._get_empty_period_data()
@@ -252,10 +255,13 @@ class DashboardService:
             previous_start = current_start - timedelta(days=period_days)
             previous_end = current_start
 
-            query = supabase.table("content_performance").select(
-                "views, unique_views, shares, conversions, time_on_page_seconds, bounce_rate"
-            ).gte("last_tracked_at", previous_start.isoformat()).lt(
-                "last_tracked_at", previous_end.isoformat()
+            query = (
+                supabase.table("content_performance")
+                .select(
+                    "views, unique_views, shares, conversions, time_on_page_seconds, bounce_rate"
+                )
+                .gte("last_tracked_at", previous_start.isoformat())
+                .lt("last_tracked_at", previous_end.isoformat())
             )
 
             if organization_id:
@@ -263,7 +269,7 @@ class DashboardService:
             if user_id:
                 query = query.eq("user_id", user_id)
 
-            result = query.execute()
+            result = await query.execute()
 
             if not result.data:
                 return self._get_empty_period_data()
@@ -440,7 +446,9 @@ class DashboardService:
         charts = []
 
         # Views over time chart
-        views_chart = await self._build_views_chart(time_range, organization_id, user_id)
+        views_chart = await self._build_views_chart(
+            time_range, organization_id, user_id
+        )
         if views_chart:
             charts.append(views_chart)
 
@@ -470,14 +478,17 @@ class DashboardService:
         try:
             start_date, end_date = self._get_date_range(time_range)
 
-            query = supabase.table("performance_snapshots").select(
-                "snapshot_date, views, unique_views"
-            ).gte("snapshot_date", start_date.date().isoformat()).order("snapshot_date")
+            query = (
+                supabase.table("performance_snapshots")
+                .select("snapshot_date, views, unique_views")
+                .gte("snapshot_date", start_date.date().isoformat())
+                .order("snapshot_date")
+            )
 
             if organization_id:
                 query = query.eq("organization_id", organization_id)
 
-            result = query.execute()
+            result = await query.execute()
 
             if not result.data:
                 return None
@@ -539,7 +550,7 @@ class DashboardService:
             if user_id:
                 query = query.eq("user_id", user_id)
 
-            result = query.execute()
+            result = await query.execute()
 
             if not result.data:
                 return None
@@ -548,7 +559,9 @@ class DashboardService:
             type_views: Dict[str, int] = {}
             for row in result.data:
                 content_type = row.get("content_type", "other")
-                type_views[content_type] = type_views.get(content_type, 0) + row.get("views", 0)
+                type_views[content_type] = type_views.get(content_type, 0) + row.get(
+                    "views", 0
+                )
 
             labels = list(type_views.keys())
             values = list(type_views.values())
@@ -589,7 +602,7 @@ class DashboardService:
             if user_id:
                 query = query.eq("user_id", user_id)
 
-            result = query.execute()
+            result = await query.execute()
 
             if not result.data:
                 return None
@@ -636,16 +649,19 @@ class DashboardService:
             return []
 
         try:
-            query = supabase.table("content_performance").select(
-                "content_id, title, content_type, views, shares, conversions"
-            ).order("views", desc=True).limit(limit)
+            query = (
+                supabase.table("content_performance")
+                .select("content_id, title, content_type, views, shares, conversions")
+                .order("views", desc=True)
+                .limit(limit)
+            )
 
             if organization_id:
                 query = query.eq("organization_id", organization_id)
             if user_id:
                 query = query.eq("user_id", user_id)
 
-            result = query.execute()
+            result = await query.execute()
 
             return [
                 {
@@ -675,14 +691,17 @@ class DashboardService:
             return []
 
         try:
-            query = supabase.table("performance_events").select(
-                "content_id, event_type, value, platform, timestamp"
-            ).order("timestamp", desc=True).limit(limit)
+            query = (
+                supabase.table("performance_events")
+                .select("content_id, event_type, value, platform, timestamp")
+                .order("timestamp", desc=True)
+                .limit(limit)
+            )
 
             if organization_id:
                 query = query.eq("organization_id", organization_id)
 
-            result = query.execute()
+            result = await query.execute()
 
             return [
                 {
@@ -727,14 +746,16 @@ class DashboardService:
         try:
             start_date, _ = self._get_date_range(time_range)
 
-            query = supabase.table("content_performance").select("*").gte(
-                "last_tracked_at", start_date.isoformat()
+            query = (
+                supabase.table("content_performance")
+                .select("*")
+                .gte("last_tracked_at", start_date.isoformat())
             )
 
             if organization_id:
                 query = query.eq("organization_id", organization_id)
 
-            result = query.execute()
+            result = await query.execute()
 
             if format == "json":
                 return json.dumps(result.data or [], indent=2, default=str)
@@ -745,12 +766,22 @@ class DashboardService:
 
             output = io.StringIO()
             fieldnames = [
-                "content_id", "title", "content_type", "views", "unique_views",
-                "shares", "conversions", "bounce_rate", "time_on_page_seconds",
-                "published_at", "last_tracked_at",
+                "content_id",
+                "title",
+                "content_type",
+                "views",
+                "unique_views",
+                "shares",
+                "conversions",
+                "bounce_rate",
+                "time_on_page_seconds",
+                "published_at",
+                "last_tracked_at",
             ]
 
-            writer = csv.DictWriter(output, fieldnames=fieldnames, extrasaction="ignore")
+            writer = csv.DictWriter(
+                output, fieldnames=fieldnames, extrasaction="ignore"
+            )
             writer.writeheader()
 
             for row in result.data:
@@ -786,14 +817,17 @@ class DashboardService:
         try:
             start_date = datetime.utcnow() - timedelta(days=days)
 
-            query = supabase.table("seo_rankings").select("*").gte(
-                "tracked_at", start_date.isoformat()
-            ).order("tracked_at", desc=True)
+            query = (
+                supabase.table("seo_rankings")
+                .select("*")
+                .gte("tracked_at", start_date.isoformat())
+                .order("tracked_at", desc=True)
+            )
 
             if organization_id:
                 query = query.eq("organization_id", organization_id)
 
-            result = query.execute()
+            result = await query.execute()
 
             if format == "json":
                 return json.dumps(result.data or [], indent=2, default=str)
@@ -804,11 +838,18 @@ class DashboardService:
 
             output = io.StringIO()
             fieldnames = [
-                "keyword", "position", "previous_position", "change",
-                "search_volume", "url", "tracked_at",
+                "keyword",
+                "position",
+                "previous_position",
+                "change",
+                "search_volume",
+                "url",
+                "tracked_at",
             ]
 
-            writer = csv.DictWriter(output, fieldnames=fieldnames, extrasaction="ignore")
+            writer = csv.DictWriter(
+                output, fieldnames=fieldnames, extrasaction="ignore"
+            )
             writer.writeheader()
 
             for row in result.data:
@@ -824,7 +865,9 @@ class DashboardService:
     # Utility Methods
     # =========================================================================
 
-    def _get_date_range(self, time_range: PerformanceTimeRange) -> Tuple[datetime, datetime]:
+    def _get_date_range(
+        self, time_range: PerformanceTimeRange
+    ) -> Tuple[datetime, datetime]:
         """Convert time range to date range."""
         now = datetime.utcnow()
 

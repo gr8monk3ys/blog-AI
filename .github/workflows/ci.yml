@@ -380,7 +380,7 @@ jobs:
           DEV_MODE: "true"
           OPENAI_API_KEY: "test"
         run: |
-          pytest tests/test_version_service.py tests/test_knowledge_metadata.py -q
+          pytest tests/test_version_service.py tests/test_knowledge_metadata.py tests/test_analytics_neon.py -q
 
   security-scan:
     name: Security Scan
