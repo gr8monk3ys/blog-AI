@@ -2,8 +2,9 @@ FROM python:3.12-slim@sha256:f3fa41d74a768c2fce8016b98c191ae8c1bacd8f1152870a3f9
 
 WORKDIR /app
 
-# Install Poetry
-RUN pip install poetry
+# Keep the base image's pip current — it vendors msgpack and setuptools'
+# pkg_resources, and stale vendored copies ship known CVEs.
+RUN pip install --no-cache-dir --upgrade pip && pip install poetry
 
 # Copy Poetry configuration files
 COPY apps/api/pyproject.toml apps/api/poetry.lock* ./

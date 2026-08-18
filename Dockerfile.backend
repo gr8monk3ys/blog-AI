@@ -48,6 +48,10 @@ RUN apt-get update && apt-get upgrade -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Keep the base image's own pip current — it vendors msgpack and setuptools'
+# pkg_resources, and stale vendored copies ship known CVEs.
+RUN python -m pip install --no-cache-dir --upgrade pip
+
 # Copy virtual environment from builder
 COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"

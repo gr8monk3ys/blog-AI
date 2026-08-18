@@ -98,6 +98,11 @@ RUN apt-get update && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
+# The base image's own pip (separate from the venv's) vendors msgpack and
+# setuptools' pkg_resources; keep it current so stale vendored copies don't
+# ship known CVEs (flagged by Trivy under the "Python" target).
+RUN python -m pip install --no-cache-dir --upgrade pip
+
 # Copy virtual environment from builder
 COPY --from=backend-deps /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
