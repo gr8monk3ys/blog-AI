@@ -99,7 +99,7 @@ jobs:
           OPENAI_API_KEY: "test"
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
           name: backend-coverage
@@ -157,7 +157,7 @@ jobs:
         run: bun run test:coverage
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
           name: frontend-coverage
@@ -189,7 +189,7 @@ jobs:
         run: bun run test:e2e:coverage
 
       - name: Upload E2E coverage report
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
           name: frontend-e2e-coverage
@@ -197,7 +197,7 @@ jobs:
           retention-days: 14
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: failure()
         with:
           name: playwright-report
