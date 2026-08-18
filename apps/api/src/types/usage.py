@@ -82,6 +82,7 @@ TIER_CONFIGS: Dict[SubscriptionTier, TierConfig] = {
             "book_generation",
             "basic_tools",
             "export_formats",
+            "research_mode",
         ],
         price_monthly=19.0,
         price_yearly=190.0,

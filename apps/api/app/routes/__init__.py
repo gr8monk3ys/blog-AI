@@ -6,7 +6,6 @@ from .batch_export import router as batch_export_router
 from .blog import router as blog_router
 from .book import router as book_router
 from .brand_voice import router as brand_voice_router
-from .bulk import router as bulk_router
 from .chat import router as chat_router
 from .config import router as config_router
 from .content import router as content_router
@@ -41,7 +40,6 @@ __all__ = [
     "blog_router",
     "book_router",
     "brand_voice_router",
-    "bulk_router",
     "chat_router",
     "config_router",
     "content_router",

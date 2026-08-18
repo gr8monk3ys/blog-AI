@@ -44,6 +44,7 @@ from ..middleware import (
     increment_usage_for_operation,
     require_pro_tier,
     require_quota,
+    require_starter_tier,
 )
 from ..models import BlogGenerationRequest
 from ..storage import conversations
@@ -136,10 +137,13 @@ async def generate_blog(
         # This prevents a single user from overwhelming the LLM backend.
         await check_generation_rate_limit(user_id)
 
-        # Pro tier features: research mode and brand voice require an upgraded plan.
-        # Check tier BEFORE quota so we never decrement quota for gated features.
-        if request.research or request.brand_profile_id:
+        # Paid-tier features, checked BEFORE quota so we never decrement quota
+        # for gated features. Research mode is sold from the Starter plan up;
+        # brand voice is a Pro feature (see PRICING_TIERS / the pricing page).
+        if request.brand_profile_id:
             await require_pro_tier(user_id)
+        elif request.research:
+            await require_starter_tier(user_id)
 
         # Enforce quota before doing any expensive generation work.
         # We call the dependency directly so we reuse the already-authenticated user_id.

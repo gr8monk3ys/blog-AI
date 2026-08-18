@@ -2,7 +2,7 @@
  * Types for subscription tiers and quota usage.
  *
  * Frontend tier IDs must match backend enums:
- * - backend/src/types/usage.py SubscriptionTier
+ * - apps/api/src/types/usage.py SubscriptionTier
  * - backend/src/types/payments.py SubscriptionTier
  */
 

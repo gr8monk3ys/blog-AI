@@ -51,10 +51,6 @@ describe('API Configuration', () => {
       expect(API_ENDPOINTS.tools.validate(id)).toContain(`/tools/${id}/validate`)
       expect(API_ENDPOINTS.tools.byCategory(category)).toContain(`/tools/category/${category}`)
 
-      expect(API_ENDPOINTS.bulk.status(id)).toContain(`/bulk/status/${id}`)
-      expect(API_ENDPOINTS.bulk.results(id)).toContain(`/bulk/results/${id}`)
-      expect(API_ENDPOINTS.bulk.cancel(id)).toContain(`/bulk/cancel/${id}`)
-
       expect(API_ENDPOINTS.batch.status(id)).toContain(`/batch/${id}`)
       expect(API_ENDPOINTS.batch.results(id)).toContain(`/batch/${id}/results`)
       expect(API_ENDPOINTS.batch.cancel(id)).toContain(`/batch/${id}/cancel`)
@@ -73,8 +69,6 @@ describe('API Configuration', () => {
 
       expect(API_ENDPOINTS.remix.format(id)).toContain(`/remix/formats/${id}`)
       expect(API_ENDPOINTS.remix.transformFormat(id)).toContain(`/remix/transform/${id}`)
-
-      expect(API_ENDPOINTS.feedback.stats(id)).toContain(`content_id=${encodeURIComponent(id)}`)
 
       expect(API_ENDPOINTS.brandVoice.samplesByProfile(id)).toContain(`/brand-voice/samples/${id}`)
       expect(API_ENDPOINTS.brandVoice.deleteSample(id, sampleId)).toContain(

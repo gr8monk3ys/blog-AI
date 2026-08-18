@@ -131,14 +131,13 @@ class ConversationStore:
         """
         # Sanitize conversation_id to prevent path traversal, then verify the
         # resolved path stays inside the storage directory.
-        safe_id = re.sub(r"[^a-zA-Z0-9_-]", "", conversation_id)
-        if not safe_id:
+        if not re.fullmatch(r"[a-zA-Z0-9_-]+", conversation_id):
             raise ValueError("Invalid conversation id")
-        base = Path(self.storage_dir).resolve()
-        path = (base / f"{safe_id}.json").resolve()
-        if base not in path.parents:
+        base = os.path.realpath(self.storage_dir)
+        path = os.path.realpath(os.path.join(base, f"{conversation_id}.json"))
+        if not path.startswith(base + os.sep):
             raise ValueError("Invalid conversation id")
-        return path
+        return Path(path)
 
     def get(self, conversation_id: str) -> List[Dict[str, Any]]:
         """
