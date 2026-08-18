@@ -121,6 +121,7 @@ TIER_CONFIGS: Dict[SubscriptionTier, TierConfig] = {
             "research_mode",
             "brand_voice",
             "remix",
+            "priority_support",
             "api_access",
             "custom_integrations",
             "dedicated_support",
