@@ -111,7 +111,11 @@ export const loadBlogPosts = async (): Promise<BlogPostMeta[]> => {
   }
 }
 
+const SAFE_SLUG = /^[a-zA-Z0-9-]+$/
+
 export const loadBlogPost = async (slug: string): Promise<BlogPost | null> => {
+  if (!SAFE_SLUG.test(slug)) return null
+
   const cmsPost = await loadBlogPostFromDb(slug)
   if (cmsPost) {
     return cmsPost

@@ -62,7 +62,9 @@ class WebhookService:
         if self._http_client is None or self._http_client.is_closed:
             self._http_client = httpx.AsyncClient(
                 timeout=httpx.Timeout(WEBHOOK_TIMEOUT_SECONDS),
-                follow_redirects=True,
+                # Never follow redirects: a validated target could otherwise
+                # 302 to an internal address (SSRF via open redirect).
+                follow_redirects=False,
                 limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
             )
         return self._http_client
@@ -185,6 +187,36 @@ class WebhookService:
         """
         client = await self._get_client()
         start_time = time.time()
+
+        # Re-validate the target at delivery time: DNS may have been rebound to a
+        # private address since the subscription was created (TOCTOU SSRF).
+        from app.validators import validate_url
+
+        url_ok, url_error = validate_url(subscription.target_url)
+        if not url_ok:
+            delivery = WebhookDelivery(
+                id=delivery_id,
+                subscription_id=subscription.id,
+                event_type=payload.event_type,
+                event_id=payload.id,
+                status=DeliveryStatus.FAILED,
+                target_url=subscription.target_url,
+                request_payload=payload.model_dump(),
+                attempt_number=attempt,
+                max_attempts=WEBHOOK_MAX_RETRIES,
+                error_message=f"Target URL failed delivery-time validation: {url_error}",
+            )
+            logger.warning(
+                f"Webhook delivery blocked: {delivery_id} target {subscription.target_url!r} "
+                f"failed revalidation ({url_error})"
+            )
+            await webhook_storage.save_delivery(delivery)
+            await webhook_storage.update_subscription_stats(
+                subscription.id,
+                success=False,
+                error_message=delivery.error_message,
+            )
+            return delivery
 
         # Serialize payload
         payload_json = payload.model_dump_json()

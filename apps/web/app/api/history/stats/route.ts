@@ -59,6 +59,9 @@ export async function GET() {
       recent_count,
     })
   } catch (error) {
+    if (error instanceof Error && error.message === 'UNAUTHORIZED') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('History stats GET error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

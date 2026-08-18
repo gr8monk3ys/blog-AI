@@ -165,7 +165,10 @@ async def get_format(format_id: str):
 
 
 @router.post("/analyze")
-async def analyze_content(request: AnalyzeRequestAPI):
+async def analyze_content(
+    request: AnalyzeRequestAPI,
+    _user: str = Depends(verify_api_key),
+):
     """
     Analyze content without transformation.
 
@@ -192,7 +195,10 @@ async def analyze_content(request: AnalyzeRequestAPI):
 
 
 @router.post("/preview", response_model=RemixPreviewResponse)
-async def preview_remix(request: PreviewRequestAPI):
+async def preview_remix(
+    request: PreviewRequestAPI,
+    _user: str = Depends(verify_api_key),
+):
     """
     Preview how content will be transformed.
 

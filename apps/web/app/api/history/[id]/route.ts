@@ -27,6 +27,9 @@ export async function GET(
 
     return NextResponse.json({ data: rows[0] })
   } catch (error) {
+    if (error instanceof Error && error.message === 'UNAUTHORIZED') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('History item GET error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -83,6 +86,9 @@ export async function PATCH(
     const is_favorite = (rows[0] as { is_favorite: boolean }).is_favorite
     return NextResponse.json({ is_favorite })
   } catch (error) {
+    if (error instanceof Error && error.message === 'UNAUTHORIZED') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('History item PATCH error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -112,6 +118,9 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
+    if (error instanceof Error && error.message === 'UNAUTHORIZED') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('History item DELETE error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

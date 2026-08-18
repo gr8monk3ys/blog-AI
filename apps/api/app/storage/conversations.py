@@ -95,21 +95,28 @@ class ConversationStore:
         """
         Verify that a user owns a conversation.
 
-        For backwards compatibility, conversations without an owner are accessible
-        to any authenticated user (legacy conversations).
+        Conversations without an ownership record are denied: allowing them
+        would let any authenticated user read or append to a conversation
+        whose owner record is missing (IDOR on guessable IDs). On first
+        access the requesting user does not implicitly claim it either —
+        ownership is only set explicitly at creation time.
 
         Args:
             conversation_id: The conversation identifier.
             user_id: The user ID to verify.
 
         Returns:
-            True if the user owns the conversation or no owner is set (legacy).
+            True if the owner matches, or if the conversation does not exist
+            yet (clients pick their own IDs, so a first GET/append may arrive
+            before ownership is recorded and there is nothing to protect).
         """
         owner = self.get_owner(conversation_id)
         if owner is None:
-            # Legacy conversation without ownership - allow access
-            # In production, consider migrating legacy data
-            return True
+            conversation_exists = (
+                conversation_id in self._cache
+                or self._get_file_path(conversation_id).exists()
+            )
+            return not conversation_exists
         return owner == user_id
 
     def _get_file_path(self, conversation_id: str) -> Path:

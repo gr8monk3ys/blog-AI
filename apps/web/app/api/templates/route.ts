@@ -49,8 +49,8 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category')
     const toolId = searchParams.get('toolId')
     const search = searchParams.get('search')
-    const limit = parseInt(searchParams.get('limit') || '50', 10)
-    const offset = parseInt(searchParams.get('offset') || '0', 10)
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10) || 50, 100)
+    const offset = Math.max(parseInt(searchParams.get('offset') || '0', 10) || 0, 0)
 
     const sql = getSqlOrNull()
 

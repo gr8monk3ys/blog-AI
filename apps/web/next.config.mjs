@@ -91,7 +91,7 @@ const securityHeaders = [
   {
     // XSS protection for older browsers
     key: 'X-XSS-Protection',
-    value: '1; mode=block',
+    value: '0',
   },
   {
     // Permissions policy - restrict sensitive APIs

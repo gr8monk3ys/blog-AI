@@ -110,6 +110,9 @@ export async function GET(request: NextRequest) {
       has_more: total > offset + limit,
     })
   } catch (error) {
+    if (error instanceof Error && error.message === 'UNAUTHORIZED') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('History GET error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -192,6 +195,9 @@ export async function POST(request: NextRequest) {
     const data = rows?.[0] ?? null
     return NextResponse.json({ data })
   } catch (error) {
+    if (error instanceof Error && error.message === 'UNAUTHORIZED') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('History POST error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
