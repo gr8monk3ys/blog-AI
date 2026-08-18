@@ -2,8 +2,9 @@ FROM python:3.12-slim@sha256:f3fa41d74a768c2fce8016b98c191ae8c1bacd8f1152870a3f9
 
 WORKDIR /app
 
-# Install Poetry
-RUN pip install poetry
+# Keep the base image's pip current — it vendors msgpack and setuptools'
+# pkg_resources, and stale vendored copies ship known CVEs.
+RUN pip install --no-cache-dir --upgrade pip && pip install poetry
 
 # Copy Poetry configuration files
 COPY apps/api/pyproject.toml apps/api/poetry.lock* ./
@@ -51,6 +52,11 @@ WORKDIR /app
 # Copy backend from the backend stage
 COPY --from=backend /app /app
 COPY --from=backend /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+
+# Drop pip and build tooling from the runtime image — nothing installs
+# packages at runtime, and every pip release vendors msgpack/setuptools
+# copies with known CVEs.
+RUN python -m pip uninstall -y poetry pip 2>/dev/null || true
 
 # Copy built frontend from frontend-build stage
 COPY --from=frontend-build /app/apps/web/.next /app/.next

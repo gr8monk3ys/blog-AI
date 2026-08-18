@@ -699,7 +699,7 @@ class TestDebugEndpointsGated:
         """In development, the /debug-sentry endpoint should be registered."""
         from server import app
 
-        routes = [route.path for route in app.routes]
+        routes = [route.path for route in app.routes if hasattr(route, "path")]
         assert '/debug-sentry' in routes, (
             '/debug-sentry should exist in development mode'
         )
@@ -708,7 +708,7 @@ class TestDebugEndpointsGated:
         """In development, the /config-status endpoint should be registered."""
         from server import app
 
-        routes = [route.path for route in app.routes]
+        routes = [route.path for route in app.routes if hasattr(route, "path")]
         assert '/config-status' in routes, (
             '/config-status should exist in development mode'
         )
@@ -727,7 +727,7 @@ class TestDebugEndpointsGated:
         from server import app, settings
 
         assert settings.is_production is False
-        routes = [route.path for route in app.routes]
+        routes = [route.path for route in app.routes if hasattr(route, "path")]
         assert '/debug-sentry' in routes
         assert '/config-status' in routes
 

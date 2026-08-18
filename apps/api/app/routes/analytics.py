@@ -17,6 +17,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 
+from src.config import get_settings
 from src.db import fetch as db_fetch, fetchrow as db_fetchrow, is_database_configured
 from src.organizations import AuthorizationContext
 
@@ -87,8 +88,25 @@ def get_time_range_dates(range_str: str) -> tuple[datetime, datetime]:
 
 
 # =============================================================================
-# Mock Data Functions
+# Mock Data Functions (development only)
 # =============================================================================
+#
+# Mock fallbacks are a local-development convenience so dashboards render
+# without a seeded database. In production they must never be served: a new
+# user sees their real (empty) analytics, and a database failure surfaces as
+# an error instead of a healthy-looking dashboard of invented numbers.
+
+
+def _demo_analytics_allowed() -> bool:
+    return not get_settings().is_production
+
+
+def _analytics_unavailable() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail="Analytics are temporarily unavailable",
+    )
+
 
 
 def get_mock_overview() -> OverviewResponse:
@@ -325,7 +343,9 @@ async def get_overview(
 
     except Exception as e:
         logger.error(f"Error fetching overview: {e}")
-        return get_mock_overview()
+        if _demo_analytics_allowed():
+            return get_mock_overview()
+        raise _analytics_unavailable()
 
 
 @router.get("/tools", response_model=list[ToolUsageResponse])
@@ -373,7 +393,7 @@ async def get_tool_usage(
         )
 
         if not rows:
-            return get_mock_tool_usage()[:limit]
+            return get_mock_tool_usage()[:limit] if _demo_analytics_allowed() else []
 
         total_count = sum(int(r["count"] or 0) for r in rows)
 
@@ -396,7 +416,9 @@ async def get_tool_usage(
 
     except Exception as e:
         logger.error(f"Error fetching tool usage: {e}")
-        return get_mock_tool_usage()[:limit]
+        if _demo_analytics_allowed():
+            return get_mock_tool_usage()[:limit]
+        raise _analytics_unavailable()
 
 
 @router.get("/timeline", response_model=list[TimelineDataPoint])
@@ -478,7 +500,9 @@ async def get_timeline(
 
     except Exception as e:
         logger.error(f"Error fetching timeline: {e}")
-        return get_mock_timeline(range)
+        if _demo_analytics_allowed():
+            return get_mock_timeline(range)
+        raise _analytics_unavailable()
 
 
 @router.get("/categories", response_model=list[CategoryBreakdown])
@@ -522,7 +546,7 @@ async def get_category_breakdown(
         )
 
         if not rows:
-            return get_mock_categories()
+            return get_mock_categories() if _demo_analytics_allowed() else []
 
         grouped: dict[str, int] = {}
         for r in rows:
@@ -549,7 +573,9 @@ async def get_category_breakdown(
 
     except Exception as e:
         logger.error(f"Error fetching categories: {e}")
-        return get_mock_categories()
+        if _demo_analytics_allowed():
+            return get_mock_categories()
+        raise _analytics_unavailable()
 
 
 # =============================================================================

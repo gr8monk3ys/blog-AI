@@ -1014,30 +1014,19 @@ async def get_sso_status(
             active_sessions_count=0,
         )
 
-    # Count active sessions (DB first, in-memory fallback).
-    active_sessions = await db_count_active_user_sessions(organization_id)
-    if active_sessions is None:
-        now = datetime.now(timezone.utc)
-        active_sessions = sum(
-            1
-            for s in _sso_user_sessions.values()
-            if s.organization_id == organization_id and s.expires_at > now
-        )
-
-    # Get certificate expiry for SAML
-    cert_expiry = None
-    if sso_config.saml_config:
-        cert_expiry = sso_config.saml_config.idp.certificate_expiry
-
+    # This endpoint is unauthenticated (login pages need to discover whether
+    # SSO is enabled/enforced before the user has a session), so it must not
+    # leak operational detail: session counts, auth timestamps, error strings,
+    # and certificate expiry stay on the authenticated admin endpoints.
     return SSOStatusResponse(
         enabled=sso_config.enabled,
         provider_type=sso_config.provider_type,
         status=sso_config.status,
         enforce_sso=sso_config.enforce_sso,
-        last_successful_auth=sso_config.last_successful_auth,
-        last_error=sso_config.last_error,
-        certificate_expiry=cert_expiry,
-        active_sessions_count=active_sessions,
+        last_successful_auth=None,
+        last_error=None,
+        certificate_expiry=None,
+        active_sessions_count=0,
     )
 
 

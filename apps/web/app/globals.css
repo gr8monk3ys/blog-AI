@@ -29,11 +29,8 @@
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(120deg, rgb(var(--background-start-rgb)) 0%, rgb(var(--background-end-rgb)) 70%);
-  font-family: "SF Pro Text", "Inter", system-ui, -apple-system, sans-serif;
-}
-
-.font-serif {
-  font-family: "Source Serif 4", "Iowan Old Style", "Times New Roman", serif;
+  /* Font families come from next/font variables wired up in app/layout.tsx
+     and exposed through Tailwind's font-sans / font-serif utilities. */
 }
 
 .glass-card {

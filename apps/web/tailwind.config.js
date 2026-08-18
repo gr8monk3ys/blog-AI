@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+const colors = require('tailwindcss/colors')
+
 module.exports = {
   darkMode: 'class',
   content: [
@@ -7,7 +9,20 @@ module.exports = {
     './app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        // Semantic aliases for the de-facto palette (amber primary, emerald
+        // success). New code should prefer these; raw amber-*/emerald-*
+        // classes remain valid while existing code migrates.
+        primary: colors.amber,
+        success: colors.emerald,
+        danger: colors.red,
+      },
+      fontFamily: {
+        sans: ['var(--font-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-serif)', 'Iowan Old Style', 'Times New Roman', 'serif'],
+      },
+    },
   },
   plugins: [
     require('@tailwindcss/typography'),

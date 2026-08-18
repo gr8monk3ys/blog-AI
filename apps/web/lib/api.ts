@@ -71,13 +71,6 @@ export const API_ENDPOINTS = {
     validate: (toolId: string) => `${API_V1_BASE_URL}/tools/${toolId}/validate`,
     byCategory: (category: string) => `${API_V1_BASE_URL}/tools/category/${category}`,
   },
-  // Bulk generation endpoints (legacy)
-  bulk: {
-    generate: `${API_V1_BASE_URL}/bulk/generate`,
-    status: (jobId: string) => `${API_V1_BASE_URL}/bulk/status/${jobId}`,
-    results: (jobId: string) => `${API_V1_BASE_URL}/bulk/results/${jobId}`,
-    cancel: (jobId: string) => `${API_V1_BASE_URL}/bulk/cancel/${jobId}`,
-  },
   // Enhanced batch generation endpoints (Tier 1)
   batch: {
     // Job management
@@ -163,11 +156,6 @@ export const API_ENDPOINTS = {
     fingerprint: (profileId: string) => `${API_V1_BASE_URL}/brand-voice/fingerprint/${profileId}`,
     score: `${API_V1_BASE_URL}/brand-voice/score`,
     status: (profileId: string) => `${API_V1_BASE_URL}/brand-voice/status/${profileId}`,
-  },
-  // Content feedback endpoints
-  feedback: {
-    submit: '/api/feedback',
-    stats: (contentId: string) => `/api/feedback?content_id=${encodeURIComponent(contentId)}`,
   },
   // Organization / team endpoints
   organizations: {

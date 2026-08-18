@@ -14,21 +14,21 @@ function ContentRendererComponent({ result }: ContentRendererProps) {
     case 'twitter_thread':
       return (
         <div className="space-y-3">
-          <div className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-400">
-            <p className="font-medium text-blue-900">{content.hook as string}</p>
+          <div className="bg-amber-50 dark:bg-amber-900/30 p-3 rounded-lg border-l-4 border-amber-400">
+            <p className="font-medium text-amber-900 dark:text-amber-300">{content.hook as string}</p>
           </div>
           {(content.tweets as string[])?.map((tweet, i) => (
-            <div key={i} className="bg-gray-50 p-3 rounded-lg">
-              <span className="text-xs text-gray-500">{i + 1}.</span>
+            <div key={i} className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg">
+              <span className="text-xs text-gray-500 dark:text-gray-400">{i + 1}.</span>
               <p className="mt-1">{tweet}</p>
             </div>
           ))}
-          <div className="bg-green-50 p-3 rounded-lg border-l-4 border-green-400">
-            <p className="font-medium text-green-900">{content.cta as string}</p>
+          <div className="bg-emerald-50 dark:bg-emerald-900/30 p-3 rounded-lg border-l-4 border-emerald-400">
+            <p className="font-medium text-emerald-900 dark:text-emerald-300">{content.cta as string}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             {(content.hashtags as string[])?.map((tag, i) => (
-              <span key={i} className="text-blue-500 text-sm">
+              <span key={i} className="text-amber-600 dark:text-amber-400 text-sm">
                 #{tag}
               </span>
             ))}
@@ -41,10 +41,10 @@ function ContentRendererComponent({ result }: ContentRendererProps) {
         <div className="space-y-4">
           <p className="font-medium text-lg">{content.hook as string}</p>
           <div className="whitespace-pre-wrap">{content.body as string}</div>
-          <p className="font-medium text-blue-600">{content.cta as string}</p>
+          <p className="font-medium text-amber-600 dark:text-amber-400">{content.cta as string}</p>
           <div className="flex flex-wrap gap-2">
             {(content.hashtags as string[])?.map((tag, i) => (
-              <span key={i} className="text-blue-500 text-sm">
+              <span key={i} className="text-amber-600 dark:text-amber-400 text-sm">
                 #{tag}
               </span>
             ))}
@@ -55,28 +55,28 @@ function ContentRendererComponent({ result }: ContentRendererProps) {
     case 'email_newsletter':
       return (
         <div className="space-y-4">
-          <div className="bg-gray-100 p-3 rounded">
-            <p className="text-sm text-gray-500">Subject:</p>
+          <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded">
+            <p className="text-sm text-gray-500 dark:text-gray-400">Subject:</p>
             <p className="font-medium">{content.subject_line as string}</p>
           </div>
-          <p className="italic text-gray-600">{content.greeting as string}</p>
+          <p className="italic text-gray-600 dark:text-gray-400">{content.greeting as string}</p>
           <p>{content.intro as string}</p>
           {(content.sections as { title: string; content: string }[])?.map(
             (section, i) => (
-              <div key={i} className="border-l-2 border-gray-200 pl-4">
+              <div key={i} className="border-l-2 border-gray-200 dark:border-gray-700 pl-4">
                 <h4 className="font-medium">{section.title}</h4>
-                <p className="text-gray-700">{section.content}</p>
+                <p className="text-gray-700 dark:text-gray-300">{section.content}</p>
               </div>
             )
           )}
-          <p className="font-medium text-blue-600">{content.cta as string}</p>
-          <p className="text-gray-500">{content.signoff as string}</p>
+          <p className="font-medium text-amber-600 dark:text-amber-400">{content.cta as string}</p>
+          <p className="text-gray-500 dark:text-gray-400">{content.signoff as string}</p>
         </div>
       )
 
     default:
       return (
-        <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg overflow-auto">
+        <pre className="whitespace-pre-wrap text-sm bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg overflow-auto">
           {JSON.stringify(content, null, 2)}
         </pre>
       )

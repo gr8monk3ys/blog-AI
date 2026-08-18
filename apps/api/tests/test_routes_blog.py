@@ -115,6 +115,7 @@ def mock_dependencies():
     with patch("app.routes.blog.verify_api_key") as mock_auth, \
          patch("app.routes.blog.check_generation_rate_limit", new_callable=AsyncMock) as mock_rate_limit, \
          patch("app.routes.blog.require_pro_tier", new_callable=AsyncMock) as mock_pro_tier, \
+         patch("app.routes.blog.require_starter_tier", new_callable=AsyncMock), \
          patch("app.routes.blog.require_quota", new_callable=AsyncMock) as mock_quota, \
          patch("app.routes.blog.increment_usage_for_operation") as mock_usage, \
          patch("app.routes.blog.conversations") as mock_conv, \
@@ -1045,6 +1046,7 @@ class TestBlogSEOAndFactCheck:
             with patch("app.routes.blog.verify_api_key") as mock_auth, \
                  patch("app.routes.blog.check_generation_rate_limit", new_callable=AsyncMock), \
                  patch("app.routes.blog.require_pro_tier", new_callable=AsyncMock), \
+                 patch("app.routes.blog.require_starter_tier", new_callable=AsyncMock), \
                  patch("app.routes.blog.require_quota", new_callable=AsyncMock), \
                  patch("app.routes.blog.increment_usage_for_operation", new_callable=AsyncMock) as mock_usage, \
                  patch("app.routes.blog.conversations") as mock_conv, \

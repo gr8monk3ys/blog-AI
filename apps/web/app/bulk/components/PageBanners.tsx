@@ -49,14 +49,14 @@ export function ActivationHint({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="mb-6 rounded-2xl border border-green-200 bg-green-50/80 p-5 text-sm text-green-900 dark:border-green-900/40 dark:bg-green-950/30 dark:text-green-100"
+      className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-5 text-sm text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-100"
     >
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <p>{hint}</p>
         <button
           type="button"
           onClick={onDismiss}
-          className="rounded-lg border border-green-300 px-3 py-2 font-medium text-green-800 transition-colors hover:bg-green-100 dark:border-green-800 dark:text-green-200 dark:hover:bg-green-900/30"
+          className="rounded-lg border border-emerald-300 px-3 py-2 font-medium text-emerald-800 transition-colors hover:bg-emerald-100 dark:border-emerald-800 dark:text-emerald-200 dark:hover:bg-emerald-900/30"
         >
           Dismiss
         </button>

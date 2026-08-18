@@ -88,13 +88,13 @@ export default function PieChart({
   }, [data, size])
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-6">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">{title}</h3>
 
       {loading ? (
         <div className="flex items-center justify-center" style={{ height: size + 100 }}>
           <div
-            className="animate-pulse rounded-full bg-gray-200"
+            className="animate-pulse rounded-full bg-gray-200 dark:bg-gray-700"
             style={{ width: size, height: size }}
           />
         </div>
@@ -103,7 +103,7 @@ export default function PieChart({
           className="flex items-center justify-center"
           style={{ height: size + 100 }}
         >
-          <p className="text-gray-500">No category data available</p>
+          <p className="text-gray-500 dark:text-gray-400">No category data available</p>
         </div>
       ) : (
         <div className="flex flex-col items-center">
@@ -133,8 +133,7 @@ export default function PieChart({
                 cx={size / 2}
                 cy={size / 2}
                 r={size / 4}
-                fill="white"
-                className="pointer-events-none"
+                className="pointer-events-none fill-white dark:fill-gray-900"
               />
 
               {/* Center text */}
@@ -142,7 +141,7 @@ export default function PieChart({
                 x={size / 2}
                 y={size / 2 - 8}
                 textAnchor="middle"
-                className="fill-gray-900 font-bold"
+                className="fill-gray-900 dark:fill-gray-100 font-bold"
                 fontSize="18"
               >
                 {data.reduce((sum, d) => sum + d.count, 0).toLocaleString()}
@@ -151,7 +150,7 @@ export default function PieChart({
                 x={size / 2}
                 y={size / 2 + 12}
                 textAnchor="middle"
-                className="fill-gray-500"
+                className="fill-gray-500 dark:fill-gray-400"
                 fontSize="12"
               >
                 Total
@@ -174,10 +173,10 @@ export default function PieChart({
                     className="w-3 h-3 rounded-full flex-shrink-0"
                     style={{ backgroundColor: item.color }}
                   />
-                  <span className="text-sm text-gray-600 truncate">
+                  <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
                     {formatCategoryLabel(item.category)}
                   </span>
-                  <span className="text-sm font-medium text-gray-900 ml-auto">
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100 ml-auto">
                     {item.percentage.toFixed(0)}%
                   </span>
                 </motion.div>

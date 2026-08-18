@@ -95,21 +95,28 @@ class ConversationStore:
         """
         Verify that a user owns a conversation.
 
-        For backwards compatibility, conversations without an owner are accessible
-        to any authenticated user (legacy conversations).
+        Conversations without an ownership record are denied: allowing them
+        would let any authenticated user read or append to a conversation
+        whose owner record is missing (IDOR on guessable IDs). On first
+        access the requesting user does not implicitly claim it either —
+        ownership is only set explicitly at creation time.
 
         Args:
             conversation_id: The conversation identifier.
             user_id: The user ID to verify.
 
         Returns:
-            True if the user owns the conversation or no owner is set (legacy).
+            True if the owner matches, or if the conversation does not exist
+            yet (clients pick their own IDs, so a first GET/append may arrive
+            before ownership is recorded and there is nothing to protect).
         """
         owner = self.get_owner(conversation_id)
         if owner is None:
-            # Legacy conversation without ownership - allow access
-            # In production, consider migrating legacy data
-            return True
+            conversation_exists = (
+                conversation_id in self._cache
+                or self._get_file_path(conversation_id).exists()
+            )
+            return not conversation_exists
         return owner == user_id
 
     def _get_file_path(self, conversation_id: str) -> Path:
@@ -122,9 +129,15 @@ class ConversationStore:
         Returns:
             Path to the conversation JSON file.
         """
-        # Sanitize conversation_id to prevent path traversal
-        safe_id = re.sub(r"[^a-zA-Z0-9_-]", "", conversation_id)
-        return self.storage_dir / f"{safe_id}.json"
+        # Sanitize conversation_id to prevent path traversal, then verify the
+        # resolved path stays inside the storage directory.
+        if not re.fullmatch(r"[a-zA-Z0-9_-]+", conversation_id):
+            raise ValueError("Invalid conversation id")
+        base = os.path.realpath(self.storage_dir)
+        path = os.path.realpath(os.path.join(base, f"{conversation_id}.json"))
+        if not path.startswith(base + os.sep):
+            raise ValueError("Invalid conversation id")
+        return Path(path)
 
     def get(self, conversation_id: str) -> List[Dict[str, Any]]:
         """

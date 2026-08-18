@@ -6,7 +6,7 @@
 # -----------------------------------------------------------------------------
 # Stage 1: Builder - install Python dependencies
 # -----------------------------------------------------------------------------
-FROM python:3.11-slim AS builder
+FROM python:3.12-slim AS builder
 
 WORKDIR /build
 
@@ -19,12 +19,13 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 COPY apps/api/requirements.txt ./
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -r requirements.txt && \
+    pip uninstall -y pip
 
 # -----------------------------------------------------------------------------
 # Stage 2: Runtime - lean production image
 # -----------------------------------------------------------------------------
-FROM python:3.11-slim AS runtime
+FROM python:3.12-slim AS runtime
 
 ARG BUILD_DATE
 ARG GIT_SHA
@@ -47,6 +48,10 @@ RUN apt-get update && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
+
+# Drop the base image's pip — nothing installs packages at runtime, and every
+# pip release vendors msgpack/setuptools copies with known CVEs.
+RUN python -m pip uninstall -y pip
 
 # Copy virtual environment from builder
 COPY --from=builder /opt/venv /opt/venv

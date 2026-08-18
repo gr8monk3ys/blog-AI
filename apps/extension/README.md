@@ -13,7 +13,7 @@ This extension lets users send webpage context into Blog AI without leaving the 
 1. Open `chrome://extensions/`.
 2. Enable `Developer mode`.
 3. Click `Load unpacked`.
-4. Select [`apps/extension`](/workspaces/blog-AI/apps/extension).
+4. Select [`apps/extension`](.).
 
 ## Configuration
 
@@ -26,7 +26,7 @@ By default it is configured for local development against `http://localhost:8000
 
 ## Build
 
-From [`apps/extension`](/workspaces/blog-AI/apps/extension):
+From [`apps/extension`](.):
 
 ```bash
 chmod +x build.sh

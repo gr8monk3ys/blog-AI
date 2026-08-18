@@ -260,7 +260,7 @@ export default function UploadDropZone({
   const statusIcon = (status: FileStatus) => {
     switch (status) {
       case 'done':
-        return <CheckCircleIcon className="h-5 w-5 text-green-500" />
+        return <CheckCircleIcon className="h-5 w-5 text-emerald-500" />
       case 'error':
         return <ExclamationCircleIcon className="h-5 w-5 text-red-500" />
       default:

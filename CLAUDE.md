@@ -44,7 +44,7 @@ bun run test:api:full     # Full backend suite (pytest)
 
 ```bash
 # Frontend (Vitest) — single file
-cd apps/web && bunx vitest run tests/lib/config.test.ts
+cd apps/web && bunx vitest run tests/lib/api.test.ts
 
 # Frontend (Playwright) — single spec
 cd apps/web && bunx playwright test e2e/navigation.spec.ts

@@ -40,53 +40,6 @@ def client():
 # ============================================================================
 
 
-class TestBulkGenerationSmoke:
-    """Smoke tests for /api/v1/bulk/* endpoints."""
-
-    def test_bulk_generate_requires_auth(self, client):
-        """POST /api/v1/bulk/generate without auth must return 401."""
-        response = client.post(
-            "/api/v1/bulk/generate",
-            json={
-                "items": [{"topic": "Test", "keywords": ["a"], "tone": "professional"}],
-                "conversation_id": "smoke-bulk-001",
-            },
-        )
-        assert response.status_code == 401, (
-            f"Expected 401, got {response.status_code}: {response.text}"
-        )
-
-    def test_bulk_status_requires_auth(self, client):
-        """GET /api/v1/bulk/status/{job_id} without auth must return 401."""
-        response = client.get("/api/v1/bulk/status/nonexistent-job-id")
-        assert response.status_code == 401, (
-            f"Expected 401, got {response.status_code}: {response.text}"
-        )
-
-    def test_bulk_generate_rejects_empty_body(self, client):
-        """POST /api/v1/bulk/generate with empty body must return 422."""
-        response = client.post(
-            "/api/v1/bulk/generate",
-            json={},
-            headers={"X-API-Key": "test-key"},
-        )
-        assert response.status_code == 422, (
-            f"Expected 422, got {response.status_code}: {response.text}"
-        )
-
-    def test_bulk_cancel_requires_auth(self, client):
-        """POST /api/v1/bulk/cancel/{job_id} without auth must return 401."""
-        response = client.post("/api/v1/bulk/cancel/nonexistent-job-id")
-        assert response.status_code == 401, (
-            f"Expected 401, got {response.status_code}: {response.text}"
-        )
-
-
-# ============================================================================
-# 2. Social Media
-# ============================================================================
-
-
 class TestSocialMediaSmoke:
     """Smoke tests for /api/social/* endpoints."""
 

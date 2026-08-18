@@ -21,24 +21,24 @@ export default function BarChart({
   const maxCount = Math.max(...displayData.map((d) => d.count), 1)
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">{title}</h3>
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-6">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6">{title}</h3>
 
       {loading ? (
         <div className="space-y-4">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="animate-pulse">
               <div className="flex items-center justify-between mb-2">
-                <div className="h-4 bg-gray-200 rounded w-32" />
-                <div className="h-4 bg-gray-200 rounded w-12" />
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32" />
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12" />
               </div>
-              <div className="h-6 bg-gray-200 rounded" />
+              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded" />
             </div>
           ))}
         </div>
       ) : displayData.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-500">No usage data available yet</p>
+          <p className="text-gray-500 dark:text-gray-400">No usage data available yet</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -56,7 +56,7 @@ export default function BarChart({
               >
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       {item.toolName}
                     </span>
                     <span
@@ -66,11 +66,11 @@ export default function BarChart({
                       {formatCategoryLabel(item.category)}
                     </span>
                   </div>
-                  <span className="text-sm font-semibold text-gray-700">
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                     {item.count.toLocaleString()}
                   </span>
                 </div>
-                <div className="relative h-6 bg-gray-100 rounded-lg overflow-hidden">
+                <div className="relative h-6 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
                   <motion.div
                     className="absolute inset-y-0 left-0 rounded-lg"
                     style={{ backgroundColor: barColor }}
@@ -78,7 +78,7 @@ export default function BarChart({
                     animate={{ width: `${barWidth}%` }}
                     transition={{ duration: 0.5, delay: index * 0.05 }}
                   />
-                  <span className="absolute inset-y-0 right-2 flex items-center text-xs font-medium text-gray-500">
+                  <span className="absolute inset-y-0 right-2 flex items-center text-xs font-medium text-gray-500 dark:text-gray-400">
                     {item.percentage.toFixed(1)}%
                   </span>
                 </div>

@@ -704,6 +704,19 @@ class EmbeddingChecker(BasePlagiarismChecker):
                 is_retryable=False,
             )
 
+        # With no reference corpus, this checker cannot make any originality
+        # claim — comparing against nothing would always report "100%
+        # original", which is worse than an honest error.
+        if not self._local_embeddings:
+            raise PlagiarismCheckError(
+                "The embedding checker has no reference documents to compare "
+                "against, so it cannot verify originality. Configure "
+                "COPYSCAPE_API_KEY or ORIGINALITY_API_KEY for web-scale "
+                "plagiarism checks.",
+                provider=self.provider,
+                is_retryable=False,
+            )
+
         start_time = time.time()
         check_id = f"emb_{uuid.uuid4().hex[:12]}"
         word_count = self._count_words(request.content)

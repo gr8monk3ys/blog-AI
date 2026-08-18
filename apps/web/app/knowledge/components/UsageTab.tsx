@@ -23,7 +23,7 @@ function UsageBar({
   const isUnlimited = max == null
   const percentage = isUnlimited ? 0 : max > 0 ? (current / max) * 100 : 0
   const barColor =
-    percentage >= 90 ? 'bg-red-500' : percentage >= 70 ? 'bg-amber-500' : 'bg-green-500'
+    percentage >= 90 ? 'bg-red-500' : percentage >= 70 ? 'bg-amber-500' : 'bg-emerald-500'
 
   return (
     <div className="space-y-2">

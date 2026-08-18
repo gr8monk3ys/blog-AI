@@ -41,7 +41,7 @@ export default function TemplateCategoryFilter({
                   ? category === 'all'
                     ? 'bg-amber-600 text-white'
                     : `${categoryInfo?.bgColor} ${categoryInfo?.color} border ${categoryInfo?.borderColor}`
-                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                  : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
               }
             `}
             aria-pressed={isSelected}
@@ -55,7 +55,7 @@ export default function TemplateCategoryFilter({
                     ? category === 'all'
                       ? 'bg-amber-500 text-white'
                       : 'bg-white/50 text-current'
-                    : 'bg-gray-100 text-gray-500'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                 }
               `}
             >

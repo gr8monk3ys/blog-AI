@@ -7,6 +7,7 @@ Security Notes:
 - Bcrypt verification uses constant-time comparison internally
 """
 
+import hashlib
 import json
 import logging
 import os
@@ -62,6 +63,14 @@ class APIKeyStore:
         self.storage_path.parent.mkdir(parents=True, exist_ok=True)
         self._cache: Dict[str, str] = {}  # user_id -> hashed_key
         self._legacy_hash_users: set = set()  # Track users with legacy hashes
+        # scrypt(plain_key, ephemeral_salt) -> user_id for keys already
+        # verified via bcrypt this process. Without it every request costs one
+        # bcrypt check per stored user (O(n) at cost factor 12), which turns
+        # auth into a DoS lever. The per-process random salt makes the
+        # in-memory index useless for offline guessing, and a hit is still
+        # re-verified against the stored bcrypt hash before being trusted.
+        self._index_salt = secrets.token_bytes(32)
+        self._verified_index: Dict[str, str] = {}
         self._load()
         logger.info(f"API key storage initialized at: {self.storage_path}")
 
@@ -198,6 +207,24 @@ class APIKeyStore:
         Returns:
             The user_id if valid, None otherwise.
         """
+        digest = hashlib.scrypt(
+            api_key.encode("utf-8"),
+            salt=self._index_salt,
+            n=2**11,
+            r=8,
+            p=1,
+        ).hex()
+        cached_user = self._verified_index.get(digest)
+        if cached_user is not None:
+            # Re-check against the stored hash so revoked/rotated keys can
+            # never be replayed from the index.
+            stored_hash = self._cache.get(cached_user)
+            if stored_hash and not self._is_legacy_hash(stored_hash) and self._verify_bcrypt(
+                api_key, stored_hash
+            ):
+                return cached_user
+            self._verified_index.pop(digest, None)
+
         result = None
         for user_id, stored_hash in self._cache.items():
             if self._is_legacy_hash(stored_hash):
@@ -207,6 +234,8 @@ class APIKeyStore:
             if self._verify_bcrypt(api_key, stored_hash):
                 if result is None:
                     result = user_id
+        if result is not None:
+            self._verified_index[digest] = result
         return result
 
     def upgrade_legacy_hash(self, user_id: str, api_key: str) -> bool:

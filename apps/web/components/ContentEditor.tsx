@@ -386,7 +386,7 @@ function useContentEditorView({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         {/* Mode toggle */}
         <div
-          className="inline-flex rounded-lg bg-gray-100 p-0.5"
+          className="inline-flex rounded-lg bg-gray-100 dark:bg-gray-800 p-0.5"
           role="tablist"
           aria-label="Editor mode"
         >
@@ -397,8 +397,8 @@ function useContentEditorView({
             onClick={() => setMode('preview')}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 ${
               mode === 'preview'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-800'
+                ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
             }`}
           >
             <EyeIcon className="w-4 h-4" aria-hidden="true" />
@@ -411,8 +411,8 @@ function useContentEditorView({
             onClick={() => setMode('edit')}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 ${
               mode === 'edit'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-800'
+                ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
             }`}
           >
             <PencilSquareIcon className="w-4 h-4" aria-hidden="true" />
@@ -423,9 +423,9 @@ function useContentEditorView({
         {/* Metrics + actions */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Word count / reading time */}
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-gray-500 dark:text-gray-400">
             {wordCount.toLocaleString()} {wordCount === 1 ? 'word' : 'words'}
-            <span className="mx-1.5 text-gray-300" aria-hidden="true">|</span>
+            <span className="mx-1.5 text-gray-300 dark:text-gray-600" aria-hidden="true">|</span>
             {readingTime} min read
           </span>
 
@@ -435,11 +435,11 @@ function useContentEditorView({
             onClick={handleCopy}
             aria-label="Copy to clipboard"
             title="Copy to clipboard"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors"
           >
             {copied ? (
               <>
-                <CheckIcon className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
+                <CheckIcon className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
                 Copied
               </>
             ) : (
@@ -456,7 +456,7 @@ function useContentEditorView({
             onClick={handleExportMarkdown}
             aria-label="Export as Markdown"
             title="Export as Markdown"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors"
           >
             <ArrowDownTrayIcon className="w-3.5 h-3.5" aria-hidden="true" />
             Export .md
@@ -469,7 +469,7 @@ function useContentEditorView({
               onClick={handleRevert}
               aria-label="Revert to original"
               title="Revert to original"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-md hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-md hover:bg-amber-100 dark:hover:bg-amber-900/50 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors"
             >
               <ArrowUturnLeftIcon className="w-3.5 h-3.5" aria-hidden="true" />
               Revert
@@ -498,7 +498,7 @@ function useContentEditorView({
             ref={textareaRef}
             value={content}
             onChange={handleTextareaChange}
-            className="w-full min-h-[400px] p-4 font-mono text-sm text-gray-800 bg-white border border-gray-200 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent leading-relaxed"
+            className="w-full min-h-[400px] p-4 font-mono text-sm text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent leading-relaxed"
             placeholder="Start writing in markdown..."
             aria-label="Content editor"
             spellCheck
@@ -506,7 +506,7 @@ function useContentEditorView({
         ) : (
           <div
             ref={previewRef}
-            className="prose prose-lg max-w-none p-4 bg-white border border-gray-200 rounded-lg min-h-[400px]"
+            className="prose prose-lg dark:prose-invert max-w-none p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg min-h-[400px]"
           />
         )}
       </div>

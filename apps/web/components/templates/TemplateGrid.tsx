@@ -187,7 +187,7 @@ export default function TemplateGrid({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search templates (e.g., landing page, email, social...)"
-                className="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm"
+                className="block w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm"
               />
               {searchQuery && (
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
@@ -210,7 +210,7 @@ export default function TemplateGrid({
       )}
 
       {/* Results summary */}
-      <div className="flex items-center justify-between text-sm text-gray-500">
+      <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
         <div className="flex items-center gap-2">
           <Squares2X2Icon className="w-4 h-4" aria-hidden="true" />
           <span>
@@ -232,7 +232,7 @@ export default function TemplateGrid({
             {[1, 2, 3, 4, 5, 6, 7, 8].map((slot) => (
               <div
                 key={`template-skeleton-${slot}`}
-                className="h-64 bg-gray-100 rounded-xl animate-pulse"
+                className="h-64 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse"
               />
             ))}
           </m.div>
@@ -259,15 +259,15 @@ export default function TemplateGrid({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200"
+            className="text-center py-12 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800"
           >
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
               <MagnifyingGlassIcon className="w-8 h-8 text-gray-400" aria-hidden="true" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
               No templates found
             </h3>
-            <p className="text-sm text-gray-500 max-w-sm mx-auto">
+            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
               Try adjusting your search or filter criteria to find what you are
               looking for.
             </p>
@@ -277,7 +277,7 @@ export default function TemplateGrid({
                 setSearchQuery('')
                 setSelectedCategoryOverride('all')
               }}
-              className="mt-4 inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-colors"
+              className="mt-4 inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-colors"
             >
               Clear all filters
             </button>

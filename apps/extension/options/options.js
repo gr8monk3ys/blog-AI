@@ -45,7 +45,7 @@ const DEFAULT_SETTINGS = {
   defaultProvider: 'openai',
   includeResearch: false,
   enableProofreading: true,
-  apiEndpoint: 'https://api.blogai.com',
+  apiEndpoint: 'http://localhost:8000',
   theme: 'system',
 }
 

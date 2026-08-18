@@ -14,7 +14,7 @@ const BlogAI = {
    */
   config: {
     // Production endpoint
-    baseUrl: 'https://api.blogai.com',
+    baseUrl: 'http://localhost:8000',
     // Development endpoint (for local testing)
     devUrl: 'http://localhost:8000',
     // Request timeout in milliseconds

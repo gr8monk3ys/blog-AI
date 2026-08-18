@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { getSqlOrNull } from '../../../../lib/db'
 
@@ -10,8 +11,11 @@ const isAuthorized = (request: Request) => {
   const headerKey =
     request.headers.get('x-admin-key') ||
     request.headers.get('authorization')?.replace('Bearer ', '')
+  if (!headerKey) return false
 
-  return headerKey === adminKey
+  const expected = Buffer.from(adminKey)
+  const provided = Buffer.from(headerKey)
+  return expected.length === provided.length && timingSafeEqual(expected, provided)
 }
 
 export async function GET(

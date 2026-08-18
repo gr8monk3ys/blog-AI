@@ -586,17 +586,17 @@ function useBulkGenerationPageView() {
                         {results[index] && (
                           <div className={`mt-3 p-3 rounded-lg ${
                             results[index].success
-                              ? 'bg-green-50 border border-green-200'
+                              ? 'bg-emerald-50 border border-emerald-200'
                               : 'bg-red-50 border border-red-200'
                           }`}>
                             <div className="flex items-center gap-2">
                               {results[index].success ? (
-                                <CheckCircleIcon className="w-5 h-5 text-green-500" />
+                                <CheckCircleIcon className="w-5 h-5 text-emerald-500" />
                               ) : (
                                 <XCircleIcon className="w-5 h-5 text-red-500" />
                               )}
                               <span className={`text-sm font-medium ${
-                                results[index].success ? 'text-green-700' : 'text-red-700'
+                                results[index].success ? 'text-emerald-700' : 'text-red-700'
                               }`}>
                                 {results[index].success
                                   ? `Generated: ${results[index].content?.title}`
@@ -767,10 +767,10 @@ function useBulkGenerationPageView() {
               <m.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border border-green-200 dark:border-green-800 p-6"
+                className="bg-gradient-to-br from-emerald-50 to-emerald-50 dark:from-emerald-900/20 dark:to-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800 p-6"
               >
                 <div className="flex items-center gap-2 mb-3">
-                  <CurrencyDollarIcon className="w-5 h-5 text-green-600" />
+                  <CurrencyDollarIcon className="w-5 h-5 text-emerald-600" />
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     Cost Estimate
                   </h2>
@@ -778,7 +778,7 @@ function useBulkGenerationPageView() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600 dark:text-gray-400">Estimated Cost</span>
-                    <span className="text-lg font-bold text-green-700">
+                    <span className="text-lg font-bold text-emerald-700">
                       ${costEstimate.estimated_cost_usd.toFixed(4)}
                     </span>
                   </div>
@@ -787,7 +787,7 @@ function useBulkGenerationPageView() {
                     <span>{Math.round(costEstimate.confidence * 100)}% confidence</span>
                   </div>
                   {costEstimate.provider_recommendations.length > 1 && (
-                    <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-800">
+                    <div className="mt-3 pt-3 border-t border-emerald-200 dark:border-emerald-800">
                       <p className="text-xs text-gray-500 mb-2">Provider comparison:</p>
                       <div className="space-y-1">
                         {costEstimate.provider_recommendations.slice(0, 3).map((rec) => (
@@ -856,7 +856,7 @@ function useBulkGenerationPageView() {
                   {actualCost > 0 && (
                     <div className="flex items-center justify-between text-sm pt-2">
                       <span className="text-gray-600 dark:text-gray-400">Cost so far</span>
-                      <span className="font-medium text-green-600">
+                      <span className="font-medium text-emerald-600">
                         ${actualCost.toFixed(4)}
                       </span>
                     </div>

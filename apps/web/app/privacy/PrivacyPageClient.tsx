@@ -12,14 +12,14 @@ export default function PrivacyPageClient(): React.ReactElement {
 
       <main className="flex-1 py-16 sm:py-20">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900 font-serif">
+          <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
             Privacy Policy
           </h1>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
             Last updated: {LAST_UPDATED}
           </p>
 
-          <div className="mt-10 prose prose-gray max-w-none prose-headings:font-serif prose-headings:font-semibold prose-a:text-amber-600 hover:prose-a:text-amber-700">
+          <div className="mt-10 prose prose-gray dark:prose-invert max-w-none prose-headings:font-serif prose-headings:font-semibold prose-a:text-amber-600 dark:prose-a:text-amber-400 hover:prose-a:text-amber-700 dark:hover:prose-a:text-amber-300">
             <p>
               Blog AI (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) is
               committed to protecting your privacy. This Privacy Policy explains

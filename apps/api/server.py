@@ -74,7 +74,6 @@ from app.routes import (
     blog_router,
     book_router,
     brand_voice_router,
-    bulk_router,
     chat_router,
     config_router,
     content_router,
@@ -314,13 +313,13 @@ Rate limit headers are included in all responses:
 ### Versioning
 
 The API supports versioning via URL path. Current version: `v1`
-- Root endpoints: `https://api.blogai.com/endpoint`
-- Versioned endpoints: `https://api.blogai.com/api/v1/endpoint`
+- Root endpoints: `/endpoint`
+- Versioned endpoints: `/api/v1/endpoint`
 
 ### Support
 
-- Documentation: [https://docs.blogai.com](https://docs.blogai.com)
-- Email: support@blogai.com
+- Documentation: interactive docs at `/docs` (non-production environments)
+- Project: [github.com/gr8monk3ys/blog-AI](https://github.com/gr8monk3ys/blog-AI)
 """,
     version="1.0.0",
     lifespan=lifespan,
@@ -351,17 +350,19 @@ The API supports versioning via URL path. Current version: `v1`
     ],
     contact={
         "name": "Blog AI Support",
-        "email": "support@blogai.com",
-        "url": "https://blogai.com/support",
+        "url": "https://github.com/gr8monk3ys/blog-AI/issues",
     },
     license_info={
         "name": "Proprietary",
-        "url": "https://blogai.com/terms",
     },
     servers=[
-        {"url": "http://localhost:8000", "description": "Local development"},
-        {"url": "https://api.blogai.com", "description": "Production"},
-    ],
+        {"url": "http://localhost:8000", "description": "Local development"}
+    ]
+    + (
+        [{"url": os.environ["PUBLIC_API_URL"], "description": "Production"}]
+        if os.environ.get("PUBLIC_API_URL")
+        else []
+    ),
 )
 
 # =============================================================================
@@ -511,7 +512,6 @@ app.include_router(content_router)
 app.include_router(conversations_router)
 app.include_router(blog_router)
 app.include_router(book_router)
-app.include_router(bulk_router)
 app.include_router(config_router)
 app.include_router(export_router)
 app.include_router(extension_router)
@@ -569,7 +569,6 @@ api_v1_router.include_router(content_router)
 api_v1_router.include_router(conversations_router)
 api_v1_router.include_router(blog_router)
 api_v1_router.include_router(book_router)
-api_v1_router.include_router(bulk_router)
 api_v1_router.include_router(config_router)
 api_v1_router.include_router(export_router)
 api_v1_router.include_router(extension_router)

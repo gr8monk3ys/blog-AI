@@ -33,7 +33,7 @@ export default function ToolSearch({
           type="text"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="block w-full pl-11 pr-10 py-3 border border-gray-200 rounded-xl bg-white shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm transition-all"
+          className="block w-full pl-11 pr-10 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm transition-all"
           placeholder={placeholder}
           aria-label="Search tools"
         />
@@ -45,7 +45,7 @@ export default function ToolSearch({
               exit={{ opacity: 0, scale: 0.8 }}
               type="button"
               onClick={handleClear}
-              className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               aria-label="Clear search"
             >
               <XMarkIcon className="h-5 w-5" aria-hidden="true" />
@@ -61,7 +61,7 @@ export default function ToolSearch({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="mt-2 text-sm text-gray-500"
+            className="mt-2 text-sm text-gray-500 dark:text-gray-400"
             aria-live="polite"
             aria-atomic="true"
           >

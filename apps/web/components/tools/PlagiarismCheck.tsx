@@ -5,17 +5,17 @@ import type { PlagiarismCheckResult } from '../../types/plagiarism'
 function riskStyles(level: string): { badge: string; label: string } {
   switch (level) {
     case 'none':
-      return { badge: 'bg-emerald-100 text-emerald-700', label: 'None' }
+      return { badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300', label: 'None' }
     case 'low':
-      return { badge: 'bg-emerald-100 text-emerald-700', label: 'Low' }
+      return { badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300', label: 'Low' }
     case 'moderate':
-      return { badge: 'bg-amber-100 text-amber-700', label: 'Moderate' }
+      return { badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300', label: 'Moderate' }
     case 'high':
-      return { badge: 'bg-orange-100 text-orange-700', label: 'High' }
+      return { badge: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300', label: 'High' }
     case 'critical':
-      return { badge: 'bg-red-100 text-red-700', label: 'Critical' }
+      return { badge: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300', label: 'Critical' }
     default:
-      return { badge: 'bg-gray-100 text-gray-700', label: String(level || 'Unknown') }
+      return { badge: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300', label: String(level || 'Unknown') }
   }
 }
 
@@ -34,11 +34,11 @@ export default function PlagiarismCheck({
   const sources = result?.matching_sources || []
 
   return (
-    <div className="mt-4 bg-white rounded-xl border border-gray-200 p-4">
+    <div className="mt-4 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-gray-900">Originality Check</p>
-          <p className="text-xs text-gray-500">
+          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Originality Check</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Scan for matching sources. Useful before publishing.
           </p>
         </div>
@@ -48,7 +48,7 @@ export default function PlagiarismCheck({
             type="button"
             onClick={() => onRun({ skipCache: false })}
             disabled={loading}
-            className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-600 text-white hover:bg-amber-700 disabled:bg-gray-300"
+            className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-600 text-white hover:bg-amber-700 disabled:bg-gray-300 dark:disabled:bg-gray-700"
           >
             {loading ? 'Checking…' : result ? 'Re-check' : 'Check'}
           </button>
@@ -57,7 +57,7 @@ export default function PlagiarismCheck({
               type="button"
               onClick={() => onRun({ skipCache: true })}
               disabled={loading}
-              className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:bg-gray-100"
+              className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:bg-gray-100 dark:disabled:bg-gray-800"
               title="Skip cache and force a fresh check"
             >
               Fresh
@@ -67,7 +67,7 @@ export default function PlagiarismCheck({
       </div>
 
       {error && (
-        <div className="mt-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+        <div className="mt-3 text-xs text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
           {error}
         </div>
       )}
@@ -78,32 +78,32 @@ export default function PlagiarismCheck({
             <span className={`px-2 py-0.5 rounded-full font-medium ${risk?.badge || ''}`}>
               Risk: {risk?.label}
             </span>
-            <span className="px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-700">
+            <span className="px-2 py-0.5 rounded-full font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
               Original: {Math.round(result.original_percentage)}%
             </span>
-            <span className="px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-700">
+            <span className="px-2 py-0.5 rounded-full font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
               Provider: {result.provider}
             </span>
             {result.cached && (
-              <span className="px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-700">
+              <span className="px-2 py-0.5 rounded-full font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
                 Cached
               </span>
             )}
-            <span className="text-gray-500">
+            <span className="text-gray-500 dark:text-gray-400">
               {(result.processing_time_ms / 1000).toFixed(1)}s
             </span>
           </div>
 
           {sources.length > 0 ? (
             <div>
-              <p className="text-xs font-medium text-gray-700 mb-2">
+              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Matching sources
               </p>
               <div className="space-y-2">
                 {sources.slice(0, 5).map((s) => (
                   <div
                     key={s.url}
-                    className="rounded-lg border border-gray-200 p-3 text-xs"
+                    className="rounded-lg border border-gray-200 dark:border-gray-800 p-3 text-xs"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
@@ -111,19 +111,19 @@ export default function PlagiarismCheck({
                           href={s.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="block font-medium text-amber-700 hover:underline truncate"
+                          className="block font-medium text-amber-700 dark:text-amber-400 hover:underline truncate"
                           title={s.title || s.url}
                         >
                           {s.title || s.url}
                         </a>
-                        <p className="text-gray-500 truncate">{s.url}</p>
+                        <p className="text-gray-500 dark:text-gray-400 truncate">{s.url}</p>
                       </div>
-                      <span className="shrink-0 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 font-medium">
+                      <span className="shrink-0 px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium">
                         {Math.round(s.similarity_percentage)}%
                       </span>
                     </div>
                     {s.matched_text && (
-                      <p className="mt-2 text-gray-600">
+                      <p className="mt-2 text-gray-600 dark:text-gray-400">
                         {s.matched_text}
                       </p>
                     )}
@@ -132,7 +132,7 @@ export default function PlagiarismCheck({
               </div>
             </div>
           ) : (
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               No matching sources returned.
             </p>
           )}

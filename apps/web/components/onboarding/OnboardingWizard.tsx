@@ -500,8 +500,8 @@ function useOnboardingWizardView({
   const renderDone = () => (
     <div className="space-y-8 text-center">
       <div>
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/40">
-          <CheckIcon className="h-8 w-8 text-green-600" aria-hidden="true" />
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
+          <CheckIcon className="h-8 w-8 text-emerald-600" aria-hidden="true" />
         </div>
         <h2 className="mt-4 text-2xl font-semibold text-gray-900 dark:text-gray-100 font-serif sm:text-3xl">
           You are all set{formData.name ? `, ${formData.name}` : ''}!

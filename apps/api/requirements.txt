@@ -35,7 +35,7 @@ python3-saml>=1.16.0  # SAML 2.0 support
 authlib>=1.7.2  # OIDC/OAuth2 support
 httpx>=0.27.0,<1.0.0  # Async HTTP client for OIDC
 PyJWT>=2.13.0  # JWT token validation
-cryptography>=48.0.1,<49.0.0  # CVE fixes + certificate handling
+cryptography>=50.0.0,<51.0.0  # CVE fixes + certificate handling
 
 # Redis for job storage
 redis>=5.0.0
