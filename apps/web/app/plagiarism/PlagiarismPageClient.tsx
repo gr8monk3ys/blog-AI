@@ -17,7 +17,7 @@ function riskStyles(level: string): { badge: string; label: string; gauge: strin
     case 'none':
       return { badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300', label: 'None', gauge: 'bg-emerald-500' }
     case 'low':
-      return { badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300', label: 'Low', gauge: 'bg-blue-500' }
+      return { badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300', label: 'Low', gauge: 'bg-emerald-500' }
     case 'moderate':
       return { badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300', label: 'Moderate', gauge: 'bg-amber-500' }
     case 'high':
@@ -127,7 +127,7 @@ export default function PlagiarismPageClient() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="flex items-center gap-3 mb-8">
-        <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-amber-100/80 dark:bg-amber-900/40 text-amber-700">
+        <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-amber-100/80 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
           <ShieldCheckIcon className="w-5 h-5" aria-hidden="true" />
         </div>
         <div>

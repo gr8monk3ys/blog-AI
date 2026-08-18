@@ -62,30 +62,30 @@ interface ContentScoreProps {
 function getScoreColor(level: string): string {
   switch (level) {
     case 'excellent':
-      return 'text-emerald-600'
+      return 'text-emerald-600 dark:text-emerald-400'
     case 'good':
-      return 'text-blue-600'
+      return 'text-amber-600 dark:text-amber-400'
     case 'fair':
-      return 'text-amber-600'
+      return 'text-amber-600 dark:text-amber-400'
     case 'poor':
-      return 'text-red-600'
+      return 'text-red-600 dark:text-red-400'
     default:
-      return 'text-gray-600'
+      return 'text-gray-600 dark:text-gray-400'
   }
 }
 
 function getScoreBgColor(level: string): string {
   switch (level) {
     case 'excellent':
-      return 'bg-emerald-100'
+      return 'bg-emerald-100 dark:bg-emerald-900/30'
     case 'good':
-      return 'bg-blue-100'
+      return 'bg-amber-100 dark:bg-amber-900/30'
     case 'fair':
-      return 'bg-amber-100'
+      return 'bg-amber-100 dark:bg-amber-900/30'
     case 'poor':
-      return 'bg-red-100'
+      return 'bg-red-100 dark:bg-red-900/30'
     default:
-      return 'bg-gray-100'
+      return 'bg-gray-100 dark:bg-gray-800'
   }
 }
 
@@ -94,7 +94,7 @@ function getScoreRingColor(level: string): string {
     case 'excellent':
       return 'stroke-emerald-500'
     case 'good':
-      return 'stroke-blue-500'
+      return 'stroke-amber-500'
     case 'fair':
       return 'stroke-amber-500'
     case 'poor':
@@ -131,7 +131,7 @@ function CircularProgress({
             cy={size / 2}
             r={radius}
             strokeWidth={strokeWidth}
-            className="fill-none stroke-gray-200"
+            className="fill-none stroke-gray-200 dark:stroke-gray-700"
           />
           {/* Progress circle */}
           <motion.circle
@@ -156,7 +156,7 @@ function CircularProgress({
           </span>
         </div>
       </div>
-      <span className="mt-2 text-xs font-medium text-gray-600">{label}</span>
+      <span className="mt-2 text-xs font-medium text-gray-600 dark:text-gray-400">{label}</span>
     </div>
   )
 }
@@ -166,7 +166,7 @@ function ScoreIcon({ level }: { level: string }) {
     case 'excellent':
       return <CheckCircleIcon className="w-5 h-5 text-emerald-500" />
     case 'good':
-      return <CheckCircleIcon className="w-5 h-5 text-blue-500" />
+      return <CheckCircleIcon className="w-5 h-5 text-amber-500" />
     case 'fair':
       return <ExclamationTriangleIcon className="w-5 h-5 text-amber-500" />
     case 'poor':
@@ -192,14 +192,14 @@ function DetailSection({
   const [isExpanded, setIsExpanded] = useState(false)
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
+    <div className="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-4 py-3 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors"
+        className="w-full px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
       >
         <div className="flex items-center gap-3">
           <ScoreIcon level={level} />
-          <span className="font-medium text-gray-900">{title}</span>
+          <span className="font-medium text-gray-900 dark:text-gray-100">{title}</span>
           <span
             className={`px-2 py-0.5 rounded-full text-xs font-medium ${getScoreBgColor(level)} ${getScoreColor(level)}`}
           >
@@ -207,9 +207,9 @@ function DetailSection({
           </span>
         </div>
         {isExpanded ? (
-          <ChevronUpIcon className="w-4 h-4 text-gray-500" />
+          <ChevronUpIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
         ) : (
-          <ChevronDownIcon className="w-4 h-4 text-gray-500" />
+          <ChevronDownIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
         )}
       </button>
 
@@ -218,28 +218,28 @@ function DetailSection({
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          className="px-4 py-3 bg-white"
+          className="px-4 py-3 bg-white dark:bg-gray-900"
         >
           {/* Metrics grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
             {metrics.map((metric) => (
               <div key={metric.label} className="text-sm">
-                <span className="text-gray-500">{metric.label}:</span>
-                <span className="ml-1 font-medium text-gray-900">{metric.value}</span>
+                <span className="text-gray-500 dark:text-gray-400">{metric.label}:</span>
+                <span className="ml-1 font-medium text-gray-900 dark:text-gray-100">{metric.value}</span>
               </div>
             ))}
           </div>
 
           {/* Suggestions */}
           {suggestions.length > 0 && (
-            <div className="border-t border-gray-100 pt-3">
+            <div className="border-t border-gray-100 dark:border-gray-800 pt-3">
               <div className="flex items-center gap-1.5 mb-2">
                 <LightBulbIcon className="w-4 h-4 text-amber-500" />
-                <span className="text-xs font-medium text-gray-700">Suggestions</span>
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Suggestions</span>
               </div>
               <ul className="space-y-1.5">
                 {suggestions.map((suggestion, idx) => (
-                  <li key={idx} className="text-sm text-gray-600 flex items-start gap-2">
+                  <li key={idx} className="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2">
                     <span className="text-amber-500 mt-0.5">-</span>
                     <span>{suggestion}</span>
                   </li>
@@ -260,10 +260,10 @@ export default function ContentScore({
 }: ContentScoreProps) {
   if (isLoading) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600" />
-          <span className="ml-3 text-sm text-gray-600">Analyzing content...</span>
+          <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">Analyzing content...</span>
         </div>
       </div>
     )
@@ -297,14 +297,14 @@ export default function ContentScore({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-white rounded-xl border border-gray-200 overflow-hidden"
+      className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden"
     >
       {/* Header with overall score */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-6 border-b border-gray-200 dark:border-gray-800">
         <div className="flex items-start justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Content Score</h3>
-            <p className="mt-1 text-sm text-gray-600">{scores.summary}</p>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Content Score</h3>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{scores.summary}</p>
           </div>
           <CircularProgress
             score={scores.overall_score}
@@ -316,7 +316,7 @@ export default function ContentScore({
         </div>
 
         {/* Score breakdown circles */}
-        <div className="flex justify-center gap-8 mt-6 pt-4 border-t border-gray-100">
+        <div className="flex justify-center gap-8 mt-6 pt-4 border-t border-gray-100 dark:border-gray-800">
           <CircularProgress
             score={scores.readability.score}
             level={scores.readability.level}
@@ -343,14 +343,14 @@ export default function ContentScore({
 
       {/* Top improvements */}
       {scores.top_improvements && scores.top_improvements.length > 0 && (
-        <div className="px-6 py-4 bg-amber-50 border-b border-amber-100">
+        <div className="px-6 py-4 bg-amber-50 dark:bg-amber-900/30 border-b border-amber-100 dark:border-amber-900/50">
           <div className="flex items-center gap-2 mb-2">
-            <LightBulbIcon className="w-5 h-5 text-amber-600" />
-            <span className="font-medium text-amber-900">Priority Improvements</span>
+            <LightBulbIcon className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            <span className="font-medium text-amber-900 dark:text-amber-300">Priority Improvements</span>
           </div>
           <ul className="space-y-1.5">
             {scores.top_improvements.map((improvement, idx) => (
-              <li key={idx} className="text-sm text-amber-800 flex items-start gap-2">
+              <li key={idx} className="text-sm text-amber-800 dark:text-amber-200 flex items-start gap-2">
                 <span className="font-medium">{idx + 1}.</span>
                 <span>{improvement}</span>
               </li>

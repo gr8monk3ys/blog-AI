@@ -30,29 +30,29 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   return (
     <>
       <SiteHeader />
-      <main className="min-h-screen bg-gradient-to-b from-neutral-50 via-white to-neutral-100">
+      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
 
-      <header className="border-b border-neutral-200 bg-white">
+      <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Link href="/blog" className="text-xs text-neutral-500 hover:text-amber-700">
+          <Link href="/blog" className="text-xs text-gray-500 dark:text-gray-400 hover:text-amber-700 dark:hover:text-amber-300">
             Back to blog
           </Link>
-          <h1 className="mt-3 text-3xl sm:text-4xl font-semibold text-neutral-900 font-serif">
+          <h1 className="mt-3 text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
             {post.title}
           </h1>
-          <div className="mt-2 text-xs text-neutral-500">{formatDisplayDate(post.date)}</div>
+          <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">{formatDisplayDate(post.date)}</div>
         </div>
       </header>
 
       <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="space-y-6 text-neutral-700">{renderMarkdownBlocks(post.body)}</div>
+        <div className="space-y-6 text-gray-700 dark:text-gray-300">{renderMarkdownBlocks(post.body)}</div>
 
         {post.tags.length > 0 && (
           <div className="mt-8 flex flex-wrap gap-2">
             {post.tags.map((tag) => (
               <span
                 key={tag}
-                className="text-xs px-2 py-1 rounded-full bg-neutral-100 text-neutral-600"
+                className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
               >
                 {tag}
               </span>
@@ -73,21 +73,21 @@ function renderMarkdownBlocks(body: string) {
   return blocks.map((block, index) => {
     if (block.startsWith('# ')) {
       return (
-        <h2 key={index} className="text-2xl font-semibold text-neutral-900 font-serif">
+        <h2 key={index} className="text-2xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
           {block.replace(/^# /, '').trim()}
         </h2>
       )
     }
     if (block.startsWith('## ')) {
       return (
-        <h3 key={index} className="text-xl font-semibold text-neutral-900 font-serif">
+        <h3 key={index} className="text-xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
           {block.replace(/^## /, '').trim()}
         </h3>
       )
     }
     if (block.startsWith('### ')) {
       return (
-        <h4 key={index} className="text-lg font-semibold text-neutral-900 font-serif">
+        <h4 key={index} className="text-lg font-semibold text-gray-900 dark:text-gray-100 font-serif">
           {block.replace(/^### /, '').trim()}
         </h4>
       )
@@ -97,7 +97,7 @@ function renderMarkdownBlocks(body: string) {
     const isList = lines.length > 1 && lines.every((line) => line.startsWith('- '))
     if (isList) {
       return (
-        <ul key={index} className="list-disc list-inside space-y-1 text-sm text-neutral-600">
+        <ul key={index} className="list-disc list-inside space-y-1 text-sm text-gray-600 dark:text-gray-400">
           {lines.map((line, listIndex) => (
             <li key={listIndex}>{line.replace(/^- /, '')}</li>
           ))}
@@ -106,7 +106,7 @@ function renderMarkdownBlocks(body: string) {
     }
 
     return (
-      <p key={index} className="text-sm text-neutral-600">
+      <p key={index} className="text-sm text-gray-600 dark:text-gray-400">
         {block.replace(/\n+/g, ' ')}
       </p>
     )

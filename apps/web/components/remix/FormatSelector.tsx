@@ -42,10 +42,10 @@ function FormatSelectorComponent({
   onTransform,
 }: FormatSelectorProps) {
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
-      <h2 className="text-lg font-semibold mb-4">
+    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-6">
+      <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
         Select Target Formats
-        <span className="text-sm font-normal text-gray-500 ml-2">
+        <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
           ({selectedFormats.length}/6 selected)
         </span>
       </h2>
@@ -63,8 +63,8 @@ function FormatSelectorComponent({
               whileTap={{ scale: 0.98 }}
               className={`p-4 rounded-lg text-left transition-all ${
                 isSelected
-                  ? 'bg-blue-50 border-2 border-blue-500'
-                  : 'bg-gray-50 border-2 border-transparent hover:border-gray-200'
+                  ? 'bg-amber-50 dark:bg-amber-900/30 border-2 border-amber-500'
+                  : 'bg-gray-50 dark:bg-gray-800/50 border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700'
               }`}
             >
               <div className="flex items-center gap-2">
@@ -72,12 +72,12 @@ function FormatSelectorComponent({
                   {FORMAT_ICONS[format.format] || '(doc)'}
                 </span>
                 <div>
-                  <p className="font-medium">{format.name}</p>
-                  <p className="text-xs text-gray-500">{format.platform}</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">{format.name}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{format.platform}</p>
                 </div>
               </div>
               {preview && (
-                <p className="mt-2 text-xs text-gray-600 line-clamp-2">
+                <p className="mt-2 text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
                   {preview.sample_hook}
                 </p>
               )}
@@ -89,7 +89,7 @@ function FormatSelectorComponent({
       <button
         onClick={onTransform}
         disabled={isTransforming || selectedFormats.length === 0}
-        className="w-full mt-6 py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium"
+        className="w-full mt-6 py-3 px-4 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors font-medium"
       >
         {isTransforming ? (
           <span className="flex items-center justify-center gap-2">

@@ -277,7 +277,7 @@ export default function PricingPage() {
                 }`}
               >
                 Yearly
-                <span className="ml-1 text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">
+                <span className="ml-1 text-xs bg-emerald-500 text-white px-2 py-0.5 rounded-full">
                   Save 17%
                 </span>
               </button>
@@ -293,9 +293,9 @@ export default function PricingPage() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-xl text-center"
+            className="mb-6 p-4 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl text-center"
           >
-            <p className="text-green-700 dark:text-green-400">{success}</p>
+            <p className="text-emerald-700 dark:text-emerald-400">{success}</p>
           </motion.div>
         )}
         {error && (
@@ -327,7 +327,7 @@ export default function PricingPage() {
                   isPopular
                     ? 'border-amber-500'
                     : tier.id === currentTier
-                    ? 'border-green-500'
+                    ? 'border-emerald-500'
                     : 'border-gray-200 dark:border-gray-800'
                 }`}
               >
@@ -343,7 +343,7 @@ export default function PricingPage() {
                 {/* Current plan badge */}
                 {tier.id === currentTier && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <span className="bg-green-500 text-white text-sm font-medium px-4 py-1 rounded-full">
+                    <span className="bg-emerald-500 text-white text-sm font-medium px-4 py-1 rounded-full">
                       Current Plan
                     </span>
                   </div>
@@ -440,7 +440,7 @@ export default function PricingPage() {
                     <ul className="space-y-3">
                       {tier.features.map((feature) => (
                         <li key={feature} className="flex items-start gap-3">
-                          <CheckIcon className="w-5 h-5 text-green-500 flex-shrink-0" />
+                          <CheckIcon className="w-5 h-5 text-emerald-500 flex-shrink-0" />
                           <span className="text-sm text-gray-600 dark:text-gray-400">{feature}</span>
                         </li>
                       ))}
@@ -496,21 +496,21 @@ export default function PricingPage() {
                       <td className="py-4 pr-8 text-sm text-gray-600 dark:text-gray-400">{feature.name}</td>
                       <td className="py-4 px-4 text-center">
                         {feature.free ? (
-                          <CheckIcon className="w-5 h-5 text-green-500 mx-auto" />
+                          <CheckIcon className="w-5 h-5 text-emerald-500 mx-auto" />
                         ) : (
                           <XMarkIcon className="w-5 h-5 text-gray-300 dark:text-gray-600 mx-auto" />
                         )}
                       </td>
                       <td className="py-4 px-4 text-center">
                         {feature.starter ? (
-                          <CheckIcon className="w-5 h-5 text-green-500 mx-auto" />
+                          <CheckIcon className="w-5 h-5 text-emerald-500 mx-auto" />
                         ) : (
                           <XMarkIcon className="w-5 h-5 text-gray-300 dark:text-gray-600 mx-auto" />
                         )}
                       </td>
                       <td className="py-4 px-4 text-center">
                         {feature.pro ? (
-                          <CheckIcon className="w-5 h-5 text-green-500 mx-auto" />
+                          <CheckIcon className="w-5 h-5 text-emerald-500 mx-auto" />
                         ) : (
                           <XMarkIcon className="w-5 h-5 text-gray-300 dark:text-gray-600 mx-auto" />
                         )}

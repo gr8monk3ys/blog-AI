@@ -67,7 +67,7 @@ export default function SearchTab({ documents }: SearchTabProps) {
   }
 
   const scoreColor = (score: number) => {
-    if (score >= 0.9) return 'bg-green-500'
+    if (score >= 0.9) return 'bg-emerald-500'
     if (score >= 0.8) return 'bg-amber-500'
     return 'bg-gray-400'
   }

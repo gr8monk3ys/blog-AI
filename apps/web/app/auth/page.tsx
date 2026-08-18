@@ -17,19 +17,19 @@ export default function AuthPage() {
   return (
     <>
       <SiteHeader />
-      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
 
       <section className="py-14 sm:py-20">
         <div className="max-w-lg mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 sm:p-8">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm p-6 sm:p-8">
             {publishableKey ? (
               <SignIn routing="path" path="/auth" signUpUrl="/sign-up" />
             ) : (
               <div className="text-center space-y-4">
-                <h1 className="text-xl font-semibold text-gray-900">
+                <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                   No sign-in required
                 </h1>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   This deployment runs without authentication, so the full
                   workspace is open. Jump straight in — no account needed.
                 </p>

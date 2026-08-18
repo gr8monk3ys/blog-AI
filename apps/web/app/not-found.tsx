@@ -18,14 +18,14 @@ export default function NotFound() {
 
   return (
     <main
-      className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100"
+      className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900"
       role="main"
       aria-labelledby="not-found-title"
     >
       <div className="text-center px-4 py-16 max-w-lg">
         {/* Status Code */}
         <p
-          className="text-8xl font-bold text-gray-200 select-none"
+          className="text-8xl font-bold text-gray-200 dark:text-gray-800 select-none"
           aria-hidden="true"
         >
           404
@@ -34,13 +34,13 @@ export default function NotFound() {
         {/* Title */}
         <h1
           id="not-found-title"
-          className="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl"
+          className="mt-4 text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100 sm:text-4xl"
         >
           Page not found
         </h1>
 
         {/* Description */}
-        <p className="mt-4 text-base leading-7 text-gray-600">
+        <p className="mt-4 text-base leading-7 text-gray-600 dark:text-gray-400">
           Sorry, we could not find the page you are looking for. It may have
           been moved, deleted, or the URL might be incorrect.
         </p>
@@ -49,7 +49,7 @@ export default function NotFound() {
         <nav className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
             href="/"
-            className="inline-flex items-center justify-center rounded-md bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-colors"
+            className="inline-flex items-center justify-center rounded-md bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-amber-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600 transition-colors"
           >
             <svg
               className="mr-2 h-4 w-4"
@@ -71,7 +71,7 @@ export default function NotFound() {
           <button
             type="button"
             onClick={() => router.back()}
-            className="inline-flex items-center justify-center rounded-md bg-white px-5 py-2.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600 transition-colors"
+            className="inline-flex items-center justify-center rounded-md bg-white dark:bg-gray-800 px-5 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600 transition-colors"
           >
             <svg
               className="mr-2 h-4 w-4"
@@ -92,11 +92,11 @@ export default function NotFound() {
         </nav>
 
         {/* Help Text */}
-        <p className="mt-10 text-sm text-gray-500">
+        <p className="mt-10 text-sm text-gray-500 dark:text-gray-400">
           If you believe this is a mistake, please{' '}
           <a
             href={`mailto:${SUPPORT_EMAIL}`}
-            className="text-blue-600 hover:text-blue-500 underline underline-offset-2"
+            className="text-amber-600 hover:text-amber-500 dark:text-amber-400 dark:hover:text-amber-300 underline underline-offset-2"
           >
             contact support
           </a>

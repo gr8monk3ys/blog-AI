@@ -41,15 +41,15 @@ export default function Error({
 
   return (
     <main
-      className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4"
+      className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 px-4"
       role="main"
       aria-labelledby="error-title"
     >
-      <div className="bg-white p-8 rounded-xl shadow-lg text-center max-w-lg w-full">
+      <div className="bg-white dark:bg-gray-900 p-8 rounded-xl shadow-lg text-center max-w-lg w-full">
         {/* Error Icon */}
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 mb-6">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30 mb-6">
           <svg
-            className="h-8 w-8 text-red-600"
+            className="h-8 w-8 text-red-600 dark:text-red-400"
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth={1.5}
@@ -67,13 +67,13 @@ export default function Error({
         {/* Title */}
         <h1
           id="error-title"
-          className="text-2xl font-bold text-gray-900 mb-3"
+          className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3"
         >
           Something went wrong
         </h1>
 
         {/* Description */}
-        <p className="text-gray-600 mb-6 leading-relaxed">
+        <p className="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
           We encountered an unexpected error while processing your request.
           Our team has been notified and is working to resolve the issue.
         </p>
@@ -81,7 +81,7 @@ export default function Error({
         {/* Error ID for support reference */}
         {error.digest && (
           <div
-            className="bg-gray-50 rounded-lg px-4 py-3 mb-6 text-sm text-gray-500 font-mono"
+            className="bg-gray-50 dark:bg-gray-800/50 rounded-lg px-4 py-3 mb-6 text-sm text-gray-500 dark:text-gray-400 font-mono"
             aria-label="Error reference ID"
           >
             Error ID: {error.digest}
@@ -92,7 +92,7 @@ export default function Error({
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={() => reset()}
-            className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-blue-600 text-white font-semibold shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-colors"
+            className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-amber-600 text-white font-semibold shadow-sm hover:bg-amber-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600 transition-colors"
             type="button"
           >
             <svg
@@ -114,7 +114,7 @@ export default function Error({
 
           <Link
             href="/"
-            className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-white text-gray-900 font-semibold shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600 transition-colors"
+            className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-semibold shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600 transition-colors"
           >
             <svg
               className="mr-2 h-4 w-4"
@@ -135,11 +135,11 @@ export default function Error({
         </div>
 
         {/* Help Text */}
-        <p className="mt-8 text-sm text-gray-500">
+        <p className="mt-8 text-sm text-gray-500 dark:text-gray-400">
           Need help?{' '}
           <a
             href={`mailto:${SUPPORT_EMAIL}`}
-            className="text-blue-600 hover:text-blue-500 underline underline-offset-2"
+            className="text-amber-600 hover:text-amber-500 dark:text-amber-400 dark:hover:text-amber-300 underline underline-offset-2"
           >
             Contact support
           </a>

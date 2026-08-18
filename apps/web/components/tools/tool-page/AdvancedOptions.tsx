@@ -39,13 +39,13 @@ export default function AdvancedOptions({
   onProviderTypeChange,
 }: AdvancedOptionsProps) {
   return (
-    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 border border-gray-200 dark:border-gray-800">
       <div className="flex items-center mb-3">
         <LightBulbIcon
-          className="h-4 w-4 text-amber-600 mr-2"
+          className="h-4 w-4 text-amber-600 dark:text-amber-400 mr-2"
           aria-hidden="true"
         />
-        <h3 className="text-sm font-medium text-gray-700">Advanced Options</h3>
+        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Advanced Options</h3>
       </div>
 
       <div className="space-y-4">
@@ -56,7 +56,7 @@ export default function AdvancedOptions({
             onChange={onUseResearchChange}
             aria-label="Use web research"
             className={`${
-              useResearch ? 'bg-amber-600' : 'bg-gray-200'
+              useResearch ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
             } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
           >
             <span
@@ -66,7 +66,7 @@ export default function AdvancedOptions({
               } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
             />
           </Switch>
-          <span className="text-sm text-gray-700">
+          <span className="text-sm text-gray-700 dark:text-gray-300">
             Use web research for better results
           </span>
         </div>
@@ -79,7 +79,7 @@ export default function AdvancedOptions({
               onChange={onGenerateVariationsChange}
               aria-label="Generate variations"
               className={`${
-                generateVariations ? 'bg-amber-600' : 'bg-gray-200'
+                generateVariations ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
               } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
             >
               <span
@@ -90,8 +90,8 @@ export default function AdvancedOptions({
               />
             </Switch>
             <div className="flex items-center gap-2">
-              <BeakerIcon className="w-4 h-4 text-amber-600" />
-              <span className="text-sm text-gray-700">
+              <BeakerIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              <span className="text-sm text-gray-700 dark:text-gray-300">
                 Generate variations for A/B testing
               </span>
             </div>
@@ -100,7 +100,7 @@ export default function AdvancedOptions({
             <select
               value={variationCount}
               onChange={(e) => onVariationCountChange(Number(e.target.value))}
-              className="text-sm rounded-md border-gray-300 focus:border-amber-500 focus:ring-amber-500"
+              className="text-sm rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:border-amber-500 focus:ring-amber-500"
             >
               <option value={2}>2 versions</option>
               <option value={3}>3 versions</option>
@@ -112,9 +112,9 @@ export default function AdvancedOptions({
         <div>
           <label
             htmlFor="keywords"
-            className="flex items-center gap-2 text-sm text-gray-700 mb-1"
+            className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 mb-1"
           >
-            <ChartBarIcon className="w-4 h-4 text-amber-600" />
+            <ChartBarIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
             Keywords for SEO scoring (comma-separated)
           </label>
           <input
@@ -123,7 +123,7 @@ export default function AdvancedOptions({
             value={keywords}
             onChange={(e) => onKeywordsChange(e.target.value)}
             placeholder="e.g., AI, machine learning, technology"
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+            className="block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
           />
         </div>
 
@@ -131,7 +131,7 @@ export default function AdvancedOptions({
         <div>
           <label
             htmlFor="provider"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
             Model Provider
           </label>
@@ -139,7 +139,7 @@ export default function AdvancedOptions({
             id="provider"
             value={providerType}
             onChange={(e) => onProviderTypeChange(e.target.value as LlmProviderType)}
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+            className="block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
             disabled={(availableProviders || []).length <= 1}
           >
             {(availableProviders || []).map((p) => (
@@ -148,7 +148,7 @@ export default function AdvancedOptions({
               </option>
             ))}
           </select>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             Uses whichever providers are configured on the server.
           </p>
         </div>

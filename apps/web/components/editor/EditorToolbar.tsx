@@ -329,7 +329,7 @@ export default function EditorToolbar({
 
   return (
     <div
-      className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg"
+      className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg"
       role="toolbar"
       aria-label="Text formatting"
     >
@@ -343,7 +343,7 @@ export default function EditorToolbar({
             disabled={isDisabled(btn.action)}
             aria-label={btn.label}
             title={btn.shortcutDisplay ? `${btn.label} (${btn.shortcutDisplay})` : btn.label}
-            className="inline-flex items-center justify-center w-8 h-8 rounded-md text-gray-600 hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1 disabled:opacity-40 disabled:pointer-events-none transition-colors"
           >
             {btn.icon}
           </button>
@@ -351,7 +351,7 @@ export default function EditorToolbar({
       </div>
 
       {/* Separator */}
-      <div className="hidden sm:block w-px h-5 bg-gray-300 mx-1" aria-hidden="true" />
+      <div className="hidden sm:block w-px h-5 bg-gray-300 dark:bg-gray-700 mx-1" aria-hidden="true" />
 
       {/* Undo / Redo */}
       <div className="flex items-center gap-0.5">
@@ -363,7 +363,7 @@ export default function EditorToolbar({
             disabled={isDisabled(btn.action)}
             aria-label={btn.label}
             title={btn.shortcutDisplay ? `${btn.label} (${btn.shortcutDisplay})` : btn.label}
-            className="inline-flex items-center justify-center w-8 h-8 rounded-md text-gray-600 hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1 disabled:opacity-40 disabled:pointer-events-none transition-colors"
           >
             {btn.icon}
           </button>

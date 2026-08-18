@@ -33,22 +33,22 @@ const variantConfig: Record<
 > = {
   danger: {
     icon: ExclamationCircleIcon,
-    iconBgColor: 'bg-red-100',
-    iconColor: 'text-red-600',
+    iconBgColor: 'bg-red-100 dark:bg-red-900/30',
+    iconColor: 'text-red-600 dark:text-red-400',
     confirmButtonColor: 'bg-red-600',
     confirmButtonHoverColor: 'hover:bg-red-700',
   },
   warning: {
     icon: ExclamationTriangleIcon,
-    iconBgColor: 'bg-amber-100',
-    iconColor: 'text-amber-600',
+    iconBgColor: 'bg-amber-100 dark:bg-amber-900/30',
+    iconColor: 'text-amber-600 dark:text-amber-400',
     confirmButtonColor: 'bg-amber-600',
     confirmButtonHoverColor: 'hover:bg-amber-700',
   },
   info: {
     icon: InformationCircleIcon,
-    iconBgColor: 'bg-amber-100',
-    iconColor: 'text-amber-600',
+    iconBgColor: 'bg-amber-100 dark:bg-amber-900/30',
+    iconColor: 'text-amber-600 dark:text-amber-400',
     confirmButtonColor: 'bg-amber-600',
     confirmButtonHoverColor: 'hover:bg-amber-700',
   },
@@ -126,7 +126,7 @@ export default function ConfirmModal({
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel
-                className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all"
+                className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-gray-800 p-6 text-left align-middle shadow-xl transition-all"
               >
                 <div className="flex items-start gap-4">
                   {/* Icon */}
@@ -143,12 +143,12 @@ export default function ConfirmModal({
                   <div className="flex-1 min-w-0">
                     <Dialog.Title
                       as="h3"
-                      className="text-lg font-semibold leading-6 text-gray-900"
+                      className="text-lg font-semibold leading-6 text-gray-900 dark:text-gray-100"
                     >
                       {title}
                     </Dialog.Title>
 
-                    <Dialog.Description className="mt-2 text-sm text-gray-600">
+                    <Dialog.Description className="mt-2 text-sm text-gray-600 dark:text-gray-400">
                       {message}
                     </Dialog.Description>
                   </div>
@@ -160,7 +160,7 @@ export default function ConfirmModal({
                     ref={cancelButtonRef}
                     type="button"
                     onClick={onClose}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
                   >
                     {cancelLabel}
                   </button>
@@ -168,7 +168,7 @@ export default function ConfirmModal({
                     ref={confirmButtonRef}
                     type="button"
                     onClick={onConfirm}
-                    className={`px-4 py-2 text-sm font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors ${config.confirmButtonColor} ${config.confirmButtonHoverColor} focus:ring-${variant === 'danger' ? 'red' : variant === 'warning' ? 'amber' : 'indigo'}-500`}
+                    className={`px-4 py-2 text-sm font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors ${config.confirmButtonColor} ${config.confirmButtonHoverColor} ${variant === 'danger' ? 'focus:ring-red-500' : 'focus:ring-amber-500'}`}
                   >
                     {confirmLabel}
                   </button>

@@ -244,7 +244,7 @@ export default function Home(): React.ReactElement {
           <RevealSection className="text-center mt-10">
             <Link
               href="/tool-directory"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-600 hover:text-amber-700 transition-colors"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
             >
               Browse the full directory
               <ArrowRightIcon className="w-3.5 h-3.5" aria-hidden="true" />
@@ -310,7 +310,7 @@ export default function Home(): React.ReactElement {
           <RevealSection className="text-center mt-10">
             <Link
               href="/pricing"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-600 hover:text-amber-700 transition-colors"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
             >
               Compare all features in detail
               <ArrowRightIcon className="w-3.5 h-3.5" aria-hidden="true" />
@@ -405,7 +405,7 @@ function FeatureGrid(): React.ReactElement {
             transition={{ duration: 0.5 }}
             className="glass-card rounded-2xl p-8 hover:shadow-lg transition-shadow"
           >
-            <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-amber-100/80 dark:bg-amber-900/40 text-amber-700 mb-5">
+            <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-amber-100/80 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 mb-5">
               <Icon className="w-5 h-5" aria-hidden="true" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
@@ -524,7 +524,7 @@ function CapabilitiesShowcase(): React.ReactElement {
             className="glass-card rounded-2xl p-6 sm:p-8"
           >
             <div className="flex items-start gap-4">
-              <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-amber-100/80 dark:bg-amber-900/40 text-amber-700 flex-shrink-0">
+              <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-amber-100/80 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 flex-shrink-0">
                 <Icon className="w-5 h-5" aria-hidden="true" />
               </div>
               <div className="flex-1 min-w-0">
