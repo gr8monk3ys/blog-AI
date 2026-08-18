@@ -129,9 +129,16 @@ class ConversationStore:
         Returns:
             Path to the conversation JSON file.
         """
-        # Sanitize conversation_id to prevent path traversal
+        # Sanitize conversation_id to prevent path traversal, then verify the
+        # resolved path stays inside the storage directory.
         safe_id = re.sub(r"[^a-zA-Z0-9_-]", "", conversation_id)
-        return self.storage_dir / f"{safe_id}.json"
+        if not safe_id:
+            raise ValueError("Invalid conversation id")
+        base = Path(self.storage_dir).resolve()
+        path = (base / f"{safe_id}.json").resolve()
+        if base not in path.parents:
+            raise ValueError("Invalid conversation id")
+        return path
 
     def get(self, conversation_id: str) -> List[Dict[str, Any]]:
         """

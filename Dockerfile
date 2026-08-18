@@ -53,6 +53,11 @@ WORKDIR /app
 COPY --from=backend /app /app
 COPY --from=backend /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 
+# Drop pip and build tooling from the runtime image — nothing installs
+# packages at runtime, and every pip release vendors msgpack/setuptools
+# copies with known CVEs.
+RUN python -m pip uninstall -y poetry pip 2>/dev/null || true
+
 # Copy built frontend from frontend-build stage
 COPY --from=frontend-build /app/apps/web/.next /app/.next
 COPY --from=frontend-build /app/apps/web/public /app/public

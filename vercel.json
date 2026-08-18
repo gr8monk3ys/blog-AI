@@ -1,6 +1,6 @@
 {
   "buildCommand": "BROWSERSLIST_IGNORE_OLD_DATA=1 npm run build",
-  "installCommand": "npm install",
+  "installCommand": "rm -rf apps/web/node_modules && npm install",
   "outputDirectory": "apps/web/.next",
   "framework": "nextjs"
 }
