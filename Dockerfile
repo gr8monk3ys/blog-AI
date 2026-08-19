@@ -2,18 +2,15 @@ FROM python:3.12-slim@sha256:f3fa41d74a768c2fce8016b98c191ae8c1bacd8f1152870a3f9
 
 WORKDIR /app
 
-# Keep the base image's pip current — it vendors msgpack and setuptools'
-# pkg_resources, and stale vendored copies ship known CVEs.
-RUN pip install --no-cache-dir --upgrade pip && pip install poetry
+COPY --from=ghcr.io/astral-sh/uv:0.10.0 /uv /uvx /bin/
 
-# Copy Poetry configuration files
-COPY apps/api/pyproject.toml apps/api/poetry.lock* ./
+# uv installs the locked dependencies into /opt/venv (no pip in the venv)
+ENV UV_PROJECT_ENVIRONMENT=/opt/venv \
+    UV_PYTHON_DOWNLOADS=never \
+    UV_COMPILE_BYTECODE=1
 
-# Configure Poetry to not create a virtual environment
-RUN poetry config virtualenvs.create false
-
-# Install dependencies only (--no-root skips installing the project itself)
-RUN poetry install --only main --no-root
+COPY apps/api/pyproject.toml apps/api/uv.lock ./
+RUN uv sync --locked --no-dev
 
 # Copy backend code
 COPY apps/api/src/ ./src/
@@ -49,14 +46,15 @@ FROM python:3.12-slim@sha256:f3fa41d74a768c2fce8016b98c191ae8c1bacd8f1152870a3f9
 
 WORKDIR /app
 
-# Copy backend from the backend stage
+# Copy backend code and its locked venv from the backend stage
 COPY --from=backend /app /app
-COPY --from=backend /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=backend /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Drop pip and build tooling from the runtime image — nothing installs
+# Drop the base image's pip from the runtime image — nothing installs
 # packages at runtime, and every pip release vendors msgpack/setuptools
-# copies with known CVEs.
-RUN python -m pip uninstall -y poetry pip 2>/dev/null || true
+# copies with known CVEs. (The uv-built venv contains no pip at all.)
+RUN python -m pip uninstall -y pip 2>/dev/null || true
 
 # Copy built frontend from frontend-build stage
 COPY --from=frontend-build /app/apps/web/.next /app/.next

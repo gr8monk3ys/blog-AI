@@ -2,13 +2,19 @@ FROM python:3.12-slim@sha256:f3fa41d74a768c2fce8016b98c191ae8c1bacd8f1152870a3f9
 
 WORKDIR /app
 
+COPY --from=ghcr.io/astral-sh/uv:0.10.0 /uv /uvx /bin/
+
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app
+    PYTHONPATH=/app \
+    UV_PROJECT_ENVIRONMENT=/opt/venv \
+    UV_PYTHON_DOWNLOADS=never \
+    UV_COMPILE_BYTECODE=1 \
+    PATH="/opt/venv/bin:$PATH"
 
-COPY requirements.txt ./
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# Install locked dependencies into /opt/venv (the venv contains no pip)
+COPY pyproject.toml uv.lock ./
+RUN uv sync --locked --no-dev
 
 COPY app/ ./app/
 COPY src/ ./src/
@@ -18,4 +24,3 @@ EXPOSE 8000
 
 # Railway sets $PORT. UVICORN_WORKERS can be set via env.
 CMD ["sh", "-c", "python -m uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000} --workers ${UVICORN_WORKERS:-1}"]
-
