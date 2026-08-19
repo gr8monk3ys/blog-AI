@@ -27,11 +27,10 @@ bun run audit:runtime    # Runtime audit policy
 
 ```bash
 cd apps/api
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-python server.py                    # Start FastAPI on :8000
-pytest -q                           # Run all backend tests
-pytest tests/test_ci_smoke.py -q    # Quick smoke tests only
+uv sync                                    # Install deps into .venv from uv.lock
+uv run python server.py                    # Start FastAPI on :8000
+uv run pytest -q                           # Run all backend tests
+uv run pytest tests/test_ci_smoke.py -q    # Quick smoke tests only
 ```
 
 From repo root:
@@ -50,10 +49,10 @@ cd apps/web && bunx vitest run tests/lib/api.test.ts
 cd apps/web && bunx playwright test e2e/navigation.spec.ts
 
 # Backend (pytest) — single file
-cd apps/api && pytest tests/test_blog.py -q
+cd apps/api && uv run pytest tests/test_blog.py -q
 
 # Backend — single test function
-cd apps/api && pytest tests/test_blog.py::test_function_name -q
+cd apps/api && uv run pytest tests/test_blog.py::test_function_name -q
 ```
 
 ### Pre-PR checks
@@ -133,9 +132,9 @@ The frontend uses `NEXT_PUBLIC_API_URL` (default `http://localhost:8000` in dev)
 
 ## Conventions
 
-- **Package manager**: Bun for the frontend workspace. Python pip/poetry for the backend.
+- **Package manager**: Bun for the frontend workspace. **uv** for the backend (`apps/api/pyproject.toml` + `uv.lock` are the single source of truth; there is no requirements.txt).
 - **Commit messages**: Conventional prefixes (`feat:`, `fix:`, `docs:`, `chore:`).
-- **Python formatting**: Black (line-length 88) + isort (black profile) + Ruff. Pre-commit hooks enforce this.
+- **Python formatting/linting**: Ruff only (line-length 88, `ruff format` + `ruff check`, configured in `apps/api/pyproject.toml`). Black and isort are retired. Pre-commit runs the ruff hooks on changed files; note the repo carries pre-existing ruff debt in unchanged files (the required `precommit` CI check runs only hygiene hooks, not ruff).
 - **TypeScript linting**: ESLint flat config (`eslint.config.mjs`) with `@typescript-eslint`, Next.js core-web-vitals, and react-hooks rules. `no-explicit-any` is warn-level.
 - **Testing**: Vitest (jsdom) for frontend unit tests, Playwright for E2E, pytest for backend. Frontend coverage uses `all: true` (measures every source file) with a **ratchet floor** set to the current real baseline (~10%) that only moves up toward the branches 70% / functions+lines+statements 85% target — never lower the thresholds to make a build pass (see `docs/REMEDIATION_PLAN.md`).
 - **Turbopack**: Default bundler in dev. E2E tests use `--webpack` flag for stability.

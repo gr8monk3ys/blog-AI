@@ -72,10 +72,8 @@ Minimum local values:
 
 ```bash
 cd apps/api
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python server.py
+uv sync                  # installs Python 3.12 deps into .venv from uv.lock
+uv run python server.py
 ```
 
 ### 4. Start the web app
