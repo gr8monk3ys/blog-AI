@@ -29,16 +29,15 @@ jobs:
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
-          cache-dependency-path: apps/api/requirements.txt
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt pip-audit
+      - name: Set up uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
+      - name: Export locked runtime dependencies
+        run: uv export --locked --no-dev --no-hashes --format requirements-txt -o /tmp/requirements-audit.txt
 
       - name: Run pip-audit
-        run: pip-audit --strict --desc
+        run: uvx --python "$PYTHON_VERSION" pip-audit --strict --desc --no-deps -r /tmp/requirements-audit.txt
 
   bun-audit:
     name: Frontend Dependency Audit

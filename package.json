@@ -27,9 +27,9 @@
     "test:e2e:coverage": "bun run --cwd apps/web test:e2e:coverage",
     "test:e2e:ui": "bun run --cwd apps/web test:e2e:ui",
     "test:e2e:headed": "bun run --cwd apps/web test:e2e:headed",
-    "test:api:smoke": "pytest apps/api/tests/test_ci_smoke.py apps/api/tests/test_feature_smoke.py -q",
-    "test:api:blocking": "pytest apps/api/tests/test_feature_smoke.py apps/api/tests/test_routes_health.py -q",
-    "test:api:full": "pytest apps/api/tests -q"
+    "test:api:smoke": "cd apps/api && uv run pytest tests/test_ci_smoke.py tests/test_feature_smoke.py -q",
+    "test:api:blocking": "cd apps/api && uv run pytest tests/test_feature_smoke.py tests/test_routes_health.py -q",
+    "test:api:full": "cd apps/api && uv run pytest tests -q"
   },
   "overrides": {
     "glob": "^13.0.6",

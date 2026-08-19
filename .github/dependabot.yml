@@ -1,7 +1,7 @@
 version: 2
 updates:
-  # Backend Python dependencies
-  - package-ecosystem: "pip"
+  # Backend Python dependencies (uv.lock + pyproject.toml)
+  - package-ecosystem: "uv"
     directory: "/apps/api"
     schedule:
       interval: "weekly"

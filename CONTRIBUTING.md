@@ -22,10 +22,8 @@ Start the backend:
 
 ```bash
 cd apps/api
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python server.py
+uv sync                  # installs Python 3.12 deps into .venv from uv.lock
+uv run python server.py
 ```
 
 Start the web app from the repository root:
@@ -50,7 +48,7 @@ For backend changes, also run:
 
 ```bash
 bun run test:api:smoke
-cd apps/api && pytest -q
+cd apps/api && uv run pytest -q
 ```
 
 For UI or user-flow changes, also run:
