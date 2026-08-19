@@ -286,7 +286,7 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.1.0" },
     { name = "pyjwt", specifier = ">=2.13.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
-    { name = "python-multipart", specifier = ">=0.0.9" },
+    { name = "python-multipart", specifier = ">=0.0.32" },
     { name = "python3-saml", specifier = ">=1.16.0" },
     { name = "redis", specifier = ">=5.0.0" },
     { name = "requests", specifier = ">=2.31.0" },
