@@ -12,8 +12,7 @@ updates:
       production-dependencies:
         dependency-type: "production"
       # Batch security fixes into a single PR so they can't be starved by the
-      # low version-update PR limit and the CVE backlog can't silently rebuild
-      # (see docs/REMEDIATION_PLAN.md Phase 4.1).
+      # low version-update PR limit and the CVE backlog cannot silently rebuild.
       security-updates:
         applies-to: security-updates
         patterns:

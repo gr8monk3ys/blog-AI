@@ -3,7 +3,7 @@
 -- Asserts that the migration runner (scripts/migrate_db.mjs, which applies only
 -- db/migrations/) produces every table the backend code actually queries. This
 -- makes "fresh install is missing tables" a CI-enforced failure and keeps the
--- schema from silently re-fragmenting. See docs/SCHEMA_AUDIT.md.
+-- schema from silently re-fragmenting.
 --
 -- Usage (after applying db/migrations against the target database):
 --   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/schema_smoke.sql
@@ -75,7 +75,7 @@ BEGIN
   END IF;
 
   IF array_length(missing, 1) > 0 THEN
-    RAISE EXCEPTION E'Schema smoke FAILED — fresh-install migration is incomplete.\nMissing: %\nAdd the missing definitions to db/migrations/ (the only directory the runner applies). See docs/SCHEMA_AUDIT.md.',
+    RAISE EXCEPTION E'Schema smoke FAILED — fresh-install migration is incomplete.\nMissing: %\nAdd the missing definitions to db/migrations/ (the only directory the runner applies).',
       array_to_string(missing, ', ');
   END IF;
 

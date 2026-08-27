@@ -1,6 +1,6 @@
 -- Migration 009: Content performance analytics (Neon/asyncpg port)
 --
--- Third module in the Supabase -> Neon migration (see docs/SCHEMA_AUDIT.md).
+-- Third module in the Supabase -> Neon migration.
 -- Backs src/analytics/* (performance_service, seo_tracker, recommendation_engine,
 -- dashboard_service), which previously read/wrote these tables in a separate
 -- Supabase project. Tables + indexes only (the services use no Postgres RPC):
