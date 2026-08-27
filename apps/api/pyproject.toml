@@ -1,3 +1,38 @@
+[project]
+name = "blog-ai-api"
+version = "0.1.0"
+description = "Blog AI FastAPI backend"
+requires-python = ">=3.12,<3.14"
+# Keep in sync with requirements.txt. Vercel's Python runtime resolves this table with uv.
+dependencies = [
+    "tenacity>=9.1.4",
+    "openai>=2.15.0",
+    "anthropic>=0.76.0",
+    "requests>=2.31.0",
+    "pydantic>=2.5.2,<3.0.0",
+    "pydantic-settings>=2.1.0",
+    "python-dotenv>=1.0.0",
+    "Pillow>=12.1.1",
+    "starlette>=0.47.2",
+    "protobuf>=5.29.6",
+    "fastapi>=0.115.0,<1.0.0",
+    "uvicorn>=0.27.0,<1.0.0",
+    "websockets>=12.0",
+    "python-multipart>=0.0.31",
+    "uvloop>=0.19.0; platform_system != 'Windows'",
+    "asyncpg>=0.29.0",
+    "bcrypt>=4.0.0,<5.0.0",
+    "nh3>=0.2.14",
+    "python3-saml>=1.16.0",
+    "authlib>=1.7.2",
+    "httpx>=0.27.0,<1.0.0",
+    "PyJWT>=2.13.0",
+    "cryptography>=50.0.0,<51.0.0",
+    "redis>=5.0.0",
+    "stripe>=7.0.0",
+    "sentry-sdk[fastapi]>=1.40.0",
+]
+
 [tool.poetry]
 name = "blog-ai"
 version = "0.1.0"
@@ -72,3 +107,10 @@ markers = [
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.vercel]
+entrypoint = "server:app"
+
+[tool.uv]
+# The API is an application, not a distributable package: never build it on install.
+package = false

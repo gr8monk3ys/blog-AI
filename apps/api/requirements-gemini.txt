@@ -1,0 +1,3 @@
+# Optional Gemini provider (not installed on Vercel: too large for the 250 MB limit)
+-r requirements.txt
+google-generativeai>=0.3.1
