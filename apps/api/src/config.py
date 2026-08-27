@@ -823,15 +823,16 @@ class Settings(BaseSettings):
                     'Remove localhost/127.0.0.1 origins for production deployments.'
                 )
 
-        # --- Redis ---
+        # --- Redis (warn only) ---
+        # Job storage, SSO sessions and webhooks fall back to in-memory state
+        # without Redis. That is lossy across restarts/instances (serverless
+        # hosts such as Vercel have neither Redis nor a persistent process),
+        # but it is not a reason to refuse to serve the API.
         if not os.environ.get("REDIS_URL"):
-            msg = (
-                "REDIS_URL is not set. Bulk jobs and webhooks require Redis in production."
+            _logger.warning(
+                "REDIS_URL is not set. Bulk jobs, SSO sessions and webhooks "
+                "will use in-memory storage and will not survive restarts."
             )
-            if is_prod:
-                errors.append(msg)
-            else:
-                _logger.warning(msg)
 
         # --- Stripe (warn only) ---
         if not self.stripe.stripe_secret_key:

@@ -1,0 +1,10 @@
+# Never upload local secrets or junk to Vercel (the CLI does not honour .gitignore for .env).
+.env
+.env.*
+!.env.example
+.venv
+venv
+__pycache__
+tests
+data
+*.egg-info
