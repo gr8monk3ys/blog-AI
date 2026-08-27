@@ -96,4 +96,3 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=...
 
 - [Deployment Overview](./DEPLOYMENT.md)
 - [Vercel + Railway + Neon Guide](./DEPLOYMENT_VERCEL_RAILWAY_NEON.md)
-- [Staging Checklist](./STAGING_CHECKLIST.md)

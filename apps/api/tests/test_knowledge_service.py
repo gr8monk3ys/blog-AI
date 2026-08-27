@@ -21,10 +21,9 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 # Quarantined: target-state specs for the Supabase -> Neon/asyncpg knowledge base
 # migration. The implementation still references Supabase, so these xfail until the
-# migration lands. Tracked in docs/SCHEMA_AUDIT.md / docs/REMEDIATION_PLAN.md (P1.2).
+# migration lands.
 _MIGRATION_XFAIL = pytest.mark.xfail(
-    reason="KnowledgeService still uses Supabase; asyncpg migration pending. "
-    "See docs/SCHEMA_AUDIT.md.",
+    reason="KnowledgeService still uses Supabase; asyncpg migration pending.",
     strict=False,
 )
 

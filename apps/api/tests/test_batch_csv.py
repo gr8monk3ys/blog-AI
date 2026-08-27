@@ -4,7 +4,7 @@ Unit tests for batch CSV parsing helpers.
 Covers parse_csv_to_items across happy path, optional columns, and the
 validation error cases (missing topic, empty file, over the item cap). These
 were previously inline in the import endpoint with no direct test coverage
-(docs/REMEDIATION_PLAN.md P2.3).
+.
 """
 
 import pytest

@@ -6,7 +6,7 @@ Defines the backend abstraction and two implementations:
 - ``RedisBackend``: distributed sliding window using Redis sorted sets.
 
 Extracted from rate_limit.py to keep the middleware module focused on policy
-and dependency wiring (see docs/REMEDIATION_PLAN.md P2.2).
+and dependency wiring.
 """
 
 import logging

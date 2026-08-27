@@ -1,6 +1,6 @@
 -- Migration 008: Knowledge-base document metadata (Neon/asyncpg port)
 --
--- Second module in the Supabase -> Neon migration (see docs/SCHEMA_AUDIT.md).
+-- Second module in the Supabase -> Neon migration.
 -- Backs the document-metadata layer of src/knowledge/knowledge_service.py, which
 -- previously stored kb_documents in a separate Supabase project (with an
 -- in-memory cache fallback). The vector embeddings remain in the pluggable

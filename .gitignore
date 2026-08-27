@@ -91,3 +91,9 @@ frontend_legacy/
 # Next.js build output
 frontend/.next/
 .vercel
+
+# Local Claude Code settings
+.claude/settings.local.json
+.remember/
+.vercel/
+tsconfig.tsbuildinfo

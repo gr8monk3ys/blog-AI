@@ -2,8 +2,7 @@
 CSV import/export helpers for batch generation.
 
 Pure parsing/template helpers extracted from app/routes/batch.py so they can be
-unit-tested without going through the HTTP layer (see
-docs/REMEDIATION_PLAN.md P2.3).
+unit-tested without going through the HTTP layer.
 """
 
 import csv

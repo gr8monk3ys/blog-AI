@@ -6,7 +6,7 @@ normalization, configured-provider validation, and strategy-based rotation
 (single, round-robin, cost-optimized, quality-optimized).
 
 Extracted from app/routes/batch.py to keep that router focused on HTTP
-handlers (see docs/REMEDIATION_PLAN.md P2.3).
+handlers.
 """
 
 from typing import Dict, List, Optional

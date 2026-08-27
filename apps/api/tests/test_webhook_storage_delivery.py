@@ -4,8 +4,7 @@ Tests for webhook storage (in-memory fallback) and the delivery path.
 Covers the WebhookStorage subscription lifecycle on the in-memory fallback
 backend (Redis unavailable — the same code path production hits on Redis
 outage), the _deliver_webhook success/failure outcomes against a mocked HTTP
-client, and the reconcile_subscriptions guard rails. Closes the Phase 2.2
-backlog in docs/REMEDIATION_PLAN.md.
+client, and the reconcile_subscriptions guard rails. 
 """
 
 import os
