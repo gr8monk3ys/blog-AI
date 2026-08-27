@@ -3,7 +3,7 @@ Batch results export endpoints.
 
 Serves completed batch results in JSON / CSV / Markdown / ZIP formats.
 Split out of app/routes/batch.py so the lifecycle router stays focused
-(docs/REMEDIATION_PLAN.md Phase 3.2 / P2.3). Same /batch prefix; route paths
+on lifecycle handlers. Same /batch prefix; route paths
 are unchanged.
 """
 

@@ -2,7 +2,7 @@
 Route-level tests for the batch generation endpoints (app/routes/batch.py).
 
 These are the characterization net required before the planned lifecycle/export
-router split (docs/REMEDIATION_PLAN.md Phase 3.2 / P2.3): they pin status
+router split: they pin status
 codes, ownership scoping, state-gating, and response shapes for the endpoints
 the split must not change. Storage is mocked at the module-level _job_store;
 auth dependencies are overridden.

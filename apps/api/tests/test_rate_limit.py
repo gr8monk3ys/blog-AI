@@ -4,7 +4,7 @@ Unit tests for the rate limiter's core logic.
 Covers the in-memory sliding-window backend, tier-limit validation, and the
 environment-driven generation-tier loader. These are pure-logic units (no DB,
 Redis, or network) and serve as the safety net for refactors of
-``app/middleware/rate_limit.py`` (see docs/REMEDIATION_PLAN.md P1.2/P2.2).
+``app/middleware/rate_limit.py``.
 """
 
 import os

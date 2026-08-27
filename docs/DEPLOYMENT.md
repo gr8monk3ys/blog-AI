@@ -18,8 +18,6 @@ bun run build
 bun run start -- --hostname 0.0.0.0 --port 3000
 ```
 
-The public homepage is served from `apps/web/public/home.html` through a rewrite in `apps/web/next.config.mjs`.
-
 ## Backend Runtime Contract
 
 ```bash
@@ -66,12 +64,11 @@ Billing:
 1. Deploy the backend.
 2. Verify `/health` reports the database correctly.
 3. Deploy the frontend with the production env vars.
-4. Run the [staging checklist](./STAGING_CHECKLIST.md).
-5. Only then treat the release as launch-capable.
+4. Run `scripts/post_deploy_health_check.sh` (the `post-deploy-health-check` workflow does this hourly).
 
 ## Related Docs
 
 - [Environment Variables](./ENVIRONMENT.md)
 - [Vercel + Railway + Neon Guide](./DEPLOYMENT_VERCEL_RAILWAY_NEON.md)
 - [Monitoring](./MONITORING.md)
-- [Repo Operations](./REPO_OPERATIONS.md)
+- [Database](./DATABASE.md)

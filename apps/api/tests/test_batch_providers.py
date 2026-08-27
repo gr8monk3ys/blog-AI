@@ -4,7 +4,7 @@ Unit tests for batch provider-selection strategy logic.
 Covers _get_next_provider across all ProviderStrategy modes. These are pure
 (strategy-driven) selections; provider validation (which depends on settings)
 is exercised by the route tests. Establishes a safety net for the batch
-provider extraction (docs/REMEDIATION_PLAN.md P2.3).
+provider extraction.
 """
 
 from app.routes.batch_providers import _get_next_provider, _provider_index

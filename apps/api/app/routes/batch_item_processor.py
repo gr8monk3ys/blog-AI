@@ -4,7 +4,7 @@ Batch item processor.
 Generates a single content item within an enhanced batch run (quota check,
 provider selection, generation, optional research/post-processing, usage
 accounting, and cost estimation). Extracted from app/routes/batch.py so the
-router stays focused on HTTP handlers (see docs/REMEDIATION_PLAN.md P2.3).
+router stays focused on HTTP handlers.
 """
 
 import asyncio

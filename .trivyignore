@@ -1,5 +1,0 @@
-# Accepted-risk vulnerabilities for container scanning. Keep in sync with the
-# audit:runtime allowlist in scripts/audit-runtime.mjs and Phase 0.3 of
-# docs/REMEDIATION_PLAN.md.
-# (picomatch CVE-2026-33671 was fixed by pinning nested picomatch 2.3.2 in
-# bun.lock, so its suppression is gone.)
