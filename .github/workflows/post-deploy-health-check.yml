@@ -78,9 +78,9 @@ jobs:
             api="$(curl -sSI "$APP_URL/" \
               | grep -i '^content-security-policy:' \
               | grep -oE 'connect-src[^;]*' \
-              | grep -oE 'https://[^ ]*railway\.app' | head -n1 || true)"
+              | grep -oE 'https://[^ ]*(railway\.app|vercel\.app)' | head -n1 || true)"
             if [ -z "$api" ]; then
-              echo "::error::Could not resolve API base URL: vars.API_BASE_URL is unset and no railway.app host found in $APP_URL CSP connect-src."
+              echo "::error::Could not resolve API base URL: vars.API_BASE_URL is unset and no railway.app/vercel.app host found in $APP_URL CSP connect-src."
               exit 1
             fi
             echo "Resolved API base URL from CSP connect-src: $api"
