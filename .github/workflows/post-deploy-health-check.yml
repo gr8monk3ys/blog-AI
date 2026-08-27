@@ -64,3 +64,39 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_PROJECT: ${{ secrets.VERCEL_PROJECT_ID }}
         run: bash scripts/post_deploy_health_check.sh
+
+      - name: Check backend API health
+        shell: bash
+        env:
+          APP_URL: https://blog-ai.vivancedata.com
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
+        run: |
+          set -euo pipefail
+          api="${API_BASE_URL:-}"
+          if [ -z "$api" ]; then
+            # Fall back to whatever backend the deployed site is allowed to call (CSP connect-src).
+            api="$(curl -sSI "$APP_URL/" \
+              | grep -i '^content-security-policy:' \
+              | grep -oE 'connect-src[^;]*' \
+              | grep -oE 'https://[^ ]*railway\.app' | head -n1 || true)"
+            if [ -z "$api" ]; then
+              echo "::error::Could not resolve API base URL: vars.API_BASE_URL is unset and no railway.app host found in $APP_URL CSP connect-src."
+              exit 1
+            fi
+            echo "Resolved API base URL from CSP connect-src: $api"
+          else
+            echo "Using API base URL from vars.API_BASE_URL: $api"
+          fi
+          api="${api%/}"
+          host="${api#*://}"
+          for attempt in 1 2 3; do
+            code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "$api/health" || echo 000)"
+            if [ "$code" = "200" ]; then
+              echo "Backend $host is healthy (GET /health -> 200)."
+              exit 0
+            fi
+            echo "Attempt $attempt/3: GET $api/health -> HTTP $code"
+            [ "$attempt" -lt 3 ] && sleep 10
+          done
+          echo "::error::Backend $host is DOWN: GET $api/health did not return 200 after 3 attempts (last: HTTP $code)."
+          exit 1

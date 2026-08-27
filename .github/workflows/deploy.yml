@@ -140,7 +140,8 @@ jobs:
   # Backend -> GHCR Docker image
   # ---------------------------------------------------------------------------
   deploy-backend:
-    name: Deploy Backend (Docker)
+    # Only builds and pushes the image to GHCR; the Railway service that runs it is dashboard-managed.
+    name: Publish Backend Image (Docker)
     runs-on: ubuntu-latest
     needs: changes
     if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.manual == 'true'
