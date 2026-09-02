@@ -51,4 +51,28 @@ test.describe('Tool Directory', () => {
     await expect(page.getByRole('banner')).toBeVisible()
     await expect(page.getByRole('contentinfo')).toBeVisible()
   })
+
+  test('interactive tools page is public and renders its catalogue', async ({
+    page,
+  }) => {
+    await page.goto('/tools')
+
+    // Staying on the requested path is the assertion that matters: a
+    // protected route would have been redirected away by proxy.ts.
+    expect(new URL(page.url()).pathname).toBe('/tools')
+    await expect(page.locator('body')).toContainText(/AI Writing Tools/i)
+    await expect(page.getByRole('contentinfo')).toBeVisible()
+  })
+
+  test('tool category page is public and renders its category', async ({
+    page,
+  }) => {
+    await page.goto('/tools/category/seo')
+
+    expect(new URL(page.url()).pathname).toBe('/tools/category/seo')
+    await expect(page.locator('body')).toContainText(/SEO Tools/i)
+    await expect(
+      page.getByRole('link', { name: /Back to directory/i })
+    ).toBeVisible()
+  })
 })

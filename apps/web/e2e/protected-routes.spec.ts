@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test'
 import { resolveProtectedRouteState } from './helpers'
 
 /**
- * E2E smoke tests for protected routes (templates, remix, onboarding, tools).
+ * E2E smoke tests for protected routes (templates, remix, onboarding, tool
+ * workspace).
  *
  * These routes require authentication. Without valid credentials the server
  * redirects to sign-in. We verify the route either renders the protected
@@ -42,14 +43,16 @@ test.describe('Protected Routes', () => {
     expect(['protected', 'auth']).toContain(state)
   })
 
-  test('tools route responds and redirects to auth or renders', async ({
+  // `/tools` itself and `/tools/category/[category]` are PUBLIC (see
+  // tool-directory.spec.ts). Only the per-tool workspace needs a session.
+  test('tool workspace route responds and redirects to auth or renders', async ({
     page,
   }) => {
-    const response = await page.goto('/tools')
+    const response = await page.goto('/tools/blog-title-generator')
 
     expect(response?.status()).toBeLessThan(500)
 
-    const state = await resolveProtectedRouteState(page, /\/tools/)
+    const state = await resolveProtectedRouteState(page, /\/tools\/blog-title-generator/)
     expect(['protected', 'auth']).toContain(state)
   })
 
