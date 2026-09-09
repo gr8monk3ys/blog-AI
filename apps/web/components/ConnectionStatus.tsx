@@ -1,11 +1,14 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ExclamationTriangleIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { checkServerConnection } from '../lib/api'
 
 const POLL_INTERVAL_MS = 30_000
 const INITIAL_DELAY_MS = 2_000
+// One failed probe is not an outage. The first check races page load, so a
+// single abort there said "server down" while the API was answering normally.
+const FAILURES_BEFORE_WARNING = 2
 
 /**
  * Subtle banner that appears when the backend is unreachable.
@@ -14,12 +17,23 @@ const INITIAL_DELAY_MS = 2_000
 export default function ConnectionStatus(): React.ReactElement | null {
   const [status, setStatus] = useState<'connected' | 'disconnected' | 'checking'>('checking')
   const [dismissed, setDismissed] = useState(false)
+  const consecutiveFailures = useRef(0)
 
   const check = useCallback(async () => {
     const ok = await checkServerConnection()
-    setStatus(ok ? 'connected' : 'disconnected')
+
+    if (ok) {
+      consecutiveFailures.current = 0
+      setStatus('connected')
+      return
+    }
+
+    consecutiveFailures.current += 1
+    if (consecutiveFailures.current < FAILURES_BEFORE_WARNING) return
+
+    setStatus('disconnected')
     // Auto-show again if the connection drops after a dismissal
-    if (!ok) setDismissed(false)
+    setDismissed(false)
   }, [])
 
   useEffect(() => {

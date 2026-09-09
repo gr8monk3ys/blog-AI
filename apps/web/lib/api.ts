@@ -266,13 +266,17 @@ export const getDefaultHeaders = async (): Promise<HeadersInit> => {
   return headers;
 };
 
+const SERVER_CHECK_TIMEOUT_MS = 8000;
+
 /**
  * Check if the backend server is running
  */
 export const checkServerConnection = async (): Promise<boolean> => {
   try {
+    // 2s aborted during page-load contention and on cold starts, producing a
+    // "server is down" banner while the API was in fact answering in ~250ms.
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const timeoutId = setTimeout(() => controller.abort(), SERVER_CHECK_TIMEOUT_MS);
 
     const response = await fetch(API_ENDPOINTS.root, {
       signal: controller.signal,
