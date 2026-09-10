@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { motion, useInView } from 'framer-motion'
 import SiteHeader from '../components/SiteHeader'
 import SiteFooter from '../components/SiteFooter'
-import { SignedIn, SignedOut } from '../lib/clerk-ui'
+import { useAuth } from '../lib/clerk-ui'
 import { TOOL_CATEGORIES } from '../types/tools'
 import {
   SparklesIcon,
@@ -52,6 +52,16 @@ function RevealSection({ children, className = '' }: RevealSectionProps) {
 
 export default function Home(): React.ReactElement {
   const isClerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+  const { isLoaded, isSignedIn } = useAuth()
+
+  // Render the signed-out CTA until Clerk positively reports a session.
+  // Clerk's <SignedIn>/<SignedOut> BOTH render nothing while clerk.browser.js
+  // is still loading — and forever if it fails to load — which left the hero
+  // with a subhead, an empty gap, and a "No credit card required" line
+  // pointing at no button. The primary action must not depend on a
+  // third-party script being reachable.
+  const showSignedInCta = isClerkConfigured && isLoaded && isSignedIn
+  const startFreeHref = isClerkConfigured ? '/sign-up' : '/auth'
 
   return (
     <>
@@ -115,43 +125,26 @@ export default function Home(): React.ReactElement {
                 transition={{ duration: 0.5 }}
                 className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
               >
-                {isClerkConfigured ? (
+                {showSignedInCta ? (
                   <>
-                    <SignedOut>
-                      <Link
-                        href="/sign-up"
-                        className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition-colors shadow-sm shadow-amber-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
-                      >
-                        Start Free
-                        <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
-                      </Link>
-                      <Link
-                        href="/pricing"
-                        className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-gray-700 dark:text-gray-300 bg-white/70 dark:bg-gray-900/60 border border-black/[0.08] dark:border-white/[0.08] hover:border-black/[0.12] dark:hover:border-white/[0.12] hover:bg-white/90 dark:hover:bg-gray-800/70 rounded-xl backdrop-blur-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
-                      >
-                        View Plans
-                      </Link>
-                    </SignedOut>
-                    <SignedIn>
-                      <Link
-                        href="/generate"
-                        className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition-colors shadow-sm shadow-amber-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
-                      >
-                        Start Generating
-                        <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
-                      </Link>
-                      <Link
-                        href="/brand"
-                        className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-gray-700 dark:text-gray-300 bg-white/70 dark:bg-gray-900/60 border border-black/[0.08] dark:border-white/[0.08] hover:border-black/[0.12] dark:hover:border-white/[0.12] hover:bg-white/90 dark:hover:bg-gray-800/70 rounded-xl backdrop-blur-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
-                      >
-                        Open Brand Voice
-                      </Link>
-                    </SignedIn>
+                    <Link
+                      href="/generate"
+                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition-colors shadow-sm shadow-amber-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                    >
+                      Start Generating
+                      <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
+                    </Link>
+                    <Link
+                      href="/brand"
+                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-gray-700 dark:text-gray-300 bg-white/70 dark:bg-gray-900/60 border border-black/[0.08] dark:border-white/[0.08] hover:border-black/[0.12] dark:hover:border-white/[0.12] hover:bg-white/90 dark:hover:bg-gray-800/70 rounded-xl backdrop-blur-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                    >
+                      Open Brand Voice
+                    </Link>
                   </>
                 ) : (
                   <>
                     <Link
-                      href="/auth"
+                      href={startFreeHref}
                       className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition-colors shadow-sm shadow-amber-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
                     >
                       Start Free
@@ -333,30 +326,17 @@ export default function Home(): React.ReactElement {
               faster, more consistent SEO content production.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              {isClerkConfigured ? (
-                <>
-                  <SignedOut>
-                    <Link
-                      href="/sign-up"
-                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-amber-700 bg-white hover:bg-amber-50 rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-600"
-                    >
-                      Start Free
-                      <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
-                    </Link>
-                  </SignedOut>
-                  <SignedIn>
-                    <Link
-                      href="/generate"
-                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-amber-700 bg-white hover:bg-amber-50 rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-600"
-                    >
-                      Start Generating
-                      <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
-                    </Link>
-                  </SignedIn>
-                </>
+              {showSignedInCta ? (
+                <Link
+                  href="/generate"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-amber-700 bg-white hover:bg-amber-50 rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-600"
+                >
+                  Start Generating
+                  <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
+                </Link>
               ) : (
                 <Link
-                  href="/auth"
+                  href={startFreeHref}
                   className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-amber-700 bg-white hover:bg-amber-50 rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-600"
                 >
                   Start Free

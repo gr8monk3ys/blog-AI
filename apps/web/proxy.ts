@@ -1,24 +1,8 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextFetchEvent, NextRequest, NextResponse } from 'next/server'
+import { PROTECTED_ROUTE_PATTERNS } from './lib/protected-routes'
 
-const isProtectedRoute = createRouteMatcher([
-  '/history(.*)',
-  '/brand(.*)',
-  '/admin(.*)',
-  '/bulk(.*)',
-  '/remix(.*)',
-  '/analytics(.*)',
-  '/tools(.*)',
-  '/templates(.*)',
-  '/onboarding(.*)',
-  '/plagiarism(.*)',
-  '/images(.*)',
-  '/settings(.*)',
-  '/social(.*)',
-  '/generate(.*)',
-  '/knowledge(.*)',
-  '/team(.*)',
-])
+const isProtectedRoute = createRouteMatcher(PROTECTED_ROUTE_PATTERNS)
 
 const clerkEnabled = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 const clerkDomain = process.env.NEXT_PUBLIC_CLERK_DOMAIN?.trim() || ''
