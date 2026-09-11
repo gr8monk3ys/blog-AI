@@ -1,43 +1,37 @@
+# Dependabot retune 2026-09-10: this repo is deployed, so version updates stay on,
+# but monthly with a small PR cap. Security updates are a repo setting and unaffected.
 version: 2
 updates:
-  # Backend Python dependencies
-  - package-ecosystem: "pip"
-    directory: "/apps/api"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 2
-    groups:
-      development-dependencies:
-        dependency-type: "development"
-      production-dependencies:
-        dependency-type: "production"
-      # Batch security fixes into a single PR so they can't be starved by the
-      # low version-update PR limit and the CVE backlog cannot silently rebuild.
-      security-updates:
-        applies-to: security-updates
-        patterns:
-          - "*"
-
-  # Frontend JavaScript dependencies
-  # npm version bumps handled by the dep-hygiene loop (Dependabot can't regen bun.lock)
-  - package-ecosystem: "npm"
-    directory: "/apps/web"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 0
-    groups:
-      development-dependencies:
-        dependency-type: "development"
-      production-dependencies:
-        dependency-type: "production"
-      security-updates:
-        applies-to: security-updates
-        patterns:
-          - "*"
-
-  # GitHub Actions
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 2
+- package-ecosystem: pip
+  directory: /apps/api
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 3
+  groups:
+    development-dependencies:
+      dependency-type: development
+    production-dependencies:
+      dependency-type: production
+    security-updates:
+      applies-to: security-updates
+      patterns:
+      - '*'
+- package-ecosystem: npm
+  directory: /apps/web
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 3
+  groups:
+    development-dependencies:
+      dependency-type: development
+    production-dependencies:
+      dependency-type: production
+    security-updates:
+      applies-to: security-updates
+      patterns:
+      - '*'
+- package-ecosystem: github-actions
+  directory: /
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 3
