@@ -35,3 +35,17 @@ Frontend Checks (Next.js).
 - Node is pinned to `22.x` in `package.json` engines; Node 24 broke the Vercel build.
 - Coverage thresholds are ratchets: raise them, never lower them to pass a build.
 - Python style: black 88 / isort (black profile) / ruff, enforced by pre-commit.
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues on `gr8monk3ys/blog-AI`, via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical roles, label string equal to role name. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
