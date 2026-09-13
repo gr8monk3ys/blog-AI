@@ -92,6 +92,11 @@ function buildCspHeader(nonce: string): string {
       clerkDomain ? `wss://${clerkDomain}` : '',
       isDev ? 'ws://localhost:* wss://localhost:*' : '',
       process.env.NEXT_PUBLIC_API_URL || '',
+      // Sentry browser SDK. The US-region ingest host is
+      // `<org>.ingest.us.sentry.io`; without this every envelope is refused
+      // by CSP and browser errors never reach the project.
+      'https://*.ingest.us.sentry.io',
+      'https://*.ingest.sentry.io',
     ]
       .filter(Boolean)
       .join(' '),
