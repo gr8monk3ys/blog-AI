@@ -67,7 +67,7 @@ function SampleFormComponent({
           <button
             onClick={onSubmit}
             disabled={isLoading || content.length < 50}
-            className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:bg-gray-300 dark:disabled:bg-gray-700"
+            className="px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 disabled:bg-gray-300 dark:disabled:bg-gray-700"
           >
             Add Sample
           </button>

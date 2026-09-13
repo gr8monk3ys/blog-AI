@@ -118,7 +118,7 @@ export default function BrandProfileCard({
               {profile.brandValues.slice(0, 3).map((value) => (
                 <span
                   key={value}
-                  className="inline-flex items-center px-2 py-0.5 rounded text-xs text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 border border-amber-100 dark:border-amber-800"
+                  className="inline-flex items-center px-2 py-0.5 rounded text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 border border-amber-100 dark:border-amber-800"
                 >
                   {value}
                 </span>
@@ -149,7 +149,7 @@ export default function BrandProfileCard({
           <button
             type="button"
             onClick={() => onEdit(profile)}
-            className="inline-flex justify-center items-center p-2 text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+            className="inline-flex justify-center items-center p-2 text-gray-500 dark:text-gray-400 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
             title="Edit profile"
           >
             <PencilSquareIcon className="w-4 h-4" />

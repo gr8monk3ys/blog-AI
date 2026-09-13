@@ -347,7 +347,7 @@ function useExportMenuView({
                     >
                       {loading === option.id ? (
                         <svg
-                          className="animate-spin w-4 h-4 text-amber-600"
+                          className="animate-spin w-4 h-4 text-amber-700"
                           xmlns="http://www.w3.org/2000/svg"
                           fill="none"
                           viewBox="0 0 24 24"
@@ -371,7 +371,7 @@ function useExportMenuView({
                       ) : (
                         <option.icon
                           className={`w-4 h-4 ${
-                            active ? 'text-amber-600' : 'text-gray-500 dark:text-gray-400'
+                            active ? 'text-amber-700' : 'text-gray-500 dark:text-gray-400'
                           } transition-colors`}
                         />
                       )}
@@ -418,7 +418,7 @@ function useExportMenuView({
                     >
                       {loading === option.id ? (
                         <svg
-                          className="animate-spin w-4 h-4 text-amber-600"
+                          className="animate-spin w-4 h-4 text-amber-700"
                           xmlns="http://www.w3.org/2000/svg"
                           fill="none"
                           viewBox="0 0 24 24"
@@ -442,7 +442,7 @@ function useExportMenuView({
                       ) : (
                         <option.icon
                           className={`w-4 h-4 ${
-                            active ? 'text-amber-600' : 'text-gray-500 dark:text-gray-400'
+                            active ? 'text-amber-700' : 'text-gray-500 dark:text-gray-400'
                           } transition-colors`}
                         />
                       )}

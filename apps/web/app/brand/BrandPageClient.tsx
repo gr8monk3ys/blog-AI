@@ -183,7 +183,7 @@ function useBrandPageView() {
       <ConfirmModalComponent />
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-amber-600 to-amber-700 text-white">
+      <section className="bg-gradient-to-r from-amber-700 to-amber-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
           <m.div
             initial={{ opacity: 0, y: 20 }}
@@ -226,7 +226,7 @@ function useBrandPageView() {
             </div>
             <Link
               href="/bulk"
-              className="inline-flex items-center justify-center rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700"
+              className="inline-flex items-center justify-center rounded-lg bg-amber-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-800"
             >
               Continue To Bulk Workflow
             </Link>
@@ -265,7 +265,7 @@ function useBrandPageView() {
             <button
               type="button"
               onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
             >
               <PlusIcon className="w-4 h-4" />
               Create Profile
@@ -352,7 +352,7 @@ function useBrandPageView() {
               <button
                 type="button"
                 onClick={() => setShowForm(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 transition-colors"
               >
                 <PlusIcon className="w-4 h-4" />
                 Create Your First Profile
@@ -395,7 +395,7 @@ function useBrandPageView() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                 <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center mb-4">
-                  <span className="text-lg font-bold text-amber-600">1</span>
+                  <span className="text-lg font-bold text-amber-700">1</span>
                 </div>
                 <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
                   Be Specific with Tone
@@ -407,7 +407,7 @@ function useBrandPageView() {
               </div>
               <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                 <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center mb-4">
-                  <span className="text-lg font-bold text-amber-600">2</span>
+                  <span className="text-lg font-bold text-amber-700">2</span>
                 </div>
                 <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
                   Provide Example Content
@@ -419,7 +419,7 @@ function useBrandPageView() {
               </div>
               <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                 <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center mb-4">
-                  <span className="text-lg font-bold text-amber-600">3</span>
+                  <span className="text-lg font-bold text-amber-700">3</span>
                 </div>
                 <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
                   Define Words to Avoid

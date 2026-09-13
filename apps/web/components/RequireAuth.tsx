@@ -48,13 +48,13 @@ export default function RequireAuth({
     return (
       <main className="min-h-screen flex items-center justify-center">
         <div className="flex items-center gap-3" role="status" aria-label="Loading">
-          <div className="h-2.5 w-2.5 rounded-full bg-amber-400 animate-bounce" />
+          <div className="h-2.5 w-2.5 rounded-full bg-amber-400 animate-pulse" />
           <div
-            className="h-2.5 w-2.5 rounded-full bg-amber-500 animate-bounce"
+            className="h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse"
             style={{ animationDelay: '150ms' }}
           />
           <div
-            className="h-2.5 w-2.5 rounded-full bg-amber-600 animate-bounce"
+            className="h-2.5 w-2.5 rounded-full bg-amber-600 animate-pulse"
             style={{ animationDelay: '300ms' }}
           />
         </div>
@@ -72,7 +72,7 @@ export default function RequireAuth({
           </p>
           <Link
             href={redirectTo}
-            className="inline-flex items-center px-4 py-2 rounded-lg bg-amber-600 text-white text-sm font-medium hover:bg-amber-700 transition-colors"
+            className="inline-flex items-center px-4 py-2 rounded-lg bg-amber-700 text-white text-sm font-medium hover:bg-amber-800 transition-colors"
           >
             Sign In
           </Link>

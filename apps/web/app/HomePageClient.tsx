@@ -106,7 +106,7 @@ export default function Home(): React.ReactElement {
                 className="mt-6 text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 font-serif leading-[1.1]"
               >
                 Brand-Consistent AI Content For{' '}
-                <span className="text-amber-600">Lean Marketing Teams</span>
+                <span className="text-amber-700">Lean Marketing Teams</span>
               </motion.h1>
 
               {/* Subheading */}
@@ -129,7 +129,7 @@ export default function Home(): React.ReactElement {
                   <>
                     <Link
                       href="/generate"
-                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition-colors shadow-sm shadow-amber-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white bg-amber-700 hover:bg-amber-800 rounded-xl transition-colors shadow-sm shadow-amber-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
                     >
                       Start Generating
                       <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
@@ -145,7 +145,7 @@ export default function Home(): React.ReactElement {
                   <>
                     <Link
                       href={startFreeHref}
-                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition-colors shadow-sm shadow-amber-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white bg-amber-700 hover:bg-amber-800 rounded-xl transition-colors shadow-sm shadow-amber-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
                     >
                       Start Free
                       <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
@@ -164,7 +164,7 @@ export default function Home(): React.ReactElement {
               <motion.p
                 variants={FADE_IN}
                 transition={{ duration: 0.6, delay: 0.3 }}
-                className="mt-6 text-sm text-gray-400 dark:text-gray-500"
+                className="mt-6 text-sm text-gray-500 dark:text-gray-400"
               >
                 No credit card required. Start free, then upgrade when you need bulk and brand controls.
               </motion.p>
@@ -237,7 +237,7 @@ export default function Home(): React.ReactElement {
           <RevealSection className="text-center mt-10">
             <Link
               href="/tool-directory"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
             >
               Browse the full directory
               <ArrowRightIcon className="w-3.5 h-3.5" aria-hidden="true" />
@@ -303,7 +303,7 @@ export default function Home(): React.ReactElement {
           <RevealSection className="text-center mt-10">
             <Link
               href="/pricing"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
             >
               Compare all features in detail
               <ArrowRightIcon className="w-3.5 h-3.5" aria-hidden="true" />
@@ -315,7 +315,7 @@ export default function Home(): React.ReactElement {
       {/* ----------------------------------------------------------------- */}
       {/* Final CTA                                                         */}
       {/* ----------------------------------------------------------------- */}
-      <section className="bg-gradient-to-r from-amber-600 to-amber-700">
+      <section className="bg-gradient-to-r from-amber-700 to-amber-800">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24 text-center">
           <RevealSection>
             <h2 className="text-3xl sm:text-4xl font-semibold text-white font-serif">
@@ -329,7 +329,7 @@ export default function Home(): React.ReactElement {
               {showSignedInCta ? (
                 <Link
                   href="/generate"
-                  className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-amber-700 bg-white hover:bg-amber-50 rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-600"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-amber-700 bg-white hover:bg-amber-50 rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-700"
                 >
                   Start Generating
                   <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
@@ -337,7 +337,7 @@ export default function Home(): React.ReactElement {
               ) : (
                 <Link
                   href={startFreeHref}
-                  className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-amber-700 bg-white hover:bg-amber-50 rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-600"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-amber-700 bg-white hover:bg-amber-50 rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-700"
                 >
                   Start Free
                   <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
@@ -345,7 +345,7 @@ export default function Home(): React.ReactElement {
               )}
               <Link
                 href="/brand"
-                className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white border border-white/30 hover:bg-white/10 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-600"
+                className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white border border-white/30 hover:bg-white/10 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-700"
               >
                 See Brand Voice
               </Link>
@@ -463,9 +463,9 @@ function StepsSection(): React.ReactElement {
             )}
 
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-amber-50/50 dark:bg-amber-950/30 border border-amber-200/40 dark:border-amber-700/30 mb-6 backdrop-blur-sm">
-              <Icon className="w-8 h-8 text-amber-600" aria-hidden="true" />
+              <Icon className="w-8 h-8 text-amber-700" aria-hidden="true" />
             </div>
-            <div className="text-xs font-medium text-amber-600 uppercase tracking-wider mb-2">
+            <div className="text-xs font-medium text-amber-700 uppercase tracking-wider mb-2">
               Step {step.number}
             </div>
             <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
@@ -559,7 +559,7 @@ function PricingGrid(): React.ReactElement {
         >
           {tier.highlighted && (
             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-              <span className="inline-flex items-center px-3.5 py-1 bg-amber-600 text-white text-xs font-medium rounded-full">
+              <span className="inline-flex items-center px-3.5 py-1 bg-amber-700 text-white text-xs font-medium rounded-full">
                 Most Popular
               </span>
             </div>
@@ -579,7 +579,7 @@ function PricingGrid(): React.ReactElement {
             href={tier.href}
             className={`mt-6 block w-full py-3 px-4 text-center text-sm font-medium rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ${
               tier.highlighted
-                ? 'bg-amber-600 text-white hover:bg-amber-700'
+                ? 'bg-amber-700 text-white hover:bg-amber-800'
                 : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700'
             }`}
           >

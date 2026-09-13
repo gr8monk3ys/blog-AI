@@ -35,7 +35,7 @@ export default function AuthPage() {
                 </p>
                 <Link
                   href="/generate"
-                  className="inline-flex items-center justify-center rounded-lg bg-amber-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-amber-700"
+                  className="inline-flex items-center justify-center rounded-lg bg-amber-700 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-amber-800"
                 >
                   Open the workspace
                 </Link>

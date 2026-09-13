@@ -78,7 +78,7 @@ export default function InviteForm({ orgId, onInviteSent }: InviteFormProps) {
       <button
         type="submit"
         disabled={loading || !email.trim()}
-        className="px-4 py-2 text-sm font-medium text-white bg-amber-600 border border-transparent rounded-lg hover:bg-amber-700 focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors disabled:opacity-50"
+        className="px-4 py-2 text-sm font-medium text-white bg-amber-700 border border-transparent rounded-lg hover:bg-amber-800 focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors disabled:opacity-50"
       >
         {loading ? 'Sending...' : 'Send Invite'}
       </button>

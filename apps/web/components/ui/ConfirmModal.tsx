@@ -41,16 +41,16 @@ const variantConfig: Record<
   warning: {
     icon: ExclamationTriangleIcon,
     iconBgColor: 'bg-amber-100 dark:bg-amber-900/30',
-    iconColor: 'text-amber-600 dark:text-amber-400',
-    confirmButtonColor: 'bg-amber-600',
-    confirmButtonHoverColor: 'hover:bg-amber-700',
+    iconColor: 'text-amber-700 dark:text-amber-400',
+    confirmButtonColor: 'bg-amber-700',
+    confirmButtonHoverColor: 'hover:bg-amber-800',
   },
   info: {
     icon: InformationCircleIcon,
     iconBgColor: 'bg-amber-100 dark:bg-amber-900/30',
-    iconColor: 'text-amber-600 dark:text-amber-400',
-    confirmButtonColor: 'bg-amber-600',
-    confirmButtonHoverColor: 'hover:bg-amber-700',
+    iconColor: 'text-amber-700 dark:text-amber-400',
+    confirmButtonColor: 'bg-amber-700',
+    confirmButtonHoverColor: 'hover:bg-amber-800',
   },
 }
 

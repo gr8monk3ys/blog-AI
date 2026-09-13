@@ -58,7 +58,7 @@ export default function SiteHeader(): React.ReactElement {
     <Link
       key={link.href}
       href={link.href}
-      className="hover:text-amber-600 transition-colors"
+      className="hover:text-amber-700 transition-colors"
     >
       {link.label}
     </Link>
@@ -68,7 +68,7 @@ export default function SiteHeader(): React.ReactElement {
     <li key={link.href}>
       <Link
         href={link.href}
-        className="block rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-amber-400 transition-colors"
+        className="block rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-amber-400 transition-colors"
         onClick={() => setMobileMenuOpen(false)}
       >
         {link.label}
@@ -81,7 +81,7 @@ export default function SiteHeader(): React.ReactElement {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <SparklesIcon className="w-5 h-5 text-amber-600" aria-hidden="true" />
+            <SparklesIcon className="w-5 h-5 text-amber-700" aria-hidden="true" />
             <span className="font-semibold text-gray-900 dark:text-gray-100">Blog AI</span>
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm text-gray-700 dark:text-gray-300">
@@ -100,7 +100,7 @@ export default function SiteHeader(): React.ReactElement {
             <button
               type="button"
               onClick={cycleTheme}
-              className="rounded-md p-1.5 text-gray-500 hover:text-amber-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-amber-400 dark:hover:bg-gray-800 transition-colors"
+              className="rounded-md p-1.5 text-gray-500 hover:text-amber-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-amber-400 dark:hover:bg-gray-800 transition-colors"
               aria-label={themeLabel}
               title={themeLabel}
             >
@@ -114,7 +114,7 @@ export default function SiteHeader(): React.ReactElement {
                 <SignedOut>
                   <Link
                     href="/sign-in"
-                    className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 transition-colors text-white"
+                    className="px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 transition-colors text-white"
                   >
                     Sign in
                   </Link>
@@ -123,7 +123,7 @@ export default function SiteHeader(): React.ReactElement {
             ) : (
               <Link
                 href="/auth"
-                className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 transition-colors text-white"
+                className="px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 transition-colors text-white"
               >
                 Sign in
               </Link>

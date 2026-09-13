@@ -55,7 +55,7 @@ export default function ConnectionStatus(): React.ReactElement | null {
         <button
           type="button"
           onClick={() => setDismissed(true)}
-          className="flex-shrink-0 rounded p-1 text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+          className="flex-shrink-0 rounded p-1 text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
           aria-label="Dismiss connection warning"
         >
           <XMarkIcon className="h-4 w-4" aria-hidden="true" />

@@ -144,7 +144,7 @@ export default function SearchTab({ documents }: SearchTabProps) {
             type="button"
             onClick={handleSearch}
             disabled={!query.trim() || searching}
-            className="ml-auto px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="ml-auto px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {searching ? 'Searching...' : 'Search'}
           </button>
@@ -185,7 +185,7 @@ export default function SearchTab({ documents }: SearchTabProps) {
                 <button
                   type="button"
                   onClick={() => openDocDetail(result)}
-                  className="text-sm font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 text-left"
+                  className="text-sm font-medium text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 text-left"
                 >
                   {result.document_title}
                 </button>

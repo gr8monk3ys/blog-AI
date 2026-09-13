@@ -45,7 +45,7 @@ function TrainingPanelComponent({
         <button
           onClick={onTrain}
           disabled={isTraining || sampleCount === 0}
-          className="w-full py-3 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-lg hover:from-amber-700 hover:to-amber-800 disabled:from-gray-400 disabled:to-gray-400 dark:disabled:from-gray-700 dark:disabled:to-gray-700 font-medium"
+          className="w-full py-3 bg-gradient-to-r from-amber-700 to-amber-800 text-white rounded-lg hover:from-amber-800 hover:to-amber-900 disabled:from-gray-400 disabled:to-gray-400 dark:disabled:from-gray-700 dark:disabled:to-gray-700 font-medium"
         >
           {isTraining ? 'Training...' : 'Train Voice'}
         </button>

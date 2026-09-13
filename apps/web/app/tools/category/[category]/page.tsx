@@ -55,7 +55,7 @@ export default async function ToolCategoryPage({ params }: CategoryPageProps) {
 
       <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Link href="/tool-directory" className="text-xs text-gray-500 dark:text-gray-400 hover:text-amber-700 dark:hover:text-amber-300">
+          <Link href="/tool-directory" className="text-xs text-gray-500 dark:text-gray-400 hover:text-amber-800 dark:hover:text-amber-300">
             Back to directory
           </Link>
           <h1 className="mt-3 text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
@@ -83,7 +83,7 @@ export default async function ToolCategoryPage({ params }: CategoryPageProps) {
               >
                 <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{tool.name}</div>
                 <div className="mt-2 text-xs text-gray-600 dark:text-gray-400">{tool.description}</div>
-                <div className="mt-3 text-xs text-amber-600 dark:text-amber-400">Open tool</div>
+                <div className="mt-3 text-xs text-amber-700 dark:text-amber-400">Open tool</div>
               </Link>
             ))}
           </div>
@@ -117,7 +117,7 @@ export default async function ToolCategoryPage({ params }: CategoryPageProps) {
               <Link
                 key={id}
                 href={`/tools/category/${id}`}
-                className="px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
+                className="px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-800 dark:hover:text-amber-300 transition-colors"
               >
                 {TOOL_CATEGORIES[id].name}
               </Link>

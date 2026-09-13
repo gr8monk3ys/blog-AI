@@ -191,7 +191,7 @@ export default function SingleImageTab({ styles, showToast }: SingleImageTabProp
         <button
           type="submit"
           disabled={loading || (mode === 'prompt' ? !prompt.trim() : !content.trim())}
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-medium bg-amber-600 text-white hover:bg-amber-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-medium bg-amber-700 text-white hover:bg-amber-800 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors"
         >
           {loading ? (
             <>
