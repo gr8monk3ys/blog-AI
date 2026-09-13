@@ -72,12 +72,16 @@ function buildCspHeader(nonce: string): string {
       .filter(Boolean)
       .join(' '),
 
-    // style-src — nonce replaces blanket unsafe-inline
-    [
-      "style-src 'self'",
-      `'nonce-${nonce}'`,
-      "'unsafe-inline'",
-    ].join(' '),
+    // style-src. No nonce here on purpose: once a nonce is present, browsers
+    // ignore 'unsafe-inline' for styles, and inline `style=""` attributes have
+    // no way to carry a nonce. Production was logging ~500 style violations
+    // per page load and silently dropping them: framer-motion's animated
+    // transforms and the hero's radial-gradient backgrounds never applied.
+    // The nonce stays on script-src, which is where it earns its keep.
+    "style-src 'self' 'unsafe-inline'",
+
+    // Sentry Session Replay compresses in a Worker created from a blob: URL.
+    "worker-src 'self' blob:",
 
     "img-src 'self' data: https://*.clerk.com https://*.unsplash.com blob:",
     "font-src 'self' data:",
