@@ -4,9 +4,17 @@
  * This file configures Sentry for browser-side error tracking.
  * It runs in the browser and captures client-side errors, performance data,
  * and session replays.
+ *
+ * It is named `instrumentation-client.ts` because that is the file Next's
+ * Turbopack build actually bundles; `sentry.client.config.ts` is silently
+ * ignored there. Production served a server-side sentry-trace header but no
+ * browser SDK until this rename. The init options are unchanged.
  */
 
 import * as Sentry from '@sentry/nextjs'
+
+// Lets the SDK instrument App Router navigations as transactions.
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart
 
 const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN
 
