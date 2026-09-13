@@ -38,7 +38,7 @@ export default function EventTypeSelector({ selected, onChange }: EventTypeSelec
                   type="checkbox"
                   checked={allSelected}
                   onChange={() => toggleGroup(group.types)}
-                  className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                  className="rounded border-gray-300 text-amber-700 focus:ring-amber-500"
                 />
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{group.label}</span>
               </label>
@@ -50,7 +50,7 @@ export default function EventTypeSelector({ selected, onChange }: EventTypeSelec
                     type="checkbox"
                     checked={selected.includes(type)}
                     onChange={() => toggle(type)}
-                    className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                    className="rounded border-gray-300 text-amber-700 focus:ring-amber-500"
                   />
                   <code className="text-xs font-mono text-gray-600 dark:text-gray-400">{type}</code>
                 </label>

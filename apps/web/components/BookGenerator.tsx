@@ -169,14 +169,14 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
   return (
     <div>
       <div className="flex items-center mb-6">
-        <BookOpenIcon className="h-5 w-5 text-amber-600 mr-2" />
+        <BookOpenIcon className="h-5 w-5 text-amber-700 mr-2" />
         <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Book Generator</h2>
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4 border border-amber-100 dark:border-amber-800">
           <div className="flex items-center mb-2">
-            <PencilIcon className="h-4 w-4 text-amber-600 mr-2" />
+            <PencilIcon className="h-4 w-4 text-amber-700 mr-2" />
             <label htmlFor="title" className="block text-sm font-medium text-amber-800 dark:text-amber-400">
               Book Title
             </label>
@@ -194,7 +194,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
 
         <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-800">
           <div className="flex items-center mb-3">
-            <AdjustmentsHorizontalIcon className="h-4 w-4 text-amber-600 mr-2" />
+            <AdjustmentsHorizontalIcon className="h-4 w-4 text-amber-700 mr-2" />
             <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Book Structure</h3>
           </div>
           
@@ -289,7 +289,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
 
         <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-800">
           <div className="flex items-center mb-3">
-            <LightBulbIcon className="h-4 w-4 text-amber-600 mr-2" />
+            <LightBulbIcon className="h-4 w-4 text-amber-700 mr-2" />
             <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Advanced Options</h3>
           </div>
           
@@ -375,7 +375,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
 
         <button
           type="submit"
-          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all"
+          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all"
         >
           Generate Book
         </button>

@@ -42,7 +42,7 @@ export default async function BlogIndexPage() {
               >
                 <div className="text-xs text-gray-500 dark:text-gray-400">{formatDisplayDate(post.date)}</div>
                 <h2 className="mt-2 text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  <Link href={`/blog/${post.slug}`} className="hover:text-amber-700 dark:hover:text-amber-300">
+                  <Link href={`/blog/${post.slug}`} className="hover:text-amber-800 dark:hover:text-amber-300">
                     {post.title}
                   </Link>
                 </h2>

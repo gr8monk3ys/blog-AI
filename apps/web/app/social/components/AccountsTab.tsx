@@ -81,7 +81,7 @@ export default function AccountsTab({ showToast, confirm }: AccountsTabProps) {
         <button
           type="button"
           onClick={() => setShowModal(true)}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-amber-600 text-white hover:bg-amber-700 transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-amber-700 text-white hover:bg-amber-800 transition-colors"
         >
           <PlusIcon className="w-4 h-4" />
           Connect Account
@@ -98,7 +98,7 @@ export default function AccountsTab({ showToast, confirm }: AccountsTabProps) {
           <button
             type="button"
             onClick={() => setShowModal(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-amber-600 text-white hover:bg-amber-700 transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-amber-700 text-white hover:bg-amber-800 transition-colors"
           >
             <PlusIcon className="w-4 h-4" />
             Connect Account

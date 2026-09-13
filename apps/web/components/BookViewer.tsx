@@ -66,7 +66,7 @@ export default function BookViewer({ book, filePath }: BookViewerProps) {
           </select>
           <button
             onClick={handleDownload}
-            className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700"
+            className="bg-amber-700 text-white px-4 py-2 rounded hover:bg-amber-800"
           >
             Download
           </button>

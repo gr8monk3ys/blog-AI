@@ -122,15 +122,15 @@ export default function UsageTab({ stats }: UsageTabProps) {
       {/* Stats overview */}
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 text-center">
-          <p className="text-2xl font-semibold text-amber-600">{stats.total_documents}</p>
+          <p className="text-2xl font-semibold text-amber-700">{stats.total_documents}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400">Documents</p>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 text-center">
-          <p className="text-2xl font-semibold text-amber-600">{stats.total_chunks}</p>
+          <p className="text-2xl font-semibold text-amber-700">{stats.total_chunks}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400">Chunks</p>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 text-center">
-          <p className="text-2xl font-semibold text-amber-600">
+          <p className="text-2xl font-semibold text-amber-700">
             {formatBytes(stats.storage_size_bytes)}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">Storage</p>
@@ -173,7 +173,7 @@ export default function UsageTab({ stats }: UsageTabProps) {
           </p>
           <a
             href="/pricing"
-            className="inline-flex px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors"
+            className="inline-flex px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 transition-colors"
           >
             View Plans
           </a>

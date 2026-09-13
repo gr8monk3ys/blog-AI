@@ -106,7 +106,7 @@ function ProfileSelectorComponent({
         <button
           onClick={() => onLoad(profileId)}
           disabled={!profileId.trim() || isLoading}
-          className="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:bg-gray-300 dark:disabled:bg-gray-700"
+          className="px-6 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 disabled:bg-gray-300 dark:disabled:bg-gray-700"
         >
           {isLoading ? 'Loading...' : 'Load'}
         </button>
@@ -115,7 +115,7 @@ function ProfileSelectorComponent({
       {profiles.length === 0 && !loadingProfiles && (
         <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
           No brand profiles yet.{' '}
-          <Link href="/brand" className="text-amber-600 hover:underline">
+          <Link href="/brand" className="text-amber-700 hover:underline">
             Create one
           </Link>
         </p>

@@ -492,7 +492,7 @@ function useBulkGenerationPageView() {
                 </label>
                 <button
                   onClick={downloadTemplate}
-                  className="ml-2 text-sm text-amber-600 hover:text-amber-700"
+                  className="ml-2 text-sm text-amber-700 hover:text-amber-800"
                 >
                   Download template
                 </button>
@@ -513,7 +513,7 @@ function useBulkGenerationPageView() {
                 <button
                   onClick={addItem}
                   disabled={isProcessing}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-amber-600 hover:text-amber-700 disabled:opacity-50"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-amber-700 hover:text-amber-800 disabled:opacity-50"
                 >
                   <PlusIcon className="w-4 h-4" />
                   Add Topic
@@ -734,7 +734,7 @@ function useBulkGenerationPageView() {
                       checked={useResearch}
                       onChange={(e) => setUseResearch(e.target.checked)}
                       disabled={isProcessing}
-                      className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
+                      className="w-4 h-4 text-amber-700 border-gray-300 rounded focus:ring-amber-500"
                     />
                     <span className="text-sm text-gray-700 dark:text-gray-300">Use web research</span>
                   </label>
@@ -744,7 +744,7 @@ function useBulkGenerationPageView() {
                       checked={proofread}
                       onChange={(e) => setProofread(e.target.checked)}
                       disabled={isProcessing}
-                      className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
+                      className="w-4 h-4 text-amber-700 border-gray-300 rounded focus:ring-amber-500"
                     />
                     <span className="text-sm text-gray-700 dark:text-gray-300">Proofread content</span>
                   </label>
@@ -754,7 +754,7 @@ function useBulkGenerationPageView() {
                       checked={humanize}
                       onChange={(e) => setHumanize(e.target.checked)}
                       disabled={isProcessing}
-                      className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
+                      className="w-4 h-4 text-amber-700 border-gray-300 rounded focus:ring-amber-500"
                     />
                     <span className="text-sm text-gray-700 dark:text-gray-300">Humanize content</span>
                   </label>
@@ -901,7 +901,7 @@ function useBulkGenerationPageView() {
                   <button
                     onClick={startGeneration}
                     disabled={items.length === 0 || !canGenerate}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <PlayIcon className="w-5 h-5" />
                     Generate {items.length} Post{items.length !== 1 ? 's' : ''}

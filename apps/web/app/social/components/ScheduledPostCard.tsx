@@ -46,7 +46,7 @@ export default function ScheduledPostCard({ post, onCancel }: ScheduledPostCardP
           <button
             type="button"
             onClick={() => onCancel(post.id)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors shrink-0"
+            className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors shrink-0"
             title="Cancel post"
           >
             <XMarkIcon className="w-4 h-4" />
