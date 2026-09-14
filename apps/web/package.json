@@ -24,6 +24,7 @@
     "@headlessui/react": "^1.7.19",
     "@heroicons/react": "^2.1.1",
     "@neondatabase/serverless": "^1.0.2",
+    "@sentry-internal/replay": "^10.36.0",
     "@sentry/nextjs": "^10.36.0",
     "@tailwindcss/typography": "^0.5.10",
     "@testing-library/dom": "^10.4.1",
