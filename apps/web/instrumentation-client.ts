@@ -8,7 +8,13 @@
  * It is named `instrumentation-client.ts` because that is the file Next's
  * Turbopack build actually bundles; `sentry.client.config.ts` is silently
  * ignored there. Production served a server-side sentry-trace header but no
- * browser SDK until this rename. The init options are unchanged.
+ * browser SDK until this rename.
+ *
+ * Session Replay is added *after* `Sentry.init`, from a dynamically imported
+ * chunk scheduled on idle. Replay (rrweb) is ~60% of the SDK's browser bytes
+ * and was the last unused/legacy-JS finding on the home page's mobile
+ * Lighthouse run. Error capture and tracing are live from init; replay
+ * attaches a moment later and still honours the sample rates set on init.
  */
 
 import * as Sentry from '@sentry/nextjs'
@@ -32,14 +38,6 @@ if (SENTRY_DSN) {
 
     // Environment tagging
     environment: process.env.NODE_ENV,
-
-    // Privacy: Mask all text and block media to protect user data
-    integrations: [
-      Sentry.replayIntegration({
-        maskAllText: true,
-        blockAllMedia: true,
-      }),
-    ],
 
     // Filter out common noise
     ignoreErrors: [
@@ -87,4 +85,47 @@ if (SENTRY_DSN) {
     // Debug mode for development
     debug: process.env.NODE_ENV === 'development',
   })
+
+  scheduleReplay()
+}
+
+/**
+ * Loads Session Replay off the critical path.
+ *
+ * The dynamic import gives the bundler a split point so rrweb ships as its
+ * own chunk instead of inside the SDK chunk every page loads eagerly. The
+ * import is deferred to an idle callback (setTimeout fallback for Safari)
+ * so it never competes with hydration. `addIntegration` on a live client
+ * runs the integration's setup, so buffered/error-sampled replays work the
+ * same as when the integration is passed to `init`.
+ *
+ * Privacy options are the same as before: mask all text, block all media.
+ */
+function scheduleReplay() {
+  const load = () => {
+    // `@sentry-internal/replay` is what `@sentry/nextjs` re-exports
+    // `replayIntegration` from. Importing it directly (rather than
+    // `import('@sentry/nextjs')`) keeps the lazy chunk to rrweb + replay
+    // only; re-importing the whole SDK namespace made Turbopack emit a
+    // 340 KB chunk that duplicated core code already in the initial bundle.
+    void import('@sentry-internal/replay')
+      .then(({ replayIntegration }) => {
+        Sentry.addIntegration(
+          replayIntegration({
+            maskAllText: true,
+            blockAllMedia: true,
+          }),
+        )
+      })
+      .catch(() => {
+        // Replay is best-effort; error monitoring is already running.
+      })
+  }
+
+  if (typeof window === 'undefined') return
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(load, { timeout: 5000 })
+  } else {
+    setTimeout(load, 1500)
+  }
 }
