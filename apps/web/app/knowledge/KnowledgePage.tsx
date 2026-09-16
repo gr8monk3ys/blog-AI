@@ -85,7 +85,7 @@ export default function KnowledgePage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex items-center mb-2">
-        <DocumentTextIcon className="h-6 w-6 text-amber-600 mr-2" />
+        <DocumentTextIcon className="h-6 w-6 text-amber-700 mr-2" />
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
           Knowledge Base
         </h1>

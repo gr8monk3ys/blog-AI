@@ -19,7 +19,7 @@ export default function PrivacyPageClient(): React.ReactElement {
             Last updated: {LAST_UPDATED}
           </p>
 
-          <div className="mt-10 prose prose-gray dark:prose-invert max-w-none prose-headings:font-serif prose-headings:font-semibold prose-a:text-amber-600 dark:prose-a:text-amber-400 hover:prose-a:text-amber-700 dark:hover:prose-a:text-amber-300">
+          <div className="mt-10 prose prose-gray dark:prose-invert max-w-none prose-headings:font-serif prose-headings:font-semibold prose-a:text-amber-700 dark:prose-a:text-amber-400 hover:prose-a:text-amber-700 dark:hover:prose-a:text-amber-300">
             <p>
               Blog AI (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) is
               committed to protecting your privacy. This Privacy Policy explains

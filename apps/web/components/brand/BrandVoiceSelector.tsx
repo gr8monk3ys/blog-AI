@@ -96,7 +96,7 @@ export default function BrandVoiceSelector({
           />
         </Switch>
         <div className="flex items-center gap-1.5">
-          <SparklesIcon className="w-4 h-4 text-amber-600" />
+          <SparklesIcon className="w-4 h-4 text-amber-700" />
           <span className="text-sm text-gray-700 dark:text-gray-300">Brand Voice</span>
         </div>
         {enabled && (
@@ -133,7 +133,7 @@ export default function BrandVoiceSelector({
                             {profile.name}
                           </span>
                           {selected && (
-                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-amber-600">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-amber-700">
                               <CheckIcon className="h-4 w-4" />
                             </span>
                           )}
@@ -154,7 +154,7 @@ export default function BrandVoiceSelector({
     <div className="bg-gray-50 dark:bg-gray-950 rounded-lg p-4 border border-gray-200 dark:border-gray-800">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <SparklesIcon className="w-5 h-5 text-amber-600" />
+          <SparklesIcon className="w-5 h-5 text-amber-700" />
           <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Apply Brand Voice</h3>
         </div>
         <Switch
@@ -199,7 +199,7 @@ export default function BrandVoiceSelector({
                   ) : profiles.length === 0 ? (
                     <div className="py-2 px-4 text-gray-500 dark:text-gray-400">
                       No profiles found.{' '}
-                      <Link href="/brand" className="text-amber-600 hover:underline">
+                      <Link href="/brand" className="text-amber-700 hover:underline">
                         Create one
                       </Link>
                     </div>
@@ -225,7 +225,7 @@ export default function BrandVoiceSelector({
                               </span>
                             </div>
                             {selected && (
-                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-amber-600">
+                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-amber-700">
                                 <CheckIcon className="h-5 w-5" />
                               </span>
                             )}

@@ -21,7 +21,7 @@ export default function ToolPageHeader() {
             </Link>
           </div>
           <div className="flex items-center gap-2">
-            <SparklesIcon className="w-5 h-5 text-amber-600" aria-hidden="true" />
+            <SparklesIcon className="w-5 h-5 text-amber-700" aria-hidden="true" />
             <span className="font-semibold text-gray-900 dark:text-gray-100">Blog AI</span>
           </div>
         </div>

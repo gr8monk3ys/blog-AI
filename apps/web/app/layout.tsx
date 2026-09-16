@@ -27,6 +27,10 @@ export const metadata: Metadata = {
   },
   description:
     'Train your brand voice, run repeatable SEO content workflows, and generate publish-ready drafts faster.',
+  // Without an explicit icon, browsers request /favicon.ico, which does not
+  // exist here (the icon is public/icon.svg, already used by manifest.json).
+  // That was a 404 on every page load and an errors-in-console finding.
+  icons: { icon: '/icon.svg' },
   openGraph: {
     type: 'website',
     siteName: 'Blog AI',

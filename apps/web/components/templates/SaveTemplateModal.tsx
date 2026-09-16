@@ -108,7 +108,7 @@ function useSaveTemplateModalView({
                     as="h3"
                     className="text-lg font-semibold leading-6 text-gray-900 dark:text-gray-100 flex items-center gap-2"
                   >
-                    <BookmarkIcon className="w-5 h-5 text-amber-600" />
+                    <BookmarkIcon className="w-5 h-5 text-amber-700" />
                     Save as Template
                   </Dialog.Title>
                   <button
@@ -210,7 +210,7 @@ function useSaveTemplateModalView({
                       id="template-public"
                       checked={isPublic}
                       onChange={(e) => setIsPublic(e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-amber-600 focus:ring-amber-500 dark:bg-gray-800"
+                      className="h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-amber-700 focus:ring-amber-500 dark:bg-gray-800"
                     />
                     <label
                       htmlFor="template-public"
@@ -240,7 +240,7 @@ function useSaveTemplateModalView({
                     <button
                       type="submit"
                       disabled={saving || !name.trim()}
-                      className="px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {saving ? 'Saving...' : 'Save Template'}
                     </button>

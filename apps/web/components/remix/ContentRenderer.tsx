@@ -14,7 +14,7 @@ function ContentRendererComponent({ result }: ContentRendererProps) {
     case 'twitter_thread':
       return (
         <div className="space-y-3">
-          <div className="bg-amber-50 dark:bg-amber-900/30 p-3 rounded-lg border-l-4 border-amber-400">
+          <div className="bg-amber-50 dark:bg-amber-900/30 p-3 rounded-lg border border-amber-200 dark:border-amber-700">
             <p className="font-medium text-amber-900 dark:text-amber-300">{content.hook as string}</p>
           </div>
           {(content.tweets as string[])?.map((tweet, i) => (
@@ -23,12 +23,12 @@ function ContentRendererComponent({ result }: ContentRendererProps) {
               <p className="mt-1">{tweet}</p>
             </div>
           ))}
-          <div className="bg-emerald-50 dark:bg-emerald-900/30 p-3 rounded-lg border-l-4 border-emerald-400">
+          <div className="bg-emerald-50 dark:bg-emerald-900/30 p-3 rounded-lg border border-emerald-200 dark:border-emerald-700">
             <p className="font-medium text-emerald-900 dark:text-emerald-300">{content.cta as string}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             {(content.hashtags as string[])?.map((tag, i) => (
-              <span key={i} className="text-amber-600 dark:text-amber-400 text-sm">
+              <span key={i} className="text-amber-700 dark:text-amber-400 text-sm">
                 #{tag}
               </span>
             ))}
@@ -41,10 +41,10 @@ function ContentRendererComponent({ result }: ContentRendererProps) {
         <div className="space-y-4">
           <p className="font-medium text-lg">{content.hook as string}</p>
           <div className="whitespace-pre-wrap">{content.body as string}</div>
-          <p className="font-medium text-amber-600 dark:text-amber-400">{content.cta as string}</p>
+          <p className="font-medium text-amber-700 dark:text-amber-400">{content.cta as string}</p>
           <div className="flex flex-wrap gap-2">
             {(content.hashtags as string[])?.map((tag, i) => (
-              <span key={i} className="text-amber-600 dark:text-amber-400 text-sm">
+              <span key={i} className="text-amber-700 dark:text-amber-400 text-sm">
                 #{tag}
               </span>
             ))}
@@ -69,7 +69,7 @@ function ContentRendererComponent({ result }: ContentRendererProps) {
               </div>
             )
           )}
-          <p className="font-medium text-amber-600 dark:text-amber-400">{content.cta as string}</p>
+          <p className="font-medium text-amber-700 dark:text-amber-400">{content.cta as string}</p>
           <p className="text-gray-500 dark:text-gray-400">{content.signoff as string}</p>
         </div>
       )

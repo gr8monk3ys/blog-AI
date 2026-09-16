@@ -97,3 +97,6 @@ frontend/.next/
 .remember/
 .vercel/
 tsconfig.tsbuildinfo
+
+# Impeccable per-developer detector overrides
+.impeccable/config.local.json

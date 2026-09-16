@@ -1,7 +1,7 @@
 'use client'
 
-import * as Sentry from '@sentry/nextjs'
 import { Component, ReactNode } from 'react'
+import { getSentry } from '../lib/sentry-client'
 
 interface Props {
   children: ReactNode
@@ -32,23 +32,31 @@ export default class ErrorBoundary extends Component<Props, State> {
     // Log to console for development
     console.error('ErrorBoundary caught an error:', error, errorInfo)
 
-    // Report to Sentry with enhanced context
-    const eventId = Sentry.captureException(error, {
-      tags: {
-        errorBoundary: 'component',
-        componentName: this.props.componentName || 'unknown',
-      },
-      contexts: {
-        react: {
-          componentStack: errorInfo.componentStack,
-        },
-        custom: this.props.context || {},
-      },
-      // Filter out any PII that might be in error messages
-      fingerprint: ['{{ default }}', this.props.componentName || 'ErrorBoundary'],
-    })
-
-    this.setState({ eventId })
+    // Report to Sentry with enhanced context. The SDK is lazy-loaded
+    // (lib/sentry-client.ts); the event id arrives once it has initialised.
+    void getSentry()
+      .then((Sentry) => {
+        const eventId = Sentry.captureException(error, {
+          tags: {
+            errorBoundary: 'component',
+            componentName: this.props.componentName || 'unknown',
+          },
+          contexts: {
+            react: {
+              componentStack: errorInfo.componentStack,
+            },
+            custom: this.props.context || {},
+          },
+          // Filter out any PII that might be in error messages
+          fingerprint: ['{{ default }}', this.props.componentName || 'ErrorBoundary'],
+        })
+        if (this.state.hasError && this.state.error === error) {
+          this.setState({ eventId })
+        }
+      })
+      .catch(() => {
+        // Reporting is best-effort; the fallback UI is already shown.
+      })
   }
 
   handleReset = (): void => {

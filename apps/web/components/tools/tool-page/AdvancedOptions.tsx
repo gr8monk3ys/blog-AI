@@ -42,7 +42,7 @@ export default function AdvancedOptions({
     <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 border border-gray-200 dark:border-gray-800">
       <div className="flex items-center mb-3">
         <LightBulbIcon
-          className="h-4 w-4 text-amber-600 dark:text-amber-400 mr-2"
+          className="h-4 w-4 text-amber-700 dark:text-amber-400 mr-2"
           aria-hidden="true"
         />
         <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Advanced Options</h3>
@@ -90,7 +90,7 @@ export default function AdvancedOptions({
               />
             </Switch>
             <div className="flex items-center gap-2">
-              <BeakerIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              <BeakerIcon className="w-4 h-4 text-amber-700 dark:text-amber-400" />
               <span className="text-sm text-gray-700 dark:text-gray-300">
                 Generate variations for A/B testing
               </span>
@@ -114,7 +114,7 @@ export default function AdvancedOptions({
             htmlFor="keywords"
             className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 mb-1"
           >
-            <ChartBarIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+            <ChartBarIcon className="w-4 h-4 text-amber-700 dark:text-amber-400" />
             Keywords for SEO scoring (comma-separated)
           </label>
           <input

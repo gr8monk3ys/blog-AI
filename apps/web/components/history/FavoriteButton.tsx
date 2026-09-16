@@ -78,7 +78,7 @@ export default function FavoriteButton({
           focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2
           ${
             isFavorite
-              ? 'text-amber-500 hover:text-amber-600'
+              ? 'text-amber-500 hover:text-amber-700'
               : 'text-gray-400 hover:text-amber-500'
           }
           ${isLoading ? 'opacity-50 cursor-wait' : 'hover:bg-gray-100'}
@@ -130,7 +130,7 @@ export default function FavoriteButton({
       {showLabel && (
         <span
           className={`ml-1.5 text-sm ${
-            isFavorite ? 'text-amber-600' : 'text-gray-500'
+            isFavorite ? 'text-amber-700' : 'text-gray-500'
           }`}
         >
           {isFavorite ? 'Favorited' : 'Favorite'}

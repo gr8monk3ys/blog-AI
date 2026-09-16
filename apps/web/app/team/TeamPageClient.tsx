@@ -81,12 +81,12 @@ export default function TeamPageClient() {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
-          <UserGroupIcon className="h-6 w-6 text-amber-600" />
+          <UserGroupIcon className="h-6 w-6 text-amber-700" />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Team</h1>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 transition-colors"
         >
           <PlusIcon className="h-4 w-4" />
           New Organization

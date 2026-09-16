@@ -241,14 +241,14 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
   return (
     <div>
       <div className="flex items-center mb-6">
-        <DocumentTextIcon className="h-5 w-5 text-amber-600 mr-2" />
+        <DocumentTextIcon className="h-5 w-5 text-amber-700 mr-2" />
         <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Blog Post Generator</h2>
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-amber-50 dark:bg-amber-950/30 rounded-lg p-4 border border-amber-100 dark:border-amber-800">
           <div className="flex items-center mb-2">
-            <PencilIcon className="h-4 w-4 text-amber-600 mr-2" />
+            <PencilIcon className="h-4 w-4 text-amber-700 mr-2" />
             <label htmlFor="topic" className="block text-sm font-medium text-amber-700">
               What would you like to write about?
             </label>
@@ -323,7 +323,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
 
         <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-800">
           <div className="flex items-center mb-3">
-            <LightBulbIcon className="h-4 w-4 text-amber-600 mr-2" />
+            <LightBulbIcon className="h-4 w-4 text-amber-700 mr-2" />
             <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Advanced Options</h3>
           </div>
           
@@ -507,7 +507,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
                 {(errorKind === 'forbidden' || errorKind === 'limit') && (
                   <Link
                     href="/pricing"
-                    className="inline-flex items-center mt-2 text-sm font-medium text-amber-600 hover:text-amber-700"
+                    className="inline-flex items-center mt-2 text-sm font-medium text-amber-700 hover:text-amber-800"
                   >
                     Upgrade your plan
                     <span className="ml-1">&rarr;</span>
@@ -522,7 +522,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
                   </button>
                 )}
                 {errorKind === 'rate-limit' && retryAfterSeconds && (
-                  <p className="mt-1 text-xs text-amber-600">
+                  <p className="mt-1 text-xs text-amber-700">
                     Try again in {retryAfterSeconds}s
                   </p>
                 )}
@@ -542,7 +542,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
 
         <button
           type="submit"
-          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all"
+          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all"
         >
           Generate Blog Post
         </button>

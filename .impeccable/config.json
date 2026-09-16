@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "gray-on-color",
+        "value": "*",
+        "files": [
+          "apps/web/app/settings/webhooks/components/SubscriptionCard.tsx",
+          "apps/web/app/social/components/AccountCard.tsx",
+          "apps/web/app/social/components/CampaignCard.tsx",
+          "apps/web/app/social/components/ScheduledPostCard.tsx",
+          "apps/web/app/tool-directory/page.tsx",
+          "apps/web/app/tools/category/[category]/page.tsx",
+          "apps/web/components/brand/BrandProfileCard.tsx",
+          "apps/web/components/brand/BrandVoiceSelector.tsx",
+          "apps/web/components/onboarding/OnboardingWizard.tsx",
+          "apps/web/components/tools/VariationCompare.tsx"
+        ],
+        "createdAt": "2026-09-13T23:07:03.403Z",
+        "reason": "Agent: every flagged line pairs hover:bg-{amber,red,emerald}-50 with a hover:text-* of the same hue, or is a ternary whose gray branch never renders on the amber branch; the gray text only ever sits on the neutral rest surface (rest contrast raised to gray-500/gray-400 in this PR). The line-based rule cannot see Tailwind variant scope."
+      }
+    ]
+  }
+}

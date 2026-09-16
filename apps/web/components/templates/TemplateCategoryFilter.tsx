@@ -39,7 +39,7 @@ export default function TemplateCategoryFilter({
               ${
                 isSelected
                   ? category === 'all'
-                    ? 'bg-amber-600 text-white'
+                    ? 'bg-amber-700 text-white'
                     : `${categoryInfo?.bgColor} ${categoryInfo?.color} border ${categoryInfo?.borderColor}`
                   : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
               }
