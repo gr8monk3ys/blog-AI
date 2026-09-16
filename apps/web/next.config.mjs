@@ -132,6 +132,7 @@ const nextConfig = {
   experimental: {
     // Enable scroll restoration
     scrollRestoration: true,
+    inlineCss: true,
   },
 
   // Image optimization with modern formats
