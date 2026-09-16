@@ -1,7 +1,7 @@
 'use client'
 
-import * as Sentry from '@sentry/nextjs'
 import { useEffect } from 'react'
+import { getSentry } from '../lib/sentry-client'
 import Link from 'next/link'
 
 const SUPPORT_EMAIL =
@@ -29,14 +29,20 @@ export default function Error({
 }) {
   // Report error to Sentry on mount
   useEffect(() => {
-    Sentry.captureException(error, {
-      tags: {
-        errorBoundary: 'app',
-      },
-      extra: {
-        digest: error.digest,
-      },
-    })
+    void getSentry()
+      .then((Sentry) => {
+        Sentry.captureException(error, {
+          tags: {
+            errorBoundary: 'app',
+          },
+          extra: {
+            digest: error.digest,
+          },
+        })
+      })
+      .catch(() => {
+        // Reporting is best-effort; the error UI is already shown.
+      })
   }, [error])
 
   return (
