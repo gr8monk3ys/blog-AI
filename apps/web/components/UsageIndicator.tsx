@@ -267,7 +267,7 @@ function UsageDetails({ usage, showUpgradePrompt }: UsageDetailsProps) {
           <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
           <div className="text-sm">
             <p className="font-medium text-amber-800 dark:text-amber-400">Running low</p>
-            <p className="text-amber-600 dark:text-amber-500">
+            <p className="text-amber-700 dark:text-amber-500">
               {!isDailyUnlimited
                 ? `${usage.daily_remaining} generations remaining today`
                 : !isMonthlyUnlimited
@@ -282,7 +282,7 @@ function UsageDetails({ usage, showUpgradePrompt }: UsageDetailsProps) {
       {showUpgradePrompt && usage.tier !== 'pro' && usage.tier !== 'business' && (
         <Link
           href="/pricing"
-          className="flex items-center justify-center gap-2 w-full py-2 px-4 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white text-sm font-medium rounded-lg transition-all"
+          className="flex items-center justify-center gap-2 w-full py-2 px-4 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white text-sm font-medium rounded-lg transition-all"
         >
           <ArrowUpCircleIcon className="h-4 w-4" />
           {usage.tier === 'free' ? 'Upgrade to Starter' : 'Upgrade to Pro'}

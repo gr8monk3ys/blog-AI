@@ -76,7 +76,7 @@ export default async function ToolDirectoryPage() {
             <div className="flex flex-col gap-2">
               <Link
                 href="/tools"
-                className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors"
+                className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-amber-700 hover:bg-amber-800 rounded-lg transition-colors"
               >
                 Open Interactive Tools
               </Link>
@@ -122,7 +122,7 @@ export default async function ToolDirectoryPage() {
               <a
                 key={category}
                 href={`#${category}`}
-                className="px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
+                className="px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-800 dark:hover:text-amber-300 transition-colors"
               >
                 {TOOL_CATEGORIES[category].name}
               </a>
@@ -153,7 +153,7 @@ export default async function ToolDirectoryPage() {
                   </div>
                   <Link
                     href={`/tools/category/${category}`}
-                    className="text-xs text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300"
+                    className="text-xs text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300"
                   >
                     View tools
                   </Link>
@@ -180,7 +180,7 @@ export default async function ToolDirectoryPage() {
                               {tool.description}
                             </div>
                           </div>
-                          <span className="text-xs text-amber-600 dark:text-amber-400">Open</span>
+                          <span className="text-xs text-amber-700 dark:text-amber-400">Open</span>
                         </Link>
                       </li>
                     ))}
@@ -206,7 +206,7 @@ export default async function ToolDirectoryPage() {
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
               href="/templates"
-              className="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg"
+              className="px-4 py-2 text-sm font-medium text-white bg-amber-700 hover:bg-amber-800 rounded-lg"
             >
               Explore templates
             </Link>

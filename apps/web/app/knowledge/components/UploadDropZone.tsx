@@ -303,7 +303,7 @@ export default function UploadDropZone({
           {atDocLimit ? (
             'Upload disabled — document limit reached'
           ) : isDragOver ? (
-            <span className="text-amber-600 font-semibold">Drop files here</span>
+            <span className="text-amber-700 font-semibold">Drop files here</span>
           ) : (
             <>
               <span className="font-semibold">Click to upload</span> or drag and drop
@@ -374,7 +374,7 @@ export default function UploadDropZone({
                   <div className="flex-shrink-0 flex items-center gap-1">
                     {statusIcon(item.status)}
                     {item.status === 'uploading' && (
-                      <span className="text-xs text-amber-600 font-medium">{item.progress}%</span>
+                      <span className="text-xs text-amber-700 font-medium">{item.progress}%</span>
                     )}
                     {item.status === 'queued' && (
                       <span className="text-xs text-gray-400">Queued</span>
@@ -401,7 +401,7 @@ export default function UploadDropZone({
                 type="button"
                 onClick={startUpload}
                 disabled={isUploading}
-                className="w-full px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isUploading ? 'Uploading...' : `Upload ${queue.filter((f) => f.status === 'queued').length} file(s)`}
               </button>

@@ -69,7 +69,7 @@ export default function CampaignCard({ campaign, onPause, onResume, onCancel }: 
             <button
               type="button"
               onClick={() => onPause(campaign.id)}
-              className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+              className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
               title="Pause campaign"
             >
               <PauseIcon className="w-4 h-4" />
@@ -79,7 +79,7 @@ export default function CampaignCard({ campaign, onPause, onResume, onCancel }: 
             <button
               type="button"
               onClick={() => onResume(campaign.id)}
-              className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+              className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
               title="Resume campaign"
             >
               <PlayIcon className="w-4 h-4" />
@@ -89,7 +89,7 @@ export default function CampaignCard({ campaign, onPause, onResume, onCancel }: 
             <button
               type="button"
               onClick={() => onCancel(campaign.id)}
-              className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+              className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
               title="Cancel campaign"
             >
               <XMarkIcon className="w-4 h-4" />

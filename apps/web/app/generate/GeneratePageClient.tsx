@@ -45,7 +45,7 @@ export default function GeneratePageClient() {
         {loading && (
           <div className="glass-panel rounded-2xl p-12 flex flex-col items-center justify-center gap-4">
             <svg
-              className="animate-spin h-10 w-10 text-amber-600"
+              className="animate-spin h-10 w-10 text-amber-700"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"

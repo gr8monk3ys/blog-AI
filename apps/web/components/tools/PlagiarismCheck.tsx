@@ -48,7 +48,7 @@ export default function PlagiarismCheck({
             type="button"
             onClick={() => onRun({ skipCache: false })}
             disabled={loading}
-            className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-600 text-white hover:bg-amber-700 disabled:bg-gray-300 dark:disabled:bg-gray-700"
+            className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-700 text-white hover:bg-amber-800 disabled:bg-gray-300 dark:disabled:bg-gray-700"
           >
             {loading ? 'Checking…' : result ? 'Re-check' : 'Check'}
           </button>

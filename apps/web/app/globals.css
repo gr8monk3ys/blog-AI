@@ -67,3 +67,67 @@ body {
     @apply text-gray-500 dark:text-gray-500;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Homepage entrance motion (app/HomePageClient.tsx, app/_home/Reveal.tsx)
+
+   The hero animates with keyframes so its text is painted in the first frame
+   of the server HTML: the h1 is the page's LCP element, so it rises but never
+   starts transparent (Chrome does not count an opacity:0 element as painted).
+   Sections below the fold fade-and-rise once they scroll into view; a small
+   IntersectionObserver hook flips `data-inview`. Timings mirror the previous
+   framer-motion variants: 0.5 s ease-out, children 120 ms apart.
+   --------------------------------------------------------------------------- */
+@keyframes home-rise {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes home-rise-painted {
+  from { transform: translateY(24px); }
+  to { transform: none; }
+}
+@keyframes home-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* In the components layer so per-element Tailwind utilities such as
+   [animation-delay:120ms] still win over the `animation` shorthand. */
+@layer components {
+  .hero-rise { animation: home-rise 0.5s ease-out both; }
+  .hero-rise-lcp { animation: home-rise-painted 0.5s ease-out both; }
+  .hero-fade { animation: home-fade 0.6s ease-out both; }
+}
+
+[data-reveal],
+[data-reveal-stagger] > * {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+[data-reveal][data-inview],
+[data-reveal-stagger][data-inview] > * {
+  opacity: 1;
+  transform: none;
+}
+[data-reveal-stagger] > :nth-child(2) { transition-delay: 120ms; }
+[data-reveal-stagger] > :nth-child(3) { transition-delay: 240ms; }
+[data-reveal-stagger] > :nth-child(4) { transition-delay: 360ms; }
+[data-reveal-stagger] > :nth-child(5) { transition-delay: 480ms; }
+[data-reveal-stagger] > :nth-child(6) { transition-delay: 600ms; }
+[data-reveal-stagger] > :nth-child(7) { transition-delay: 720ms; }
+[data-reveal-stagger] > :nth-child(n + 8) { transition-delay: 840ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-rise,
+  .hero-rise-lcp,
+  .hero-fade {
+    animation: none;
+  }
+  [data-reveal],
+  [data-reveal-stagger] > * {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

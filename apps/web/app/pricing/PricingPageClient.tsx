@@ -229,7 +229,7 @@ export default function PricingPage() {
       return 'bg-gray-100 dark:bg-gray-800 text-gray-500 cursor-default'
     }
     if (tier === 'starter' || tier === 'pro') {
-      return 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white'
+      return 'bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white'
     }
     return 'border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
   }
@@ -240,7 +240,7 @@ export default function PricingPage() {
       <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-16">
+      <section className="bg-gradient-to-r from-amber-700 to-amber-800 text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -262,7 +262,7 @@ export default function PricingPage() {
                 onClick={() => setBillingCycle('monthly')}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                   billingCycle === 'monthly'
-                    ? 'bg-white text-amber-600'
+                    ? 'bg-white text-amber-700'
                     : 'text-white hover:bg-white/10'
                 }`}
               >
@@ -272,7 +272,7 @@ export default function PricingPage() {
                 onClick={() => setBillingCycle('yearly')}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                   billingCycle === 'yearly'
-                    ? 'bg-white text-amber-600'
+                    ? 'bg-white text-amber-700'
                     : 'text-white hover:bg-white/10'
                 }`}
               >
@@ -574,7 +574,7 @@ export default function PricingPage() {
       </section>
 
       {/* Footer CTA */}
-      <section className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-12">
+      <section className="bg-gradient-to-r from-amber-700 to-amber-800 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl font-bold mb-4">Ready to create amazing content?</h2>
           <p className="text-amber-100 mb-6">
@@ -582,7 +582,7 @@ export default function PricingPage() {
           </p>
           <Link
             href="/"
-            className="inline-flex items-center px-6 py-3 bg-white text-amber-600 font-medium rounded-lg hover:bg-amber-50 transition-colors"
+            className="inline-flex items-center px-6 py-3 bg-white text-amber-700 font-medium rounded-lg hover:bg-amber-50 transition-colors"
           >
             Start Creating for Free
           </Link>
