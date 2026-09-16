@@ -163,6 +163,65 @@ jobs:
       - name: Build
         run: bun run build
 
+  lighthouse:
+    name: Lighthouse (score floors)
+    runs-on: ubuntu-latest
+    # Runs after the cheap checks so a lint or type error does not also cost a
+    # build plus four Lighthouse runs. Same build recipe as frontend-checks.
+    needs: [frontend-checks]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # NEXT_PUBLIC_API_URL points at the app itself: the home page pings the
+      # API root on load, and an unset URL falls back to localhost:8000, which
+      # the CSP blocks and which logs a console.error, both of which sink the
+      # best-practices score for reasons unrelated to the code under test.
+      # No Clerk key, same as frontend-checks: every route is public without
+      # one, and these are the public routes anyway.
+      - name: Build
+        run: bun run build
+        env:
+          NEXT_PUBLIC_API_URL: http://127.0.0.1:3000
+
+      - name: Start application
+        run: |
+          bun run start -- -p 3000 > /tmp/blog-ai-web.log 2>&1 &
+          echo $! > /tmp/blog-ai-web.pid
+          for _ in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/ > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/blog-ai-web.log
+          exit 1
+
+      - name: Enforce Lighthouse score floors and document byte budget
+        run: bun run lighthouse:ci
+
+      - name: Upload Lighthouse artifacts
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: lighthouse-artifacts
+          path: artifacts/lighthouse
+          retention-days: 7
+
+      - name: Stop application
+        if: always()
+        run: |
+          if [ -f /tmp/blog-ai-web.pid ]; then
+            kill "$(cat /tmp/blog-ai-web.pid)" || true
+          fi
+
   frontend-e2e:
     name: Frontend E2E (Playwright)
     runs-on: ubuntu-latest
