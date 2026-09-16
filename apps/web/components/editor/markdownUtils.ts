@@ -90,7 +90,7 @@ export function markdownToHtml(md: string): string {
     if (line.trimStart().startsWith('> ')) {
       closeList()
       const text = inlineFormat(line.replace(/^>\s?/, ''))
-      html.push(`<blockquote class="border-l-4 border-amber-300 pl-4 italic text-gray-600 my-4">${text}</blockquote>`)
+      html.push(`<blockquote class="border-l border-amber-400 pl-4 italic text-gray-600 my-4">${text}</blockquote>`)
       continue
     }
 

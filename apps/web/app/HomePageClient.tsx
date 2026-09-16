@@ -1,11 +1,9 @@
 'use client'
 
-import { useRef } from 'react'
 import Link from 'next/link'
-import { motion, useInView } from 'framer-motion'
 import SiteHeader from '../components/SiteHeader'
 import SiteFooter from '../components/SiteFooter'
-import { SignedIn, SignedOut } from '../lib/clerk-ui'
+import { useAuth } from '../lib/clerk-ui'
 import { TOOL_CATEGORIES } from '../types/tools'
 import {
   SparklesIcon,
@@ -13,7 +11,7 @@ import {
   CheckIcon,
   UserGroupIcon,
 } from '@heroicons/react/24/outline'
-import { FADE_UP, FADE_IN, STAGGER_CONTAINER } from './_home/animations'
+import { Reveal } from './_home/Reveal'
 import {
   FEATURES,
   STEPS,
@@ -23,27 +21,10 @@ import {
   CAPABILITIES,
 } from './_home/data'
 
-interface RevealSectionProps {
-  children: React.ReactNode
-  className?: string
-}
-
-function RevealSection({ children, className = '' }: RevealSectionProps) {
-  const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-60px' })
-
-  return (
-    <motion.div
-      ref={ref}
-      initial="hidden"
-      animate={isInView ? 'visible' : 'hidden'}
-      variants={FADE_UP}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  )
+// Entrance motion lives in app/_home/Reveal.tsx (CSS-driven; see the note
+// there for why this page no longer uses framer-motion).
+function RevealSection({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return <Reveal className={className}>{children}</Reveal>
 }
 
 // ---------------------------------------------------------------------------
@@ -52,6 +33,16 @@ function RevealSection({ children, className = '' }: RevealSectionProps) {
 
 export default function Home(): React.ReactElement {
   const isClerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+  const { isLoaded, isSignedIn } = useAuth()
+
+  // Render the signed-out CTA until Clerk positively reports a session.
+  // Clerk's <SignedIn>/<SignedOut> BOTH render nothing while clerk.browser.js
+  // is still loading — and forever if it fails to load — which left the hero
+  // with a subhead, an empty gap, and a "No credit card required" line
+  // pointing at no button. The primary action must not depend on a
+  // third-party script being reachable.
+  const showSignedInCta = isClerkConfigured && isLoaded && isSignedIn
+  const startFreeHref = isClerkConfigured ? '/sign-up' : '/auth'
 
   return (
     <>
@@ -76,83 +67,61 @@ export default function Home(): React.ReactElement {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-36">
           <div className="max-w-3xl mx-auto text-center">
-            <motion.div
-              initial="hidden"
-              animate="visible"
-              variants={STAGGER_CONTAINER}
-            >
+            {/*
+              The hero is painted by the server HTML and animated purely in CSS
+              (.hero-rise / .hero-fade in globals.css). The h1 is the LCP element:
+              it rises but is never transparent, so first paint == LCP.
+            */}
+            <div>
               {/* Badge */}
-              <motion.div variants={FADE_UP} transition={{ duration: 0.5 }}>
+              <div className="hero-rise">
                 <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-100/70 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 text-xs font-medium tracking-wide">
                   <SparklesIcon className="w-3.5 h-3.5" aria-hidden="true" />
                   AI writing tools with Brand Voice Training
                 </span>
-              </motion.div>
+              </div>
 
               {/* Headline */}
-              <motion.h1
-                variants={FADE_UP}
-                transition={{ duration: 0.5 }}
-                className="mt-6 text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 font-serif leading-[1.1]"
+              <h1
+                className="hero-rise-lcp [animation-delay:120ms] mt-6 text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 font-serif leading-[1.1]"
               >
                 Brand-Consistent AI Content For{' '}
-                <span className="text-amber-600">Lean Marketing Teams</span>
-              </motion.h1>
+                <span className="text-amber-700">Lean Marketing Teams</span>
+              </h1>
 
               {/* Subheading */}
-              <motion.p
-                variants={FADE_UP}
-                transition={{ duration: 0.5 }}
-                className="mt-6 text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed"
+              <p
+                className="hero-rise [animation-delay:240ms] mt-6 text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed"
               >
                 Train your voice once, run repeatable SEO content workflows, and generate
                 publish-ready drafts faster without sounding generic.
-              </motion.p>
+              </p>
 
               {/* CTAs */}
-              <motion.div
-                variants={FADE_UP}
-                transition={{ duration: 0.5 }}
-                className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
+              <div
+                className="hero-rise [animation-delay:360ms] mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
               >
-                {isClerkConfigured ? (
+                {showSignedInCta ? (
                   <>
-                    <SignedOut>
-                      <Link
-                        href="/sign-up"
-                        className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition-colors shadow-sm shadow-amber-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
-                      >
-                        Start Free
-                        <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
-                      </Link>
-                      <Link
-                        href="/pricing"
-                        className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-gray-700 dark:text-gray-300 bg-white/70 dark:bg-gray-900/60 border border-black/[0.08] dark:border-white/[0.08] hover:border-black/[0.12] dark:hover:border-white/[0.12] hover:bg-white/90 dark:hover:bg-gray-800/70 rounded-xl backdrop-blur-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
-                      >
-                        View Plans
-                      </Link>
-                    </SignedOut>
-                    <SignedIn>
-                      <Link
-                        href="/generate"
-                        className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition-colors shadow-sm shadow-amber-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
-                      >
-                        Start Generating
-                        <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
-                      </Link>
-                      <Link
-                        href="/brand"
-                        className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-gray-700 dark:text-gray-300 bg-white/70 dark:bg-gray-900/60 border border-black/[0.08] dark:border-white/[0.08] hover:border-black/[0.12] dark:hover:border-white/[0.12] hover:bg-white/90 dark:hover:bg-gray-800/70 rounded-xl backdrop-blur-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
-                      >
-                        Open Brand Voice
-                      </Link>
-                    </SignedIn>
+                    <Link
+                      href="/generate"
+                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white bg-amber-700 hover:bg-amber-800 rounded-xl transition-colors shadow-sm shadow-amber-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                    >
+                      Start Generating
+                      <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
+                    </Link>
+                    <Link
+                      href="/brand"
+                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-gray-700 dark:text-gray-300 bg-white/70 dark:bg-gray-900/60 border border-black/[0.08] dark:border-white/[0.08] hover:border-black/[0.12] dark:hover:border-white/[0.12] hover:bg-white/90 dark:hover:bg-gray-800/70 rounded-xl backdrop-blur-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                    >
+                      Open Brand Voice
+                    </Link>
                   </>
                 ) : (
                   <>
                     <Link
-                      href="/auth"
-                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition-colors shadow-sm shadow-amber-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                      href={startFreeHref}
+                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white bg-amber-700 hover:bg-amber-800 rounded-xl transition-colors shadow-sm shadow-amber-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
                     >
                       Start Free
                       <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
@@ -165,17 +134,15 @@ export default function Home(): React.ReactElement {
                     </Link>
                   </>
                 )}
-              </motion.div>
+              </div>
 
               {/* Trust indicator */}
-              <motion.p
-                variants={FADE_IN}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                className="mt-6 text-sm text-gray-400 dark:text-gray-500"
+              <p
+                className="hero-fade [animation-delay:780ms] mt-6 text-sm text-gray-500 dark:text-gray-400"
               >
                 No credit card required. Start free, then upgrade when you need bulk and brand controls.
-              </motion.p>
-            </motion.div>
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -244,7 +211,7 @@ export default function Home(): React.ReactElement {
           <RevealSection className="text-center mt-10">
             <Link
               href="/tool-directory"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
             >
               Browse the full directory
               <ArrowRightIcon className="w-3.5 h-3.5" aria-hidden="true" />
@@ -310,7 +277,7 @@ export default function Home(): React.ReactElement {
           <RevealSection className="text-center mt-10">
             <Link
               href="/pricing"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
             >
               Compare all features in detail
               <ArrowRightIcon className="w-3.5 h-3.5" aria-hidden="true" />
@@ -322,7 +289,7 @@ export default function Home(): React.ReactElement {
       {/* ----------------------------------------------------------------- */}
       {/* Final CTA                                                         */}
       {/* ----------------------------------------------------------------- */}
-      <section className="bg-gradient-to-r from-amber-600 to-amber-700">
+      <section className="bg-gradient-to-r from-amber-700 to-amber-800">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24 text-center">
           <RevealSection>
             <h2 className="text-3xl sm:text-4xl font-semibold text-white font-serif">
@@ -333,31 +300,18 @@ export default function Home(): React.ReactElement {
               faster, more consistent SEO content production.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              {isClerkConfigured ? (
-                <>
-                  <SignedOut>
-                    <Link
-                      href="/sign-up"
-                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-amber-700 bg-white hover:bg-amber-50 rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-600"
-                    >
-                      Start Free
-                      <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
-                    </Link>
-                  </SignedOut>
-                  <SignedIn>
-                    <Link
-                      href="/generate"
-                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-amber-700 bg-white hover:bg-amber-50 rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-600"
-                    >
-                      Start Generating
-                      <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
-                    </Link>
-                  </SignedIn>
-                </>
+              {showSignedInCta ? (
+                <Link
+                  href="/generate"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-amber-700 bg-white hover:bg-amber-50 rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-700"
+                >
+                  Start Generating
+                  <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
+                </Link>
               ) : (
                 <Link
-                  href="/auth"
-                  className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-amber-700 bg-white hover:bg-amber-50 rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-600"
+                  href={startFreeHref}
+                  className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-amber-700 bg-white hover:bg-amber-50 rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-700"
                 >
                   Start Free
                   <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
@@ -365,7 +319,7 @@ export default function Home(): React.ReactElement {
               )}
               <Link
                 href="/brand"
-                className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white border border-white/30 hover:bg-white/10 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-600"
+                className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white border border-white/30 hover:bg-white/10 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-700"
               >
                 See Brand Voice
               </Link>
@@ -385,24 +339,13 @@ export default function Home(): React.ReactElement {
 // ---------------------------------------------------------------------------
 
 function FeatureGrid(): React.ReactElement {
-  const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-60px' })
-
   return (
-    <motion.div
-      ref={ref}
-      initial="hidden"
-      animate={isInView ? 'visible' : 'hidden'}
-      variants={STAGGER_CONTAINER}
-      className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8"
-    >
+    <Reveal stagger className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8">
       {FEATURES.map((feature) => {
         const Icon = feature.icon
         return (
-          <motion.div
+          <div
             key={feature.title}
-            variants={FADE_UP}
-            transition={{ duration: 0.5 }}
             className="glass-card rounded-2xl p-8 hover:shadow-lg transition-shadow"
           >
             <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-amber-100/80 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 mb-5">
@@ -414,31 +357,21 @@ function FeatureGrid(): React.ReactElement {
             <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
               {feature.description}
             </p>
-          </motion.div>
+          </div>
         )
       })}
-    </motion.div>
+    </Reveal>
   )
 }
 
 function ToolBreadthStrip(): React.ReactElement {
-  const ref = useRef<HTMLUListElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-60px' })
-
   return (
-    <motion.ul
-      ref={ref}
-      role="list"
-      initial="hidden"
-      animate={isInView ? 'visible' : 'hidden'}
-      variants={STAGGER_CONTAINER}
-      className="flex flex-wrap justify-center gap-4"
-    >
+    <Reveal stagger as="ul" className="flex flex-wrap justify-center gap-4">
       {TOOL_CATEGORY_PILLS.map((pill) => {
         const Icon = pill.icon
         const cat = TOOL_CATEGORIES[pill.key]
         return (
-          <motion.li key={pill.key} variants={FADE_UP} transition={{ duration: 0.4 }}>
+          <li key={pill.key}>
             <Link
               href={`/tools/category/${pill.key}`}
               className={`inline-flex items-center gap-2.5 px-5 py-3 rounded-xl ${cat.bgColor} ${cat.color} border ${cat.borderColor} text-sm font-medium hover:shadow-md transition-shadow`}
@@ -446,32 +379,21 @@ function ToolBreadthStrip(): React.ReactElement {
               <Icon className="w-4 h-4" aria-hidden="true" />
               {pill.label}
             </Link>
-          </motion.li>
+          </li>
         )
       })}
-    </motion.ul>
+    </Reveal>
   )
 }
 
 function StepsSection(): React.ReactElement {
-  const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-60px' })
-
   return (
-    <motion.div
-      ref={ref}
-      initial="hidden"
-      animate={isInView ? 'visible' : 'hidden'}
-      variants={STAGGER_CONTAINER}
-      className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12"
-    >
+    <Reveal stagger className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
       {STEPS.map((step, index) => {
         const Icon = step.icon
         return (
-          <motion.div
+          <div
             key={step.number}
-            variants={FADE_UP}
-            transition={{ duration: 0.5 }}
             className="relative text-center"
           >
             {/* Connector line between steps on desktop */}
@@ -483,9 +405,9 @@ function StepsSection(): React.ReactElement {
             )}
 
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-amber-50/50 dark:bg-amber-950/30 border border-amber-200/40 dark:border-amber-700/30 mb-6 backdrop-blur-sm">
-              <Icon className="w-8 h-8 text-amber-600" aria-hidden="true" />
+              <Icon className="w-8 h-8 text-amber-700" aria-hidden="true" />
             </div>
-            <div className="text-xs font-medium text-amber-600 uppercase tracking-wider mb-2">
+            <div className="text-xs font-medium text-amber-700 uppercase tracking-wider mb-2">
               Step {step.number}
             </div>
             <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
@@ -494,33 +416,22 @@ function StepsSection(): React.ReactElement {
             <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed max-w-xs mx-auto">
               {step.description}
             </p>
-          </motion.div>
+          </div>
         )
       })}
-    </motion.div>
+    </Reveal>
   )
 }
 
 function CapabilitiesShowcase(): React.ReactElement {
-  const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-60px' })
-
   return (
-    <motion.div
-      ref={ref}
-      initial="hidden"
-      animate={isInView ? 'visible' : 'hidden'}
-      variants={STAGGER_CONTAINER}
-      className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8"
-    >
+    <Reveal stagger className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8">
       {CAPABILITIES.map((cap) => {
         const Icon = cap.icon
         const isStarter = cap.tier === 'Starter+'
         return (
-          <motion.article
+          <article
             key={cap.title}
-            variants={FADE_UP}
-            transition={{ duration: 0.5 }}
             className="glass-card rounded-2xl p-6 sm:p-8"
           >
             <div className="flex items-start gap-4">
@@ -547,30 +458,19 @@ function CapabilitiesShowcase(): React.ReactElement {
                 </p>
               </div>
             </div>
-          </motion.article>
+          </article>
         )
       })}
-    </motion.div>
+    </Reveal>
   )
 }
 
 function PricingGrid(): React.ReactElement {
-  const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-60px' })
-
   return (
-    <motion.div
-      ref={ref}
-      initial="hidden"
-      animate={isInView ? 'visible' : 'hidden'}
-      variants={STAGGER_CONTAINER}
-      className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8"
-    >
+    <Reveal stagger className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
       {PRICING_TIERS.map((tier) => (
-        <motion.div
+        <div
           key={tier.name}
-          variants={FADE_UP}
-          transition={{ duration: 0.5 }}
           className={`relative rounded-2xl p-8 transition-shadow ${
             tier.highlighted
               ? 'glass-card border-2 border-amber-500/60 shadow-lg shadow-amber-500/10'
@@ -579,7 +479,7 @@ function PricingGrid(): React.ReactElement {
         >
           {tier.highlighted && (
             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-              <span className="inline-flex items-center px-3.5 py-1 bg-amber-600 text-white text-xs font-medium rounded-full">
+              <span className="inline-flex items-center px-3.5 py-1 bg-amber-700 text-white text-xs font-medium rounded-full">
                 Most Popular
               </span>
             </div>
@@ -599,7 +499,7 @@ function PricingGrid(): React.ReactElement {
             href={tier.href}
             className={`mt-6 block w-full py-3 px-4 text-center text-sm font-medium rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ${
               tier.highlighted
-                ? 'bg-amber-600 text-white hover:bg-amber-700'
+                ? 'bg-amber-700 text-white hover:bg-amber-800'
                 : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700'
             }`}
           >
@@ -617,8 +517,8 @@ function PricingGrid(): React.ReactElement {
               </li>
             ))}
           </ul>
-        </motion.div>
+        </div>
       ))}
-    </motion.div>
+    </Reveal>
   )
 }

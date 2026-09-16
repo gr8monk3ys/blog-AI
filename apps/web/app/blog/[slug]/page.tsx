@@ -34,7 +34,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
       <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Link href="/blog" className="text-xs text-gray-500 dark:text-gray-400 hover:text-amber-700 dark:hover:text-amber-300">
+          <Link href="/blog" className="text-xs text-gray-500 dark:text-gray-400 hover:text-amber-800 dark:hover:text-amber-300">
             Back to blog
           </Link>
           <h1 className="mt-3 text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">

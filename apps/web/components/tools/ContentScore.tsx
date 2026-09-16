@@ -64,9 +64,9 @@ function getScoreColor(level: string): string {
     case 'excellent':
       return 'text-emerald-600 dark:text-emerald-400'
     case 'good':
-      return 'text-amber-600 dark:text-amber-400'
+      return 'text-amber-700 dark:text-amber-400'
     case 'fair':
-      return 'text-amber-600 dark:text-amber-400'
+      return 'text-amber-700 dark:text-amber-400'
     case 'poor':
       return 'text-red-600 dark:text-red-400'
     default:
@@ -262,7 +262,7 @@ export default function ContentScore({
     return (
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
         <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600" />
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-amber-200 border-t-amber-600 dark:border-amber-900 dark:border-t-amber-500" />
           <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">Analyzing content...</span>
         </div>
       </div>
@@ -345,7 +345,7 @@ export default function ContentScore({
       {scores.top_improvements && scores.top_improvements.length > 0 && (
         <div className="px-6 py-4 bg-amber-50 dark:bg-amber-900/30 border-b border-amber-100 dark:border-amber-900/50">
           <div className="flex items-center gap-2 mb-2">
-            <LightBulbIcon className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            <LightBulbIcon className="w-5 h-5 text-amber-700 dark:text-amber-400" />
             <span className="font-medium text-amber-900 dark:text-amber-300">Priority Improvements</span>
           </div>
           <ul className="space-y-1.5">

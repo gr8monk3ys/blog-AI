@@ -202,7 +202,7 @@ export default function DocumentDetailModal({
                             key={chunk.id}
                             className={`rounded-lg border p-3 ${
                               isMatched
-                                ? 'border-l-4 border-l-amber-500 border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20'
+                                ? 'border-amber-400 dark:border-amber-600 bg-amber-50/50 dark:bg-amber-950/20'
                                 : 'border-gray-200 dark:border-gray-700'
                             }`}
                           >
@@ -226,7 +226,7 @@ export default function DocumentDetailModal({
                                 </span>
                               </div>
                               {isMatched && score != null && (
-                                <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                                <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
                                   Score: {score.toFixed(2)}
                                 </span>
                               )}
@@ -238,7 +238,7 @@ export default function DocumentDetailModal({
                               <button
                                 type="button"
                                 onClick={() => toggleExpand(chunk.chunk_index)}
-                                className="mt-1 text-xs text-amber-600 hover:text-amber-700 flex items-center gap-0.5"
+                                className="mt-1 text-xs text-amber-700 hover:text-amber-800 flex items-center gap-0.5"
                               >
                                 {isExpanded ? (
                                   <>
@@ -260,7 +260,7 @@ export default function DocumentDetailModal({
                           type="button"
                           onClick={loadMore}
                           disabled={loadingChunks}
-                          className="w-full py-2 text-sm text-amber-600 hover:text-amber-700 font-medium disabled:opacity-50"
+                          className="w-full py-2 text-sm text-amber-700 hover:text-amber-800 font-medium disabled:opacity-50"
                         >
                           {loadingChunks ? 'Loading...' : `Load more (${chunks.length}/${totalChunks})`}
                         </button>

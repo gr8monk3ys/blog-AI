@@ -1,7 +1,7 @@
 'use client'
 
-import * as Sentry from '@sentry/nextjs'
 import { useEffect } from 'react'
+import { getSentry } from '../lib/sentry-client'
 import Link from 'next/link'
 
 const SUPPORT_EMAIL =
@@ -29,14 +29,20 @@ export default function Error({
 }) {
   // Report error to Sentry on mount
   useEffect(() => {
-    Sentry.captureException(error, {
-      tags: {
-        errorBoundary: 'app',
-      },
-      extra: {
-        digest: error.digest,
-      },
-    })
+    void getSentry()
+      .then((Sentry) => {
+        Sentry.captureException(error, {
+          tags: {
+            errorBoundary: 'app',
+          },
+          extra: {
+            digest: error.digest,
+          },
+        })
+      })
+      .catch(() => {
+        // Reporting is best-effort; the error UI is already shown.
+      })
   }, [error])
 
   return (
@@ -92,7 +98,7 @@ export default function Error({
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={() => reset()}
-            className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-amber-600 text-white font-semibold shadow-sm hover:bg-amber-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600 transition-colors"
+            className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-amber-700 text-white font-semibold shadow-sm hover:bg-amber-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600 transition-colors"
             type="button"
           >
             <svg
@@ -139,7 +145,7 @@ export default function Error({
           Need help?{' '}
           <a
             href={`mailto:${SUPPORT_EMAIL}`}
-            className="text-amber-600 hover:text-amber-500 dark:text-amber-400 dark:hover:text-amber-300 underline underline-offset-2"
+            className="text-amber-700 hover:text-amber-500 dark:text-amber-400 dark:hover:text-amber-300 underline underline-offset-2"
           >
             Contact support
           </a>

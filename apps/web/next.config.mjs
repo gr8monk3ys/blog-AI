@@ -119,10 +119,20 @@ const nextConfig = {
   // Enable gzip compression
   compress: true,
 
+  // Keep client assets on the `?dpl=` scheme instead of Next 16.3's
+  // `_next/static/immutable` upload. Vercel's adapter turns the immutable
+  // upload on by default, and this project has Preview Comments enabled;
+  // Vercel's comments patcher then fails every preview deploy at
+  // "Deploying outputs" with IMMUTABLE_STATIC_PATCH_PREVIEW_COMMENTS
+  // (seen on 16.3.4 and 16.3.5, PR #188). The adapter honours this opt-out.
+  // Drop it once Vercel can patch comments into immutable static files.
+  supportsImmutableAssets: false,
+
   // Experimental features
   experimental: {
     // Enable scroll restoration
     scrollRestoration: true,
+    inlineCss: true,
   },
 
   // Image optimization with modern formats

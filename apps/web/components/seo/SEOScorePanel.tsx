@@ -16,7 +16,7 @@ const DIMENSIONS: { label: string; key: keyof SEOScore; thresholdDefault: number
 
 function scoreColor(score: number, threshold: number): string {
   if (score >= threshold) return 'text-emerald-600 dark:text-emerald-400'
-  if (score >= threshold * 0.7) return 'text-amber-600 dark:text-amber-400'
+  if (score >= threshold * 0.7) return 'text-amber-700 dark:text-amber-400'
   return 'text-red-600 dark:text-red-400'
 }
 

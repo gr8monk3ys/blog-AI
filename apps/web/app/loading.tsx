@@ -16,7 +16,7 @@ export default function Loading() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-950 px-4">
       <div className="w-full max-w-md text-center">
-        <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-amber-600" />
+        <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600 dark:border-amber-900 dark:border-t-amber-500" />
         <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Loading your workspace...</p>
         <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">This should only take a few seconds.</p>
 
@@ -30,7 +30,7 @@ export default function Loading() {
               <button
                 type="button"
                 onClick={() => window.location.reload()}
-                className="inline-flex items-center rounded-md bg-amber-600 px-3 py-2 text-xs font-medium text-white hover:bg-amber-700"
+                className="inline-flex items-center rounded-md bg-amber-700 px-3 py-2 text-xs font-medium text-white hover:bg-amber-800"
               >
                 Retry
               </button>

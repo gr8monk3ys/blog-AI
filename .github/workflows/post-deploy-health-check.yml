@@ -19,11 +19,11 @@ jobs:
     steps:
       - name: Checkout (manual/scheduled)
         if: github.event_name != 'workflow_run'
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Checkout deployed commit (workflow_run)
         if: github.event_name == 'workflow_run'
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: main
 

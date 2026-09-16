@@ -120,7 +120,7 @@ function ResultsPanelComponent({
                 .filter(([key]) => key !== 'overall')
                 .map(([key, value]) => (
                   <div key={key} className="text-center">
-                    <div className="text-lg font-bold text-amber-600 dark:text-amber-400">
+                    <div className="text-lg font-bold text-amber-700 dark:text-amber-400">
                       {Math.round((value as number) * 100)}%
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400 capitalize">
@@ -146,7 +146,7 @@ function ResultsPanelComponent({
             </button>
             <button
               onClick={handleCopyText}
-              className="flex-1 py-2 px-4 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+              className="flex-1 py-2 px-4 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-colors"
             >
               Copy Text
             </button>

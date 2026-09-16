@@ -89,7 +89,7 @@ function FormatSelectorComponent({
       <button
         onClick={onTransform}
         disabled={isTransforming || selectedFormats.length === 0}
-        className="w-full mt-6 py-3 px-4 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors font-medium"
+        className="w-full mt-6 py-3 px-4 bg-amber-700 text-white rounded-lg hover:bg-amber-800 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors font-medium"
       >
         {isTransforming ? (
           <span className="flex items-center justify-center gap-2">

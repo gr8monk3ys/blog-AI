@@ -147,7 +147,7 @@ export default function BlogPostEditor() {
           type="button"
           onClick={loadPosts}
           disabled={!isConfigured || loading}
-          className="mt-3 w-full text-sm font-medium bg-amber-600 text-white rounded-lg py-2 disabled:opacity-50"
+          className="mt-3 w-full text-sm font-medium bg-amber-700 text-white rounded-lg py-2 disabled:opacity-50"
         >
           Load Posts
         </button>
@@ -318,7 +318,7 @@ export default function BlogPostEditor() {
             type="button"
             onClick={savePost}
             disabled={!isConfigured || loading}
-            className="px-4 py-2 text-sm font-medium bg-amber-600 text-white rounded-lg disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium bg-amber-700 text-white rounded-lg disabled:opacity-50"
           >
             Save Post
           </button>

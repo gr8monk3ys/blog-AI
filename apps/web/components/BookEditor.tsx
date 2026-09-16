@@ -103,7 +103,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
               />
               <button
                 onClick={() => setIsEditingTitle(false)}
-                className="ml-2 text-amber-600 hover:text-amber-800"
+                className="ml-2 text-amber-700 hover:text-amber-800"
               >
                 Save
               </button>
@@ -113,7 +113,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
               {editingBook.title}
               <button
                 onClick={() => setIsEditingTitle(true)}
-                className="ml-2 text-gray-400 hover:text-amber-600"
+                className="ml-2 text-gray-400 hover:text-amber-700"
               >
                 <PencilIcon className="h-5 w-5" />
               </button>
@@ -122,7 +122,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
         </div>
         <button
           onClick={handleSaveBook}
-          className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700"
+          className="bg-amber-700 text-white px-4 py-2 rounded hover:bg-amber-800"
         >
           Save Book
         </button>
@@ -133,7 +133,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
           <span className="text-sm text-gray-500 dark:text-gray-400 mr-2">Tags:</span>
           <button
             onClick={() => setIsEditingTags(!isEditingTags)}
-            className="text-gray-400 hover:text-amber-600"
+            className="text-gray-400 hover:text-amber-700"
           >
             <PencilIcon className="h-4 w-4" />
           </button>
@@ -165,7 +165,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
               />
               <button
                 onClick={handleAddTag}
-                className="bg-amber-600 text-white rounded-r px-2 py-1 text-sm"
+                className="bg-amber-700 text-white rounded-r px-2 py-1 text-sm"
               >
                 Add
               </button>
@@ -187,7 +187,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
                         e.stopPropagation();
                         setIsEditingChapter(chapterIndex);
                       }}
-                      className="ml-2 text-gray-400 hover:text-amber-600"
+                      className="ml-2 text-gray-400 hover:text-amber-700"
                     >
                       <PencilIcon className="h-4 w-4" />
                     </button>
@@ -205,7 +205,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
                         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">{topic.title}</h3>
                         <button
                           onClick={() => setIsEditingTopic({ chapterIndex, topicIndex })}
-                          className="ml-2 text-gray-400 hover:text-amber-600"
+                          className="ml-2 text-gray-400 hover:text-amber-700"
                         >
                           <PencilIcon className="h-4 w-4" />
                         </button>
@@ -281,7 +281,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
                     </button>
                     <button
                       type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 focus:outline-none"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800 focus:outline-none"
                       onClick={() => {
                         if (isEditingChapter !== null && editingBook.chapters[isEditingChapter]) {
                           handleUpdateChapterTitle(
@@ -373,7 +373,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
                     </button>
                     <button
                       type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 focus:outline-none"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800 focus:outline-none"
                       onClick={() => {
                         if (isEditingTopic) {
                           const chapter = editingBook.chapters[isEditingTopic.chapterIndex];

@@ -1,7 +1,7 @@
 'use client'
 
-import * as Sentry from '@sentry/nextjs'
 import { useEffect } from 'react'
+import { getSentry } from '../lib/sentry-client'
 import Link from 'next/link'
 
 /**
@@ -24,14 +24,20 @@ export default function GlobalError({
 }) {
   // Report error to Sentry on mount
   useEffect(() => {
-    Sentry.captureException(error, {
-      tags: {
-        errorBoundary: 'global',
-      },
-      extra: {
-        digest: error.digest,
-      },
-    })
+    void getSentry()
+      .then((Sentry) => {
+        Sentry.captureException(error, {
+          tags: {
+            errorBoundary: 'global',
+          },
+          extra: {
+            digest: error.digest,
+          },
+        })
+      })
+      .catch(() => {
+        // Reporting is best-effort; the error UI is already shown.
+      })
   }, [error])
 
   // Inline styles since Tailwind is not available in global error

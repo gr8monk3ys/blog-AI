@@ -150,7 +150,7 @@ function useHistoryPageView() {
       <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-amber-600 to-amber-700 text-white">
+      <section className="bg-gradient-to-r from-amber-700 to-amber-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
           <m.div
             initial={{ opacity: 0, y: 20 }}
@@ -213,7 +213,7 @@ function useHistoryPageView() {
             </p>
             <Link
               href="/sign-in"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-colors"
             >
               <DocumentTextIcon className="w-5 h-5" />
               Sign In
@@ -297,7 +297,7 @@ function useHistoryPageView() {
                 </p>
                 <Link
                   href="/tools"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-colors"
                 >
                   <SparklesIcon className="w-5 h-5" />
                   Start Creating

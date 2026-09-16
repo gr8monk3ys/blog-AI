@@ -162,7 +162,7 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
               type="checkbox"
               checked={generateFeatured}
               onChange={(e) => setGenerateFeatured(e.target.checked)}
-              className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+              className="rounded border-gray-300 text-amber-700 focus:ring-amber-500"
             />
             Featured image
           </label>
@@ -171,7 +171,7 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
               type="checkbox"
               checked={generateSocial}
               onChange={(e) => setGenerateSocial(e.target.checked)}
-              className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+              className="rounded border-gray-300 text-amber-700 focus:ring-amber-500"
             />
             Social image
           </label>
@@ -206,7 +206,7 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
         <button
           type="submit"
           disabled={loading || !title.trim() || content.length < 10}
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-medium bg-amber-600 text-white hover:bg-amber-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-medium bg-amber-700 text-white hover:bg-amber-800 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors"
         >
           {loading ? (
             <>

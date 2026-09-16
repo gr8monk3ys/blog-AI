@@ -83,7 +83,7 @@ export default function ToolCard({ tool, index = 0 }: ToolCardProps) {
             </div>
 
             {/* Title */}
-            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 group-hover:text-amber-600 transition-colors mb-2 line-clamp-1">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 group-hover:text-amber-700 transition-colors mb-2 line-clamp-1">
               {tool.name}
             </h3>
 
@@ -95,7 +95,7 @@ export default function ToolCard({ tool, index = 0 }: ToolCardProps) {
 
           {/* Bottom action indicator */}
           <div className="px-5 pb-4">
-            <div className="flex items-center text-sm font-medium text-amber-600 group-hover:text-amber-700 transition-colors">
+            <div className="flex items-center text-sm font-medium text-amber-700 group-hover:text-amber-800 transition-colors">
               <span>Try it now</span>
               <svg
                 className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform"

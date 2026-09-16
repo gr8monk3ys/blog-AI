@@ -16,7 +16,7 @@ export default function TemplatesPageClient() {
       <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-amber-600 to-amber-700 text-white">
+      <section className="bg-gradient-to-r from-amber-700 to-amber-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
           <m.div
             initial={{ opacity: 0, y: 20 }}
@@ -84,7 +84,7 @@ export default function TemplatesPageClient() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/tools"
-                className="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-lg text-sm font-medium text-white bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+                className="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-lg text-sm font-medium text-white bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
               >
                 Browse Tools
               </Link>

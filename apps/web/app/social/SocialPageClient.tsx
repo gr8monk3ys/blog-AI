@@ -45,7 +45,7 @@ export default function SocialPageClient() {
               onClick={() => setActiveTab(tab.id)}
               className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-amber-600 text-amber-600'
+                  ? 'border-amber-600 text-amber-700'
                   : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >

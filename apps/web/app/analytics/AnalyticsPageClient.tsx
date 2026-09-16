@@ -98,7 +98,7 @@ function useAnalyticsPageView() {
       <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-amber-600 to-amber-700 text-white">
+      <section className="bg-gradient-to-r from-amber-700 to-amber-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
           <m.div
             initial={{ opacity: 0, y: 20 }}
@@ -124,7 +124,7 @@ function useAnalyticsPageView() {
                       onClick={() => setTimeRange(range)}
                       className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
                         timeRange === range
-                          ? 'bg-white text-amber-600'
+                          ? 'bg-white text-amber-700'
                           : 'text-white/80 hover:text-white hover:bg-white/10'
                       }`}
                     >
@@ -256,7 +256,7 @@ function useAnalyticsPageView() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/"
-              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 shadow-sm transition-all"
+              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 shadow-sm transition-all"
             >
               Generate Content
             </Link>

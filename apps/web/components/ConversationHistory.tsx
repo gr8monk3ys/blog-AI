@@ -267,7 +267,7 @@ function useConversationHistoryView({ conversationId }: ConversationHistoryProps
             {isServerConnected ? 'Live' : 'Offline'}
           </span>
           {messages.length > 0 && (
-            <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
+            <span className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded-full">
               {messages.length} messages
             </span>
           )}
@@ -351,9 +351,9 @@ function useConversationHistoryView({ conversationId }: ConversationHistoryProps
           >
             <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm">
               <div className="flex space-x-2">
-                <div className="h-2 w-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="h-2 w-2 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="h-2 w-2 bg-amber-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                <div className="h-2 w-2 bg-amber-400 rounded-full animate-pulse" style={{ animationDelay: '0ms' }}></div>
+                <div className="h-2 w-2 bg-amber-500 rounded-full animate-pulse" style={{ animationDelay: '150ms' }}></div>
+                <div className="h-2 w-2 bg-amber-600 rounded-full animate-pulse" style={{ animationDelay: '300ms' }}></div>
               </div>
             </div>
           </m.div>

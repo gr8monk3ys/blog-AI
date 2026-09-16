@@ -113,7 +113,7 @@ function useScorePage() {
       <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
 
       {/* Hero */}
-      <section className="bg-gradient-to-r from-amber-600 to-amber-700 text-white">
+      <section className="bg-gradient-to-r from-amber-700 to-amber-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
           <m.div
             initial={{ opacity: 0, y: 20 }}
@@ -215,7 +215,7 @@ function useScorePage() {
               {!loadingProfiles && profiles.length === 0 && (
                 <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                   No profiles found.{' '}
-                  <Link href="/brand" className="text-amber-600 hover:underline">
+                  <Link href="/brand" className="text-amber-700 hover:underline">
                     Create one
                   </Link>{' '}
                   first.
@@ -280,7 +280,7 @@ function useScorePage() {
               type="button"
               onClick={handleScore}
               disabled={!canScore}
-              className="w-full py-3 px-6 rounded-xl bg-amber-600 hover:bg-amber-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white font-medium text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+              className="w-full py-3 px-6 rounded-xl bg-amber-700 hover:bg-amber-800 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white font-medium text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
             >
               {isScoring ? (
                 <span className="inline-flex items-center gap-2">
@@ -337,7 +337,7 @@ function useScorePage() {
                     >
                       {scoreResponse.passed ? 'Passed' : 'Failed'}
                     </span>
-                    <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
+                    <span className="text-sm font-bold text-amber-700 dark:text-amber-400">
                       Grade: {scoreResponse.grade}
                     </span>
                   </div>

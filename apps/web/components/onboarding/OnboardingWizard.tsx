@@ -257,7 +257,7 @@ function useOnboardingWizardView({
     <div className="space-y-6">
       <div className="text-center">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40">
-          <SparklesIcon className="h-7 w-7 text-amber-600" aria-hidden="true" />
+          <SparklesIcon className="h-7 w-7 text-amber-700" aria-hidden="true" />
         </div>
         <h2 className="mt-4 text-2xl font-semibold text-gray-900 dark:text-gray-100 font-serif sm:text-3xl">
           Welcome to Blog AI
@@ -372,7 +372,7 @@ function useOnboardingWizardView({
                   transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2
                   ${
                     selected
-                      ? 'bg-amber-600 text-white shadow-sm'
+                      ? 'bg-amber-700 text-white shadow-sm'
                       : disabled
                         ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-800 dark:hover:text-amber-400'
@@ -548,7 +548,7 @@ function useOnboardingWizardView({
       <div className="max-w-sm mx-auto grid gap-3">
         <Link
           href={buildActivationHref()}
-          className="flex items-center justify-center gap-2 rounded-lg bg-amber-600 px-5 py-3 text-sm font-medium text-white hover:bg-amber-700 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+          className="flex items-center justify-center gap-2 rounded-lg bg-amber-700 px-5 py-3 text-sm font-medium text-white hover:bg-amber-800 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
           data-autofocus="true"
         >
           <SparklesIcon className="h-4 w-4" aria-hidden="true" />
@@ -600,7 +600,7 @@ function useOnboardingWizardView({
                   focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2
                   ${
                     isCurrent
-                      ? 'bg-amber-600 text-white shadow-sm'
+                      ? 'bg-amber-700 text-white shadow-sm'
                       : isComplete
                         ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/60'
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -711,7 +711,7 @@ function useOnboardingWizardView({
               next()
             }}
             disabled={saving}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-amber-700 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-amber-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-amber-800 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             aria-label={step === totalSteps - 2 ? 'Finish setup' : 'Next step'}
           >
             {saving ? (

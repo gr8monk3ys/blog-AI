@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-13T23:15:00.000Z",
+  "title": "Design System: Blog AI",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Burnt Amber", "canonical": "#b45309", "tonalRamp": ["#451a03", "#78350f", "#92400e", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fef3c7"] },
+      "primary-fill": { "role": "primary", "displayName": "Live Amber", "canonical": "#d97706", "tonalRamp": ["#451a03", "#78350f", "#92400e", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fef3c7"] },
+      "primary-dark": { "role": "primary", "displayName": "Lamp Amber", "canonical": "#fbbf24", "tonalRamp": ["#451a03", "#78350f", "#92400e", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fef3c7"] },
+      "success": { "role": "tertiary", "displayName": "Status Green", "canonical": "#059669", "tonalRamp": ["#022c22", "#064e3b", "#065f46", "#047857", "#059669", "#10b981", "#6ee7b7", "#d1fae5"] },
+      "danger": { "role": "tertiary", "displayName": "Status Red", "canonical": "#dc2626", "tonalRamp": ["#450a0a", "#7f1d1d", "#991b1b", "#b91c1c", "#dc2626", "#ef4444", "#fca5a5", "#fee2e2"] },
+      "tier-pro": { "role": "secondary", "displayName": "Pro Indigo", "canonical": "#4338ca", "tonalRamp": ["#1e1b4b", "#312e81", "#3730a3", "#4338ca", "#4f46e5", "#6366f1", "#a5b4fc", "#e0e7ff"] },
+      "canvas": { "role": "neutral", "displayName": "Cream Canvas", "canonical": "#fff8e6", "tonalRamp": ["#111827", "#374151", "#6b7280", "#9ca3af", "#d1d5db", "#e5e7eb", "#f9fafb", "#fff8e6"] },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#111827", "tonalRamp": ["#030712", "#111827", "#1f2937", "#374151", "#4b5563", "#6b7280", "#9ca3af", "#f3f4f6"] },
+      "muted": { "role": "neutral", "displayName": "Muted", "canonical": "#6b7280", "tonalRamp": ["#030712", "#111827", "#1f2937", "#374151", "#4b5563", "#6b7280", "#9ca3af", "#f3f4f6"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Home hero h1 only; Source Serif 4 at semibold with one amber phrase allowed." },
+      "headline": { "displayName": "Headline", "purpose": "Marketing section h2 and page-banner h1." },
+      "title": { "displayName": "Title", "purpose": "Card and feature titles in Inter." },
+      "body": { "displayName": "Body", "purpose": "Descriptions and lead paragraphs, measure capped near 65ch." },
+      "body-sm": { "displayName": "Body Small", "purpose": "Default size inside product UI." },
+      "label": { "displayName": "Label", "purpose": "Badges, chips, step markers, copyright line." }
+    },
+    "shadows": [
+      { "name": "rest", "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)", "purpose": "Buttons, cards and selected chips at rest." },
+      { "name": "lift", "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)", "purpose": "Hover on cards and pills; the featured pricing tier." },
+      { "name": "glass", "value": "0 20px 60px rgba(217, 119, 6, 0.12)", "purpose": "Ambient amber shadow under .glass-card (dark: rgba(245,158,11,0.08))." }
+    ],
+    "motion": [
+      { "name": "fade-up", "value": "opacity 0->1, translateY 24px->0, 0.5s ease-out, stagger 0.12s", "purpose": "Single section reveal via framer-motion FADE_UP, once per viewport entry." },
+      { "name": "color-change", "value": "transition-colors 150ms cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Hover and focus color changes on buttons, links and chips." },
+      { "name": "indicator-slide", "value": "framer-motion spring, bounce 0.2, 0.4s", "purpose": "layoutId indicator behind the selected filter chip." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Burnt Amber fill with white text; the one filled action on a surface.",
+      "html": "<button class=\"ds-btn-primary\">Start Free</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 8px; background: #b45309; color: #fff; font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 500; padding: 8px 16px; border: none; border-radius: 8px; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); cursor: pointer; transition: background-color 150ms cubic-bezier(0.4,0,0.2,1); } .ds-btn-primary:hover { background: #92400e; } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #f59e0b; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Translucent white with a hairline border; the quiet partner to the primary action.",
+      "html": "<button class=\"ds-btn-secondary\">View Plans</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.7); color: #374151; font-family: Inter, system-ui, sans-serif; font-size: 16px; font-weight: 500; padding: 14px 28px; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; backdrop-filter: blur(4px); cursor: pointer; transition: background-color 150ms, border-color 150ms; } .ds-btn-secondary:hover { background: rgba(255,255,255,0.9); border-color: rgba(0,0,0,0.12); } .ds-btn-secondary:focus-visible { outline: none; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #f59e0b; }"
+    },
+    {
+      "name": "Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Neutral pill that washes amber on hover; selected state inverts to the primary fill.",
+      "html": "<span class=\"ds-chip\">Blog &amp; Articles</span> <span class=\"ds-chip ds-chip--selected\">SEO</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; background: #f3f4f6; color: #374151; font-family: Inter, system-ui, sans-serif; font-size: 12px; font-weight: 500; padding: 6px 12px; border-radius: 9999px; cursor: pointer; transition: background-color 150ms, color 150ms; } .ds-chip:hover { background: #fffbeb; color: #b45309; } .ds-chip--selected { background: #b45309; color: #fff; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }"
+    },
+    {
+      "name": "Badge",
+      "kind": "chip",
+      "refersTo": "badge-primary",
+      "description": "Tier and status badge on the amber tile color.",
+      "html": "<span class=\"ds-badge\">Starter+</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; background: #fef3c7; color: #b45309; font-family: Inter, system-ui, sans-serif; font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 9999px; }"
+    },
+    {
+      "name": "Glass Card",
+      "kind": "card",
+      "refersTo": "card-glass",
+      "description": "Translucent marketing card with an icon tile, title and body.",
+      "html": "<article class=\"ds-glass-card\"><div class=\"ds-glass-card__tile\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path d=\"M9.8 15.3 9 18l-.8-2.7a4.5 4.5 0 0 0-3-3L2.5 12l2.7-.8a4.5 4.5 0 0 0 3-3L9 5.5l.8 2.7a4.5 4.5 0 0 0 3 3l2.7.8-2.7.8a4.5 4.5 0 0 0-3 3ZM18 8l.4-1.4a2.3 2.3 0 0 1 1.6-1.6L21.4 4.5 20 4.1a2.3 2.3 0 0 1-1.6-1.6L18 1l-.4 1.4a2.3 2.3 0 0 1-1.6 1.6L14.6 4.5l1.4.4a2.3 2.3 0 0 1 1.6 1.6L18 8Z\"/></svg></div><h3 class=\"ds-glass-card__title\">Brand Voice Training</h3><p class=\"ds-glass-card__body\">Turn your best writing into reusable guidance for every draft.</p></article>",
+      "css": ".ds-glass-card { background: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.35); box-shadow: 0 20px 60px rgba(217,119,6,0.12); backdrop-filter: blur(18px); border-radius: 16px; padding: 32px; max-width: 360px; font-family: Inter, system-ui, sans-serif; transition: box-shadow 150ms; } .ds-glass-card:hover { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); } .ds-glass-card__tile { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 12px; background: rgba(254,243,199,0.8); color: #b45309; margin-bottom: 20px; } .ds-glass-card__title { margin: 0 0 8px; font-size: 18px; font-weight: 600; color: #111827; } .ds-glass-card__body { margin: 0; font-size: 14px; line-height: 1.625; color: #4b5563; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "White field with a gray-300 hairline and an amber focus ring.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Topic or keyword\" />",
+      "css": ".ds-input { width: 100%; max-width: 320px; background: #fff; color: #111827; font-family: Inter, system-ui, sans-serif; font-size: 14px; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; transition: box-shadow 150ms, border-color 150ms; } .ds-input::placeholder { color: #9ca3af; } .ds-input:focus { outline: none; border-color: #f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,0.5); }"
+    },
+    {
+      "name": "Header Nav",
+      "kind": "nav",
+      "refersTo": "button-primary",
+      "description": "Sticky white bar with the sparkles wordmark, 14px links and a filled sign-in.",
+      "html": "<header class=\"ds-nav\"><a class=\"ds-nav__brand\" href=\"#\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path d=\"M9.8 15.3 9 18l-.8-2.7a4.5 4.5 0 0 0-3-3L2.5 12l2.7-.8a4.5 4.5 0 0 0 3-3L9 5.5l.8 2.7a4.5 4.5 0 0 0 3 3l2.7.8-2.7.8a4.5 4.5 0 0 0-3 3ZM18 8l.4-1.4a2.3 2.3 0 0 1 1.6-1.6L21.4 4.5 20 4.1a2.3 2.3 0 0 1-1.6-1.6L18 1l-.4 1.4a2.3 2.3 0 0 1-1.6 1.6L14.6 4.5l1.4.4a2.3 2.3 0 0 1 1.6 1.6L18 8Z\"/></svg><span>Blog AI</span></a><nav class=\"ds-nav__links\"><a href=\"#\">Pricing</a><a href=\"#\">Blog</a><a href=\"#\">Tools</a></nav><a class=\"ds-nav__cta\" href=\"#\">Sign in</a></header>",
+      "css": ".ds-nav { display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 64px; padding: 0 24px; background: #fff; border-bottom: 1px solid #e5e7eb; font-family: Inter, system-ui, sans-serif; font-size: 14px; } .ds-nav__brand { display: inline-flex; align-items: center; gap: 8px; color: #b45309; text-decoration: none; } .ds-nav__brand span { color: #111827; font-weight: 600; font-size: 16px; } .ds-nav__links { display: flex; gap: 24px; } .ds-nav__links a { color: #374151; text-decoration: none; transition: color 150ms; } .ds-nav__links a:hover { color: #b45309; } .ds-nav__cta { background: #b45309; color: #fff; padding: 6px 12px; border-radius: 8px; text-decoration: none; transition: background-color 150ms; } .ds-nav__cta:hover { background: #92400e; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Warm Press",
+    "overview": "Blog AI looks like a small, well-run publishing house that happens to be software. The canvas is a faint cream that drifts to white, the accent is a single burnt amber, and every claim on the marketing surfaces is set in a serif while every control is set in Inter. The tone is confident and unhurried: generous section padding, one accent, no decoration that does not carry meaning.\n\nThe system is one hue deep. Amber does all the work: dark amber for text and filled actions, mid amber for switches and progress, pale amber for icon tiles, badges and hover washes. Green and red appear only as status. The Pro tier borrows indigo for its badge and nothing else. The dark theme swaps the cream for near-black and the amber steps two shades lighter; it is a re-lit version of the same room, not a second brand.",
+    "keyCharacteristics": [
+      "Serif display over sans interface, both at semibold, never bold-on-bold.",
+      "One accent hue, four jobs (text, fill, tile, wash), tinted rather than grayed.",
+      "Cream canvas with translucent \"glass\" cards that let the gradient breathe through.",
+      "Hairline borders (1px) carry structure; shadows are quiet and reserved for hover.",
+      "Motion is a single fade-and-rise per section, then stillness."
+    ],
+    "rules": [
+      { "name": "The One Hue Rule", "body": "Amber is the only color with a voice. Green and red state a status; indigo names a plan; nothing else gets a hue.", "section": "colors" },
+      { "name": "The Tint-Not-Gray Rule", "body": "Text that sits on a colored surface is a darker shade of that surface's hue (amber-700/900 on amber-50, emerald-700 on emerald-50). Gray text on color is a defect.", "section": "colors" },
+      { "name": "The Contrast Floor Rule", "body": "Small text is at least 4.5:1, icons and fills at least 3:1, in both themes. The gray-400 step is a placeholder and disabled color, not a text color.", "section": "colors" },
+      { "name": "The Serif Speaks Rule", "body": "The serif is reserved for h1 and h2 on marketing and banner surfaces. Product UI headings stay in Inter so the workspace reads as a tool.", "section": "typography" },
+      { "name": "The Quiet Rest Rule", "body": "Nothing floats at rest beyond shadow-sm. Elevation is a response to hover or to being the highlighted option.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do put small text in gray-500 or darker on light surfaces and gray-400 or lighter on dark surfaces; both clear 4.5:1.",
+      "Do use amber-700 for any amber that carries text or sits under white text, and keep amber-600 for fills that only need 3:1.",
+      "Do tint text on a colored wash from that wash's hue (amber-900 on amber-50, red-600 on red-50).",
+      "Do keep the serif for marketing and banner headings, at semibold, with tight tracking only on the display size.",
+      "Do reveal sections once with the shared FADE_UP variant (24px rise, 0.5s ease-out, 0.12s stagger, useInView once) and leave everything else still.",
+      "Do use full-perimeter hairline borders and shadow-sm for structure; lift to shadow-lg only on hover or for the featured option."
+    ],
+    "donts": [
+      "Don't set white text on amber-600 or lighter; it fails AA.",
+      "Don't use gray-400 for anything but placeholders and disabled states on a light surface.",
+      "Don't add a colored left or right border thicker than 1px to a card, list row, quote or callout; highlight with a full amber border or a wash instead.",
+      "Don't use bounce or elastic motion; loading states pulse or spin.",
+      "Don't introduce a second accent hue. Indigo exists for the Pro badge only; purple, blue and violet gradients are out.",
+      "Don't put a kicker or eyebrow label above a heading; the serif heading carries the section."
+    ]
+  }
+}
