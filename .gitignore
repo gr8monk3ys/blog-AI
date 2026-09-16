@@ -9,6 +9,7 @@ backend/coverage.xml
 
 # Test artifacts
 playwright-report/
+artifacts/lighthouse/
 test-results/
 .playwright-cli/
 output/

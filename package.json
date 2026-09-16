@@ -20,6 +20,7 @@
     "db:migrate": "bun scripts/migrate_db.mjs",
     "analyze": "bun run --cwd apps/web analyze",
     "audit:runtime": "bun scripts/audit-runtime.mjs",
+    "lighthouse:ci": "node scripts/check-lighthouse-score.mjs http://127.0.0.1:3000 / /pricing /blog /tools",
     "test": "bun run --cwd apps/web test",
     "test:run": "bun run --cwd apps/web test:run",
     "test:coverage": "bun run --cwd apps/web test:coverage",
