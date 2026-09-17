@@ -30,6 +30,11 @@ import { spawnSync } from "node:child_process";
 //   /blog     perf 100  a11y 100  bp 96  seo 100
 //   /tools    perf 100  a11y 100  bp 96  seo 100
 // Performance sits 2 below the observed minimum; the others sit at it.
+// Re-observed on the CI runner itself 2026-09-16 (twice): / 100, /pricing 99,
+// /blog 100, /tools 100 — /pricing gained a point from the entrance-motion
+// rewrite. The floor stays 96 rather than tracking up to 97 because the
+// desktop preset's TBT still moves with the runner; raise it once there is
+// more than a two-run history.
 // Accessibility is a flat 100: the two defects that forced it down to 96 are
 // fixed (the /pricing "Save 17%" badge was white on emerald-500, 2.54:1, now
 // emerald-700 at 5.48:1; the /tools cards jumped h1 -> h3, and ToolGrid now
@@ -50,54 +55,60 @@ const DESKTOP_SCORE_FLOORS = {
   seo: 100,
 };
 
-// Mobile floors. Measured the same way as the desktop ones: three runs per
-// route of the production build on 2026-09-16, `--form-factor=mobile
-// --screenEmulation.mobile --throttling-method=devtools`, colour scheme pinned
-// light, no backend on NEXT_PUBLIC_API_URL (exactly what CI does):
-//   /         perf 100  a11y 100  bp 96  seo 100   (cls 0.013)
-//   /pricing  perf 100  a11y 100  bp 96  seo 100   (cls 0.000)
-//   /blog     perf 100  a11y 100  bp 96  seo 100   (cls 0.000)
-//   /tools    perf 100  a11y 100  bp 96  seo 100   (cls 0.000)
-// Identical on all three runs. Accessibility, best-practices and SEO sit at
-// the observed value, same as desktop.
+// Mobile floors. Measured twice on the CI runner itself (the numbers printed
+// by the "Lighthouse (score floors)" job on this branch, ubuntu-latest, no
+// backend on NEXT_PUBLIC_API_URL), per route:
+//   /         perf 98, 98   a11y 100  bp 96  seo 100   cls 0.016  lcp ~2.05 s
+//   /pricing  perf 99, 99   a11y 100  bp 96  seo 100   cls 0.003  lcp ~1.18 s
+//   /blog     perf 99, 99   a11y 100  bp 96  seo 100   cls 0.001  lcp ~0.85 s
+//   /tools    perf 99, 97   a11y 100  bp 96  seo 100   cls 0.000  lcp ~0.91 s
+// Observed minimum: performance 97. Floor is two below it, same rule as
+// desktop; the others sit at the observed value.
 //
-// Performance does NOT sit two below the observed 100, and the reason matters.
-// The desktop preset simulates a fixed CPU and network, so its numbers travel
-// between machines. `--throttling-method=devtools` does not: it applies a 4x
-// slowdown to whatever CPU it is running on, and a 2-vCPU GitHub runner is
-// several times slower than the machine those 100s came off. A floor of 98
-// would fail on hardware alone, and a floor that fails on noise gets bypassed,
-// which leaves no check at all.
+// The floors deliberately come from the runner, not from a laptop. Unlike the
+// desktop preset, `--throttling-method=devtools` applies its 4x slowdown to
+// whatever host CPU it has, so local numbers do not transfer: the same build
+// scores 100 on every route here and 97-99 on a 2-vCPU runner. Re-measure on
+// CI, not locally, before touching these.
 //
-// So the floor comes from modelling the slower host instead of pretending it
-// does not exist. Same build, same routes, extra CPU slowdown:
-//   cpuSlowdownMultiplier 8   -> /pricing 97, /tools 96
-//   cpuSlowdownMultiplier 16  -> /pricing 83, /tools 82
-// 16x is the pessimistic end of what a runner looks like. Two below its
-// minimum is 80. That is still nowhere near permissive: the defect this
-// profile was added to catch — /pricing fetching its plan cards after
-// hydration — scored 62-67 on THIS machine at the normal setting, and 62 in
-// production. Tighten this to two below the observed CI minimum once real
-// runner numbers exist; every run prints its score, so the headroom is visible.
+// 95 is not a soft floor. The defect this profile was added to catch —
+// /pricing fetching its plan cards after hydration — scored 62 in production
+// and 63-67 locally. And MAX_ATTEMPTS below means a route has to miss the
+// floor four times in a row to fail the job, which is what keeps a 2-point
+// runner wobble from turning into a red build.
 const MOBILE_SCORE_FLOORS = {
-  performance: 80,
+  performance: 95,
   accessibility: 100,
   bestPractices: 96,
   seo: 100,
 };
 
 // Hardware-independent budgets, mobile only. These are the real gate. The
-// regression this profile was added for was a layout shift and a paint that
-// waited for hydration, and neither number cares how fast the host is: CLS was
-// 0.000 at every CPU multiplier above, and LCP moved only 1.20 s -> 1.40 s
-// between 4x and 16x. A composite performance score cannot say that.
-// Observed after the fix: CLS 0.000 on every route except / at 0.013, mobile
-// LCP 0.84-1.15 s (1.40 s at 16x). Budgets are 0.1 (Core Web Vitals "good")
-// and 3 s — loose enough for a slow runner, tight enough that the 0.359 /
-// 4.7 s this replaced could not sneak back.
+// regression this profile exists for was a layout shift plus a paint that
+// waited for hydration, and neither number drifts with the host the way a
+// composite score does: measured locally at cpuSlowdownMultiplier 4, 8 and 16,
+// CLS stayed 0.000 throughout and LCP moved only 1.20 s -> 1.40 s.
+//
+// CLS 0.1 is the Core Web Vitals "good" threshold; the worst route on CI is /
+// at 0.016. LCP defaults to 2.5 s, which /pricing (1.18 s on CI) clears with
+// room to spare and the 4.7 s this replaced does not.
 const MOBILE_METRIC_BUDGETS = {
   cumulativeLayoutShift: { limit: 0.1, format: (v) => v.toFixed(3) },
-  largestContentfulPaint: { limit: 3000, format: (v) => `${Math.round(v)}ms` },
+  largestContentfulPaint: { limit: 2500, format: (v) => `${Math.round(v)}ms` },
+};
+
+// Per-route budget exceptions. Keep this list short and always say why.
+//
+//   /  — the home hero renders at 2.04-2.06 s on the runner (0.78 s desktop);
+//        it is a much heavier above-the-fold section than /pricing's, and it
+//        is already at 98 performance. 3.5 s keeps ~1.4 s of headroom over the
+//        measured value instead of failing the build on runner variance, and
+//        still sits a second under the 4.7 s regression this profile guards.
+//        Lower it if the home hero ever gets lighter.
+const ROUTE_METRIC_BUDGETS = {
+  mobile: {
+    "/": { largestContentfulPaint: { limit: 3500, format: (v) => `${Math.round(v)}ms` } },
+  },
 };
 
 const PROFILES = [
@@ -156,7 +167,8 @@ try {
           `${artifactSlug(route)}-${profile.id}-attempt-${attempt}.json`
         );
         const { scores, metrics } = runLighthouse(url, reportPath, profile);
-        const budgetFailures = checkMetricBudgets(metrics, profile.metricBudgets);
+        const budgets = { ...profile.metricBudgets, ...(ROUTE_METRIC_BUDGETS[profile.id]?.[route] ?? {}) };
+        const budgetFailures = checkMetricBudgets(metrics, budgets);
 
         console.log(
           `[lighthouse] ${profile.id} ${route} attempt ${attempt} -> ${JSON.stringify(scores)}` +
