@@ -66,7 +66,9 @@ function ToolsPageContent() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <ToolGrid initialCategory={initialCategory} />
+          {/* The grid is the first content under the page <h1>, so its card titles
+              are the h2 level of this page; the CTA below is the other h2. */}
+          <ToolGrid initialCategory={initialCategory} headingLevel={2} />
         </m.div>
       </section>
 

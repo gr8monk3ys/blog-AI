@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import ToolCard from './ToolCard'
+import ToolCard, { type HeadingLevel } from './ToolCard'
 import ToolSearch from './ToolSearch'
 import CategoryFilter from './CategoryFilter'
 import { Tool, ToolCategory, SAMPLE_TOOLS } from '../../types/tools'
@@ -17,6 +17,12 @@ interface ToolGridProps {
   showFilters?: boolean
   showSearch?: boolean
   initialCategory?: ToolCategory | 'all'
+  /**
+   * Heading level for the tool card titles and the empty state. Defaults to 3,
+   * which is correct when the grid sits under a section <h2>. Pass 2 when the
+   * grid is the first content under the page <h1>.
+   */
+  headingLevel?: HeadingLevel
 }
 
 export default function ToolGrid({
@@ -24,7 +30,9 @@ export default function ToolGrid({
   showFilters = true,
   showSearch = true,
   initialCategory = 'all',
+  headingLevel = 3,
 }: ToolGridProps) {
+  const EmptyStateHeading = `h${headingLevel}` as const
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<ToolCategory | 'all'>(
     initialCategory
@@ -153,7 +161,12 @@ export default function ToolGrid({
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
           >
             {sortedTools.map((tool, index) => (
-              <ToolCard key={tool.id} tool={tool} index={index} />
+              <ToolCard
+                key={tool.id}
+                tool={tool}
+                index={index}
+                headingLevel={headingLevel}
+              />
             ))}
           </motion.div>
         ) : (
@@ -167,9 +180,9 @@ export default function ToolGrid({
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
               <MagnifyingGlassIcon className="w-8 h-8 text-gray-400" aria-hidden="true" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+            <EmptyStateHeading className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
               No tools found
-            </h3>
+            </EmptyStateHeading>
             <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
               Try adjusting your search or filter criteria to find what you&apos;re
               looking for.
