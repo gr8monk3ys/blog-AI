@@ -14,9 +14,18 @@ import {
   ArrowPathIcon,
 } from '@heroicons/react/24/outline'
 
+export type HeadingLevel = 2 | 3 | 4 | 5 | 6
+
 interface ToolCardProps {
   tool: Tool
   index?: number
+  /**
+   * Heading level for the card title. Defaults to 3, which is correct when the
+   * grid sits under a section <h2>. Pass 2 when the cards are the first
+   * headings under the page <h1>, so the outline stays sequential (WCAG 1.3.1
+   * / axe heading-order).
+   */
+  headingLevel?: HeadingLevel
 }
 
 const categoryIcons: Record<string, React.ElementType> = {
@@ -30,7 +39,8 @@ const categoryIcons: Record<string, React.ElementType> = {
   rewriting: ArrowPathIcon,
 }
 
-export default function ToolCard({ tool, index = 0 }: ToolCardProps) {
+export default function ToolCard({ tool, index = 0, headingLevel = 3 }: ToolCardProps) {
+  const Heading = `h${headingLevel}` as const
   const categoryInfo = TOOL_CATEGORIES[tool.category]
   const Icon = categoryIcons[tool.category] || DocumentTextIcon
 
@@ -83,9 +93,9 @@ export default function ToolCard({ tool, index = 0 }: ToolCardProps) {
             </div>
 
             {/* Title */}
-            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 group-hover:text-amber-700 transition-colors mb-2 line-clamp-1">
+            <Heading className="text-base font-semibold text-gray-900 dark:text-gray-100 group-hover:text-amber-700 transition-colors mb-2 line-clamp-1">
               {tool.name}
-            </h3>
+            </Heading>
 
             {/* Description */}
             <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed">

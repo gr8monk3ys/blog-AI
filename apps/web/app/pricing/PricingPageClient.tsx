@@ -277,7 +277,7 @@ export default function PricingPage() {
                 }`}
               >
                 Yearly
-                <span className="ml-1 text-xs bg-emerald-500 text-white px-2 py-0.5 rounded-full">
+                <span className="ml-1 text-xs bg-emerald-700 text-white px-2 py-0.5 rounded-full">
                   Save 17%
                 </span>
               </button>
@@ -343,7 +343,7 @@ export default function PricingPage() {
                 {/* Current plan badge */}
                 {tier.id === currentTier && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <span className="bg-emerald-500 text-white text-sm font-medium px-4 py-1 rounded-full">
+                    <span className="bg-emerald-700 text-white text-sm font-medium px-4 py-1 rounded-full">
                       Current Plan
                     </span>
                   </div>

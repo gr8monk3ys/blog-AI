@@ -13,13 +13,18 @@ import { spawnSync } from "node:child_process";
 // the Lighthouse program notes); this check guards the desktop score of the
 // build itself so the 2026-09-13..16 Lighthouse work cannot silently regress.
 //
-// Per-category floors rather than a blanket 100. Measured 2026-09-16 over
+// Per-category floors rather than a blanket 100. Re-measured 2026-09-16 over
 // three local runs of the production build (desktop preset), per route:
 //   /         perf 100  a11y 100  bp 96  seo 100
-//   /pricing  perf  98  a11y  96  bp 96  seo 100  (a11y: one color-contrast hit)
+//   /pricing  perf  98  a11y 100  bp 96  seo 100
 //   /blog     perf 100  a11y 100  bp 96  seo 100
-//   /tools    perf 100  a11y  99  bp 96  seo 100  (a11y: one heading-order hit)
+//   /tools    perf 100  a11y 100  bp 96  seo 100
 // Performance sits 2 below the observed minimum; the others sit at it.
+// Accessibility is a flat 100: the two defects that forced it down to 96 are
+// fixed (the /pricing "Save 17%" badge was white on emerald-500, 2.54:1, now
+// emerald-700 at 5.48:1; the /tools cards jumped h1 -> h3, and ToolGrid now
+// takes a headingLevel). Every route in the list clears 100 on every run, so
+// there is no per-route exception left to carve out.
 // Best-practices is 96 rather than the 100 production scores because off
 // Vercel the @vercel/analytics and @vercel/speed-insights loaders 404 on
 // /_vercel/*, which trips errors-in-console. That is an artifact of the CI
@@ -29,7 +34,7 @@ import { spawnSync } from "node:child_process";
 // whenever the real score improves.
 const SCORE_FLOORS = {
   performance: 96,
-  accessibility: 96,
+  accessibility: 100,
   bestPractices: 96,
   seo: 100,
 };
