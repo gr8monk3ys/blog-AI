@@ -45,7 +45,22 @@ export interface UsageCheckResponse {
   reset_date: string
 }
 
-// Tier display configuration
+// Tier display configuration.
+//
+// `color` is used both on its own (the /pricing comparison-table headers, the
+// UsageIndicator icon) and paired with `bgColor` (the tier chips). Every value
+// therefore carries a dark: variant, and the pairs are chosen together: the
+// -700 text belongs on the -100 chip in light mode and the -300 text on the
+// -900 chip in dark mode.
+//
+// Without the dark: variants these classes rendered dark-on-dark wherever the
+// surface follows the theme. On /pricing that made the table headers 1.72:1
+// (gray-700 on gray-900), 3.53:1 (amber-700) and 2.24:1 (indigo-700) — the
+// "Free" header was effectively invisible. All four tiers now clear AA in
+// both themes; the measured ratios are in the PR that introduced this note.
+//
+// NOTE: apps/web/tailwind.config.js must keep ./types/** in `content`, or
+// these class names are never generated.
 export const TIER_DISPLAY: Record<UsageTier, {
   name: string
   color: string
@@ -55,29 +70,29 @@ export const TIER_DISPLAY: Record<UsageTier, {
 }> = {
   free: {
     name: 'Free',
-    color: 'text-gray-700',
-    bgColor: 'bg-gray-100',
+    color: 'text-gray-700 dark:text-gray-200',
+    bgColor: 'bg-gray-100 dark:bg-gray-800',
     borderColor: 'border-gray-200',
     badgeColor: 'bg-gray-500',
   },
   starter: {
     name: 'Starter',
-    color: 'text-amber-700',
-    bgColor: 'bg-amber-100',
+    color: 'text-amber-700 dark:text-amber-300',
+    bgColor: 'bg-amber-100 dark:bg-amber-900',
     borderColor: 'border-amber-200',
     badgeColor: 'bg-amber-600',
   },
   pro: {
     name: 'Pro',
-    color: 'text-indigo-700',
-    bgColor: 'bg-indigo-100',
+    color: 'text-indigo-700 dark:text-indigo-300',
+    bgColor: 'bg-indigo-100 dark:bg-indigo-900',
     borderColor: 'border-indigo-200',
     badgeColor: 'bg-indigo-600',
   },
   business: {
     name: 'Business',
-    color: 'text-purple-700',
-    bgColor: 'bg-purple-100',
+    color: 'text-purple-700 dark:text-purple-300',
+    bgColor: 'bg-purple-100 dark:bg-purple-900',
     borderColor: 'border-purple-200',
     badgeColor: 'bg-purple-600',
   },

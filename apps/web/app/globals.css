@@ -69,7 +69,8 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
-   Homepage entrance motion (app/HomePageClient.tsx, app/_home/Reveal.tsx)
+   Entrance motion (app/HomePageClient.tsx, app/pricing/PricingPageClient.tsx,
+   app/_home/Reveal.tsx)
 
    The hero animates with keyframes so its text is painted in the first frame
    of the server HTML: the h1 is the page's LCP element, so it rises but never

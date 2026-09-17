@@ -20,7 +20,9 @@
     "db:migrate": "bun scripts/migrate_db.mjs",
     "analyze": "bun run --cwd apps/web analyze",
     "audit:runtime": "bun scripts/audit-runtime.mjs",
-    "lighthouse:ci": "node scripts/check-lighthouse-score.mjs http://127.0.0.1:3000 / /pricing /blog /tools",
+    "lighthouse:ci": "bun run lighthouse:scores && bun run a11y:dark",
+    "lighthouse:scores": "node scripts/check-lighthouse-score.mjs http://127.0.0.1:3000 / /pricing /blog /tools",
+    "a11y:dark": "node scripts/check-dark-mode-a11y.mjs http://127.0.0.1:3000 / /pricing /blog /tools",
     "test": "bun run --cwd apps/web test",
     "test:run": "bun run --cwd apps/web test:run",
     "test:coverage": "bun run --cwd apps/web test:coverage",
@@ -31,6 +33,10 @@
     "test:api:smoke": "pytest apps/api/tests/test_ci_smoke.py apps/api/tests/test_feature_smoke.py -q",
     "test:api:blocking": "pytest apps/api/tests/test_feature_smoke.py apps/api/tests/test_routes_health.py -q",
     "test:api:full": "pytest apps/api/tests -q"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.58.2"
   },
   "overrides": {
     "glob": "^13.0.6",
