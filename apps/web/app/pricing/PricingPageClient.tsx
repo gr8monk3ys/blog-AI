@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
 import SiteHeader from '../../components/SiteHeader'
 import SiteFooter from '../../components/SiteFooter'
+import { Reveal } from '../_home/Reveal'
 import { useAuth } from '../../lib/clerk-ui'
 import {
   CheckIcon,
@@ -17,24 +17,18 @@ import {
 } from '@heroicons/react/24/outline'
 import { UsageTier, TIER_DISPLAY } from '../../types/usage'
 import { API_ENDPOINTS, getDefaultHeaders } from '../../lib/api'
+import { normalizePricingTiers, type PublicPricingTier } from './tiers'
 
 type BillingCycle = 'monthly' | 'yearly'
 
-interface PublicPricingTier {
-  id: UsageTier
-  name: string
-  description?: string
-  price_monthly: number
-  price_yearly: number
-  daily_limit?: number
-  monthly_limit?: number
-  generations_per_month?: number
-  features: string[]
-  stripe_price_id_monthly?: string
-  stripe_price_id_yearly?: string
-}
-
-const TIER_ORDER: UsageTier[] = ['free', 'starter', 'pro', 'business']
+// Entrance motion is CSS (see "Entrance motion" in app/globals.css).
+// This page used framer-motion, and framer serialises its `initial` state into
+// the server HTML: the hero subhead — this route's LCP element — shipped as
+// `opacity: 0` and stayed invisible until the whole page had hydrated, which is
+// the entire 4.48 s of "element render delay" behind a 4.7 s mobile LCP. The
+// hero now rises with a transform-only keyframe so it is painted in the first
+// frame; sections below the fold use the same <Reveal> as the home page.
+const CARD_STAGGER = ['', '[animation-delay:120ms]', '[animation-delay:240ms]']
 
 const TIER_ICONS: Record<UsageTier, React.ElementType> = {
   free: SparklesIcon,
@@ -65,14 +59,18 @@ const TIER_POSITIONING: Record<Exclude<UsageTier, 'business'>, {
   },
 }
 
-function sortTiers(a: PublicPricingTier, b: PublicPricingTier) {
-  return TIER_ORDER.indexOf(a.id) - TIER_ORDER.indexOf(b.id)
+interface PricingPageClientProps {
+  /**
+   * Plans resolved on the server (see ./tiers). They are rendered in the
+   * document, so the card grid never grows after hydration.
+   */
+  initialTiers: PublicPricingTier[]
 }
 
-export default function PricingPage() {
+export default function PricingPage({ initialTiers }: PricingPageClientProps) {
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly')
   const [currentTier, setCurrentTier] = useState<UsageTier | null>(null)
-  const [tiers, setTiers] = useState<PublicPricingTier[]>([])
+  const [tiers, setTiers] = useState<PublicPricingTier[]>(initialTiers)
   const [loading, setLoading] = useState(true)
   const [upgrading, setUpgrading] = useState<UsageTier | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -106,11 +104,10 @@ export default function PricingPage() {
 
       const data = await response.json()
       if (data?.success && Array.isArray(data?.tiers)) {
-        // We don’t sell the Business/Agency tier yet (no seats/invites/etc).
-        const filtered = (data.tiers as PublicPricingTier[])
-          .filter((t) => t.id !== 'business')
-          .sort(sortTiers)
-        setTiers(filtered)
+        const filtered = normalizePricingTiers(data.tiers as PublicPricingTier[])
+        // Only ever replace the server-rendered plans with a non-empty list:
+        // an empty grid is what used to shove the rest of the page around.
+        if (filtered.length > 0) setTiers(filtered)
       }
     } catch (err) {
       console.error('Error fetching pricing:', err)
@@ -226,7 +223,9 @@ export default function PricingPage() {
 
   const getButtonStyle = (tier: UsageTier) => {
     if (tier === currentTier) {
-      return 'bg-gray-100 dark:bg-gray-800 text-gray-500 cursor-default'
+      // gray-500 was 4.39:1 on gray-100 and 3.04:1 on gray-800 — under AA in
+      // both themes. Now 6.87:1 and 5.78:1.
+      return 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 cursor-default'
     }
     if (tier === 'starter' || tier === 'pro') {
       return 'bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white'
@@ -242,11 +241,10 @@ export default function PricingPage() {
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-amber-700 to-amber-800 text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
+          {/* hero-rise-lcp moves without ever being transparent: Chrome does not
+              count an opacity:0 element as painted, and the <p> below is this
+              route's LCP element. */}
+          <div className="hero-rise-lcp">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
               Pricing For Brand-Safe Content Production
             </h1>
@@ -282,7 +280,7 @@ export default function PricingPage() {
                 </span>
               </button>
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -290,22 +288,14 @@ export default function PricingPage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 pb-16">
         {/* Success/Error messages */}
         {success && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 p-4 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl text-center"
-          >
+          <div className="hero-fade mb-6 p-4 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl text-center">
             <p className="text-emerald-700 dark:text-emerald-400">{success}</p>
-          </motion.div>
+          </div>
         )}
         {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-center"
-          >
+          <div className="hero-fade mb-6 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-center">
             <p className="text-red-700 dark:text-red-400">{error}</p>
-          </motion.div>
+          </div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -318,12 +308,9 @@ export default function PricingPage() {
             const isPopular = tier.id === 'pro'
 
             return (
-              <motion.div
+              <div
                 key={tier.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className={`relative bg-white dark:bg-gray-900 rounded-2xl shadow-lg border-2 ${
+                className={`hero-rise ${CARD_STAGGER[index] ?? ''} relative bg-white dark:bg-gray-900 rounded-2xl shadow-lg border-2 ${
                   isPopular
                     ? 'border-amber-500'
                     : tier.id === currentTier
@@ -334,7 +321,11 @@ export default function PricingPage() {
                 {/* Popular badge */}
                 {isPopular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <span className="bg-gradient-to-r from-amber-500 to-amber-600 text-white text-sm font-medium px-4 py-1 rounded-full">
+                    {/* amber-500/600 put white text at 2.15:1 / 3.19:1; the
+                        700/800 pair used by every other amber CTA on this page
+                        is 5.02:1 / 7.09:1. axe cannot score text over a
+                        gradient, so nothing ever flagged this one. */}
+                    <span className="bg-gradient-to-r from-amber-700 to-amber-800 text-white text-sm font-medium px-4 py-1 rounded-full">
                       Most Popular
                     </span>
                   </div>
@@ -356,7 +347,9 @@ export default function PricingPage() {
                       <Icon className={`w-6 h-6 ${TIER_DISPLAY[tier.id].color}`} />
                     </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">{tier.name}</h3>
+                    {/* h2, not h3: the only heading above it is the hero h1,
+                        so an h3 here skipped a level (axe heading-order). */}
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{tier.name}</h2>
                     <p className="text-sm font-medium text-amber-700 dark:text-amber-400">
                       {TIER_POSITIONING[tier.id as Exclude<UsageTier, 'business'>]?.audience || ''}
                     </p>
@@ -411,11 +404,15 @@ export default function PricingPage() {
                         ? tier.stripe_price_id_monthly
                         : tier.stripe_price_id_yearly
                     const stripeAvailable = tier.id === 'free' || Boolean(stripePriceId)
-                    if (stripeAvailable) {
+                    // While the plans are still the server-rendered ones we do
+                    // not know the Stripe price ids yet. Render the button shape
+                    // (disabled, "Loading...") rather than the "Contact Us" link,
+                    // so the CTA never flips between two different labels.
+                    if (loading || stripeAvailable) {
                       return (
                         <button
                           onClick={() => tier.id !== currentTier && handleUpgrade(tier.id)}
-                          disabled={tier.id === currentTier || upgrading !== null}
+                          disabled={loading || tier.id === currentTier || upgrading !== null}
                           className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${getButtonStyle(tier.id)} disabled:opacity-50`}
                         >
                           {getButtonText(tier.id)}
@@ -434,9 +431,9 @@ export default function PricingPage() {
 
                   {/* Features */}
                   <div className="mt-8">
-                    <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
                       What&apos;s included
-                    </h4>
+                    </h3>
                     <ul className="space-y-3">
                       {tier.features.map((feature) => (
                         <li key={feature} className="flex items-start gap-3">
@@ -447,7 +444,7 @@ export default function PricingPage() {
                     </ul>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             )
           })}
         </div>
@@ -456,11 +453,7 @@ export default function PricingPage() {
       {/* Feature Comparison Table */}
       <section className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
+          <Reveal>
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 text-center mb-12">
               Feature Comparison
             </h2>
@@ -520,18 +513,14 @@ export default function PricingPage() {
                 </tbody>
               </table>
             </div>
-          </motion.div>
+          </Reveal>
         </div>
       </section>
 
       {/* FAQ Section */}
       <section className="py-16">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
+          <Reveal>
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 text-center mb-12">
               Frequently Asked Questions
             </h2>
@@ -569,7 +558,7 @@ export default function PricingPage() {
                 </div>
               ))}
             </div>
-          </motion.div>
+          </Reveal>
         </div>
       </section>
 

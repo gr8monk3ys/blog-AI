@@ -204,7 +204,15 @@ jobs:
           cat /tmp/blog-ai-web.log
           exit 1
 
-      - name: Enforce Lighthouse score floors and document byte budget
+      # Chromium for the dark-mode accessibility pass. Lighthouse drives the
+      # runner's preinstalled Chrome; Playwright needs its own browser, and
+      # pinning it keeps the dark-mode run identical everywhere.
+      - name: Install Playwright Chromium
+        run: bunx playwright install chromium
+
+      # lighthouse:ci = score floors + document byte budget (desktop AND mobile
+      # profiles, light) followed by the dark-mode axe pass over the same routes.
+      - name: Enforce Lighthouse score floors, byte budget and dark-mode a11y
         run: bun run lighthouse:ci
 
       - name: Upload Lighthouse artifacts
