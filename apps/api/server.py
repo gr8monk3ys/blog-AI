@@ -169,12 +169,60 @@ def filter_sensitive_breadcrumbs(crumb, hint):
     return crumb
 
 
+# =============================================================================
+# Sentry: deployed services only
+# =============================================================================
+#
+# The `vivance` Sentry org shares ONE error quota across all of its projects.
+# 36% of the error events it accepted in the 30 days to 2026-09-13 were tagged
+# `environment:development` -- code running on a developer laptop reporting
+# into the production quota, until the quota was exhausted org-wide and every
+# project stopped receiving errors. Per-DSN rate limits are not on the plan, so
+# refusing to initialise off a deployment is the only control there is.
+#
+# This service is deployed as a container on Railway (railway.json +
+# Dockerfile.backend; see docs/DEPLOYMENT_VERCEL_RAILWAY_NEON.md). Railway
+# injects RAILWAY_ENVIRONMENT_NAME / RAILWAY_ENVIRONMENT into every running
+# deployment and nothing else does: they are absent for `uvicorn server:app`
+# on a laptop, for `docker run` of the same image locally, and in CI. That
+# makes them the API's equivalent of Vercel's VERCEL_ENV for the web app.
+#
+# SENTRY_ENVIRONMENT is deliberately NOT used as the signal: it defaults to
+# "development" but is a plain env var a developer may set to anything, and a
+# laptop that copied a production .env would sail straight through.
+#
+# Escape hatches:
+#   SENTRY_FORCE_ENABLE=1  -- report from a non-Railway host (another container
+#                             host, or a deliberate local test; point SENTRY_DSN
+#                             at a throwaway project first).
+#   SENTRY_FORCE_DISABLE=1 -- kill switch for a deployment that is flooding the
+#                             shared quota.
+
+_RAILWAY_ENV = (
+    os.environ.get("RAILWAY_ENVIRONMENT_NAME")
+    or os.environ.get("RAILWAY_ENVIRONMENT")
+    or ""
+).strip()
+_SENTRY_ON_DEPLOYED_HOST = bool(_RAILWAY_ENV) or os.environ.get("SENTRY_FORCE_ENABLE") == "1"
+_SENTRY_ENABLED = (
+    settings.is_sentry_configured
+    and _SENTRY_ON_DEPLOYED_HOST
+    and os.environ.get("SENTRY_FORCE_DISABLE") != "1"
+)
+
 # Initialize Sentry using validated settings
-if settings.is_sentry_configured:
+if _SENTRY_ENABLED:
     sentry_settings = settings.sentry
+    # Prefer an explicitly configured SENTRY_ENVIRONMENT; otherwise tag events
+    # with the Railway environment name so production and staging stay apart.
+    _sentry_environment = (
+        os.environ.get("SENTRY_ENVIRONMENT")
+        or _RAILWAY_ENV
+        or sentry_settings.sentry_environment
+    )
     sentry_sdk.init(
         dsn=sentry_settings.sentry_dsn,
-        environment=sentry_settings.sentry_environment,
+        environment=_sentry_environment,
         # Sample rate for error events (1.0 = 100% of errors are sent)
         sample_rate=1.0,
         # Sample rate for performance transactions
@@ -199,16 +247,22 @@ if settings.is_sentry_configured:
         # Release version for tracking deployments
         release=sentry_settings.sentry_release,
     )
-    logger.info(f"Sentry initialized for environment: {sentry_settings.sentry_environment}")
-else:
+    logger.info(f"Sentry initialized for environment: {_sentry_environment}")
+elif not settings.is_sentry_configured:
     logger.info("Sentry DSN not configured, error tracking disabled")
+else:
+    logger.info(
+        "Sentry DSN configured but this is not a deployed service "
+        "(no RAILWAY_ENVIRONMENT_NAME); error tracking disabled to protect the "
+        "shared org error quota. Set SENTRY_FORCE_ENABLE=1 to override."
+    )
 
 
 def is_sentry_initialized() -> bool:
     """Check if Sentry is properly initialized and configured."""
     try:
         client = sentry_sdk.get_client()
-        return client.is_active() and settings.is_sentry_configured
+        return client.is_active() and _SENTRY_ENABLED
     except Exception:
         return False
 

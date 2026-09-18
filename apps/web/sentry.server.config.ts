@@ -8,18 +8,20 @@
 
 import * as Sentry from '@sentry/nextjs'
 
-const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN
+import { SENTRY_DSN, SENTRY_ENABLED, SENTRY_ENVIRONMENT } from './lib/sentry-env'
 
-// Only initialize Sentry if DSN is configured
-if (SENTRY_DSN) {
+// Only initialize Sentry when a DSN is configured AND this is a deployed
+// Vercel app. A local `next build && next start` has NODE_ENV=production but
+// no VERCEL_ENV, and used to report into the org's shared error quota.
+if (SENTRY_ENABLED) {
   Sentry.init({
     dsn: SENTRY_DSN,
 
     // Performance Monitoring
     tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
 
-    // Environment tagging
-    environment: process.env.NODE_ENV,
+    // Environment tagging: "production" or "preview", from VERCEL_ENV.
+    environment: SENTRY_ENVIRONMENT,
 
     // Filter out common server-side noise
     ignoreErrors: [

@@ -52,6 +52,44 @@ Blog AI uses a multi-layered monitoring approach:
 
 ## Sentry Integration
 
+### Sentry only initialises on a deployed service
+
+Every Sentry project in the `vivance` org shares **one** error quota, and the
+plan has no per-DSN rate limits. In the 30 days to 2026-09-13, 36% of the
+error events that quota accepted were tagged `environment:development` — this
+app running on a laptop — and the quota ran out org-wide, blinding every
+project. So both runtimes now refuse to initialise unless they are actually
+deployed:
+
+| Runtime | Deployed signal | Set by |
+|---------|-----------------|--------|
+| `apps/web` (Vercel) | `VERCEL_ENV` is `production` or `preview` | Vercel, on deployed builds only |
+| `apps/api` (Railway) | `RAILWAY_ENVIRONMENT_NAME` (or `RAILWAY_ENVIRONMENT`) is set | Railway, in every running deployment |
+
+`NODE_ENV` / `SENTRY_ENVIRONMENT` are deliberately **not** the signal: a local
+`next build && next start` sets `NODE_ENV=production`, and `SENTRY_ENVIRONMENT`
+is a plain variable a copied `.env` can carry onto a laptop. The web gate lives
+in `apps/web/lib/sentry-env.ts`; the API gate is at the top of the Sentry block
+in `apps/api/server.py`.
+
+Because the browser bundle can only read `NEXT_PUBLIC_*`, `next.config.mjs`
+mirrors `VERCEL_ENV` into `NEXT_PUBLIC_VERCEL_ENV` at build time. Nothing needs
+to be configured in Vercel for that to work.
+
+**Escape hatches** (all build-time on the web side — set them for `build`, not
+just `start`):
+
+```bash
+# Turn reporting ON off-deployment, e.g. to test SDK wiring. Point the DSN at a
+# throwaway project first: the shared quota is what this gate protects.
+NEXT_PUBLIC_SENTRY_FORCE_ENABLE=1   # apps/web
+SENTRY_FORCE_ENABLE=1               # apps/api (also: a non-Railway container host)
+
+# Kill switch for a deployment flooding the shared quota.
+NEXT_PUBLIC_SENTRY_FORCE_DISABLE=1  # apps/web
+SENTRY_FORCE_DISABLE=1              # apps/api
+```
+
 ### Configuration
 
 Sentry is configured via environment variables:
@@ -88,9 +126,10 @@ Three Sentry configuration files handle different runtime contexts:
 
 | File | Runtime | Purpose |
 |------|---------|---------|
-| `sentry.client.config.ts` | Browser | Client-side errors, session replay |
+| `instrumentation-client.ts` + `lib/sentry-client.ts` | Browser | Client-side errors, session replay (SDK lazy-loaded after hydration) |
 | `sentry.server.config.ts` | Node.js | Server components, API routes |
 | `sentry.edge.config.ts` | Edge Runtime | Middleware, edge functions |
+| `lib/sentry-env.ts` | all three | The deployed-only gate and the `environment` tag |
 
 **Privacy Features:**
 - Session replay masks all text and blocks media
