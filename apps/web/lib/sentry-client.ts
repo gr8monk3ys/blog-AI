@@ -15,14 +15,17 @@
  * the load itself and reports once init has run.
  */
 
-type SentryModule = typeof import('./sentry-sdk')
+import { SENTRY_DSN, SENTRY_ENABLED, SENTRY_ENVIRONMENT } from './sentry-env'
 
-const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN
+type SentryModule = typeof import('./sentry-sdk')
 
 let sentryPromise: Promise<SentryModule> | null = null
 
 function init(Sentry: SentryModule): SentryModule {
-  if (!SENTRY_DSN) return Sentry
+  // Gate first: off a Vercel deployment this returns the un-initialised
+  // module, so every captureException below is a no-op rather than an
+  // envelope posted into the org's shared error quota (lib/sentry-env.ts).
+  if (!SENTRY_ENABLED) return Sentry
 
   Sentry.init({
     dsn: SENTRY_DSN,
@@ -34,8 +37,9 @@ function init(Sentry: SentryModule): SentryModule {
     replaysSessionSampleRate: 0.1, // 10% of sessions
     replaysOnErrorSampleRate: 1.0, // 100% of sessions with errors
 
-    // Environment tagging
-    environment: process.env.NODE_ENV,
+    // Environment tagging: the deployed environment ("production" /
+    // "preview"), so the two stay distinguishable in Sentry.
+    environment: SENTRY_ENVIRONMENT,
 
     // Filter out common noise
     ignoreErrors: [
@@ -101,7 +105,13 @@ export function getSentry(): Promise<SentryModule> {
   return sentryPromise
 }
 
-/** True when a DSN is configured, i.e. `getSentry()` will actually report. */
+/**
+ * True when `getSentry()` will actually report: a DSN is configured AND this
+ * build is running as a deployed Vercel app (see lib/sentry-env.ts).
+ *
+ * instrumentation-client.ts checks this before installing its pre-init error
+ * buffer, so a local build does not even schedule the SDK load.
+ */
 export function isSentryEnabled(): boolean {
-  return !!SENTRY_DSN
+  return SENTRY_ENABLED
 }

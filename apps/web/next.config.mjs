@@ -113,6 +113,18 @@ const nextConfig = {
   // lockfiles exist elsewhere on disk.
   turbopack: { root: path.resolve(__dirname, '../..') },
 
+  // The browser bundle can only read NEXT_PUBLIC_* variables, and Sentry's
+  // deployed-only gate (lib/sentry-env.ts) has to make the same decision in
+  // the client as on the server. Mirror Vercel's VERCEL_ENV into a public
+  // variable so the value is inlined at build time whether or not the Vercel
+  // project has "Automatically expose System Environment Variables" enabled.
+  // Off Vercel there is nothing to mirror, so it inlines as '' and the gate
+  // stays shut — which is the whole point.
+  env: {
+    NEXT_PUBLIC_VERCEL_ENV:
+      process.env.NEXT_PUBLIC_VERCEL_ENV ?? process.env.VERCEL_ENV ?? '',
+  },
+
   // Remove X-Powered-By header for security
   poweredByHeader: false,
 

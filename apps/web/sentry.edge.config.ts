@@ -7,18 +7,19 @@
 
 import * as Sentry from '@sentry/nextjs'
 
-const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN
+import { SENTRY_DSN, SENTRY_ENABLED, SENTRY_ENVIRONMENT } from './lib/sentry-env'
 
-// Only initialize Sentry if DSN is configured
-if (SENTRY_DSN) {
+// Only initialize Sentry when a DSN is configured AND this is a deployed
+// Vercel app — same gate as the server and client runtimes.
+if (SENTRY_ENABLED) {
   Sentry.init({
     dsn: SENTRY_DSN,
 
     // Lower trace rate for edge functions (they can be high volume)
     tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.05 : 1.0,
 
-    // Environment tagging
-    environment: process.env.NODE_ENV,
+    // Environment tagging: "production" or "preview", from VERCEL_ENV.
+    environment: SENTRY_ENVIRONMENT,
 
     // Remove PII before sending
     beforeSend(event) {
