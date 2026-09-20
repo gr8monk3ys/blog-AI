@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import ConversationHistory from '../../components/ConversationHistory'
 import * as api from '../../lib/api'
 
@@ -69,8 +69,12 @@ describe('ConversationHistory', () => {
 
       render(<ConversationHistory {...defaultProps} />)
 
-      // Advance timer to trigger mock data loading
-      await vi.advanceTimersByTimeAsync(1500)
+      // Advance timer to trigger mock data loading. React 19 schedules the
+      // resulting state update through the (faked) scheduler, so the advance
+      // has to run inside act() for the re-render to be flushed.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1500)
+      })
 
       expect(
         screen.getByText(/Can you write a blog post about artificial intelligence/i)
@@ -85,7 +89,9 @@ describe('ConversationHistory', () => {
 
       render(<ConversationHistory {...defaultProps} />)
 
-      await vi.advanceTimersByTimeAsync(1500)
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1500)
+      })
 
       expect(screen.getByText('4 messages')).toBeInTheDocument()
 

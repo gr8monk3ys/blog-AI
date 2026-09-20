@@ -12,6 +12,17 @@ afterEach(() => {
 // Mock fetch globally
 global.fetch = vi.fn()
 
+// @headlessui/react v2 observes element movement with ResizeObserver, which
+// jsdom does not implement. A no-op keeps Menu/Listbox/Dialog interactions
+// from throwing during tests.
+class MockResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+global.ResizeObserver =
+  global.ResizeObserver ?? (MockResizeObserver as unknown as typeof ResizeObserver)
+
 // ---------------------------------------------------------------------------
 // Mock next/navigation
 // ---------------------------------------------------------------------------
