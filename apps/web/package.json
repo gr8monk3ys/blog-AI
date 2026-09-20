@@ -38,7 +38,7 @@
     "postcss": "^8",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "tailwindcss": "^4.3.3",
+    "tailwindcss": "^3.4.19",
     "uuid": "^14.0.0"
   },
   "devDependencies": {
