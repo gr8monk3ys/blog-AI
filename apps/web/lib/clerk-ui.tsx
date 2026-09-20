@@ -155,7 +155,7 @@ export function SignUp(props: Record<string, unknown>): ReactNode {
 }
 
 export function useAuth(): UseAuthResult {
-  let auth: ReturnType<typeof useAuthImpl> | null = null
+  let auth: ReturnType<typeof useAuthImpl> | null
 
   try {
     // This wrapper intentionally tolerates missing Clerk config and provider state.
