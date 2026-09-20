@@ -58,7 +58,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "globals": "^17.4.0",
     "jsdom": "^30.0.1",
-    "typescript": "^7",
+    "typescript": "^5",
     "vitest": "^5.0.0"
   }
 }

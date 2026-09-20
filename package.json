@@ -44,7 +44,7 @@
     "nanoid": "^3.3.16",
     "rollup": "^4.59.0",
     "serialize-javascript": "^7.0.4",
-    "vite": "^7.3.5",
+    "vite": "^8.0.0",
     "undici": "^7.29.0",
     "flatted": "^3.4.2",
     "js-yaml": "^4.2.0",
