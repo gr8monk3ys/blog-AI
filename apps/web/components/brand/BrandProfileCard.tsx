@@ -34,7 +34,7 @@ export default function BrandProfileCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
-      className={`relative bg-white dark:bg-gray-900 rounded-xl border shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden ${
+      className={`relative bg-white dark:bg-gray-900 rounded-xl border shadow-sm hover:shadow-md transition duration-200 overflow-hidden ${
         profile.isDefault ? 'border-amber-300 dark:border-amber-700 ring-2 ring-amber-100 dark:ring-amber-900/50' : 'border-gray-200 dark:border-gray-800'
       }`}
     >

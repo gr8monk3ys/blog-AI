@@ -55,7 +55,7 @@ export default function ToolCard({ tool, index = 0, headingLevel = 3 }: ToolCard
         className="block group"
         aria-label={`Open ${tool.name} tool`}
       >
-        <div className="relative h-full bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-amber-200 dark:hover:border-amber-700 transition-all duration-200 overflow-hidden">
+        <div className="relative h-full bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-amber-200 dark:hover:border-amber-700 transition duration-200 overflow-hidden">
           {/* Top badges row */}
           <div className="absolute top-3 right-3 flex items-center gap-2">
             {tool.isNew && (

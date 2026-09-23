@@ -79,7 +79,7 @@ export default async function ToolCategoryPage({ params }: CategoryPageProps) {
               <Link
                 key={tool.id}
                 href={`/tools/${tool.slug}`}
-                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 hover:border-amber-200 dark:hover:border-amber-800 hover:shadow-sm transition-all"
+                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 hover:border-amber-200 dark:hover:border-amber-800 hover:shadow-sm transition"
               >
                 <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{tool.name}</div>
                 <div className="mt-2 text-xs text-gray-600 dark:text-gray-400">{tool.description}</div>

@@ -206,9 +206,9 @@ function UsageDetails({ usage, showUpgradePrompt }: UsageDetailsProps) {
         {!isDailyUnlimited && (
           <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2">
             <m.div
-              initial={{ width: 0 }}
-              animate={{ width: `${Math.min(dailyPercentUsed, 100)}%` }}
-              className={`h-2 rounded-full ${
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: Math.min(Math.max(dailyPercentUsed, 0), 100) / 100 }}
+              className={`h-2 w-full origin-left rounded-full ${
                 isAtLimit
                   ? 'bg-red-500'
                   : isNearLimit
@@ -235,9 +235,9 @@ function UsageDetails({ usage, showUpgradePrompt }: UsageDetailsProps) {
         {!isMonthlyUnlimited && (
           <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2">
             <m.div
-              initial={{ width: 0 }}
-              animate={{ width: `${Math.min(monthlyPercentUsed, 100)}%` }}
-              className={`h-2 rounded-full ${
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: Math.min(Math.max(monthlyPercentUsed, 0), 100) / 100 }}
+              className={`h-2 w-full origin-left rounded-full ${
                 monthlyPercentUsed >= 100
                   ? 'bg-red-500'
                   : monthlyPercentUsed >= 80
@@ -282,7 +282,7 @@ function UsageDetails({ usage, showUpgradePrompt }: UsageDetailsProps) {
       {showUpgradePrompt && usage.tier !== 'pro' && usage.tier !== 'business' && (
         <Link
           href="/pricing"
-          className="flex items-center justify-center gap-2 w-full py-2 px-4 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white text-sm font-medium rounded-lg transition-all"
+          className="flex items-center justify-center gap-2 w-full py-2 px-4 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white text-sm font-medium rounded-lg transition"
         >
           <ArrowUpCircleIcon className="h-4 w-4" />
           {usage.tier === 'free' ? 'Upgrade to Starter' : 'Upgrade to Pro'}

@@ -191,7 +191,7 @@ export default function HistoryCard({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.3, delay: index * 0.05 }}
-        className={`group relative bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-amber-200 dark:hover:border-amber-700 transition-all duration-200 overflow-hidden ${
+        className={`group relative bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-amber-200 dark:hover:border-amber-700 transition duration-200 overflow-hidden ${
           isDeleting ? 'opacity-50 pointer-events-none' : ''
         }`}
       >

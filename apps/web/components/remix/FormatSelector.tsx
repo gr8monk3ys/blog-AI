@@ -61,7 +61,7 @@ function FormatSelectorComponent({
               onClick={() => onToggleFormat(format.format)}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className={`p-4 rounded-lg text-left transition-all ${
+              className={`p-4 rounded-lg text-left transition ${
                 isSelected
                   ? 'bg-amber-50 dark:bg-amber-900/30 border-2 border-amber-500'
                   : 'bg-gray-50 dark:bg-gray-800/50 border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700'

@@ -413,7 +413,7 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
                         <button
                           onClick={() => tier.id !== currentTier && handleUpgrade(tier.id)}
                           disabled={loading || tier.id === currentTier || upgrading !== null}
-                          className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${getButtonStyle(tier.id)} disabled:opacity-50`}
+                          className={`w-full py-3 px-4 rounded-lg font-medium transition ${getButtonStyle(tier.id)} disabled:opacity-50`}
                         >
                           {getButtonText(tier.id)}
                         </button>
@@ -422,7 +422,7 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
                     return (
                       <a
                         href="mailto:support@blogai.com"
-                        className={`w-full py-3 px-4 rounded-lg font-medium transition-all text-center block ${getButtonStyle(tier.id)}`}
+                        className={`w-full py-3 px-4 rounded-lg font-medium transition text-center block ${getButtonStyle(tier.id)}`}
                       >
                         Contact Us
                       </a>

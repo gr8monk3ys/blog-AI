@@ -328,9 +328,9 @@ export default function UploadDropZone({
       <AnimatePresence>
         {queue.length > 0 && (
           <m.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
             className="space-y-2"
           >
             {queue.map((item, idx) => {
@@ -360,9 +360,9 @@ export default function UploadDropZone({
                     {item.status === 'uploading' && (
                       <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-1">
                         <m.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${item.progress}%` }}
-                          className="h-1.5 rounded-full bg-amber-500"
+                          initial={{ scaleX: 0 }}
+                          animate={{ scaleX: Math.min(Math.max(item.progress, 0), 100) / 100 }}
+                          className="h-1.5 w-full origin-left rounded-full bg-amber-500"
                         />
                       </div>
                     )}

@@ -72,10 +72,10 @@ export default function BarChart({
                 </div>
                 <div className="relative h-6 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
                   <motion.div
-                    className="absolute inset-y-0 left-0 rounded-lg"
+                    className="absolute inset-0 origin-left rounded-lg"
                     style={{ backgroundColor: barColor }}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${barWidth}%` }}
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: Math.min(Math.max(barWidth, 0), 100) / 100 }}
                     transition={{ duration: 0.5, delay: index * 0.05 }}
                   />
                   <span className="absolute inset-y-0 right-2 flex items-center text-xs font-medium text-gray-500 dark:text-gray-400">

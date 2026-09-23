@@ -369,7 +369,7 @@ function useOnboardingWizardView({
                 aria-pressed={selected}
                 className={`
                   inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium
-                  transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2
+                  transition focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2
                   ${
                     selected
                       ? 'bg-amber-700 text-white shadow-sm'
@@ -447,7 +447,7 @@ function useOnboardingWizardView({
               aria-checked={selected}
               onClick={() => selectContentType(option.value)}
               className={`
-                relative rounded-xl p-5 text-left transition-all
+                relative rounded-xl p-5 text-left transition
                 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2
                 ${
                   selected
@@ -596,7 +596,7 @@ function useOnboardingWizardView({
                 aria-current={isCurrent ? 'step' : undefined}
                 aria-label={`${s.title}${isComplete ? ' (completed)' : ''}${isCurrent ? ' (current)' : ''}`}
                 className={`
-                  flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium transition-all
+                  flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium transition
                   focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2
                   ${
                     isCurrent
@@ -642,7 +642,7 @@ function useOnboardingWizardView({
               aria-label={`Go to step ${i + 1}: ${s.title}`}
               aria-current={i === step ? 'step' : undefined}
               className={`
-                h-2.5 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2
+                h-2.5 rounded-full transition focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2
                 ${
                   i === step
                     ? 'w-8 bg-amber-600'

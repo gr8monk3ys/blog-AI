@@ -42,9 +42,9 @@ function UsageBar({
       {!isUnlimited && (
         <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2">
           <m.div
-            initial={{ width: 0 }}
-            animate={{ width: `${Math.min(percentage, 100)}%` }}
-            className={`h-2 rounded-full ${barColor}`}
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: Math.min(Math.max(percentage, 0), 100) / 100 }}
+            className={`h-2 w-full origin-left rounded-full ${barColor}`}
           />
         </div>
       )}

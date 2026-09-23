@@ -122,7 +122,7 @@ function useAnalyticsPageView() {
                     <button
                       key={range}
                       onClick={() => setTimeRange(range)}
-                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
                         timeRange === range
                           ? 'bg-white text-amber-700'
                           : 'text-white/80 hover:text-white hover:bg-white/10'
@@ -256,13 +256,13 @@ function useAnalyticsPageView() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/"
-              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 shadow-sm transition-all"
+              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 shadow-sm transition"
             >
               Generate Content
             </Link>
             <Link
               href="/tools"
-              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm transition-all"
+              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm transition"
             >
               Browse Tools
             </Link>
@@ -270,7 +270,7 @@ function useAnalyticsPageView() {
               onClick={() => {
                 setTimeRange('7d')
               }}
-              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm transition-all"
+              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm transition"
             >
               <ClockIcon className="w-4 h-4 mr-2" aria-hidden="true" />
               View Last 7 Days

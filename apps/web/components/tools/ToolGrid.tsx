@@ -125,7 +125,7 @@ export default function ToolGrid({
               <button
                 type="button"
                 onClick={() => setShowFreeOnly(!showFreeOnly)}
-                className={`flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 ${
+                className={`flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 ${
                   showFreeOnly
                     ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
                     : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'

@@ -96,8 +96,8 @@ export default function ToolOutput({
       {/* Variations comparison section */}
       {variations.length > 0 && (
         <m.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
           className="border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950"
         >
           <div className="p-6">
@@ -114,8 +114,8 @@ export default function ToolOutput({
       {/* Output section */}
       {output && (
         <m.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
           className="border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950"
         >
           <div className="p-6">

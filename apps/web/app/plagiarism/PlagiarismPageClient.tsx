@@ -318,7 +318,7 @@ export default function PlagiarismPageClient() {
               </div>
               <div className="h-3 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-500 ${risk?.gauge}`}
+                  className={`h-full rounded-full ${risk?.gauge}`}
                   style={{ width: `${Math.min(result.overall_score, 100)}%` }}
                 />
               </div>

@@ -532,9 +532,9 @@ function useBulkGenerationPageView() {
                     {items.map((item, index) => (
                       <m.div
                         key={item.localId}
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
                         className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
                       >
                         <div className="flex items-start gap-4">
@@ -822,9 +822,9 @@ function useBulkGenerationPageView() {
                   </div>
                   <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
                     <m.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${status.progress_percentage}%` }}
-                      className="bg-amber-500 h-3 rounded-full"
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: Math.min(Math.max(status.progress_percentage, 0), 100) / 100 }}
+                      className="bg-amber-500 h-3 w-full origin-left rounded-full"
                     />
                   </div>
                   <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
@@ -901,7 +901,7 @@ function useBulkGenerationPageView() {
                   <button
                     onClick={startGeneration}
                     disabled={items.length === 0 || !canGenerate}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <PlayIcon className="w-5 h-5" />
                     Generate {items.length} Post{items.length !== 1 ? 's' : ''}

@@ -115,7 +115,7 @@ export default function SEOScorePanel({ score }: SEOScorePanelProps) {
                 </div>
                 <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all ${barColor(value, thresholdDefault)}`}
+                    className={`h-full rounded-full ${barColor(value, thresholdDefault)}`}
                     style={{ width: `${Math.min(value, 100)}%` }}
                   />
                 </div>

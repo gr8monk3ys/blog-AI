@@ -97,7 +97,7 @@ function VariationCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.1 }}
-      className={`relative rounded-xl border-2 transition-all duration-200 ${
+      className={`relative rounded-xl border-2 transition duration-200 ${
         isSelected
           ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-900/20 shadow-md'
           : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm'
@@ -177,9 +177,9 @@ function VariationCard({
       <AnimatePresence>
         {showScores && variation.scores && (
           <m.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
             className="border-b border-gray-100 dark:border-gray-800"
           >
             <div className="p-4">
@@ -205,7 +205,7 @@ function VariationCard({
       <div className="p-4 pt-0">
         <button
           onClick={onSelect}
-          className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
+          className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition ${
             isSelected
               ? 'bg-amber-700 text-white shadow-sm'
               : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-800'

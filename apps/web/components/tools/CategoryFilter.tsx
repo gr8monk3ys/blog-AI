@@ -80,7 +80,7 @@ export default function CategoryFilter({
               tabIndex={isSelected ? 0 : -1}
               onClick={() => onCategoryChange(category.id)}
               onKeyDown={(e) => handleKeyDown(e, index)}
-              className={`relative flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 ${
+              className={`relative flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 ${
                 isSelected
                   ? 'bg-amber-700 text-white shadow-sm'
                   : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
