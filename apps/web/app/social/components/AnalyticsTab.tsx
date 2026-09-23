@@ -99,7 +99,7 @@ export default function AnalyticsTab() {
           id="analytics-campaign"
           value={selectedCampaignId || ''}
           onChange={(e) => handleSelectCampaign(e.target.value)}
-          className="w-full sm:w-auto rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+          className="w-full sm:w-auto rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
         >
           {campaigns.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>

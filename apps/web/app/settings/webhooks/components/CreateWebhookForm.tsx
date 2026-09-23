@@ -98,7 +98,7 @@ export default function CreateWebhookForm({ editingSubscription, onClose, onSucc
             value={targetUrl}
             onChange={(e) => setTargetUrl(e.target.value)}
             placeholder="https://your-app.com/webhooks/blog-ai"
-            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 font-mono"
+            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500 font-mono"
             required
           />
         </div>
@@ -123,7 +123,7 @@ export default function CreateWebhookForm({ editingSubscription, onClose, onSucc
               value={secret}
               onChange={(e) => setSecret(e.target.value)}
               placeholder={isEditing ? 'Leave empty to keep current' : 'Used for HMAC-SHA256 signature verification'}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 pr-10 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 font-mono"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 pr-10 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500 font-mono"
               maxLength={256}
             />
             <button
@@ -147,7 +147,7 @@ export default function CreateWebhookForm({ editingSubscription, onClose, onSucc
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="What is this webhook for?"
-            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             maxLength={500}
           />
         </div>

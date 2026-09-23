@@ -109,7 +109,7 @@ export default function TeamPageClient() {
               <select
                 value={activeOrg?.id || ''}
                 onChange={(e) => setActiveOrg(orgs.find((o) => o.id === e.target.value) || null)}
-                className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:border-amber-500 focus:ring-amber-500"
+                className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus-visible:border-amber-500 focus-visible:ring-amber-500"
               >
                 {orgs.map((org) => (
                   <option key={org.id} value={org.id}>{org.name}</option>

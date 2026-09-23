@@ -343,7 +343,7 @@ export default function EditorToolbar({
             disabled={isDisabled(btn.action)}
             aria-label={btn.label}
             title={btn.shortcutDisplay ? `${btn.label} (${btn.shortcutDisplay})` : btn.label}
-            className="inline-flex items-center justify-center w-8 h-8 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 disabled:opacity-40 disabled:pointer-events-none transition-colors"
           >
             {btn.icon}
           </button>
@@ -363,7 +363,7 @@ export default function EditorToolbar({
             disabled={isDisabled(btn.action)}
             aria-label={btn.label}
             title={btn.shortcutDisplay ? `${btn.label} (${btn.shortcutDisplay})` : btn.label}
-            className="inline-flex items-center justify-center w-8 h-8 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 disabled:opacity-40 disabled:pointer-events-none transition-colors"
           >
             {btn.icon}
           </button>

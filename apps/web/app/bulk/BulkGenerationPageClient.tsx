@@ -548,7 +548,7 @@ function useBulkGenerationPageView() {
                               onChange={(e) => updateItem(index, 'topic', e.target.value)}
                               placeholder="Enter topic..."
                               disabled={isProcessing}
-                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus-visible:ring-amber-500 focus-visible:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
                             />
                             <div className="flex gap-3">
                               <input
@@ -557,13 +557,13 @@ function useBulkGenerationPageView() {
                                 onChange={(e) => updateItem(index, 'keywords', e.target.value)}
                                 placeholder="Keywords (comma separated)"
                                 disabled={isProcessing}
-                                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
+                                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus-visible:ring-amber-500 focus-visible:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
                               />
                               <select
                                 value={item.tone}
                                 onChange={(e) => updateItem(index, 'tone', e.target.value)}
                                 disabled={isProcessing}
-                                className="px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
+                                className="px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus-visible:ring-amber-500 focus-visible:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
                               >
                                 {TONE_OPTIONS.map((option) => (
                                   <option key={option.value} value={option.value}>
@@ -645,7 +645,7 @@ function useBulkGenerationPageView() {
                       setCostEstimate(null)
                     }}
                     disabled={isProcessing}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus-visible:ring-amber-500 focus-visible:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
                   >
                     {STRATEGY_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -673,7 +673,7 @@ function useBulkGenerationPageView() {
                         setCostEstimate(null)
                       }}
                       disabled={isProcessing}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus-visible:ring-amber-500 focus-visible:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
                     >
                       {availableProviders.map((p) => {
                         const meta = PROVIDER_META[p]
@@ -698,7 +698,7 @@ function useBulkGenerationPageView() {
                     value={sharedTone}
                     onChange={(e) => setSharedTone(e.target.value)}
                     disabled={isProcessing}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus-visible:ring-amber-500 focus-visible:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
                   >
                     {TONE_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -717,7 +717,7 @@ function useBulkGenerationPageView() {
                     value={parallelLimit}
                     onChange={(e) => setParallelLimit(Number(e.target.value))}
                     disabled={isProcessing}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus-visible:ring-amber-500 focus-visible:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
                   >
                     {[1, 2, 3, 5, 10].map((n) => (
                       <option key={n} value={n}>
@@ -734,7 +734,7 @@ function useBulkGenerationPageView() {
                       checked={useResearch}
                       onChange={(e) => setUseResearch(e.target.checked)}
                       disabled={isProcessing}
-                      className="w-4 h-4 text-amber-700 border-gray-300 rounded focus:ring-amber-500"
+                      className="w-4 h-4 text-amber-700 border-gray-300 rounded focus-visible:ring-amber-500"
                     />
                     <span className="text-sm text-gray-700 dark:text-gray-300">Use web research</span>
                   </label>
@@ -744,7 +744,7 @@ function useBulkGenerationPageView() {
                       checked={proofread}
                       onChange={(e) => setProofread(e.target.checked)}
                       disabled={isProcessing}
-                      className="w-4 h-4 text-amber-700 border-gray-300 rounded focus:ring-amber-500"
+                      className="w-4 h-4 text-amber-700 border-gray-300 rounded focus-visible:ring-amber-500"
                     />
                     <span className="text-sm text-gray-700 dark:text-gray-300">Proofread content</span>
                   </label>
@@ -754,7 +754,7 @@ function useBulkGenerationPageView() {
                       checked={humanize}
                       onChange={(e) => setHumanize(e.target.checked)}
                       disabled={isProcessing}
-                      className="w-4 h-4 text-amber-700 border-gray-300 rounded focus:ring-amber-500"
+                      className="w-4 h-4 text-amber-700 border-gray-300 rounded focus-visible:ring-amber-500"
                     />
                     <span className="text-sm text-gray-700 dark:text-gray-300">Humanize content</span>
                   </label>

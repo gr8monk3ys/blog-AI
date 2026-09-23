@@ -99,7 +99,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
                 type="text"
                 value={editingBook.title}
                 onChange={(e) => setEditingBook({ ...editingBook, title: e.target.value })}
-                className="text-3xl font-bold border-b border-amber-500 focus:outline-none dark:bg-transparent dark:text-gray-100"
+                className="text-3xl font-bold border-b border-amber-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:bg-transparent dark:text-gray-100"
               />
               <button
                 onClick={() => setIsEditingTitle(false)}
@@ -179,7 +179,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
           <Disclosure key={chapter.number} defaultOpen={chapterIndex === 0}>
             {({ open }) => (
               <>
-                <Disclosure.Button className="flex justify-between w-full px-4 py-2 text-lg font-medium text-left text-amber-900 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900/50 focus:outline-none focus-visible:ring focus-visible:ring-amber-500 focus-visible:ring-opacity-75">
+                <Disclosure.Button className="flex justify-between w-full px-4 py-2 text-lg font-medium text-left text-amber-900 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900/50 focus-visible:outline-none focus-visible:ring focus-visible:ring-amber-500 focus-visible:ring-opacity-75">
                   <div className="flex items-center">
                     <span>{chapter.title}</span>
                     <button
@@ -274,14 +274,14 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
                   <div className="mt-4 flex justify-end space-x-2">
                     <button
                       type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-gray-200 dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-700 focus:outline-none"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-gray-200 dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                       onClick={() => setIsEditingChapter(null)}
                     >
                       Cancel
                     </button>
                     <button
                       type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800 focus:outline-none"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                       onClick={() => {
                         if (isEditingChapter !== null && editingBook.chapters[isEditingChapter]) {
                           handleUpdateChapterTitle(
@@ -366,14 +366,14 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
                   <div className="mt-4 flex justify-end space-x-2">
                     <button
                       type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-gray-200 dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-700 focus:outline-none"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-gray-200 dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                       onClick={() => setIsEditingTopic(null)}
                     >
                       Cancel
                     </button>
                     <button
                       type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800 focus:outline-none"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                       onClick={() => {
                         if (isEditingTopic) {
                           const chapter = editingBook.chapters[isEditingTopic.chapterIndex];

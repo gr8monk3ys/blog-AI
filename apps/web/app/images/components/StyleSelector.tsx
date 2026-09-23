@@ -38,7 +38,7 @@ export default function StyleSelector({
         <select
           value={provider}
           onChange={(e) => onProviderChange(e.target.value as ImageProvider)}
-          className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+          className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
         >
           {providers.map((p) => (
             <option key={p} value={p} className="capitalize">{p === 'openai' ? 'DALL-E 3' : 'Stability AI'}</option>
@@ -51,7 +51,7 @@ export default function StyleSelector({
         <select
           value={style}
           onChange={(e) => onStyleChange(e.target.value as ImageStyle)}
-          className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+          className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
         >
           <option value="natural">Natural</option>
           <option value="vivid">Vivid</option>
@@ -63,7 +63,7 @@ export default function StyleSelector({
         <select
           value={quality}
           onChange={(e) => onQualityChange(e.target.value as ImageQuality)}
-          className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+          className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
         >
           {qualities.map((q) => (
             <option key={q} value={q} className="capitalize">{q === 'hd' ? 'HD' : 'Standard'}</option>
@@ -76,7 +76,7 @@ export default function StyleSelector({
         <select
           value={size}
           onChange={(e) => onSizeChange(e.target.value as ImageSize)}
-          className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+          className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
         >
           {sizes.map((s) => (
             <option key={s} value={s}>{s}</option>

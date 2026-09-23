@@ -35,7 +35,7 @@ function SourceContentFormComponent({
             value={sourceTitle}
             onChange={(e) => onTitleChange(e.target.value)}
             placeholder="Enter your content title..."
-            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:border-transparent"
           />
         </div>
 
@@ -48,7 +48,7 @@ function SourceContentFormComponent({
             onChange={(e) => onContentChange(e.target.value)}
             placeholder="Paste your blog post, article, or any content here..."
             rows={12}
-            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-none"
+            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:border-transparent resize-none"
           />
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{wordCount} words</p>
         </div>

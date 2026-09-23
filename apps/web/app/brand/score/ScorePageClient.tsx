@@ -201,7 +201,7 @@ function useScorePage() {
                     setSelectedProfileId(e.target.value)
                     setScoreResponse(null)
                   }}
-                  className="w-full rounded-xl border-black/[0.08] dark:border-white/[0.08] bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full rounded-xl border-black/[0.08] dark:border-white/[0.08] bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                 >
                   <option value="">Select a profile…</option>
                   {profiles.map((p) => (
@@ -241,7 +241,7 @@ function useScorePage() {
                 id="content-type-select"
                 value={contentType}
                 onChange={(e) => setContentType(e.target.value as ContentType)}
-                className="w-full rounded-xl border-black/[0.08] dark:border-white/[0.08] bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full rounded-xl border-black/[0.08] dark:border-white/[0.08] bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
               >
                 {CONTENT_TYPES.map((ct) => (
                   <option key={ct.value} value={ct.value}>
@@ -268,7 +268,7 @@ function useScorePage() {
                 }}
                 placeholder="Paste the content you want to score against your brand voice…"
                 rows={8}
-                className="w-full rounded-xl border-black/[0.08] dark:border-white/[0.08] bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full rounded-xl border-black/[0.08] dark:border-white/[0.08] bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
               />
               <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500 text-right">
                 {content.trim().split(/\s+/).filter(Boolean).length} words
@@ -280,7 +280,7 @@ function useScorePage() {
               type="button"
               onClick={handleScore}
               disabled={!canScore}
-              className="w-full py-3 px-6 rounded-xl bg-amber-700 hover:bg-amber-800 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white font-medium text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+              className="w-full py-3 px-6 rounded-xl bg-amber-700 hover:bg-amber-800 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white font-medium text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
             >
               {isScoring ? (
                 <span className="inline-flex items-center gap-2">

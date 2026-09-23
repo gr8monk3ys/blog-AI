@@ -87,7 +87,7 @@ export default function BrandVoiceSelector({
           onChange={onEnabledChange}
           className={`${
             enabled ? 'bg-amber-600' : 'bg-gray-200'
-          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
+          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2`}
         >
           <span
             className={`${
@@ -102,7 +102,7 @@ export default function BrandVoiceSelector({
         {enabled && (
           <Listbox value={selectedProfile} onChange={onProfileChange}>
             <div className="relative">
-              <Listbox.Button className="relative w-40 cursor-pointer rounded-lg bg-white dark:bg-gray-800 py-1.5 pl-3 pr-8 text-left border border-gray-300 dark:border-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm">
+              <Listbox.Button className="relative w-40 cursor-pointer rounded-lg bg-white dark:bg-gray-800 py-1.5 pl-3 pr-8 text-left border border-gray-300 dark:border-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 text-sm">
                 <span className="block truncate">
                   {selectedProfile?.name || 'Select...'}
                 </span>
@@ -116,7 +116,7 @@ export default function BrandVoiceSelector({
                 leaveFrom="opacity-100"
                 leaveTo="opacity-0"
               >
-                <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-48 overflow-auto rounded-lg bg-white dark:bg-gray-800 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none text-sm">
+                <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-48 overflow-auto rounded-lg bg-white dark:bg-gray-800 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 text-sm">
                   {profiles.map((profile) => (
                     <Listbox.Option
                       key={profile.id}
@@ -162,7 +162,7 @@ export default function BrandVoiceSelector({
           onChange={onEnabledChange}
           className={`${
             enabled ? 'bg-amber-600' : 'bg-gray-200'
-          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
+          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2`}
         >
           <span
             className={`${
@@ -179,7 +179,7 @@ export default function BrandVoiceSelector({
               <Listbox.Label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
                 Select Brand Profile
               </Listbox.Label>
-              <Listbox.Button className="relative w-full cursor-pointer rounded-lg bg-white dark:bg-gray-800 py-2 pl-3 pr-10 text-left border border-gray-300 dark:border-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm">
+              <Listbox.Button className="relative w-full cursor-pointer rounded-lg bg-white dark:bg-gray-800 py-2 pl-3 pr-10 text-left border border-gray-300 dark:border-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 text-sm">
                 <span className="block truncate">
                   {selectedProfile?.name || 'Choose a profile...'}
                 </span>
@@ -193,7 +193,7 @@ export default function BrandVoiceSelector({
                 leaveFrom="opacity-100"
                 leaveTo="opacity-0"
               >
-                <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white dark:bg-gray-800 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none text-sm">
+                <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white dark:bg-gray-800 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 text-sm">
                   {loading ? (
                     <div className="py-2 px-4 text-gray-500 dark:text-gray-400">Loading...</div>
                   ) : profiles.length === 0 ? (

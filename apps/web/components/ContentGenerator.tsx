@@ -258,7 +258,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
             id="topic"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 bg-white dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 bg-white dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
             placeholder="Enter your topic..."
             required
           />
@@ -274,7 +274,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
               id="keywords"
               value={keywords}
               onChange={(e) => setKeywords(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
               placeholder="SEO, marketing, content..."
             />
           </div>
@@ -287,7 +287,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
               id="tone"
               value={tone}
               onChange={(e) => setTone(e.target.value as BlogGenerationOptions['tone'])}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
             >
               <option value="informative">Informative</option>
               <option value="conversational">Conversational</option>
@@ -309,7 +309,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
                 hasUserSelection.current = true
                 setProviderType(e.target.value as LlmProviderType)
               }}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
               disabled={(availableProviders || []).length <= 1}
             >
               {(availableProviders || []).map((p) => (
@@ -335,7 +335,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
                 aria-label="Enable web research"
                 className={`${
                   useResearch ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
-                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2`}
               >
                 <span
                   aria-hidden="true"
@@ -349,7 +349,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
                 <select
                   value={researchDepth}
                   onChange={(e) => setResearchDepth(e.target.value as 'basic' | 'deep' | 'comprehensive')}
-                  className="ml-2 text-xs rounded border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:border-amber-500 focus:ring-amber-500"
+                  className="ml-2 text-xs rounded border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus-visible:border-amber-500 focus-visible:ring-amber-500"
                 >
                   <option value="basic">Basic</option>
                   <option value="deep">Deep</option>
@@ -365,7 +365,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
                 aria-label="Enable proofreading"
                 className={`${
                   proofread ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
-                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2`}
               >
                 <span
                   aria-hidden="true"
@@ -384,7 +384,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
                 aria-label="Enable content humanization"
                 className={`${
                   humanize ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
-                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2`}
               >
                 <span
                   aria-hidden="true"
@@ -403,7 +403,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
                 aria-label="Enable SEO optimization"
                 className={`${
                   seoOptimize ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
-                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2`}
               >
                 <span
                   aria-hidden="true"
@@ -422,7 +422,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
                 aria-label="Enable fact checking"
                 className={`${
                   factCheck ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
-                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2`}
               >
                 <span
                   aria-hidden="true"
@@ -542,7 +542,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
 
         <button
           type="submit"
-          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition"
+          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber-500 transition"
         >
           Generate Blog Post
         </button>

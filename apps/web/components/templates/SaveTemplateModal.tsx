@@ -144,7 +144,7 @@ function useSaveTemplateModalView({
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g., SaaS Product Launch"
-                      className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+                      className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
                       required
                     />
                   </div>
@@ -162,7 +162,7 @@ function useSaveTemplateModalView({
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="Describe what this template is for..."
                       rows={3}
-                      className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+                      className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
                     />
                   </div>
 
@@ -177,7 +177,7 @@ function useSaveTemplateModalView({
                       id="template-category"
                       value={category}
                       onChange={(e) => setCategory(e.target.value as TemplateCategory)}
-                      className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+                      className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
                     >
                       {Object.entries(TEMPLATE_CATEGORIES).map(([key, info]) => (
                         <option key={key} value={key}>
@@ -200,7 +200,7 @@ function useSaveTemplateModalView({
                       value={tagsInput}
                       onChange={(e) => setTagsInput(e.target.value)}
                       placeholder="e.g., landing-page, conversion, copy"
-                      className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+                      className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
                     />
                   </div>
 
@@ -210,7 +210,7 @@ function useSaveTemplateModalView({
                       id="template-public"
                       checked={isPublic}
                       onChange={(e) => setIsPublic(e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-amber-700 focus:ring-amber-500 dark:bg-gray-800"
+                      className="h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-amber-700 focus-visible:ring-amber-500 dark:bg-gray-800"
                     />
                     <label
                       htmlFor="template-public"
@@ -233,14 +233,14 @@ function useSaveTemplateModalView({
                     <button
                       type="button"
                       onClick={onClose}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
+                      className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={saving || !name.trim()}
-                      className="px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {saving ? 'Saving...' : 'Save Template'}
                     </button>

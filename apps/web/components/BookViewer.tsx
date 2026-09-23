@@ -59,7 +59,7 @@ export default function BookViewer({ book, filePath }: BookViewerProps) {
           <select
             value={downloadFormat}
             onChange={(e) => setDownloadFormat(e.target.value as 'markdown' | 'json')}
-            className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+            className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500"
           >
             <option value="markdown">Markdown</option>
             <option value="json">JSON</option>
@@ -95,7 +95,7 @@ export default function BookViewer({ book, filePath }: BookViewerProps) {
           <Disclosure key={chapter.number}>
             {({ open }) => (
               <>
-                <Disclosure.Button className="flex justify-between w-full px-4 py-2 text-lg font-medium text-left text-amber-900 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900/50 focus:outline-none focus-visible:ring focus-visible:ring-amber-500 focus-visible:ring-opacity-75">
+                <Disclosure.Button className="flex justify-between w-full px-4 py-2 text-lg font-medium text-left text-amber-900 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900/50 focus-visible:outline-none focus-visible:ring focus-visible:ring-amber-500 focus-visible:ring-opacity-75">
                   <span>{chapter.title}</span>
                   <ChevronUpIcon
                     className={`${

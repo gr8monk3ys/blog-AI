@@ -92,7 +92,7 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Your blog post title"
-            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             required
           />
         </div>
@@ -108,7 +108,7 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Paste your blog content (minimum 10 characters)..."
-            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             required
             minLength={10}
           />
@@ -127,7 +127,7 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
               onChange={(e) => setKeywordInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addKeyword() } }}
               placeholder="Add keyword"
-              className="flex-1 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+              className="flex-1 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             />
             <button
               type="button"
@@ -162,7 +162,7 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
               type="checkbox"
               checked={generateFeatured}
               onChange={(e) => setGenerateFeatured(e.target.checked)}
-              className="rounded border-gray-300 text-amber-700 focus:ring-amber-500"
+              className="rounded border-gray-300 text-amber-700 focus-visible:ring-amber-500"
             />
             Featured image
           </label>
@@ -171,7 +171,7 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
               type="checkbox"
               checked={generateSocial}
               onChange={(e) => setGenerateSocial(e.target.checked)}
-              className="rounded border-gray-300 text-amber-700 focus:ring-amber-500"
+              className="rounded border-gray-300 text-amber-700 focus-visible:ring-amber-500"
             />
             Social image
           </label>
@@ -181,7 +181,7 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
               id="inline-count"
               value={inlineCount}
               onChange={(e) => setInlineCount(Number(e.target.value))}
-              className="rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+              className="rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             >
               {[0, 1, 2, 3, 4, 5].map((n) => (
                 <option key={n} value={n}>{n}</option>

@@ -174,7 +174,7 @@ export default function PlagiarismPageClient() {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Paste the content you want to check for plagiarism (minimum 50 characters)..."
-            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             required
             minLength={50}
           />
@@ -196,7 +196,7 @@ export default function PlagiarismPageClient() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Content title"
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             />
           </div>
 
@@ -208,7 +208,7 @@ export default function PlagiarismPageClient() {
               id="plag-provider"
               value={provider}
               onChange={(e) => setProvider(e.target.value as '' | PlagiarismProvider)}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             >
               {PROVIDERS.map((p) => (
                 <option key={p.value} value={p.value}>{p.label}</option>
@@ -229,7 +229,7 @@ export default function PlagiarismPageClient() {
               onChange={(e) => setExcludeUrlInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addExcludeUrl() } }}
               placeholder="https://example.com/your-original"
-              className="flex-1 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+              className="flex-1 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             />
             <button
               type="button"
@@ -263,7 +263,7 @@ export default function PlagiarismPageClient() {
             type="checkbox"
             checked={skipCache}
             onChange={(e) => setSkipCache(e.target.checked)}
-            className="rounded border-gray-300 text-amber-700 focus:ring-amber-500"
+            className="rounded border-gray-300 text-amber-700 focus-visible:ring-amber-500"
           />
           Skip cache (force fresh check)
         </label>

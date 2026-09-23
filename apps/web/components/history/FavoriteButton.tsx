@@ -75,7 +75,7 @@ export default function FavoriteButton({
           group relative inline-flex items-center justify-center
           ${buttonSizeClasses[size]}
           rounded-lg transition duration-200
-          focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2
           ${
             isFavorite
               ? 'text-amber-500 hover:text-amber-700'
