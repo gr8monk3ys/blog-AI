@@ -8,6 +8,7 @@ import { useToast } from '../../hooks/useToast'
 import SingleImageTab from './components/SingleImageTab'
 import BlogImagesTab from './components/BlogImagesTab'
 import type { ImageStylesResponse } from '../../types/images'
+import { useUrlSearchParam } from '../../hooks/useUrlSearchParam'
 
 const TABS = [
   { id: 'single', label: 'Single Image' },
@@ -16,8 +17,11 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]['id']
 
+const isTabId = (value: string): value is TabId => TABS.some((tab) => tab.id === value)
+
 export default function ImageGenerationPage() {
-  const [activeTab, setActiveTab] = useState<TabId>('single')
+  // ?tab= deep-links the active tab.
+  const [activeTab, setActiveTab] = useUrlSearchParam<TabId>('tab', 'single', isTabId)
   const [styles, setStyles] = useState<ImageStylesResponse | null>(null)
   const [proAccess, setProAccess] = useState<boolean | null>(null)
   const { showToast, ToastComponent } = useToast()

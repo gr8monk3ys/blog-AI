@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import ToolCard, { type HeadingLevel } from './ToolCard'
 import ToolSearch from './ToolSearch'
@@ -11,6 +11,7 @@ import {
   Squares2X2Icon,
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline'
+import { useUrlSearchParam } from '../../hooks/useUrlSearchParam'
 
 interface ToolGridProps {
   tools?: Tool[]
@@ -33,11 +34,16 @@ export default function ToolGrid({
   headingLevel = 3,
 }: ToolGridProps) {
   const EmptyStateHeading = `h${headingLevel}` as const
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<ToolCategory | 'all'>(
+  // Filters live in the URL (?q=&category=&free=1) so a filtered view can be
+  // shared and survives Back/Forward.
+  const [searchQuery, setSearchQuery] = useUrlSearchParam<string>('q', '')
+  const [selectedCategory, setSelectedCategory] = useUrlSearchParam<ToolCategory | 'all'>(
+    'category',
     initialCategory
   )
-  const [showFreeOnly, setShowFreeOnly] = useState(false)
+  const [freeParam, setFreeParam] = useUrlSearchParam<'' | '1'>('free', '')
+  const showFreeOnly = freeParam === '1'
+  const setShowFreeOnly = (next: boolean) => setFreeParam(next ? '1' : '')
 
   // Filter tools based on search, category, and free filter
   const filteredTools = useMemo(() => {

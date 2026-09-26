@@ -11,6 +11,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { Template, TemplateCategory, SAMPLE_TEMPLATES } from '../../types/templates'
 import { getDefaultHeaders } from '../../lib/api'
+import { useUrlSearchParam } from '../../hooks/useUrlSearchParam'
 
 interface TemplateGridProps {
   showFilters?: boolean
@@ -59,8 +60,12 @@ export default function TemplateGrid({
 }: TemplateGridProps) {
   const router = useRouter()
   const [templates, setTemplates] = useState<Template[]>(SAMPLE_TEMPLATES)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategoryOverride, setSelectedCategoryOverride] = useState<TemplateCategory | 'all' | null>(null)
+  // Search and category live in the URL (?q=&category=) for deep links.
+  const [searchQuery, setSearchQuery] = useUrlSearchParam<string>('q', '')
+  const [categoryParam, setCategoryParam] = useUrlSearchParam<string>('category', '')
+  const selectedCategoryOverride = (categoryParam || null) as TemplateCategory | 'all' | null
+  const setSelectedCategoryOverride = (next: TemplateCategory | 'all' | null) =>
+    setCategoryParam(next ?? '')
   const [loading, setLoading] = useState(false)
   const selectedCategory = selectedCategoryOverride ?? initialCategory
 
