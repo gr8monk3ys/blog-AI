@@ -79,7 +79,7 @@ export default function AnalyticsTab() {
   if (campaigns.length === 0) {
     return (
       <div className="text-center py-16">
-        <ChartBarIcon className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+        <ChartBarIcon aria-hidden="true" className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
         <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">No analytics data</h3>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Create and run campaigns to see performance analytics.
@@ -140,7 +140,7 @@ export default function AnalyticsTab() {
                     className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4"
                   >
                     <div className="flex items-center gap-2 mb-3">
-                      <PlatformIcon platform={stat.platform} size="sm" />
+                      <PlatformIcon aria-hidden="true" platform={stat.platform} size="sm" />
                       <span className="text-sm font-medium text-gray-900 dark:text-gray-100 capitalize">{stat.platform}</span>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">

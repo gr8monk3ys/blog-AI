@@ -22,7 +22,7 @@ function TrainingPanelComponent({
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-6">
       <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-        <BeakerIcon className="w-5 h-5" />
+        <BeakerIcon aria-hidden="true" className="w-5 h-5" />
         Voice Training
       </h2>
 
@@ -30,7 +30,7 @@ function TrainingPanelComponent({
         {/* Training Status */}
         <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
           {trainingStatus === 'trained' ? (
-            <CheckCircleIcon className="w-6 h-6 text-emerald-500" />
+            <CheckCircleIcon aria-hidden="true" className="w-6 h-6 text-emerald-500" />
           ) : (
             <div className="w-6 h-6 rounded-full bg-gray-300 dark:bg-gray-600" />
           )}

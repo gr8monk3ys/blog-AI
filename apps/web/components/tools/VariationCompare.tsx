@@ -45,13 +45,13 @@ function getStyleDescription(style: string): string {
 function StyleIcon({ style, className }: { style: string; className: string }) {
   switch (style) {
     case 'standard':
-      return <DocumentTextIcon className={className} />
+      return <DocumentTextIcon aria-hidden="true" className={className} />
     case 'creative':
-      return <SparklesIcon className={className} />
+      return <SparklesIcon aria-hidden="true" className={className} />
     case 'concise':
-      return <BeakerIcon className={className} />
+      return <BeakerIcon aria-hidden="true" className={className} />
     default:
-      return <DocumentTextIcon className={className} />
+      return <DocumentTextIcon aria-hidden="true" className={className} />
   }
 }
 
@@ -119,7 +119,7 @@ function VariationCard({
             </span>
             <div>
               <div className="flex items-center gap-2">
-                <StyleIcon style={variation.prompt_style} className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                <StyleIcon aria-hidden="true" style={variation.prompt_style} className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                 <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {getStyleDescription(variation.prompt_style)}
                 </span>
@@ -150,9 +150,9 @@ function VariationCard({
               >
                 Score: {Math.round(variation.scores.overall_score)}
                 {showScores ? (
-                  <ChevronUpIcon className="w-3 h-3" />
+                  <ChevronUpIcon aria-hidden="true" className="w-3 h-3" />
                 ) : (
-                  <ChevronDownIcon className="w-3 h-3" />
+                  <ChevronDownIcon aria-hidden="true" className="w-3 h-3" />
                 )}
               </button>
             )}
@@ -164,9 +164,9 @@ function VariationCard({
               aria-label="Copy content"
             >
               {copied ? (
-                <CheckIcon className="w-4 h-4 text-emerald-500" />
+                <CheckIcon aria-hidden="true" className="w-4 h-4 text-emerald-500" />
               ) : (
-                <ClipboardDocumentIcon className="w-4 h-4" />
+                <ClipboardDocumentIcon aria-hidden="true" className="w-4 h-4" />
               )}
             </button>
           </div>
@@ -213,7 +213,7 @@ function VariationCard({
         >
           {isSelected ? (
             <>
-              <CheckIcon className="w-4 h-4" />
+              <CheckIcon aria-hidden="true" className="w-4 h-4" />
               Selected
             </>
           ) : (
@@ -229,7 +229,7 @@ function VariationCard({
           animate={{ scale: 1 }}
           className="absolute -top-2 -right-2 w-6 h-6 bg-amber-700 rounded-full flex items-center justify-center shadow-md"
         >
-          <CheckIcon className="w-4 h-4 text-white" />
+          <CheckIcon aria-hidden="true" className="w-4 h-4 text-white" />
         </m.div>
       )}
     </m.div>
@@ -292,7 +292,7 @@ export default function VariationCompare({
   if (variations.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-        <BeakerIcon className="w-12 h-12 mx-auto mb-3 text-gray-400 dark:text-gray-500" />
+        <BeakerIcon aria-hidden="true" className="w-12 h-12 mx-auto mb-3 text-gray-400 dark:text-gray-500" />
         <p>No variations generated yet.</p>
         <p className="text-sm mt-1">Enable variations to compare different content styles.</p>
       </div>
@@ -309,7 +309,7 @@ export default function VariationCompare({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <BeakerIcon className="w-5 h-5 text-amber-700" />
+          <BeakerIcon aria-hidden="true" className="w-5 h-5 text-amber-700" />
           <h3 className="font-semibold text-gray-900 dark:text-gray-100">
             Compare Variations ({variations.length})
           </h3>

@@ -78,11 +78,12 @@ export default function CreateWebhookForm({ editingSubscription, onClose, onSucc
           {isEditing ? 'Edit Webhook' : 'New Webhook'}
         </h2>
         <button
+          aria-label="Close"
           type="button"
           onClick={onClose}
           className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         >
-          <XMarkIcon className="w-5 h-5" />
+          <XMarkIcon aria-hidden="true" className="w-5 h-5" />
         </button>
       </div>
 
@@ -136,7 +137,7 @@ export default function CreateWebhookForm({ editingSubscription, onClose, onSucc
               onClick={() => setShowSecret(!showSecret)}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
-              {showSecret ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
+              {showSecret ? <EyeSlashIcon aria-hidden="true" className="w-4 h-4" /> : <EyeIcon aria-hidden="true" className="w-4 h-4" />}
             </button>
           </div>
         </div>

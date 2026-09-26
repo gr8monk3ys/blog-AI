@@ -122,7 +122,7 @@ function useScorePage() {
             className="text-center"
           >
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/10 mb-6">
-              <SparklesIcon className="w-8 h-8 text-white" />
+              <SparklesIcon aria-hidden="true" className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
               Score Your Content
@@ -143,7 +143,7 @@ function useScorePage() {
             href="/brand"
             className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
           >
-            <ArrowLeftIcon className="w-4 h-4" />
+            <ArrowLeftIcon aria-hidden="true" className="w-4 h-4" />
             Back to Brand Profiles
           </Link>
         </div>
@@ -157,7 +157,7 @@ function useScorePage() {
               exit={{ opacity: 0, y: -10 }}
               className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-400 flex items-start gap-3"
             >
-              <ExclamationCircleIcon className="w-5 h-5 shrink-0 mt-0.5" />
+              <ExclamationCircleIcon aria-hidden="true" className="w-5 h-5 shrink-0 mt-0.5" />
               <span className="flex-1 text-sm">{error}</span>
               <button
                 type="button"

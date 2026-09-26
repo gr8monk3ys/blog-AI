@@ -108,15 +108,16 @@ function useSaveTemplateModalView({
                     as="h3"
                     className="text-lg font-semibold leading-6 text-gray-900 dark:text-gray-100 flex items-center gap-2"
                   >
-                    <BookmarkIcon className="w-5 h-5 text-amber-700" />
+                    <BookmarkIcon aria-hidden="true" className="w-5 h-5 text-amber-700" />
                     Save as Template
                   </Dialog.Title>
                   <button
+                    aria-label="Close"
                     type="button"
                     onClick={onClose}
                     className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                   >
-                    <XMarkIcon className="w-5 h-5" />
+                    <XMarkIcon aria-hidden="true" className="w-5 h-5" />
                   </button>
                 </div>
 

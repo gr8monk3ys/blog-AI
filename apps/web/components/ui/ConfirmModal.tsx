@@ -134,8 +134,8 @@ export default function ConfirmModal({
                     className={`flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-full ${config.iconBgColor}`}
                   >
                     <Icon
-                      className={`w-6 h-6 ${config.iconColor}`}
                       aria-hidden="true"
+                      className={`w-6 h-6 ${config.iconColor}`}
                     />
                   </div>
 

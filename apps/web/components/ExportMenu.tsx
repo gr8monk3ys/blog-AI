@@ -346,7 +346,7 @@ function useExportMenuView({
                       } flex items-center justify-center transition-colors`}
                     >
                       {loading === option.id ? (
-                        <svg
+                        <svg aria-hidden="true"
                           className="animate-spin w-4 h-4 text-amber-700"
                           xmlns="http://www.w3.org/2000/svg"
                           fill="none"
@@ -367,9 +367,10 @@ function useExportMenuView({
                           />
                         </svg>
                       ) : copied === option.id ? (
-                        <CheckIcon className="w-4 h-4 text-emerald-600" />
+                        <CheckIcon aria-hidden="true" className="w-4 h-4 text-emerald-600" />
                       ) : (
                         <option.icon
+                          aria-hidden="true"
                           className={`w-4 h-4 ${
                             active ? 'text-amber-700' : 'text-gray-500 dark:text-gray-400'
                           } transition-colors`}
@@ -417,7 +418,7 @@ function useExportMenuView({
                       } flex items-center justify-center transition-colors`}
                     >
                       {loading === option.id ? (
-                        <svg
+                        <svg aria-hidden="true"
                           className="animate-spin w-4 h-4 text-amber-700"
                           xmlns="http://www.w3.org/2000/svg"
                           fill="none"
@@ -438,9 +439,10 @@ function useExportMenuView({
                           />
                         </svg>
                       ) : copied === option.id ? (
-                        <CheckIcon className="w-4 h-4 text-emerald-600" />
+                        <CheckIcon aria-hidden="true" className="w-4 h-4 text-emerald-600" />
                       ) : (
                         <option.icon
+                          aria-hidden="true"
                           className={`w-4 h-4 ${
                             active ? 'text-amber-700' : 'text-gray-500 dark:text-gray-400'
                           } transition-colors`}

@@ -123,7 +123,7 @@ export default function DocumentDetailModal({
                 <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3 min-w-0">
-                      <DocumentTextIcon
+                      <DocumentTextIcon aria-hidden="true"
                         className={`h-6 w-6 flex-shrink-0 ${typeConfig?.color || 'text-gray-400'}`}
                       />
                       <div className="min-w-0">
@@ -164,11 +164,12 @@ export default function DocumentDetailModal({
                       </div>
                     </div>
                     <button
+                      aria-label="Close"
                       type="button"
                       onClick={onClose}
                       className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                     >
-                      <XMarkIcon className="h-5 w-5" />
+                      <XMarkIcon aria-hidden="true" className="h-5 w-5" />
                     </button>
                   </div>
                 </div>
@@ -242,11 +243,11 @@ export default function DocumentDetailModal({
                               >
                                 {isExpanded ? (
                                   <>
-                                    Show less <ChevronUpIcon className="h-3 w-3" />
+                                    Show less <ChevronUpIcon aria-hidden="true" className="h-3 w-3" />
                                   </>
                                 ) : (
                                   <>
-                                    Show more <ChevronDownIcon className="h-3 w-3" />
+                                    Show more <ChevronDownIcon aria-hidden="true" className="h-3 w-3" />
                                   </>
                                 )}
                               </button>
@@ -276,7 +277,7 @@ export default function DocumentDetailModal({
                     onClick={() => onDelete(document.id, document.filename)}
                     className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors"
                   >
-                    <TrashIcon className="h-4 w-4" />
+                    <TrashIcon aria-hidden="true" className="h-4 w-4" />
                     Delete
                   </button>
                   <button

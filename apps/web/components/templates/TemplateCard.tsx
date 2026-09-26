@@ -107,7 +107,7 @@ export default function TemplateCard({ template, index = 0, onUse }: TemplateCar
           {/* Stats */}
           <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-4">
             <span className="flex items-center gap-1">
-              <SparklesIcon className="w-3.5 h-3.5" />
+              <SparklesIcon aria-hidden="true" className="w-3.5 h-3.5" />
               {template.useCount} uses
             </span>
           </div>

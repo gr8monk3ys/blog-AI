@@ -93,11 +93,12 @@ export default function CreateCampaignForm({ accounts, onClose, onSuccess, showT
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">New Campaign</h3>
         <button
+          aria-label="Close"
           type="button"
           onClick={onClose}
           className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
         >
-          <XMarkIcon className="w-5 h-5" />
+          <XMarkIcon aria-hidden="true" className="w-5 h-5" />
         </button>
       </div>
 
@@ -176,7 +177,7 @@ export default function CreateCampaignForm({ accounts, onClose, onSuccess, showT
                       : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
-                  <PlatformIcon platform={account.platform} size="sm" />
+                  <PlatformIcon aria-hidden="true" platform={account.platform} size="sm" />
                   @{account.username}
                 </button>
               )

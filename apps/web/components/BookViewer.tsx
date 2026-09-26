@@ -98,7 +98,7 @@ export default function BookViewer({ book, filePath }: BookViewerProps) {
               <>
                 <Disclosure.Button className="flex justify-between w-full px-4 py-2 text-lg font-medium text-left text-amber-900 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900/50 focus-visible:outline-none focus-visible:ring focus-visible:ring-amber-500 focus-visible:ring-opacity-75">
                   <span>{chapter.title}</span>
-                  <ChevronUpIcon
+                  <ChevronUpIcon aria-hidden="true"
                     className={`${
                       open ? 'transform rotate-180' : ''
                     } w-5 h-5 text-amber-500`}

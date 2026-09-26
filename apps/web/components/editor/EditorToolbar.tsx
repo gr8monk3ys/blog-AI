@@ -243,19 +243,19 @@ function RedoIcon(): React.ReactElement {
 // ---------------------------------------------------------------------------
 
 const FORMATTING_BUTTONS: ToolbarButton[] = [
-  { action: 'bold', label: 'Bold', icon: <BoldIcon />, shortcutDisplay: 'Ctrl+B' },
-  { action: 'italic', label: 'Italic', icon: <ItalicIcon />, shortcutDisplay: 'Ctrl+I' },
-  { action: 'heading2', label: 'Heading 2', icon: <Heading2Icon />, shortcutDisplay: 'Ctrl+2' },
-  { action: 'heading3', label: 'Heading 3', icon: <Heading3Icon />, shortcutDisplay: 'Ctrl+3' },
-  { action: 'bulletList', label: 'Bullet list', icon: <BulletListIcon />, shortcutDisplay: 'Ctrl+U' },
-  { action: 'numberedList', label: 'Numbered list', icon: <NumberedListIcon />, shortcutDisplay: 'Ctrl+O' },
-  { action: 'link', label: 'Insert link', icon: <LinkIcon />, shortcutDisplay: 'Ctrl+K' },
-  { action: 'codeBlock', label: 'Code block', icon: <CodeBlockIcon />, shortcutDisplay: 'Ctrl+E' },
+  { action: 'bold', label: 'Bold', icon: <BoldIcon aria-hidden="true" />, shortcutDisplay: 'Ctrl+B' },
+  { action: 'italic', label: 'Italic', icon: <ItalicIcon aria-hidden="true" />, shortcutDisplay: 'Ctrl+I' },
+  { action: 'heading2', label: 'Heading 2', icon: <Heading2Icon aria-hidden="true" />, shortcutDisplay: 'Ctrl+2' },
+  { action: 'heading3', label: 'Heading 3', icon: <Heading3Icon aria-hidden="true" />, shortcutDisplay: 'Ctrl+3' },
+  { action: 'bulletList', label: 'Bullet list', icon: <BulletListIcon aria-hidden="true" />, shortcutDisplay: 'Ctrl+U' },
+  { action: 'numberedList', label: 'Numbered list', icon: <NumberedListIcon aria-hidden="true" />, shortcutDisplay: 'Ctrl+O' },
+  { action: 'link', label: 'Insert link', icon: <LinkIcon aria-hidden="true" />, shortcutDisplay: 'Ctrl+K' },
+  { action: 'codeBlock', label: 'Code block', icon: <CodeBlockIcon aria-hidden="true" />, shortcutDisplay: 'Ctrl+E' },
 ]
 
 const HISTORY_BUTTONS: ToolbarButton[] = [
-  { action: 'undo', label: 'Undo', icon: <UndoIcon />, shortcutDisplay: 'Ctrl+Z' },
-  { action: 'redo', label: 'Redo', icon: <RedoIcon />, shortcutDisplay: 'Ctrl+Y' },
+  { action: 'undo', label: 'Undo', icon: <UndoIcon aria-hidden="true" />, shortcutDisplay: 'Ctrl+Z' },
+  { action: 'redo', label: 'Redo', icon: <RedoIcon aria-hidden="true" />, shortcutDisplay: 'Ctrl+Y' },
 ]
 
 // ---------------------------------------------------------------------------

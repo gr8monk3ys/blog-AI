@@ -51,8 +51,8 @@ export default function ToolHeaderSection({
               className={`flex-shrink-0 w-14 h-14 rounded-xl ${categoryInfo.bgColor} flex items-center justify-center`}
             >
               <Icon
-                className={`w-7 h-7 ${categoryInfo.color}`}
                 aria-hidden="true"
+                className={`w-7 h-7 ${categoryInfo.color}`}
               />
             </div>
             <div className="flex-1">

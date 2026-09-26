@@ -122,7 +122,7 @@ export default function PostComposer({ accounts, showToast, onScheduled }: PostC
             </option>
           ))}
         </select>
-        {platform && <PlatformIcon platform={platform} size="sm" />}
+        {platform && <PlatformIcon aria-hidden="true" platform={platform} size="sm" />}
       </div>
 
       {/* Content */}

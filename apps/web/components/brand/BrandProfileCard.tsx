@@ -56,7 +56,7 @@ export default function BrandProfileCard({
               profile.isActive ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-gray-100 dark:bg-gray-800'
             }`}
           >
-            <CheckCircleIcon
+            <CheckCircleIcon aria-hidden="true"
               className={`w-5 h-5 ${profile.isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'}`}
             />
           </div>
@@ -141,7 +141,7 @@ export default function BrandProfileCard({
             onClick={() => onSetDefault(profile)}
             className="flex-1 inline-flex justify-center items-center gap-1.5 py-2 px-3 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
           >
-            <StarIcon className="w-3.5 h-3.5" />
+            <StarIcon aria-hidden="true" className="w-3.5 h-3.5" />
             Set Default
           </button>
         )}
@@ -152,7 +152,7 @@ export default function BrandProfileCard({
             className="inline-flex justify-center items-center p-2 text-gray-500 dark:text-gray-400 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
             title="Edit profile"
           >
-            <PencilSquareIcon className="w-4 h-4" />
+            <PencilSquareIcon aria-hidden="true" className="w-4 h-4" />
           </button>
         )}
         {onDelete && (
@@ -162,7 +162,7 @@ export default function BrandProfileCard({
             className="inline-flex justify-center items-center p-2 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
             title="Delete profile"
           >
-            <TrashIcon className="w-4 h-4" />
+            <TrashIcon aria-hidden="true" className="w-4 h-4" />
           </button>
         )}
       </div>

@@ -204,7 +204,7 @@ function useHistoryPageView() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center py-16"
           >
-            <ExclamationTriangleIcon className="w-16 h-16 mx-auto text-amber-500 mb-4" />
+            <ExclamationTriangleIcon aria-hidden="true" className="w-16 h-16 mx-auto text-amber-500 mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
               Sign In Required
             </h2>
@@ -215,7 +215,7 @@ function useHistoryPageView() {
               href="/sign-in"
               className="inline-flex items-center gap-2 px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-colors"
             >
-              <DocumentTextIcon className="w-5 h-5" />
+              <DocumentTextIcon aria-hidden="true" className="w-5 h-5" />
               Sign In
             </Link>
           </m.div>
@@ -280,7 +280,7 @@ function useHistoryPageView() {
                 animate={{ opacity: 1, y: 0 }}
                 className="text-center py-16"
               >
-                <DocumentTextIcon className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+                <DocumentTextIcon aria-hidden="true" className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
                   {filters.favorites_only
                     ? 'No Favorites Yet'
@@ -299,7 +299,7 @@ function useHistoryPageView() {
                   href="/tools"
                   className="inline-flex items-center gap-2 px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-colors"
                 >
-                  <SparklesIcon className="w-5 h-5" />
+                  <SparklesIcon aria-hidden="true" className="w-5 h-5" />
                   Start Creating
                 </Link>
               </m.div>
@@ -336,7 +336,7 @@ function useHistoryPageView() {
                     >
                       {isLoadingMore ? (
                         <>
-                          <svg
+                          <svg aria-hidden="true"
                             className="animate-spin w-4 h-4"
                             xmlns="http://www.w3.org/2000/svg"
                             fill="none"

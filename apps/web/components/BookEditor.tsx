@@ -114,10 +114,11 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
             <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
               {editingBook.title}
               <button
+                aria-label="Edit book title"
                 onClick={() => setIsEditingTitle(true)}
                 className="ml-2 text-gray-400 hover:text-amber-700"
               >
-                <PencilIcon className="h-5 w-5" />
+                <PencilIcon aria-hidden="true" className="h-5 w-5" />
               </button>
             </h1>
           )}
@@ -134,10 +135,11 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
         <div className="flex items-center mb-2">
           <span className="text-sm text-gray-500 dark:text-gray-400 mr-2">Tags:</span>
           <button
+            aria-label={isEditingTags ? "Done editing tags" : "Edit tags"}
             onClick={() => setIsEditingTags(!isEditingTags)}
             className="text-gray-400 hover:text-amber-700"
           >
-            <PencilIcon className="h-4 w-4" />
+            <PencilIcon aria-hidden="true" className="h-4 w-4" />
           </button>
         </div>
         
@@ -147,6 +149,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
               {tag}
               {isEditingTags && (
                 <button
+                  aria-label={`Remove tag ${tag}`}
                   onClick={() => handleRemoveTag(tag)}
                   className="ml-1 text-gray-500 hover:text-red-500"
                 >
@@ -183,35 +186,38 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
           <Disclosure key={chapter.number} defaultOpen={chapterIndex === 0}>
             {({ open }) => (
               <>
-                <Disclosure.Button className="flex justify-between w-full px-4 py-2 text-lg font-medium text-left text-amber-900 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900/50 focus-visible:outline-none focus-visible:ring focus-visible:ring-amber-500 focus-visible:ring-opacity-75">
-                  <div className="flex items-center">
-                    <span>{chapter.title}</span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsEditingChapter(chapterIndex);
-                      }}
-                      className="ml-2 text-gray-400 hover:text-amber-700"
-                    >
-                      <PencilIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <ChevronUpIcon
-                    className={`${
-                      open ? 'transform rotate-180' : ''
-                    } w-5 h-5 text-amber-500`}
-                  />
-                </Disclosure.Button>
+                {/* The edit button sits beside the disclosure button, not inside
+                    it: interactive elements must not be nested. */}
+                <div className="flex items-center gap-2">
+                  <Disclosure.Button className="flex min-w-0 flex-1 justify-between px-4 py-2 text-lg font-medium text-left text-amber-900 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900/50 focus-visible:outline-none focus-visible:ring focus-visible:ring-amber-500 focus-visible:ring-opacity-75">
+                    <span className="min-w-0 break-words">{chapter.title}</span>
+                    <ChevronUpIcon aria-hidden="true"
+                      className={`${
+                        open ? 'transform rotate-180' : ''
+                      } w-5 h-5 shrink-0 text-amber-500`}
+                    />
+                  </Disclosure.Button>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingChapter(chapterIndex)}
+                    className="rounded p-1 text-gray-400 hover:text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                    aria-label={`Edit chapter title: ${chapter.title}`}
+                  >
+                    <PencilIcon aria-hidden="true" className="h-4 w-4" />
+                  </button>
+                </div>
                 <Disclosure.Panel className="px-4 pt-4 pb-2 text-gray-500 dark:text-gray-400">
                   {chapter.topics.map((topic, topicIndex) => (
                     <div key={topicIndex} className="mb-6">
                       <div className="flex items-center mb-2">
                         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">{topic.title}</h3>
                         <button
+                          type="button"
                           onClick={() => setIsEditingTopic({ chapterIndex, topicIndex })}
                           className="ml-2 text-gray-400 hover:text-amber-700"
+                          aria-label={`Edit topic: ${topic.title}`}
                         >
-                          <PencilIcon className="h-4 w-4" />
+                          <PencilIcon aria-hidden="true" className="h-4 w-4" />
                         </button>
                       </div>
                       <div className="prose prose-indigo dark:prose-invert">{topic.content}</div>

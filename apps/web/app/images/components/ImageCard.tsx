@@ -60,7 +60,7 @@ export default function ImageCard({ image, label }: ImageCardProps) {
           onClick={() => setShowPrompt(!showPrompt)}
           className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
         >
-          {showPrompt ? <ChevronUpIcon className="w-3 h-3" /> : <ChevronDownIcon className="w-3 h-3" />}
+          {showPrompt ? <ChevronUpIcon aria-hidden="true" className="w-3 h-3" /> : <ChevronDownIcon aria-hidden="true" className="w-3 h-3" />}
           Prompt used
         </button>
         {showPrompt && (
@@ -77,7 +77,7 @@ export default function ImageCard({ image, label }: ImageCardProps) {
           rel="noreferrer"
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
         >
-          <ArrowDownTrayIcon className="w-3.5 h-3.5" />
+          <ArrowDownTrayIcon aria-hidden="true" className="w-3.5 h-3.5" />
           Download
         </a>
       </div>

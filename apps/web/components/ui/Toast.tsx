@@ -92,8 +92,8 @@ export default function Toast({
           aria-live="polite"
         >
           <Icon
-            className={`w-5 h-5 flex-shrink-0 ${config.iconColor}`}
             aria-hidden="true"
+            className={`w-5 h-5 flex-shrink-0 ${config.iconColor}`}
           />
           <span className={`text-sm font-medium ${config.textColor}`}>
             {message}

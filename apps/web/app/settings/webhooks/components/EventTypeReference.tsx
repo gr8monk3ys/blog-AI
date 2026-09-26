@@ -14,9 +14,9 @@ export default function EventTypeReference() {
         onClick={() => setExpanded(!expanded)}
         className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
       >
-        <InformationCircleIcon className="w-4 h-4" />
+        <InformationCircleIcon aria-hidden="true" className="w-4 h-4" />
         Event Type Reference
-        {expanded ? <ChevronUpIcon className="w-3.5 h-3.5" /> : <ChevronDownIcon className="w-3.5 h-3.5" />}
+        {expanded ? <ChevronUpIcon aria-hidden="true" className="w-3.5 h-3.5" /> : <ChevronDownIcon aria-hidden="true" className="w-3.5 h-3.5" />}
       </button>
 
       {expanded && (

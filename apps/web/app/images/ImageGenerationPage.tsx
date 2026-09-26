@@ -58,7 +58,7 @@ export default function ImageGenerationPage() {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-100/80 dark:bg-amber-900/40 text-amber-700 mb-6">
-          <PhotoIcon className="w-8 h-8" />
+          <PhotoIcon aria-hidden="true" className="w-8 h-8" />
         </div>
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
           AI Image Generation

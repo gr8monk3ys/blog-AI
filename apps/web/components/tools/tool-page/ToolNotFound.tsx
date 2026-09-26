@@ -18,7 +18,7 @@ export default function ToolNotFound() {
           href="/tools"
           className="inline-flex items-center gap-2 px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-colors"
         >
-          <ArrowLeftIcon className="w-4 h-4" />
+          <ArrowLeftIcon aria-hidden="true" className="w-4 h-4" />
           Back to Tools
         </Link>
       </div>

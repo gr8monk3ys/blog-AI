@@ -344,7 +344,7 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
                   {/* Header */}
                   <div className="flex items-center gap-3 mb-4">
                     <div className={`p-2 rounded-lg ${TIER_DISPLAY[tier.id].bgColor}`}>
-                      <Icon className={`w-6 h-6 ${TIER_DISPLAY[tier.id].color}`} />
+                      <Icon aria-hidden="true" className={`w-6 h-6 ${TIER_DISPLAY[tier.id].color}`} />
                     </div>
                   <div>
                     {/* h2, not h3: the only heading above it is the hero h1,
@@ -437,7 +437,7 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
                     <ul className="space-y-3">
                       {tier.features.map((feature) => (
                         <li key={feature} className="flex items-start gap-3">
-                          <CheckIcon className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                          <CheckIcon aria-hidden="true" className="w-5 h-5 text-emerald-500 flex-shrink-0" />
                           <span className="text-sm text-gray-600 dark:text-gray-400">{feature}</span>
                         </li>
                       ))}
@@ -489,23 +489,23 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
                       <td className="py-4 pr-8 text-sm text-gray-600 dark:text-gray-400">{feature.name}</td>
                       <td className="py-4 px-4 text-center">
                         {feature.free ? (
-                          <CheckIcon className="w-5 h-5 text-emerald-500 mx-auto" />
+                          <CheckIcon aria-hidden="true" className="w-5 h-5 text-emerald-500 mx-auto" />
                         ) : (
-                          <XMarkIcon className="w-5 h-5 text-gray-300 dark:text-gray-600 mx-auto" />
+                          <XMarkIcon aria-hidden="true" className="w-5 h-5 text-gray-300 dark:text-gray-600 mx-auto" />
                         )}
                       </td>
                       <td className="py-4 px-4 text-center">
                         {feature.starter ? (
-                          <CheckIcon className="w-5 h-5 text-emerald-500 mx-auto" />
+                          <CheckIcon aria-hidden="true" className="w-5 h-5 text-emerald-500 mx-auto" />
                         ) : (
-                          <XMarkIcon className="w-5 h-5 text-gray-300 dark:text-gray-600 mx-auto" />
+                          <XMarkIcon aria-hidden="true" className="w-5 h-5 text-gray-300 dark:text-gray-600 mx-auto" />
                         )}
                       </td>
                       <td className="py-4 px-4 text-center">
                         {feature.pro ? (
-                          <CheckIcon className="w-5 h-5 text-emerald-500 mx-auto" />
+                          <CheckIcon aria-hidden="true" className="w-5 h-5 text-emerald-500 mx-auto" />
                         ) : (
-                          <XMarkIcon className="w-5 h-5 text-gray-300 dark:text-gray-600 mx-auto" />
+                          <XMarkIcon aria-hidden="true" className="w-5 h-5 text-gray-300 dark:text-gray-600 mx-auto" />
                         )}
                       </td>
                     </tr>

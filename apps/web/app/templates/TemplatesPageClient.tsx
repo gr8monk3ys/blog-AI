@@ -25,7 +25,7 @@ export default function TemplatesPageClient() {
             className="text-center"
           >
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/10 mb-6">
-              <BookmarkIcon className="w-8 h-8 text-white" />
+              <BookmarkIcon aria-hidden="true" className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
               Templates Library

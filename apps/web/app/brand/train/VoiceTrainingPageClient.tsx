@@ -242,7 +242,7 @@ function useVoiceTrainingPageContentView() {
             href="/brand"
             className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
           >
-            <ArrowLeftIcon className="w-4 h-4" />
+            <ArrowLeftIcon aria-hidden="true" className="w-4 h-4" />
             Back to Profiles
           </Link>
         </div>
@@ -263,7 +263,7 @@ function useVoiceTrainingPageContentView() {
               exit={{ opacity: 0, y: -10 }}
               className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 flex items-center gap-2"
             >
-              <ExclamationCircleIcon className="w-5 h-5" />
+              <ExclamationCircleIcon aria-hidden="true" className="w-5 h-5" />
               {error}
               <button onClick={() => setError(null)} className="ml-auto text-red-500">
                 &times;

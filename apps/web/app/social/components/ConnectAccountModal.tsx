@@ -83,10 +83,11 @@ export default function ConnectAccountModal({ onClose, onConnected, showToast }:
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Connect Account</h2>
           <button
             type="button"
+            aria-label="Close"
             onClick={onClose}
             className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
-            <XMarkIcon className="w-5 h-5" />
+            <XMarkIcon aria-hidden="true" className="w-5 h-5" />
           </button>
         </div>
 
@@ -102,12 +103,12 @@ export default function ConnectAccountModal({ onClose, onConnected, showToast }:
                 disabled={connecting !== null}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors text-left"
               >
-                <PlatformIcon platform={platform} />
+                <PlatformIcon aria-hidden="true" platform={platform} />
                 <span className="flex-1 text-sm font-medium text-gray-900 dark:text-gray-100">
                   {config.name}
                 </span>
                 {isConnecting && (
-                  <svg className="animate-spin h-4 w-4 text-gray-400" viewBox="0 0 24 24" fill="none">
+                  <svg aria-hidden="true" className="animate-spin h-4 w-4 text-gray-400" viewBox="0 0 24 24" fill="none">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>

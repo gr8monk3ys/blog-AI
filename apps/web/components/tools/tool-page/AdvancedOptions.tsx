@@ -90,7 +90,7 @@ export default function AdvancedOptions({
               />
             </Switch>
             <div className="flex items-center gap-2">
-              <BeakerIcon className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+              <BeakerIcon aria-hidden="true" className="w-4 h-4 text-amber-700 dark:text-amber-400" />
               <span className="text-sm text-gray-700 dark:text-gray-300">
                 Generate variations for A/B testing
               </span>
@@ -115,7 +115,7 @@ export default function AdvancedOptions({
             htmlFor="keywords"
             className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 mb-1"
           >
-            <ChartBarIcon className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+            <ChartBarIcon aria-hidden="true" className="w-4 h-4 text-amber-700 dark:text-amber-400" />
             Keywords for SEO scoring (comma-separated)
           </label>
           <input

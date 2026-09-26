@@ -75,7 +75,7 @@ export default function ScheduleTab({ showToast }: ScheduleTabProps) {
         <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Scheduled Posts</h3>
         {posts.length === 0 ? (
           <div className="text-center py-12">
-            <CalendarIcon className="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+            <CalendarIcon aria-hidden="true" className="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
             <p className="text-sm text-gray-500 dark:text-gray-400">No scheduled posts yet.</p>
           </div>
         ) : (

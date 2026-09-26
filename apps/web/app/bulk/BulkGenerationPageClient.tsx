@@ -472,7 +472,7 @@ function useBulkGenerationPageView() {
                 the template if you want the fastest path.
               </p>
               <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center hover:border-amber-400 dark:hover:border-amber-500 transition-colors">
-                <ArrowUpTrayIcon className="w-8 h-8 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
+                <ArrowUpTrayIcon aria-hidden="true" className="w-8 h-8 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                   Drop a CSV file here, or click to browse
                 </p>
@@ -517,14 +517,14 @@ function useBulkGenerationPageView() {
                   disabled={isProcessing}
                   className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-amber-700 hover:text-amber-800 disabled:opacity-50"
                 >
-                  <PlusIcon className="w-4 h-4" />
+                  <PlusIcon aria-hidden="true" className="w-4 h-4" />
                   Add Topic
                 </button>
               </div>
 
               {items.length === 0 ? (
                 <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <DocumentTextIcon className="w-12 h-12 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
+                  <DocumentTextIcon aria-hidden="true" className="w-12 h-12 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
                   <p>No topics added yet.</p>
                   <p className="text-sm">Upload a CSV or add topics manually to build a batch.</p>
                 </div>
@@ -581,11 +581,12 @@ function useBulkGenerationPageView() {
                             </div>
                           </div>
                           <button
+                            aria-label={`Remove item ${index + 1}`}
                             onClick={() => removeItem(index)}
                             disabled={isProcessing}
                             className="p-2 text-gray-400 hover:text-red-500 disabled:opacity-50"
                           >
-                            <TrashIcon className="w-5 h-5" />
+                            <TrashIcon aria-hidden="true" className="w-5 h-5" />
                           </button>
                         </div>
 
@@ -598,9 +599,9 @@ function useBulkGenerationPageView() {
                           }`}>
                             <div className="flex items-center gap-2">
                               {results[index].success ? (
-                                <CheckCircleIcon className="w-5 h-5 text-emerald-500" />
+                                <CheckCircleIcon aria-hidden="true" className="w-5 h-5 text-emerald-500" />
                               ) : (
-                                <XCircleIcon className="w-5 h-5 text-red-500" />
+                                <XCircleIcon aria-hidden="true" className="w-5 h-5 text-red-500" />
                               )}
                               <span className={`text-sm font-medium ${
                                 results[index].success ? 'text-emerald-700' : 'text-red-700'
@@ -641,7 +642,7 @@ function useBulkGenerationPageView() {
                 {/* Provider Strategy */}
                 <div>
                   <label htmlFor="provider-strategy" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    <ServerStackIcon className="w-4 h-4 inline mr-1" />
+                    <ServerStackIcon aria-hidden="true" className="w-4 h-4 inline mr-1" />
                     Provider Strategy
                   </label>
                   <select
@@ -784,7 +785,7 @@ function useBulkGenerationPageView() {
                 className="bg-gradient-to-br from-emerald-50 to-emerald-50 dark:from-emerald-900/20 dark:to-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800 p-6"
               >
                 <div className="flex items-center gap-2 mb-3">
-                  <CurrencyDollarIcon className="w-5 h-5 text-emerald-600" />
+                  <CurrencyDollarIcon aria-hidden="true" className="w-5 h-5 text-emerald-600" />
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     Cost Estimate
                   </h2>
@@ -908,7 +909,7 @@ function useBulkGenerationPageView() {
                     onClick={cancelJob}
                     className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors"
                   >
-                    <StopIcon className="w-5 h-5" />
+                    <StopIcon aria-hidden="true" className="w-5 h-5" />
                     Cancel Generation
                   </button>
                 ) : (
@@ -917,7 +918,7 @@ function useBulkGenerationPageView() {
                     disabled={items.length === 0 || !canGenerate}
                     className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <PlayIcon className="w-5 h-5" />
+                    <PlayIcon aria-hidden="true" className="w-5 h-5" />
                     Generate {items.length} Post{items.length !== 1 ? 's' : ''}
                   </button>
                 )}
@@ -928,7 +929,7 @@ function useBulkGenerationPageView() {
                       onClick={() => setShowExportMenu(!showExportMenu)}
                       className="w-full flex items-center justify-center gap-2 py-3 px-4 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                     >
-                      <ArrowDownTrayIcon className="w-5 h-5" />
+                      <ArrowDownTrayIcon aria-hidden="true" className="w-5 h-5" />
                       Export Results
                     </button>
                     {showExportMenu && (
@@ -958,7 +959,7 @@ function useBulkGenerationPageView() {
                     onClick={retryFailed}
                     className="w-full flex items-center justify-center gap-2 py-3 px-4 border border-orange-300 bg-orange-50 text-orange-700 font-medium rounded-lg hover:bg-orange-100 transition-colors"
                   >
-                    <ArrowPathIcon className="w-5 h-5" />
+                    <ArrowPathIcon aria-hidden="true" className="w-5 h-5" />
                     Retry {results.filter(r => !r.success).length} Failed
                   </button>
                 )}
@@ -972,7 +973,7 @@ function useBulkGenerationPageView() {
                     }}
                     className="w-full flex items-center justify-center gap-2 py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
                   >
-                    <TrashIcon className="w-4 h-4" />
+                    <TrashIcon aria-hidden="true" className="w-4 h-4" />
                     Clear All
                   </button>
                 )}

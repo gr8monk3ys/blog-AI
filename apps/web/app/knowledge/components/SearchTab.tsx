@@ -102,7 +102,7 @@ export default function SearchTab({ documents }: SearchTabProps) {
                 className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
                 aria-label="Clear search"
               >
-                <XMarkIcon className="h-5 w-5" />
+                <XMarkIcon aria-hidden="true" className="h-5 w-5" />
               </motion.button>
             )}
           </AnimatePresence>
@@ -158,7 +158,7 @@ export default function SearchTab({ documents }: SearchTabProps) {
       {/* Results */}
       {searchTimeMs != null && (
         <div className="flex items-center gap-1 text-xs text-gray-400">
-          <ClockIcon className="h-3.5 w-3.5" />
+          <ClockIcon aria-hidden="true" className="h-3.5 w-3.5" />
           Found {results.length} result{results.length !== 1 ? 's' : ''} in{' '}
           {searchTimeMs.toFixed(0)}ms
         </div>
@@ -166,14 +166,14 @@ export default function SearchTab({ documents }: SearchTabProps) {
 
       {hasSearched && results.length === 0 && !searching && (
         <div className="text-center py-12 text-gray-400 dark:text-gray-500">
-          <MagnifyingGlassIcon className="h-10 w-10 mx-auto mb-3 opacity-50" />
+          <MagnifyingGlassIcon aria-hidden="true" className="h-10 w-10 mx-auto mb-3 opacity-50" />
           <p>No results found. Try adjusting your query or lowering the minimum score.</p>
         </div>
       )}
 
       {!hasSearched && (
         <div className="text-center py-12 text-gray-400 dark:text-gray-500">
-          <MagnifyingGlassIcon className="h-10 w-10 mx-auto mb-3 opacity-50" />
+          <MagnifyingGlassIcon aria-hidden="true" className="h-10 w-10 mx-auto mb-3 opacity-50" />
           <p>Enter a query and press Enter or click Search to find relevant content.</p>
         </div>
       )}

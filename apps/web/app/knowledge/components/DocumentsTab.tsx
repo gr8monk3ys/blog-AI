@@ -43,7 +43,7 @@ export default function DocumentsTab({
         </div>
       ) : documents.length === 0 ? (
         <div className="text-center py-12 text-gray-400 dark:text-gray-500">
-          <DocumentTextIcon className="h-12 w-12 mx-auto mb-3 opacity-50" />
+          <DocumentTextIcon aria-hidden="true" className="h-12 w-12 mx-auto mb-3 opacity-50" />
           <p>No documents yet. Upload your first document above.</p>
         </div>
       ) : (
@@ -118,7 +118,7 @@ export default function DocumentsTab({
                         className="text-gray-400 hover:text-red-500 transition-colors"
                         aria-label={`Delete ${doc.filename}`}
                       >
-                        <TrashIcon className="h-4 w-4" />
+                        <TrashIcon aria-hidden="true" className="h-4 w-4" />
                       </button>
                     </td>
                   </tr>

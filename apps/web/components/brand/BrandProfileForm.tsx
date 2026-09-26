@@ -305,13 +305,14 @@ function useBrandProfileFormView({
             className="flex-1 rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm dark:bg-gray-800 dark:text-gray-100"
           />
           <button
+            aria-label="Add preferred word"
             type="button"
             onClick={() =>
               addToArray(preferredWordInput, setPreferredWords, setPreferredWordInput)
             }
             className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
-            <PlusIcon className="w-4 h-4" />
+            <PlusIcon aria-hidden="true" className="w-4 h-4" />
           </button>
         </div>
         <div className="flex flex-wrap gap-1">
@@ -322,11 +323,12 @@ function useBrandProfileFormView({
             >
               {word}
               <button
+                aria-label={`Remove preferred word ${word}`}
                 type="button"
                 onClick={() => removeFromArray(word, setPreferredWords)}
                 className="hover:text-emerald-900 dark:hover:text-emerald-100"
               >
-                <XMarkIcon className="w-3 h-3" />
+                <XMarkIcon aria-hidden="true" className="w-3 h-3" />
               </button>
             </span>
           ))}
@@ -359,13 +361,14 @@ function useBrandProfileFormView({
             className="flex-1 rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm dark:bg-gray-800 dark:text-gray-100"
           />
           <button
+            aria-label="Add word to avoid"
             type="button"
             onClick={() =>
               addToArray(avoidWordInput, setAvoidWords, setAvoidWordInput)
             }
             className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
-            <PlusIcon className="w-4 h-4" />
+            <PlusIcon aria-hidden="true" className="w-4 h-4" />
           </button>
         </div>
         <div className="flex flex-wrap gap-1">
@@ -376,11 +379,12 @@ function useBrandProfileFormView({
             >
               {word}
               <button
+                aria-label={`Remove word to avoid ${word}`}
                 type="button"
                 onClick={() => removeFromArray(word, setAvoidWords)}
                 className="hover:text-red-900 dark:hover:text-red-100"
               >
-                <XMarkIcon className="w-3 h-3" />
+                <XMarkIcon aria-hidden="true" className="w-3 h-3" />
               </button>
             </span>
           ))}
@@ -413,13 +417,14 @@ function useBrandProfileFormView({
             className="flex-1 rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm dark:bg-gray-800 dark:text-gray-100"
           />
           <button
+            aria-label="Add brand value"
             type="button"
             onClick={() =>
               addToArray(brandValueInput, setBrandValues, setBrandValueInput)
             }
             className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
-            <PlusIcon className="w-4 h-4" />
+            <PlusIcon aria-hidden="true" className="w-4 h-4" />
           </button>
         </div>
         <div className="flex flex-wrap gap-1">
@@ -430,11 +435,12 @@ function useBrandProfileFormView({
             >
               {value}
               <button
+                aria-label={`Remove brand value ${value}`}
                 type="button"
                 onClick={() => removeFromArray(value, setBrandValues)}
                 className="hover:text-amber-900 dark:hover:text-amber-100"
               >
-                <XMarkIcon className="w-3 h-3" />
+                <XMarkIcon aria-hidden="true" className="w-3 h-3" />
               </button>
             </span>
           ))}
@@ -467,13 +473,14 @@ function useBrandProfileFormView({
             className="flex-1 rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm dark:bg-gray-800 dark:text-gray-100"
           />
           <button
+            aria-label="Add content theme"
             type="button"
             onClick={() =>
               addToArray(contentThemeInput, setContentThemes, setContentThemeInput)
             }
             className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
-            <PlusIcon className="w-4 h-4" />
+            <PlusIcon aria-hidden="true" className="w-4 h-4" />
           </button>
         </div>
         <div className="flex flex-wrap gap-1">
@@ -484,11 +491,12 @@ function useBrandProfileFormView({
             >
               {theme}
               <button
+                aria-label={`Remove content theme ${theme}`}
                 type="button"
                 onClick={() => removeFromArray(theme, setContentThemes)}
                 className="hover:text-amber-900 dark:hover:text-amber-100"
               >
-                <XMarkIcon className="w-3 h-3" />
+                <XMarkIcon aria-hidden="true" className="w-3 h-3" />
               </button>
             </span>
           ))}
@@ -511,7 +519,7 @@ function useBrandProfileFormView({
           disabled={isLoading}
           className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <SparklesIcon className="w-4 h-4" />
+          <SparklesIcon aria-hidden="true" className="w-4 h-4" />
           {isLoading ? 'Saving…' : profile ? 'Update Profile' : 'Create Profile'}
         </button>
       </div>

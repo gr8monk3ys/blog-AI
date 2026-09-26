@@ -260,9 +260,9 @@ export default function UploadDropZone({
   const statusIcon = (status: FileStatus) => {
     switch (status) {
       case 'done':
-        return <CheckCircleIcon className="h-5 w-5 text-emerald-500" />
+        return <CheckCircleIcon aria-hidden="true" className="h-5 w-5 text-emerald-500" />
       case 'error':
-        return <ExclamationCircleIcon className="h-5 w-5 text-red-500" />
+        return <ExclamationCircleIcon aria-hidden="true" className="h-5 w-5 text-red-500" />
       default:
         return null
     }
@@ -298,7 +298,7 @@ export default function UploadDropZone({
               : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer'
         }`}
       >
-        <ArrowUpTrayIcon className={`h-8 w-8 mb-2 ${isDragOver ? 'text-amber-500' : 'text-gray-400'}`} />
+        <ArrowUpTrayIcon aria-hidden="true" className={`h-8 w-8 mb-2 ${isDragOver ? 'text-amber-500' : 'text-gray-400'}`} />
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {atDocLimit ? (
             'Upload disabled — document limit reached'
@@ -346,7 +346,7 @@ export default function UploadDropZone({
                   exit={{ opacity: 0, x: 20 }}
                   className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
                 >
-                  <DocumentTextIcon
+                  <DocumentTextIcon aria-hidden="true"
                     className={`h-5 w-5 flex-shrink-0 ${typeConfig?.color || 'text-gray-400'}`}
                   />
                   <div className="flex-1 min-w-0">
@@ -390,7 +390,7 @@ export default function UploadDropZone({
                       className="text-gray-400 hover:text-red-500 transition-colors p-0.5"
                       aria-label={`Remove ${item.file.name}`}
                     >
-                      <XMarkIcon className="h-4 w-4" />
+                      <XMarkIcon aria-hidden="true" className="h-4 w-4" />
                     </button>
                   </div>
                 </m.div>

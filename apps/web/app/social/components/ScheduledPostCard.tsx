@@ -25,7 +25,7 @@ export default function ScheduledPostCard({ post, onCancel }: ScheduledPostCardP
     <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0 flex-1">
-          <PlatformIcon platform={post.platform} size="sm" />
+          <PlatformIcon aria-hidden="true" platform={post.platform} size="sm" />
           <div className="min-w-0 flex-1">
             <p className="text-sm text-gray-900 dark:text-gray-100 line-clamp-2">{post.content.text}</p>
             <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
@@ -49,7 +49,7 @@ export default function ScheduledPostCard({ post, onCancel }: ScheduledPostCardP
             className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors shrink-0"
             title="Cancel post"
           >
-            <XMarkIcon className="w-4 h-4" />
+            <XMarkIcon aria-hidden="true" className="w-4 h-4" />
           </button>
         )}
       </div>

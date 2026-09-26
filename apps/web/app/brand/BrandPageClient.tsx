@@ -192,7 +192,7 @@ function useBrandPageView() {
             className="text-center"
           >
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/10 mb-6">
-              <SparklesIcon className="w-8 h-8 text-white" />
+              <SparklesIcon aria-hidden="true" className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
               Brand Voice Profiles
@@ -242,11 +242,12 @@ function useBrandPageView() {
           >
             <span>{error}</span>
             <button
+              aria-label="Dismiss error"
               type="button"
               onClick={() => setError(null)}
               className="text-red-400 hover:text-red-600 dark:hover:text-red-300"
             >
-              <XMarkIcon className="w-5 h-5" />
+              <XMarkIcon aria-hidden="true" className="w-5 h-5" />
             </button>
           </m.div>
         )}
@@ -267,7 +268,7 @@ function useBrandPageView() {
               onClick={() => setShowForm(true)}
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
             >
-              <PlusIcon className="w-4 h-4" />
+              <PlusIcon aria-hidden="true" className="w-4 h-4" />
               Create Profile
             </button>
           )}
@@ -289,6 +290,7 @@ function useBrandPageView() {
                     {editingProfile ? 'Edit Profile' : 'Create New Profile'}
                   </h3>
                   <button
+                    aria-label="Close form"
                     type="button"
                     onClick={() => {
                       setShowForm(false)
@@ -296,7 +298,7 @@ function useBrandPageView() {
                     }}
                     className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   >
-                    <XMarkIcon className="w-5 h-5" />
+                    <XMarkIcon aria-hidden="true" className="w-5 h-5" />
                   </button>
                 </div>
                 <BrandProfileForm
@@ -340,7 +342,7 @@ function useBrandPageView() {
               className="text-center py-12 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800"
             >
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                <SparklesIcon className="w-8 h-8 text-gray-400" />
+                <SparklesIcon aria-hidden="true" className="w-8 h-8 text-gray-400" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                 No brand profiles yet
@@ -354,7 +356,7 @@ function useBrandPageView() {
                 onClick={() => setShowForm(true)}
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 transition-colors"
               >
-                <PlusIcon className="w-4 h-4" />
+                <PlusIcon aria-hidden="true" className="w-4 h-4" />
                 Create Your First Profile
               </button>
             </m.div>
