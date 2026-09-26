@@ -71,6 +71,11 @@ html[data-theme-pref='system'] .theme-pref-icon[data-pref='system'] {
   display: block;
 }
 
+/* The skip link focuses <main> programmatically; no ring on the landmark. */
+main[tabindex='-1']:focus {
+  outline: none;
+}
+
 /* Numbers in tables line up column by column. */
 :where(table) {
   font-variant-numeric: tabular-nums;

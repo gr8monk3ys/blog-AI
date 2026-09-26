@@ -441,7 +441,7 @@ function useBulkGenerationPageView() {
   return (
     <>
       <SiteHeader />
-      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
 
       <BulkHero />
 
@@ -497,7 +497,7 @@ function useBulkGenerationPageView() {
                   onClick={downloadTemplate}
                   className="ml-2 text-sm text-amber-700 hover:text-amber-800"
                 >
-                  Download template
+                  Download Template
                 </button>
               </div>
             </m.div>
@@ -900,7 +900,7 @@ function useBulkGenerationPageView() {
                   <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
                     Usage limit reached.{' '}
                     <Link href="/pricing" className="font-medium underline">
-                      Upgrade your plan
+                      Upgrade Your Plan
                     </Link>{' '}
                     to continue.
                   </div>
@@ -1008,7 +1008,7 @@ function useBulkGenerationPageView() {
               className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6"
             >
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                Suggested operating flow
+                Suggested Operating Flow
               </h2>
               <ol className="mt-4 space-y-3 text-sm text-gray-600 dark:text-gray-400">
                 <li>1. Save one brand profile that reflects your real positioning.</li>

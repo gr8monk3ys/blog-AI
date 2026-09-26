@@ -61,7 +61,7 @@ export default function ImageCard({ image, label }: ImageCardProps) {
           className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
         >
           {showPrompt ? <ChevronUpIcon aria-hidden="true" className="w-3 h-3" /> : <ChevronDownIcon aria-hidden="true" className="w-3 h-3" />}
-          Prompt used
+          Prompt Used
         </button>
         {showPrompt && (
           <p className="text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 rounded-lg p-3 leading-relaxed">

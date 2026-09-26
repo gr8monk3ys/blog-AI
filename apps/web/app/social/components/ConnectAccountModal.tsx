@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Dialog } from '@headlessui/react'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import { API_ENDPOINTS, getDefaultHeaders } from '../../../lib/api'
 import type { ToastOptions } from '../../../hooks/useToast'
@@ -76,11 +77,16 @@ export default function ConnectAccountModal({ onClose, onConnected, showToast }:
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl p-6">
+    // headlessui Dialog: focus trap, Escape and outside-click close, inert
+    // background, focus restored on close.
+    <Dialog open onClose={onClose} className="relative z-50">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
+      <div className="fixed inset-0 flex items-center justify-center overflow-y-auto overscroll-contain p-4">
+      <Dialog.Panel className="relative w-full max-w-md rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Connect Account</h2>
+          <Dialog.Title as="h2" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Connect Account
+          </Dialog.Title>
           <button
             type="button"
             aria-label="Close"
@@ -117,7 +123,8 @@ export default function ConnectAccountModal({ onClose, onConnected, showToast }:
             )
           })}
         </div>
+      </Dialog.Panel>
       </div>
-    </div>
+    </Dialog>
   )
 }

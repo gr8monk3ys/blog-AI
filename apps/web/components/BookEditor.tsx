@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useUnsavedChangesWarning } from '../hooks/useUnsavedChangesWarning';
 import { Disclosure, Dialog, Transition } from '@headlessui/react';
 import { ChevronUpIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { Fragment } from 'react';
@@ -15,6 +16,13 @@ interface BookEditorProps {
 function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
   const { showToast, ToastComponent } = useToast();
   const [editingBook, setEditingBook] = useState<Book>({ ...book });
+  // Edits live in state until "Save"; warn before they are lost.
+  const [isDirty, setIsDirty] = useState(false);
+  const updateEditingBook: typeof setEditingBook = (next) => {
+    setIsDirty(true);
+    setEditingBook(next);
+  };
+  useUnsavedChangesWarning(isDirty);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingTags, setIsEditingTags] = useState(false);
   const [isEditingChapter, setIsEditingChapter] = useState<number | null>(null);
@@ -36,6 +44,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
         throw new Error('Failed to save book');
       }
 
+      setIsDirty(false);
       onSave(editingBook);
       showToast({
         message: 'Book saved successfully!',
@@ -58,21 +67,21 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
     const existingTags = new Set(updatedBook.tags || []);
     if (existingTags.has(trimmedTag)) return;
     updatedBook.tags = [...existingTags, trimmedTag];
-    setEditingBook(updatedBook);
+    updateEditingBook(updatedBook);
     setNewTag('');
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
     const updatedBook = { ...editingBook };
     updatedBook.tags = (updatedBook.tags || []).filter((tag) => tag !== tagToRemove);
-    setEditingBook(updatedBook);
+    updateEditingBook(updatedBook);
   };
 
   const handleUpdateChapterTitle = (chapterIndex: number, newTitle: string) => {
     const updatedBook = { ...editingBook };
     if (updatedBook.chapters[chapterIndex]) {
       updatedBook.chapters[chapterIndex].title = newTitle;
-      setEditingBook(updatedBook);
+      updateEditingBook(updatedBook);
     }
     setIsEditingChapter(null);
   };
@@ -81,7 +90,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
     const updatedBook = { ...editingBook };
     if (updatedBook.chapters[chapterIndex]?.topics[topicIndex]) {
       updatedBook.chapters[chapterIndex].topics[topicIndex].content = newContent;
-      setEditingBook(updatedBook);
+      updateEditingBook(updatedBook);
     }
     setIsEditingTopic(null);
   };
@@ -102,7 +111,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
                 value={editingBook.title}
                 onChange={(e) => {
                   const title = e.target.value
-                  setEditingBook((prev) => ({ ...prev, title }))
+                  updateEditingBook((prev) => ({ ...prev, title }))
                 }}
                 className="text-3xl font-bold border-b border-amber-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:bg-transparent dark:text-gray-100"
               />
@@ -248,7 +257,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
             <div className="fixed inset-0 bg-black bg-opacity-25" />
           </Transition.Child>
 
-          <div className="fixed inset-0 overflow-y-auto">
+          <div className="fixed inset-0 overflow-y-auto overscroll-contain">
             <div className="flex min-h-full items-center justify-center p-4 text-center">
               <Transition.Child
                 as={Fragment}
@@ -278,7 +287,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
                           if (chapter) {
                             const updatedBook = { ...editingBook };
                             updatedBook.chapters[isEditingChapter] = { ...chapter, title: e.target.value };
-                            setEditingBook(updatedBook);
+                            updateEditingBook(updatedBook);
                           }
                         }
                       }}
@@ -331,7 +340,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
             <div className="fixed inset-0 bg-black bg-opacity-25" />
           </Transition.Child>
 
-          <div className="fixed inset-0 overflow-y-auto">
+          <div className="fixed inset-0 overflow-y-auto overscroll-contain">
             <div className="flex min-h-full items-center justify-center p-4 text-center">
               <Transition.Child
                 as={Fragment}
@@ -369,7 +378,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
                               const topicToUpdate = chapterToUpdate?.topics[isEditingTopic.topicIndex];
                               if (topicToUpdate) {
                                 topicToUpdate.content = e.target.value;
-                                setEditingBook(updatedBook);
+                                updateEditingBook(updatedBook);
                               }
                             }}
                             className="w-full p-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded"

@@ -91,7 +91,7 @@ export default function AccountsTab({ showToast, confirm }: AccountsTabProps) {
       {accounts.length === 0 ? (
         <div className="text-center py-16">
           <UserGroupIcon aria-hidden="true" className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">No accounts connected</h3>
+          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">No Accounts Connected</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
             Connect your social media accounts to start scheduling posts.
           </p>

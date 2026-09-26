@@ -143,7 +143,7 @@ export default function CampaignsTab({ showToast, confirm }: CampaignsTabProps) 
       {campaigns.length === 0 ? (
         <div className="text-center py-16">
           <RocketLaunchIcon aria-hidden="true" className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">No campaigns yet</h3>
+          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">No Campaigns Yet</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Create a campaign to schedule content across multiple platforms.
           </p>

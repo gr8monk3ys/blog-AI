@@ -231,7 +231,7 @@ function useVoiceTrainingPageContentView() {
   }, [profileId, testContent, fingerprint])
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <main id="main-content" tabIndex={-1} className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Confirm Modal */}
       <ConfirmModalComponent />
 
@@ -318,7 +318,7 @@ function useVoiceTrainingPageContentView() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   )
 }
 

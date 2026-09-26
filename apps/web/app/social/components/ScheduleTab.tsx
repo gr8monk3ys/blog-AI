@@ -7,12 +7,14 @@ import type { ToastOptions } from '../../../hooks/useToast'
 import type { SocialAccount, ScheduledPost } from '../../../types/social'
 import PostComposer from './PostComposer'
 import ScheduledPostCard from './ScheduledPostCard'
+import type { ConfirmOptions } from '../../../hooks/useConfirmModal'
 
 interface ScheduleTabProps {
   showToast: (opts: ToastOptions) => void
+  confirm: (opts: ConfirmOptions) => Promise<boolean>
 }
 
-export default function ScheduleTab({ showToast }: ScheduleTabProps) {
+export default function ScheduleTab({ showToast, confirm }: ScheduleTabProps) {
   const [accounts, setAccounts] = useState<SocialAccount[]>([])
   const [posts, setPosts] = useState<ScheduledPost[]>([])
   const [loading, setLoading] = useState(true)
@@ -45,6 +47,14 @@ export default function ScheduleTab({ showToast }: ScheduleTabProps) {
   }, [fetchData])
 
   async function handleCancelPost(postId: string) {
+    const confirmed = await confirm({
+      title: 'Cancel scheduled post?',
+      message: 'The post will not be published. This cannot be undone.',
+      variant: 'danger',
+      confirmLabel: 'Cancel Post',
+    })
+    if (!confirmed) return
+
     try {
       const headers = await getDefaultHeaders()
       const res = await fetch(API_ENDPOINTS.social.cancelPost(postId), { method: 'DELETE', headers })

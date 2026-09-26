@@ -96,7 +96,7 @@ export default function OnboardingPageClient() {
 
   if (!isLoaded) {
     return (
-      <main className="min-h-screen flex items-center justify-center">
+      <main id="main-content" tabIndex={-1} className="min-h-screen flex items-center justify-center">
         <div className="flex items-center gap-3" role="status" aria-label="Loading">
           <div className="h-2.5 w-2.5 rounded-full bg-amber-400 animate-pulse" />
           <div
@@ -113,7 +113,7 @@ export default function OnboardingPageClient() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-4 py-12 sm:py-16">
+    <main id="main-content" tabIndex={-1} className="min-h-screen flex flex-col items-center justify-center px-4 py-12 sm:py-16">
       {/* Skip link for keyboard users */}
       <a
         href="#onboarding-wizard"

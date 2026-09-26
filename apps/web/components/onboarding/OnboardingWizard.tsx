@@ -315,7 +315,7 @@ function useOnboardingWizardView({
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 font-serif sm:text-3xl">
-          Define your brand voice
+          Define Your Brand Voice
         </h2>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
           Help us understand how you write so generated content matches your
@@ -428,7 +428,7 @@ function useOnboardingWizardView({
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 font-serif sm:text-3xl">
-          Which workflow should we tee up first?
+          Which Workflow Should We Tee up First?
         </h2>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
           Choose the job you most want done next. We will prefill the follow-up
@@ -511,7 +511,7 @@ function useOnboardingWizardView({
           <CheckIcon className="h-8 w-8 text-emerald-600" aria-hidden="true" />
         </div>
         <h2 className="mt-4 text-2xl font-semibold text-gray-900 dark:text-gray-100 font-serif sm:text-3xl">
-          You are all set{formData.name ? `, ${formData.name}` : ''}!
+          You Are All Set{formData.name ? `, ${formData.name}` : ''}!
         </h2>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
           Your setup is ready. The fastest path to value now is to run a small
@@ -545,7 +545,7 @@ function useOnboardingWizardView({
                   markOnboardingComplete()
                 }}
               >
-                Skip and continue
+                Skip and Continue
               </button>
             </div>
           </div>

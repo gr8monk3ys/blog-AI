@@ -200,7 +200,7 @@ export default function BrandVoiceSelector({
                     <div className="py-2 px-4 text-gray-500 dark:text-gray-400">
                       No profiles found.{' '}
                       <Link href="/brand" className="text-amber-700 hover:underline">
-                        Create one
+                        Create One
                       </Link>
                     </div>
                   ) : (

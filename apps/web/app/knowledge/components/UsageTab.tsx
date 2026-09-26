@@ -164,7 +164,7 @@ export default function UsageTab({ stats }: UsageTabProps) {
       {showUpgradeCTA && (
         <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-lg border border-amber-200 dark:border-amber-800 p-4">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
-            Need more capacity?
+            Need More Capacity?
           </h3>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
             {tier === 'free'

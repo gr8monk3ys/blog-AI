@@ -21,7 +21,7 @@ function ToolsPageContent() {
   return (
     <>
       <SiteHeader />
-      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
 
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-amber-700 to-amber-800 text-white">
@@ -82,7 +82,7 @@ function ToolsPageContent() {
             className="text-center"
           >
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-              Can’t find what you need?
+              Can’t Find What You Need?
             </h2>
             <p className="text-gray-600 dark:text-gray-400 max-w-xl mx-auto mb-6">
               Use our flexible Blog Post or Book generators for custom content creation
@@ -116,7 +116,7 @@ export default function ToolsPageClient() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+        <main id="main-content" tabIndex={-1} className="min-h-screen flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
           Loading tools…
         </main>
       }

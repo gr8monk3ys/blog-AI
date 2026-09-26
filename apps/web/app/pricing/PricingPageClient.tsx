@@ -237,7 +237,7 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
   return (
     <>
       <SiteHeader />
-      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
 
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-amber-700 to-amber-800 text-white py-16">
@@ -294,7 +294,7 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
           </div>
         )}
         {error && (
-          <div className="hero-fade mb-6 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-center">
+          <div className="hero-fade mb-6 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-center" role="alert">
             <p className="text-red-700 dark:text-red-400">{error}</p>
           </div>
         )}
@@ -433,7 +433,7 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
                   {/* Features */}
                   <div className="mt-8">
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                      What’s included
+                      What’s Included
                     </h3>
                     <ul className="space-y-3">
                       {tier.features.map((feature) => (
@@ -566,7 +566,7 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
       {/* Footer CTA */}
       <section className="bg-gradient-to-r from-amber-700 to-amber-800 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl font-bold mb-4">Ready to create amazing content?</h2>
+          <h2 className="text-2xl font-bold mb-4">Ready to Create Amazing Content?</h2>
           <p className="text-amber-100 mb-6">
             Start with our free plan and upgrade when you need more.
           </p>

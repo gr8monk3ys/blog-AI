@@ -52,7 +52,7 @@ export default function CreateOrgModal({ open, onClose, onCreated }: CreateOrgMo
           <div className="fixed inset-0 bg-black/30" />
         </Transition.Child>
 
-        <div className="fixed inset-0 overflow-y-auto">
+        <div className="fixed inset-0 overflow-y-auto overscroll-contain">
           <div className="flex min-h-full items-center justify-center p-4">
             <Transition.Child
               as={Fragment}
@@ -88,7 +88,7 @@ export default function CreateOrgModal({ open, onClose, onCreated }: CreateOrgMo
                   </div>
 
                   {error && (
-                    <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                    <p className="text-sm text-red-600 dark:text-red-400" role="alert">{error}</p>
                   )}
 
                   <div className="flex justify-end gap-3">

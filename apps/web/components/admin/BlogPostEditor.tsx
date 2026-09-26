@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useUnsavedChangesWarning } from '../../hooks/useUnsavedChangesWarning'
 
 interface BlogPost {
   id?: string
@@ -36,6 +37,9 @@ export default function BlogPostEditor() {
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [activeSlug, setActiveSlug] = useState<string | null>(null)
   const [form, setForm] = useState<BlogPost>(emptyPost)
+  // Snapshot of the last loaded/saved form, to detect unsaved edits.
+  const [savedForm, setSavedForm] = useState<BlogPost>(emptyPost)
+  useUnsavedChangesWarning(JSON.stringify(form) !== JSON.stringify(savedForm))
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
 
@@ -48,13 +52,15 @@ export default function BlogPostEditor() {
 
   useEffect(() => {
     if (activePost) {
-      setForm({
+      const loaded: BlogPost = {
         ...activePost,
         excerpt: activePost.excerpt || '',
         body: activePost.body || '',
         tags: activePost.tags || [],
         status: activePost.status || 'draft',
-      })
+      }
+      setForm(loaded)
+      setSavedForm(loaded)
     }
   }, [activePost])
 
@@ -98,6 +104,7 @@ export default function BlogPostEditor() {
       if (!response.ok) {
         throw new Error(payload.error || 'Failed to save post')
       }
+      setSavedForm(form)
       setStatus('Post saved.')
       await loadPosts()
       setActiveSlug(payload.data?.slug || form.slug)
@@ -110,6 +117,7 @@ export default function BlogPostEditor() {
 
   const deletePost = async () => {
     if (!activeSlug || !isConfigured) return
+    if (!window.confirm(`Delete “${activeSlug}”? This cannot be undone.`)) return
     setLoading(true)
     setStatus(null)
     try {
@@ -124,6 +132,7 @@ export default function BlogPostEditor() {
       setStatus('Post deleted.')
       setActiveSlug(null)
       setForm(emptyPost)
+      setSavedForm(emptyPost)
       await loadPosts()
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Failed to delete post')
@@ -197,6 +206,7 @@ export default function BlogPostEditor() {
               onClick={() => {
                 setActiveSlug(null)
                 setForm(emptyPost)
+                setSavedForm(emptyPost)
               }}
               className="text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
             >

@@ -507,7 +507,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
                     href="/sign-in"
                     className="inline-flex items-center mt-2 text-sm font-medium text-red-600 hover:text-red-700"
                   >
-                    Sign in
+                    Sign In
                     <span className="ml-1">&rarr;</span>
                   </Link>
                 )}
@@ -516,7 +516,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
                     href="/pricing"
                     className="inline-flex items-center mt-2 text-sm font-medium text-amber-700 hover:text-amber-800"
                   >
-                    Upgrade your plan
+                    Upgrade Your Plan
                     <span className="ml-1">&rarr;</span>
                   </Link>
                 )}

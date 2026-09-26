@@ -81,7 +81,7 @@ export default function AnalyticsTab() {
     return (
       <div className="text-center py-16">
         <ChartBarIcon aria-hidden="true" className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-        <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">No analytics data</h3>
+        <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">No Analytics Data</h3>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Create and run campaigns to see performance analytics.
         </p>

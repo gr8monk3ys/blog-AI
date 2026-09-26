@@ -91,7 +91,7 @@ export default function WebhooksPageClient() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <main id="main-content" tabIndex={-1} className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
           <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-amber-100/80 dark:bg-amber-900/40 text-amber-700">
@@ -115,7 +115,7 @@ export default function WebhooksPageClient() {
       </div>
 
       {error && (
-        <div className="mb-6 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+        <div className="mb-6 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300" role="alert">
           {error}
         </div>
       )}
@@ -153,7 +153,7 @@ export default function WebhooksPageClient() {
       ) : subscriptions.length === 0 ? (
         <div className="text-center py-16">
           <BoltIcon aria-hidden="true" className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">No webhooks configured</h3>
+          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">No Webhooks Configured</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Add a webhook to receive real-time notifications when events occur.
           </p>
@@ -178,6 +178,6 @@ export default function WebhooksPageClient() {
 
       <ToastComponent />
       <ConfirmModalComponent />
-    </div>
+    </main>
   )
 }

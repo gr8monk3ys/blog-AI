@@ -196,7 +196,7 @@ export default function ToolGrid({
               }}
               className="mt-4 inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 transition-colors"
             >
-              Clear all filters
+              Clear All Filters
             </button>
           </motion.div>
         )}

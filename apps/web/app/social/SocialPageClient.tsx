@@ -24,7 +24,7 @@ export default function SocialPageClient() {
   const { confirm, ConfirmModalComponent } = useConfirmModal()
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <main id="main-content" tabIndex={-1} className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="flex items-center gap-3 mb-8">
         <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-amber-100/80 dark:bg-amber-900/40 text-amber-700">
           <ChatBubbleLeftRightIcon className="w-5 h-5" aria-hidden="true" />
@@ -56,12 +56,12 @@ export default function SocialPageClient() {
       </div>
 
       {activeTab === 'accounts' && <AccountsTab showToast={showToast} confirm={confirm} />}
-      {activeTab === 'schedule' && <ScheduleTab showToast={showToast} />}
+      {activeTab === 'schedule' && <ScheduleTab showToast={showToast} confirm={confirm} />}
       {activeTab === 'campaigns' && <CampaignsTab showToast={showToast} confirm={confirm} />}
       {activeTab === 'analytics' && <AnalyticsTab />}
 
       <ToastComponent />
       <ConfirmModalComponent />
-    </div>
+    </main>
   )
 }

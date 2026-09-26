@@ -126,7 +126,7 @@ export default function PlagiarismPageClient() {
   const sources = result?.matching_sources || []
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <main id="main-content" tabIndex={-1} className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="flex items-center gap-3 mb-8">
         <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-amber-100/80 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
           <ShieldCheckIcon className="w-5 h-5" aria-hidden="true" />
@@ -303,7 +303,7 @@ export default function PlagiarismPageClient() {
 
       {/* Error */}
       {error && (
-        <div className="mt-6 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+        <div className="mt-6 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300" role="alert">
           {error}
         </div>
       )}
@@ -405,6 +405,6 @@ export default function PlagiarismPageClient() {
       )}
 
       <ToastComponent />
-    </div>
+    </main>
   )
 }

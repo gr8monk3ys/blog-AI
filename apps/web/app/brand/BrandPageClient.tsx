@@ -178,7 +178,7 @@ function useBrandPageView() {
   return (
     <>
       <SiteHeader />
-      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
       {/* Confirm Modal */}
       <ConfirmModalComponent />
 
@@ -216,7 +216,7 @@ function useBrandPageView() {
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h2 className="text-base font-semibold text-amber-900 dark:text-amber-100">
-                Start here if you want content worth paying for
+                Start Here If You Want Content Worth Paying For
               </h2>
               <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">
                 Brand voice is the foundation for the strongest paid workflow in this product.
@@ -345,7 +345,7 @@ function useBrandPageView() {
                 <SparklesIcon aria-hidden="true" className="w-8 h-8 text-gray-400" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                No brand profiles yet
+                No Brand Profiles Yet
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-6">
                 Create your first brand voice profile to ensure consistent

@@ -124,7 +124,7 @@ export default function SiteHeader(): React.ReactElement {
                     href="/sign-in"
                     className="px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 transition-colors text-white"
                   >
-                    Sign in
+                    Sign In
                   </Link>
                 </SignedOut>
               </>
@@ -133,7 +133,7 @@ export default function SiteHeader(): React.ReactElement {
                 href="/auth"
                 className="px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 transition-colors text-white"
               >
-                Sign in
+                Sign In
               </Link>
             )}
             <button

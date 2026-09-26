@@ -93,6 +93,16 @@ export default function ToolOutput({
 }: ToolOutputProps) {
   return (
     <>
+      {/* Always mounted, so screen readers hear when generated text arrives. */}
+      <p className="sr-only" role="status">
+        {loading
+          ? 'Generating…'
+          : copied
+            ? 'Copied to clipboard'
+            : output
+              ? 'Your generated content is ready.'
+              : ''}
+      </p>
       {/* Variations comparison section */}
       {variations.length > 0 && (
         <m.div
@@ -205,7 +215,7 @@ export default function ToolOutput({
                     href="/history"
                     className="inline-flex items-center gap-1 text-amber-700 hover:text-amber-800 transition-colors"
                   >
-                    View history
+                    View History
                     <svg aria-hidden="true"
                       className="w-3 h-3"
                       fill="none"

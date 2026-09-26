@@ -33,7 +33,7 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     )
 
-    expect(screen.getByText('Something went wrong')).toBeInTheDocument()
+    expect(screen.getByText('Something Went Wrong')).toBeInTheDocument()
     // Error messages are not displayed for security (prevent PII exposure)
     expect(screen.getByText(/An unexpected error occurred/)).toBeInTheDocument()
   })
@@ -48,7 +48,7 @@ describe('ErrorBoundary', () => {
     )
 
     expect(screen.getByText('Custom error fallback')).toBeInTheDocument()
-    expect(screen.queryByText('Something went wrong')).not.toBeInTheDocument()
+    expect(screen.queryByText('Something Went Wrong')).not.toBeInTheDocument()
   })
 
   it('should have a try again button in default error UI', () => {
@@ -69,7 +69,7 @@ describe('ErrorBoundary', () => {
     )
 
     // Verify error state
-    expect(screen.getByText('Something went wrong')).toBeInTheDocument()
+    expect(screen.getByText('Something Went Wrong')).toBeInTheDocument()
 
     // Click try again - this attempts to reset the error boundary
     // But the child will throw again, so we'll still see the error
@@ -77,7 +77,7 @@ describe('ErrorBoundary', () => {
 
     // The error boundary resets but ThrowError throws again immediately
     // So we should still see the error UI
-    expect(screen.getByText('Something went wrong')).toBeInTheDocument()
+    expect(screen.getByText('Something Went Wrong')).toBeInTheDocument()
   })
 
   it('should display generic message when error has no message', () => {
@@ -91,7 +91,7 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     )
 
-    expect(screen.getByText('Something went wrong')).toBeInTheDocument()
+    expect(screen.getByText('Something Went Wrong')).toBeInTheDocument()
     expect(screen.getByText(/An unexpected error occurred/)).toBeInTheDocument()
   })
 

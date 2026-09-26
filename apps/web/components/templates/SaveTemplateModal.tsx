@@ -91,7 +91,7 @@ function useSaveTemplateModalView({
           <div className="fixed inset-0 bg-black bg-opacity-25" />
         </Transition.Child>
 
-        <div className="fixed inset-0 overflow-y-auto">
+        <div className="fixed inset-0 overflow-y-auto overscroll-contain">
           <div className="flex min-h-full items-center justify-center p-4 text-center">
             <Transition.Child
               as={Fragment}
@@ -126,7 +126,7 @@ function useSaveTemplateModalView({
                 </p>
 
                 {error && (
-                  <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-sm text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800">
+                  <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-sm text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800" role="alert">
                     {error}
                   </div>
                 )}

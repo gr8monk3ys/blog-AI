@@ -69,17 +69,17 @@ export default function TeamPageClient() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-12">
+      <main id="main-content" tabIndex={-1} className="max-w-4xl mx-auto px-4 py-12">
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded w-48" />
           <div className="h-64 bg-gray-200 dark:bg-gray-800 rounded" />
         </div>
-      </div>
+      </main>
     )
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <main id="main-content" tabIndex={-1} className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
           <UserGroupIcon aria-hidden="true" className="h-6 w-6 text-amber-700" />
@@ -97,7 +97,7 @@ export default function TeamPageClient() {
       {orgs.length === 0 ? (
         <div className="text-center py-16 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800">
           <UserGroupIcon aria-hidden="true" className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-4 text-sm font-medium text-gray-900 dark:text-gray-100">No organizations</h3>
+          <h3 className="mt-4 text-sm font-medium text-gray-900 dark:text-gray-100">No Organizations</h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Create an organization to collaborate with your team.
           </p>
@@ -208,6 +208,6 @@ export default function TeamPageClient() {
         onClose={() => setShowCreateModal(false)}
         onCreated={fetchOrgs}
       />
-    </div>
+    </main>
   )
 }

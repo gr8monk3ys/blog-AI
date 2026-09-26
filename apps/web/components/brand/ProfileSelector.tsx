@@ -117,7 +117,7 @@ function ProfileSelectorComponent({
         <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
           No brand profiles yet.{' '}
           <Link href="/brand" className="text-amber-700 hover:underline">
-            Create one
+            Create One
           </Link>
         </p>
       )}

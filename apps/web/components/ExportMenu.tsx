@@ -304,6 +304,9 @@ function useExportMenuView({
 
   return (
     <Menu as="div" className={`relative inline-block text-left ${className}`}>
+      <span className="sr-only" role="status">
+        {copied ? 'Copied to clipboard' : ''}
+      </span>
       <Menu.Button
         disabled={disabled}
         className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"

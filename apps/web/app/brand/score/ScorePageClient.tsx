@@ -110,7 +110,7 @@ function useScorePage() {
   return (
     <>
       <SiteHeader />
-      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
 
       {/* Hero */}
       <section className="bg-gradient-to-r from-amber-700 to-amber-800 text-white">
@@ -217,7 +217,7 @@ function useScorePage() {
                 <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                   No profiles found.{' '}
                   <Link href="/brand" className="text-amber-700 hover:underline">
-                    Create one
+                    Create One
                   </Link>{' '}
                   first.
                 </p>
@@ -361,7 +361,7 @@ function useScorePage() {
           className="mt-6 rounded-2xl border border-amber-200 bg-amber-50/80 p-5 dark:border-amber-900/40 dark:bg-amber-950/30"
         >
           <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-100 mb-1">
-            Tip: Train first, then score
+            Tip: Train First, Then Score
           </h3>
           <p className="text-sm text-amber-800 dark:text-amber-200">
             For accurate results, make sure your brand profile has been trained with writing

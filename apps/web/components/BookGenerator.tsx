@@ -155,7 +155,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
       console.error('Error generating book:', err);
       const status = (err as Error & { status?: number })?.status
       if (status === 401 || status === 403) {
-        setError('Sign in required to generate books.')
+        setError('Sign in to generate books.')
       } else if (status === 429) {
         setError('Usage limit reached. Upgrade your plan to continue generating books.')
       } else {
@@ -372,7 +372,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
         </div>
 
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
+          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg text-sm" role="alert">
             <p className="font-medium">Error</p>
             <p>{error}</p>
             <button

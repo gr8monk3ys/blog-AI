@@ -10,7 +10,7 @@ export default function TermsPageClient(): React.ReactElement {
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
 
-      <main className="flex-1 py-16 sm:py-20">
+      <main id="main-content" tabIndex={-1} className="flex-1 py-16 sm:py-20">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
             Terms of Service
