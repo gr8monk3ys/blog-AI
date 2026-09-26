@@ -4,6 +4,7 @@ import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline'
 import type { WebhookSubscription } from '../../../../types/webhooks'
 import type { ToastOptions } from '../../../../hooks/useToast'
 import TestWebhookButton from './TestWebhookButton'
+import { formatDisplayDate } from '@/lib/format'
 
 interface SubscriptionCardProps {
   subscription: WebhookSubscription
@@ -66,7 +67,7 @@ export default function SubscriptionCard({ subscription: sub, onEdit, onDelete, 
               <span>{successRate}% success rate</span>
             )}
             {sub.last_delivery_at && (
-              <span>Last: {new Date(sub.last_delivery_at).toLocaleDateString()}</span>
+              <span>Last: {formatDisplayDate(sub.last_delivery_at)}</span>
             )}
           </div>
 

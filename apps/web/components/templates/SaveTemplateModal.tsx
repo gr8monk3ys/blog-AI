@@ -122,7 +122,7 @@ function useSaveTemplateModalView({
                 </div>
 
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                  Save your current settings for &quot;{toolName}&quot; as a reusable template.
+                  Save your current settings for “{toolName}“ as a reusable template.
                 </p>
 
                 {error && (

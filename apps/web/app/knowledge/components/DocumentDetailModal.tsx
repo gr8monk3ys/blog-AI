@@ -12,6 +12,7 @@ import {
 import { apiFetch, API_ENDPOINTS } from '../../../lib/api'
 import type { KBDocument, KBChunk, KBChunksResponse } from '../../../types/knowledge'
 import { FILE_TYPE_CONFIG, formatBytes } from '../../../types/knowledge'
+import { formatDisplayDate, formatNumber } from '@/lib/format'
 
 interface DocumentDetailModalProps {
   document: KBDocument | null
@@ -158,7 +159,7 @@ export default function DocumentDetailModal({
                             {document.chunk_count} chunks
                           </span>
                           <span className="text-xs text-gray-400">
-                            {new Date(document.created_at).toLocaleDateString()}
+                            {formatDisplayDate(document.created_at)}
                           </span>
                         </div>
                       </div>
@@ -228,7 +229,7 @@ export default function DocumentDetailModal({
                               </div>
                               {isMatched && score != null && (
                                 <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
-                                  Score: {score.toFixed(2)}
+                                  Score: {formatNumber(score, 2)}
                                 </span>
                               )}
                             </div>

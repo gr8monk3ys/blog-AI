@@ -82,7 +82,7 @@ function ToolsPageContent() {
             className="text-center"
           >
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-              Can&apos;t find what you need?
+              Can’t find what you need?
             </h2>
             <p className="text-gray-600 dark:text-gray-400 max-w-xl mx-auto mb-6">
               Use our flexible Blog Post or Book generators for custom content creation

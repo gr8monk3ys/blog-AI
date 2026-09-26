@@ -12,7 +12,7 @@ export default function ToolNotFound() {
       <div className="text-center">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Tool Not Found</h1>
         <p className="text-gray-600 dark:text-gray-400 mb-6">
-          The tool you&apos;re looking for doesn&apos;t exist or has been removed.
+          The tool you’re looking for doesn’t exist or has been removed.
         </p>
         <Link
           href="/tools"

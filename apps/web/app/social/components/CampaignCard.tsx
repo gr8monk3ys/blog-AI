@@ -3,6 +3,7 @@
 import { PauseIcon, PlayIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import type { Campaign } from '../../../types/social'
 import PlatformIcon from './PlatformIcon'
+import { formatDisplayDate } from '@/lib/format'
 
 interface CampaignCardProps {
   campaign: Campaign
@@ -49,7 +50,7 @@ export default function CampaignCard({ campaign, onPause, onResume, onCancel }: 
           <div className="flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-400">
             <span>{campaign.post_count} post{campaign.post_count !== 1 ? 's' : ''}</span>
             {campaign.scheduled_at && (
-              <span>Scheduled: {new Date(campaign.scheduled_at).toLocaleDateString()}</span>
+              <span>Scheduled: {formatDisplayDate(campaign.scheduled_at)}</span>
             )}
             {campaign.tags && campaign.tags.length > 0 && (
               <span className="flex gap-1">

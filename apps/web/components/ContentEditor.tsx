@@ -25,6 +25,7 @@ import {
   type TextSelection,
   type FormatResult,
 } from './editor/markdownUtils'
+import { formatNumber } from '@/lib/format'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -424,9 +425,9 @@ function useContentEditorView({
         <div className="flex flex-wrap items-center gap-3">
           {/* Word count / reading time */}
           <span className="text-xs text-gray-500 dark:text-gray-400">
-            {wordCount.toLocaleString()} {wordCount === 1 ? 'word' : 'words'}
+            {formatNumber(wordCount)} {wordCount === 1 ? 'word' : 'words'}
             <span className="mx-1.5 text-gray-300 dark:text-gray-600" aria-hidden="true">|</span>
-            {readingTime} min read
+            {readingTime}&nbsp;min read
           </span>
 
           {/* Copy */}

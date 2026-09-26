@@ -5,6 +5,7 @@ import { ChartBarIcon } from '@heroicons/react/24/outline'
 import { API_ENDPOINTS, getDefaultHeaders } from '../../../lib/api'
 import type { Campaign, CampaignAnalytics } from '../../../types/social'
 import PlatformIcon from './PlatformIcon'
+import { formatNumber } from '@/lib/format'
 
 export default function AnalyticsTab() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -144,11 +145,11 @@ export default function AnalyticsTab() {
                       <span className="text-sm font-medium text-gray-900 dark:text-gray-100 capitalize">{stat.platform}</span>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                      <MiniStat label="Impressions" value={stat.impressions.toLocaleString()} />
-                      <MiniStat label="Reach" value={stat.reach.toLocaleString()} />
-                      <MiniStat label="Engagements" value={stat.engagements.toLocaleString()} />
-                      <MiniStat label="Clicks" value={stat.clicks.toLocaleString()} />
-                      <MiniStat label="Engagement Rate" value={`${stat.engagement_rate.toFixed(1)}%`} />
+                      <MiniStat label="Impressions" value={formatNumber(stat.impressions)} />
+                      <MiniStat label="Reach" value={formatNumber(stat.reach)} />
+                      <MiniStat label="Engagements" value={formatNumber(stat.engagements)} />
+                      <MiniStat label="Clicks" value={formatNumber(stat.clicks)} />
+                      <MiniStat label="Engagement Rate" value={`${formatNumber(stat.engagement_rate, 1)}%`} />
                     </div>
                   </div>
                 ))}

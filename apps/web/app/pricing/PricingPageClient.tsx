@@ -18,6 +18,7 @@ import {
 import { UsageTier, TIER_DISPLAY } from '../../types/usage'
 import { API_ENDPOINTS, getDefaultHeaders } from '../../lib/api'
 import { normalizePricingTiers, type PublicPricingTier } from './tiers'
+import { formatNumber } from '@/lib/format'
 
 type BillingCycle = 'monthly' | 'yearly'
 
@@ -389,9 +390,9 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
                         {tier.monthly_limit === -1
                           ? 'Unlimited'
                           : typeof tier.monthly_limit === 'number'
-                          ? tier.monthly_limit.toLocaleString()
+                          ? formatNumber(tier.monthly_limit)
                           : typeof tier.generations_per_month === 'number'
-                          ? tier.generations_per_month.toLocaleString()
+                          ? formatNumber(tier.generations_per_month)
                           : '—'}
                       </span>
                     </div>
@@ -432,7 +433,7 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
                   {/* Features */}
                   <div className="mt-8">
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                      What&apos;s included
+                      What’s included
                     </h3>
                     <ul className="space-y-3">
                       {tier.features.map((feature) => (

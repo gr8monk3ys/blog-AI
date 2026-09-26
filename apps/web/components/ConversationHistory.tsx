@@ -30,7 +30,7 @@ const MOCK_MESSAGES: Message[] = [
   },
   {
     role: 'assistant',
-    content: 'I\'ll create a comprehensive blog post about AI for you. What specific aspects would you like me to focus on?',
+    content: 'I’ll create a comprehensive blog post about AI for you. What specific aspects would you like me to focus on?',
     timestamp: new Date(Date.now() - 3500000).toISOString()
   },
   {
@@ -40,7 +40,7 @@ const MOCK_MESSAGES: Message[] = [
   },
   {
     role: 'assistant',
-    content: 'I\'ve generated a blog post titled "How AI is Revolutionizing Content Creation and Marketing" with 5 sections covering the latest trends and applications.',
+    content: 'I’ve generated a blog post titled “How AI is Revolutionizing Content Creation and Marketing” with 5 sections covering the latest trends and applications.',
     timestamp: new Date(Date.now() - 3300000).toISOString()
   }
 ];

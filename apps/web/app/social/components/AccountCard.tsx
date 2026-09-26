@@ -4,6 +4,7 @@ import { TrashIcon } from '@heroicons/react/24/outline'
 import type { SocialAccount } from '../../../types/social'
 import { PLATFORM_CONFIG } from '../../../types/social'
 import PlatformIcon from './PlatformIcon'
+import { formatDisplayDate } from '@/lib/format'
 
 interface AccountCardProps {
   account: SocialAccount
@@ -50,9 +51,9 @@ export default function AccountCard({ account, onDisconnect }: AccountCardProps)
         </div>
       </div>
       <div className="mt-3 text-xs text-gray-400 dark:text-gray-500">
-        Connected {new Date(account.connected_at).toLocaleDateString()}
+        Connected {formatDisplayDate(account.connected_at)}
         {account.last_used_at && (
-          <> &middot; Last used {new Date(account.last_used_at).toLocaleDateString()}</>
+          <> &middot; Last used {formatDisplayDate(account.last_used_at)}</>
         )}
       </div>
     </div>

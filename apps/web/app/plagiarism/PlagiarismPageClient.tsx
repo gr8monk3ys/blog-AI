@@ -11,6 +11,7 @@ import type {
   PlagiarismQuotaResponse,
   ProviderQuota,
 } from '../../types/plagiarism'
+import { formatNumber } from '@/lib/format'
 
 function riskStyles(level: string): { badge: string; label: string; gauge: string } {
   switch (level) {
@@ -182,7 +183,7 @@ export default function PlagiarismPageClient() {
           />
           <div className="mt-1 flex justify-between text-xs text-gray-400">
             <span>{content.length < 50 ? `${50 - content.length} more characters needed` : 'Ready to check'}</span>
-            <span>{content.length.toLocaleString()} characters</span>
+            <span>{formatNumber(content.length)} characters</span>
           </div>
         </div>
 
@@ -342,7 +343,7 @@ export default function PlagiarismPageClient() {
                 Provider: {result.provider}
               </span>
               <span className="px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium">
-                {result.total_words_checked.toLocaleString()} words checked
+                {formatNumber(result.total_words_checked)} words checked
               </span>
               {result.cached && (
                 <span className="px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium">
@@ -350,7 +351,7 @@ export default function PlagiarismPageClient() {
                 </span>
               )}
               <span className="text-gray-400 dark:text-gray-500 self-center">
-                {(result.processing_time_ms / 1000).toFixed(1)}s
+                {formatNumber(result.processing_time_ms / 1000, 1)}s
               </span>
             </div>
           </div>

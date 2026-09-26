@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import type { ToolUsageStat } from '../../types/analytics'
 import { getCategoryColor, getCategoryBgColor } from '../../types/analytics'
+import { formatNumber } from '@/lib/format'
 
 interface BarChartProps {
   data: ToolUsageStat[]
@@ -67,7 +68,7 @@ export default function BarChart({
                     </span>
                   </div>
                   <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    {item.count.toLocaleString()}
+                    {formatNumber(item.count)}
                   </span>
                 </div>
                 <div className="relative h-6 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
@@ -79,7 +80,7 @@ export default function BarChart({
                     transition={{ duration: 0.5, delay: index * 0.05 }}
                   />
                   <span className="absolute inset-y-0 right-2 flex items-center text-xs font-medium text-gray-500 dark:text-gray-400">
-                    {item.percentage.toFixed(1)}%
+                    {formatNumber(item.percentage, 1)}%
                   </span>
                 </div>
               </motion.div>

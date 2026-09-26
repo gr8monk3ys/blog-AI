@@ -64,7 +64,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
             subtopics: [
               {
                 title: "",
-                content: "Artificial intelligence has rapidly evolved from a futuristic concept to a practical tool that's reshaping industries across the globe. In the realm of content creation and marketing, AI technologies are not just supplementing human efforts—they're revolutionizing the entire process from ideation to distribution. This transformation is enabling businesses and creators to produce more engaging, personalized, and effective content at unprecedented scale and speed."
+                content: "Artificial intelligence has rapidly evolved from a futuristic concept to a practical tool that’s reshaping industries across the globe. In the realm of content creation and marketing, AI technologies are not just supplementing human efforts—they’re revolutionizing the entire process from ideation to distribution. This transformation is enabling businesses and creators to produce more engaging, personalized, and effective content at unprecedented scale and speed."
               }
             ]
           },
@@ -73,7 +73,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
             subtopics: [
               {
                 title: "",
-                content: "Today's AI tools can generate blog posts, social media updates, email newsletters, and even video scripts with minimal human input. Natural Language Processing (NLP) models like GPT-4 can produce human-like text that's increasingly difficult to distinguish from content written by people. These advancements have democratized content creation, allowing smaller businesses and individual creators to compete with larger organizations that have traditionally had more resources for content production."
+                content: "Today’s AI tools can generate blog posts, social media updates, email newsletters, and even video scripts with minimal human input. Natural Language Processing (NLP) models like GPT-4 can produce human-like text that’s increasingly difficult to distinguish from content written by people. These advancements have democratized content creation, allowing smaller businesses and individual creators to compete with larger organizations that have traditionally had more resources for content production."
               }
             ]
           },
@@ -100,7 +100,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
             subtopics: [
               {
                 title: "",
-                content: "AI is undeniably transforming content creation and marketing, offering unprecedented opportunities for efficiency, personalization, and scale. While it won't replace human creativity entirely, it's becoming an essential tool in the modern marketer's arsenal. Organizations that successfully integrate AI into their content strategies—while maintaining human oversight and creative direction—will be best positioned to thrive in this new era of content marketing."
+                content: "AI is undeniably transforming content creation and marketing, offering unprecedented opportunities for efficiency, personalization, and scale. While it won’t replace human creativity entirely, it’s becoming an essential tool in the modern marketer’s arsenal. Organizations that successfully integrate AI into their content strategies—while maintaining human oversight and creative direction—will be best positioned to thrive in this new era of content marketing."
               }
             ]
           },
@@ -113,7 +113,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
               },
               {
                 title: "How can small businesses leverage AI for content marketing?",
-                content: "Small businesses can use AI tools to scale their content production, analyze competitor content, generate ideas, and optimize existing content for SEO. Many affordable AI writing assistants, content generators, and analytics platforms are now available that don't require technical expertise to use."
+                content: "Small businesses can use AI tools to scale their content production, analyze competitor content, generate ideas, and optimize existing content for SEO. Many affordable AI writing assistants, content generators, and analytics platforms are now available that don’t require technical expertise to use."
               },
               {
                 title: "What skills should content marketers develop in the age of AI?",

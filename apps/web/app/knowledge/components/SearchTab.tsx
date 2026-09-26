@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { apiFetch, API_ENDPOINTS } from '../../../lib/api'
 import type { KBDocument, KBSearchResult, KBSearchResponse } from '../../../types/knowledge'
 import DocumentDetailModal from './DocumentDetailModal'
+import { formatNumber } from '@/lib/format'
 
 interface SearchTabProps {
   documents: KBDocument[]
@@ -130,7 +131,7 @@ export default function SearchTab({ documents }: SearchTabProps) {
           </div>
           <div className="flex items-center gap-2">
             <label htmlFor="minscore" className="text-xs text-gray-500 dark:text-gray-400">
-              Min score: {minScore.toFixed(1)}
+              Min score: {formatNumber(minScore, 1)}
             </label>
             <input
               name="minscore"
@@ -160,7 +161,7 @@ export default function SearchTab({ documents }: SearchTabProps) {
         <div className="flex items-center gap-1 text-xs text-gray-400">
           <ClockIcon aria-hidden="true" className="h-3.5 w-3.5" />
           Found {results.length} result{results.length !== 1 ? 's' : ''} in{' '}
-          {searchTimeMs.toFixed(0)}ms
+          {formatNumber(searchTimeMs, 0)}ms
         </div>
       )}
 
@@ -202,7 +203,7 @@ export default function SearchTab({ documents }: SearchTabProps) {
                     />
                   </div>
                   <span className="text-xs text-gray-500 font-medium w-10 text-right">
-                    {(result.score * 100).toFixed(0)}%
+                    {formatNumber(result.score * 100, 0)}%
                   </span>
                 </div>
               </div>

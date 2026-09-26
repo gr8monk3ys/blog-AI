@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { OrganizationMember, OrganizationRole } from '../../types/team'
 import { apiFetch, API_ENDPOINTS } from '../../lib/api'
+import { formatDisplayDate } from '@/lib/format'
 
 interface MembersListProps {
   orgId: string
@@ -109,7 +110,7 @@ export default function MembersList({
                   </span>
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                  {new Date(member.joined_at).toLocaleDateString()}
+                  {formatDisplayDate(member.joined_at)}
                 </td>
                 {canManage && (
                   <td className="px-4 py-3 text-right">

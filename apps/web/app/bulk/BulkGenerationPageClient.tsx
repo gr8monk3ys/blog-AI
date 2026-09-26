@@ -41,6 +41,7 @@ import {
 } from './constants'
 import { createDraftItem, parseCSV, type BulkDraftItem } from './csv'
 import { ActivationHint, BulkHero, WorkflowBanner } from './components/PageBanners'
+import { formatCurrency, formatNumber } from '@/lib/format'
 
 function useBulkGenerationPageView() {
   const [conversationId] = useState(() => uuidv4())
@@ -794,11 +795,11 @@ function useBulkGenerationPageView() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600 dark:text-gray-400">Estimated Cost</span>
                     <span className="text-lg font-bold text-emerald-700">
-                      ${costEstimate.estimated_cost_usd.toFixed(4)}
+                      {formatCurrency(costEstimate.estimated_cost_usd, 4)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-xs text-gray-500">
-                    <span>~{costEstimate.estimated_output_tokens.toLocaleString()} tokens</span>
+                    <span>~{formatNumber(costEstimate.estimated_output_tokens)} tokens</span>
                     <span>{Math.round(costEstimate.confidence * 100)}% confidence</span>
                   </div>
                   {costEstimate.provider_recommendations.length > 1 && (
@@ -808,7 +809,7 @@ function useBulkGenerationPageView() {
                         {costEstimate.provider_recommendations.slice(0, 3).map((rec) => (
                           <div key={rec.provider} className="flex items-center justify-between text-xs">
                             <span className="text-gray-600 dark:text-gray-400">{rec.display_name}</span>
-                            <span className="font-medium text-gray-900 dark:text-gray-100">${rec.estimated_cost.toFixed(4)}</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">{formatCurrency(rec.estimated_cost, 4)}</span>
                           </div>
                         ))}
                       </div>
@@ -872,7 +873,7 @@ function useBulkGenerationPageView() {
                     <div className="flex items-center justify-between text-sm pt-2">
                       <span className="text-gray-600 dark:text-gray-400">Cost so far</span>
                       <span className="font-medium text-emerald-600">
-                        ${actualCost.toFixed(4)}
+                        {formatCurrency(actualCost, 4)}
                       </span>
                     </div>
                   )}

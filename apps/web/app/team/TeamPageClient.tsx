@@ -8,6 +8,7 @@ import { apiFetch, API_ENDPOINTS } from '../../lib/api'
 import CreateOrgModal from '../../components/team/CreateOrgModal'
 import MembersList from '../../components/team/MembersList'
 import InviteForm from '../../components/team/InviteForm'
+import { formatDisplayDate } from '@/lib/format'
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ')
@@ -169,7 +170,7 @@ export default function TeamPageClient() {
                             </p>
                           </div>
                           <span className="text-xs text-gray-400">
-                            Expires {new Date(invite.expires_at).toLocaleDateString()}
+                            Expires {formatDisplayDate(invite.expires_at)}
                           </span>
                         </div>
                       ))}

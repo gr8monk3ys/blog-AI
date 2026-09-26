@@ -139,7 +139,7 @@ export default function SingleImageTab({ styles, showToast }: SingleImageTabProp
               rows={6}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Paste your blog content and we'll generate a relevant image…"
+              placeholder="Paste your blog content and we’ll generate a relevant image…"
               className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
               required
             />

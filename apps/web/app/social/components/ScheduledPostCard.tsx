@@ -3,6 +3,7 @@
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import type { ScheduledPost } from '../../../types/social'
 import PlatformIcon from './PlatformIcon'
+import { formatDisplayDateTime } from '@/lib/format'
 
 interface ScheduledPostCardProps {
   post: ScheduledPost
@@ -32,7 +33,7 @@ export default function ScheduledPostCard({ post, onCancel }: ScheduledPostCardP
               <span className={`px-2 py-0.5 rounded-full font-medium ${STATUS_STYLES[post.status] || STATUS_STYLES.draft}`}>
                 {post.status}
               </span>
-              <span>{new Date(post.scheduled_at).toLocaleString()}</span>
+              <span>{formatDisplayDateTime(post.scheduled_at)}</span>
               {post.recurrence !== 'none' && (
                 <span className="capitalize">{post.recurrence}</span>
               )}

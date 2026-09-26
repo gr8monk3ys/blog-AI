@@ -265,7 +265,7 @@ export default function BrandVoiceSelector({
 
       {!enabled && (
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          Enable to apply your brand&apos;s tone and style to generated content.
+          Enable to apply your brand’s tone and style to generated content.
         </p>
       )}
     </div>

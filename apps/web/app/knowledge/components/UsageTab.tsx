@@ -92,12 +92,12 @@ export default function UsageTab({ stats }: UsageTabProps) {
       {/* Warning banners */}
       {showCritical && (
         <div className="px-4 py-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-400">
-          You&apos;ve reached your plan limits. Upgrade to continue uploading documents.
+          You’ve reached your plan limits. Upgrade to continue uploading documents.
         </div>
       )}
       {showWarning && !showCritical && (
         <div className="px-4 py-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-sm text-amber-700 dark:text-amber-400">
-          You&apos;re approaching your plan limits. Consider upgrading for more capacity.
+          You’re approaching your plan limits. Consider upgrading for more capacity.
         </div>
       )}
 

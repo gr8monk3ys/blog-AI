@@ -184,7 +184,7 @@ export default function ToolGrid({
               No tools found
             </EmptyStateHeading>
             <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-              Try adjusting your search or filter criteria to find what you&apos;re
+              Try adjusting your search or filter criteria to find what you’re
               looking for.
             </p>
             <button

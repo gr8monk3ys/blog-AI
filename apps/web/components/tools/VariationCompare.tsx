@@ -12,6 +12,7 @@ import {
   ChevronUpIcon,
 } from '@heroicons/react/24/outline'
 import ContentScore, { ContentScoreResult } from './ContentScore'
+import { formatNumber } from '@/lib/format'
 
 export interface ContentVariation {
   id: string
@@ -125,7 +126,7 @@ function VariationCard({
                 </span>
               </div>
               <span className="text-xs text-gray-500 dark:text-gray-400">
-                Temperature: {variation.temperature.toFixed(1)}
+                Temperature: {formatNumber(variation.temperature, 1)}
               </span>
             </div>
           </div>
@@ -343,7 +344,7 @@ export default function VariationCompare({
       {/* Selection hint */}
       {!effectiveSelectedId && (
         <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-          Click &quot;Pick this one&quot; to select your preferred version
+          Click “Pick this one” to select your preferred version
         </p>
       )}
     </div>

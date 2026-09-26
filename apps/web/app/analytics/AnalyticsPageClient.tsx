@@ -28,6 +28,7 @@ import type {
   TimeRangeOption,
 } from '../../types/analytics'
 import { TIME_RANGE_OPTIONS } from '../../types/analytics'
+import { formatNumber } from '@/lib/format'
 
 function useAnalyticsPageView() {
   const [timeRange, setTimeRange] = useState<TimeRangeOption>('30d')
@@ -81,7 +82,7 @@ function useAnalyticsPageView() {
 
   const formatExecutionTime = (ms: number): string => {
     if (ms < 1000) return `${ms}ms`
-    return `${(ms / 1000).toFixed(1)}s`
+    return `${formatNumber(ms / 1000, 1)}s`
   }
 
   const formatToolName = (toolId: string | null): string => {
@@ -170,7 +171,7 @@ function useAnalyticsPageView() {
         >
           <StatCard
             title="Total Generations"
-            value={overviewStats?.totalGenerations.toLocaleString() || '0'}
+            value={formatNumber(overviewStats?.totalGenerations ?? 0)}
             icon={ChartBarIcon}
             change={overviewStats?.generationsChange}
             changeLabel="vs previous period"
@@ -178,7 +179,7 @@ function useAnalyticsPageView() {
           />
           <StatCard
             title="Active Today"
-            value={overviewStats?.activeToday.toLocaleString() || '0'}
+            value={formatNumber(overviewStats?.activeToday ?? 0)}
             icon={FireIcon}
             subtitle="Generations today"
             loading={loading}

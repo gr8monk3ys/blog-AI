@@ -6,6 +6,7 @@ import type { ToastOptions } from '../../../hooks/useToast'
 import type { BlogImagesResult, ImageProvider, ImageStyle, ImageQuality, ImageStylesResponse } from '../../../types/images'
 import StyleSelector from './StyleSelector'
 import ImageCard from './ImageCard'
+import { formatNumber } from '@/lib/format'
 
 interface BlogImagesTabProps {
   styles: ImageStylesResponse | null
@@ -116,7 +117,7 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
             required
             minLength={10}
           />
-          <p className="mt-1 text-xs text-gray-400">{content.length.toLocaleString()} characters</p>
+          <p className="mt-1 text-xs text-gray-400">{formatNumber(content.length)} characters</p>
         </div>
 
         {/* Keywords */}
