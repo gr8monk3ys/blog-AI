@@ -35,14 +35,17 @@ function SampleFormComponent({
 
       <div className="space-y-4">
         <input
+          name="title"
+          autoComplete="off"
           type="text"
           value={title}
           onChange={(e) => onTitleChange(e.target.value)}
-          placeholder="Sample title (optional)"
+          placeholder="e.g. Launch announcement (optional)…"
           className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg"
         />
 
         <select
+          name="contentType"
           value={contentType}
           onChange={(e) => onContentTypeChange(e.target.value)}
           className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg"
@@ -55,9 +58,11 @@ function SampleFormComponent({
         </select>
 
         <textarea
+          name="content"
+          autoComplete="off"
           value={content}
           onChange={(e) => onContentChange(e.target.value)}
-          placeholder="Paste your content sample here... (min 50 characters)"
+          placeholder="Paste your content sample here… (min 50 characters)"
           rows={6}
           className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg resize-none"
         />

@@ -108,11 +108,13 @@ export default function CreateCampaignForm({ accounts, onClose, onSuccess, showT
               Campaign name <span className="text-red-500">*</span>
             </label>
             <input
+              name="camp-name"
+              autoComplete="name"
               id="camp-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Q1 product launch"
+              placeholder="e.g. Q1 product launch…"
               className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
               required
             />
@@ -122,11 +124,13 @@ export default function CreateCampaignForm({ accounts, onClose, onSuccess, showT
               Description
             </label>
             <input
+              name="camp-desc"
+              autoComplete="off"
               id="camp-desc"
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Optional description"
+              placeholder="e.g. Posts for the spring campaign…"
               className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             />
           </div>
@@ -138,11 +142,13 @@ export default function CreateCampaignForm({ accounts, onClose, onSuccess, showT
             Post content <span className="text-red-500">*</span>
           </label>
           <textarea
+            name="camp-text"
+            autoComplete="off"
             id="camp-text"
             rows={4}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Content to share across platforms..."
+            placeholder="Content to share across platforms…"
             className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             required
           />
@@ -150,10 +156,13 @@ export default function CreateCampaignForm({ accounts, onClose, onSuccess, showT
 
         {/* Account selection */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <p
+            id="campaign-platforms-label"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
             Platforms <span className="text-red-500">*</span>
-          </label>
-          <div className="flex flex-wrap gap-2">
+          </p>
+          <div className="flex flex-wrap gap-2" role="group" aria-labelledby="campaign-platforms-label">
             {accounts.map((account) => {
               const isSelected = selectedAccountIds.includes(account.id)
               return (
@@ -180,6 +189,8 @@ export default function CreateCampaignForm({ accounts, onClose, onSuccess, showT
           <div>
             <label htmlFor="camp-schedule" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Schedule for</label>
             <input
+              name="camp-schedule"
+              autoComplete="off"
               id="camp-schedule"
               type="datetime-local"
               value={scheduledAt}
@@ -190,6 +201,7 @@ export default function CreateCampaignForm({ accounts, onClose, onSuccess, showT
           <div>
             <label htmlFor="camp-recurrence" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Recurrence</label>
             <select
+              name="camp-recurrence"
               id="camp-recurrence"
               value={recurrence}
               onChange={(e) => setRecurrence(e.target.value as RecurrenceType)}
@@ -205,14 +217,16 @@ export default function CreateCampaignForm({ accounts, onClose, onSuccess, showT
 
         {/* Tags */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Tags</label>
+          <label htmlFor="campaign-tags" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Tags</label>
           <div className="flex gap-2">
-            <input
+            <input id="campaign-tags"
+              name="tagsInput"
+              autoComplete="off"
               type="text"
               value={tagsInput}
               onChange={(e) => setTagsInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
-              placeholder="Add tag"
+              placeholder="e.g. marketing…"
               className="flex-1 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             />
             <button
@@ -241,7 +255,7 @@ export default function CreateCampaignForm({ accounts, onClose, onSuccess, showT
             disabled={saving}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium bg-amber-700 text-white hover:bg-amber-800 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors"
           >
-            {saving ? 'Creating...' : 'Create Campaign'}
+            {saving ? 'Creating…' : 'Create Campaign'}
           </button>
           <button
             type="button"

@@ -495,11 +495,13 @@ function useContentEditorView({
       >
         {mode === 'edit' ? (
           <textarea
+            name="content"
+            autoComplete="off"
             ref={textareaRef}
             value={content}
             onChange={handleTextareaChange}
             className="w-full min-h-[400px] p-4 font-mono text-sm text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg resize-y focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:border-transparent leading-relaxed"
-            placeholder="Start writing in markdown..."
+            placeholder="Start writing in markdown…"
             aria-label="Content editor"
             spellCheck
           />

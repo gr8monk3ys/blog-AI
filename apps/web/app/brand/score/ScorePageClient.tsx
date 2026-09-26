@@ -195,6 +195,7 @@ function useScorePage() {
                 <div className="h-10 rounded-xl bg-gray-200 dark:bg-gray-700 animate-pulse" />
               ) : (
                 <select
+                  name="profile-select"
                   id="profile-select"
                   value={selectedProfileId}
                   onChange={(e) => {
@@ -238,6 +239,7 @@ function useScorePage() {
                 Content Type
               </label>
               <select
+                name="content-type-select"
                 id="content-type-select"
                 value={contentType}
                 onChange={(e) => setContentType(e.target.value as ContentType)}
@@ -260,6 +262,8 @@ function useScorePage() {
                 Content to Score
               </label>
               <textarea
+                name="content-textarea"
+                autoComplete="off"
                 id="content-textarea"
                 value={content}
                 onChange={(e) => {

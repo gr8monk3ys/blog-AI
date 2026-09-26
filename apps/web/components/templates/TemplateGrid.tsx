@@ -183,10 +183,12 @@ export default function TemplateGrid({
                 <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
               </div>
               <input
+                name="searchQuery"
+                autoComplete="off"
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search templates (e.g., landing page, email, social...)"
+                placeholder="Search templates (e.g. landing page, email, social)…"
                 className="block w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:border-amber-500 text-sm"
               />
               {searchQuery && (

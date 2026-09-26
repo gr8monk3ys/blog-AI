@@ -9,7 +9,7 @@ afterEach(() => {
 describe('Loading', () => {
   it('renders the loading message', () => {
     render(<Loading />)
-    expect(screen.getByText('Loading your workspace...')).toBeInTheDocument()
+    expect(screen.getByText('Loading your workspace…')).toBeInTheDocument()
   })
 
   it('renders a spinner animation element', () => {

@@ -116,6 +116,7 @@ export default function MembersList({
                     {!isOwner && !isSelf && (
                       <div className="flex items-center justify-end gap-2">
                         <select
+                          name="role"
                           value={member.role}
                           onChange={(e) => handleRoleChange(member.user_id, e.target.value as OrganizationRole)}
                           disabled={isUpdating}

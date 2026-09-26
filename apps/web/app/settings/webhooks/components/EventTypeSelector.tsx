@@ -35,6 +35,7 @@ export default function EventTypeSelector({ selected, onChange }: EventTypeSelec
             <div className="flex items-center gap-2 mb-2">
               <label className="inline-flex items-center gap-2 cursor-pointer">
                 <input
+                  name="allSelected"
                   type="checkbox"
                   checked={allSelected}
                   onChange={() => toggleGroup(group.types)}
@@ -47,6 +48,8 @@ export default function EventTypeSelector({ selected, onChange }: EventTypeSelec
               {group.types.map((type) => (
                 <label key={type} className="flex items-center gap-2 cursor-pointer">
                   <input
+                    name="eventTypes"
+                    value={type}
                     type="checkbox"
                     checked={selected.includes(type)}
                     onChange={() => toggle(type)}

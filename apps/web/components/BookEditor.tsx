@@ -96,6 +96,8 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
           {isEditingTitle ? (
             <div className="flex items-center">
               <input
+                name="title"
+                autoComplete="off"
                 type="text"
                 value={editingBook.title}
                 onChange={(e) => setEditingBook({ ...editingBook, title: e.target.value })}
@@ -157,11 +159,13 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
           {isEditingTags && (
             <div className="flex items-center">
               <input
+                name="newTag"
+                autoComplete="off"
                 type="text"
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
                 className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-l px-2 py-1 text-sm"
-                placeholder="Add tag..."
+                placeholder="Add tag…"
               />
               <button
                 onClick={handleAddTag}
@@ -255,6 +259,8 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
                   </Dialog.Title>
                   <div className="mt-2">
                     <input
+                      name="title"
+                      autoComplete="off"
                       type="text"
                       value={isEditingChapter !== null ? editingBook.chapters[isEditingChapter]?.title ?? '' : ''}
                       onChange={(e) => {
@@ -345,6 +351,8 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
                             {topic.title}
                           </h4>
                           <textarea
+                            name="content"
+                            autoComplete="off"
                             value={topic.content}
                             onChange={(e) => {
                               const updatedBook = { ...editingBook };

@@ -17,7 +17,7 @@ export default function Loading() {
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-950 px-4">
       <div className="w-full max-w-md text-center">
         <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600 dark:border-amber-900 dark:border-t-amber-500" />
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Loading your workspace...</p>
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Loading your workspace…</p>
         <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">This should only take a few seconds.</p>
 
         {showHelp ? (

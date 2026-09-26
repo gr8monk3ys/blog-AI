@@ -111,6 +111,7 @@ export default function PostComposer({ accounts, showToast, onScheduled }: PostC
       {/* Account selector */}
       <div className="flex items-center gap-3">
         <select
+          name="selectedAccountId"
           value={selectedAccountId}
           onChange={(e) => setSelectedAccountId(e.target.value)}
           className="flex-1 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
@@ -127,10 +128,12 @@ export default function PostComposer({ accounts, showToast, onScheduled }: PostC
       {/* Content */}
       <div>
         <textarea
+          name="text"
+          autoComplete="off"
           rows={4}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="What do you want to share?"
+          placeholder="e.g. Our new guide is live…"
           className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
           required
         />
@@ -145,10 +148,13 @@ export default function PostComposer({ accounts, showToast, onScheduled }: PostC
 
       {/* Media URL */}
       <input
+        name="mediaUrl"
+        autoComplete="url"
+        spellCheck={false}
         type="url"
         value={mediaUrl}
         onChange={(e) => setMediaUrl(e.target.value)}
-        placeholder="Media URL (optional)"
+        placeholder="https://example.com/image.png…"
         className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
       />
 
@@ -158,6 +164,8 @@ export default function PostComposer({ accounts, showToast, onScheduled }: PostC
           <label htmlFor="schedule-at" className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Schedule for</label>
           <div className="flex gap-2">
             <input
+              name="schedule-at"
+              autoComplete="off"
               id="schedule-at"
               type="datetime-local"
               value={scheduledAt}
@@ -171,13 +179,14 @@ export default function PostComposer({ accounts, showToast, onScheduled }: PostC
               disabled={suggestingTime || !platform}
               className="px-3 py-2 rounded-lg text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors whitespace-nowrap"
             >
-              {suggestingTime ? 'Suggesting...' : 'Optimal Time'}
+              {suggestingTime ? 'Suggesting…' : 'Optimal Time'}
             </button>
           </div>
         </div>
         <div>
           <label htmlFor="recurrence" className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Recurrence</label>
           <select
+            name="recurrence"
             id="recurrence"
             value={recurrence}
             onChange={(e) => setRecurrence(e.target.value as RecurrenceType)}
@@ -195,7 +204,7 @@ export default function PostComposer({ accounts, showToast, onScheduled }: PostC
         disabled={loading || !text.trim() || !scheduledAt || isOverLimit}
         className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium bg-amber-700 text-white hover:bg-amber-800 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors"
       >
-        {loading ? 'Scheduling...' : 'Schedule Post'}
+        {loading ? 'Scheduling…' : 'Schedule Post'}
       </button>
     </form>
   )

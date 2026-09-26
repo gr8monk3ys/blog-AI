@@ -242,7 +242,7 @@ function LoadingSkeleton() {
       <div className="flex items-center justify-center py-4">
         <div className="flex items-center gap-3">
           <div className="animate-spin rounded-full h-5 w-5 border-2 border-amber-200 border-t-amber-600 dark:border-amber-900 dark:border-t-amber-500" />
-          <span className="text-sm text-gray-600 dark:text-gray-400">Generating variations...</span>
+          <span className="text-sm text-gray-600 dark:text-gray-400">Generating variations…</span>
         </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

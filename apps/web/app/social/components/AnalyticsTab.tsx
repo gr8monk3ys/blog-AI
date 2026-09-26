@@ -96,6 +96,7 @@ export default function AnalyticsTab() {
           Campaign
         </label>
         <select
+          name="analytics-campaign"
           id="analytics-campaign"
           value={selectedCampaignId || ''}
           onChange={(e) => handleSelectCampaign(e.target.value)}

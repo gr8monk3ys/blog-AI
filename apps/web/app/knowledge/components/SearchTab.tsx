@@ -81,12 +81,14 @@ export default function SearchTab({ documents }: SearchTabProps) {
             <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
           </div>
           <input
+            name="query"
+            autoComplete="off"
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             className="block w-full pl-11 pr-10 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 shadow-sm placeholder-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:border-amber-500 text-sm text-gray-900 dark:text-gray-100 transition"
-            placeholder="Search your knowledge base..."
+            placeholder="Search your knowledge base…"
             aria-label="Search knowledge base"
           />
           <AnimatePresence>
@@ -113,6 +115,7 @@ export default function SearchTab({ documents }: SearchTabProps) {
               Results:
             </label>
             <select
+              name="topk"
               id="topk"
               value={topK}
               onChange={(e) => setTopK(Number(e.target.value))}
@@ -130,6 +133,7 @@ export default function SearchTab({ documents }: SearchTabProps) {
               Min score: {minScore.toFixed(1)}
             </label>
             <input
+              name="minscore"
               id="minscore"
               type="range"
               min="0.5"
@@ -146,7 +150,7 @@ export default function SearchTab({ documents }: SearchTabProps) {
             disabled={!query.trim() || searching}
             className="ml-auto px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {searching ? 'Searching...' : 'Search'}
+            {searching ? 'Searching…' : 'Search'}
           </button>
         </div>
       </div>

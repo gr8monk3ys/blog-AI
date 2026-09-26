@@ -104,7 +104,7 @@ export default function BrandVoiceSelector({
             <div className="relative">
               <Listbox.Button className="relative w-40 cursor-pointer rounded-lg bg-white dark:bg-gray-800 py-1.5 pl-3 pr-8 text-left border border-gray-300 dark:border-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 text-sm">
                 <span className="block truncate">
-                  {selectedProfile?.name || 'Select...'}
+                  {selectedProfile?.name || 'Select…'}
                 </span>
                 <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                   <ChevronUpDownIcon className="h-4 w-4 text-gray-400" />
@@ -181,7 +181,7 @@ export default function BrandVoiceSelector({
               </Listbox.Label>
               <Listbox.Button className="relative w-full cursor-pointer rounded-lg bg-white dark:bg-gray-800 py-2 pl-3 pr-10 text-left border border-gray-300 dark:border-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 text-sm">
                 <span className="block truncate">
-                  {selectedProfile?.name || 'Choose a profile...'}
+                  {selectedProfile?.name || 'Choose a profile…'}
                 </span>
                 <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                   <ChevronUpDownIcon className="h-5 w-5 text-gray-400" />
@@ -195,7 +195,7 @@ export default function BrandVoiceSelector({
               >
                 <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white dark:bg-gray-800 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 text-sm">
                   {loading ? (
-                    <div className="py-2 px-4 text-gray-500 dark:text-gray-400">Loading...</div>
+                    <div className="py-2 px-4 text-gray-500 dark:text-gray-400">Loading…</div>
                   ) : profiles.length === 0 ? (
                     <div className="py-2 px-4 text-gray-500 dark:text-gray-400">
                       No profiles found.{' '}

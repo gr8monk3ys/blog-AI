@@ -107,6 +107,7 @@ export default function TeamPageClient() {
           {orgs.length > 1 && (
             <div className="mb-6">
               <select
+                name="id"
                 value={activeOrg?.id || ''}
                 onChange={(e) => setActiveOrg(orgs.find((o) => o.id === e.target.value) || null)}
                 className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus-visible:border-amber-500 focus-visible:ring-amber-500"

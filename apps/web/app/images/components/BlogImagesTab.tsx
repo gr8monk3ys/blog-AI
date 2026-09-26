@@ -87,11 +87,13 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
             Blog title <span className="text-red-500">*</span>
           </label>
           <input
+            name="blog-title"
+            autoComplete="off"
             id="blog-title"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Your blog post title"
+            placeholder="e.g. 10 Ways to Improve Team Focus…"
             className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             required
           />
@@ -103,11 +105,13 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
             Blog content <span className="text-red-500">*</span>
           </label>
           <textarea
+            name="blog-content"
+            autoComplete="off"
             id="blog-content"
             rows={8}
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Paste your blog content (minimum 10 characters)..."
+            placeholder="Paste your blog content (minimum 10 characters)…"
             className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             required
             minLength={10}
@@ -117,16 +121,18 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
 
         {/* Keywords */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+          <label htmlFor="blog-images-keywords" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
             Keywords (optional)
           </label>
           <div className="flex gap-2">
-            <input
+            <input id="blog-images-keywords"
+              name="keywordInput"
+              autoComplete="off"
               type="text"
               value={keywordInput}
               onChange={(e) => setKeywordInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addKeyword() } }}
-              placeholder="Add keyword"
+              placeholder="e.g. content strategy…"
               className="flex-1 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             />
             <button
@@ -159,6 +165,7 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
         <div className="flex flex-wrap items-center gap-6">
           <label className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
             <input
+              name="generateFeatured"
               type="checkbox"
               checked={generateFeatured}
               onChange={(e) => setGenerateFeatured(e.target.checked)}
@@ -168,6 +175,7 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
           </label>
           <label className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
             <input
+              name="generateSocial"
               type="checkbox"
               checked={generateSocial}
               onChange={(e) => setGenerateSocial(e.target.checked)}
@@ -178,6 +186,7 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
           <div className="inline-flex items-center gap-2">
             <label htmlFor="inline-count" className="text-sm text-gray-600 dark:text-gray-400">Inline images:</label>
             <select
+              name="inline-count"
               id="inline-count"
               value={inlineCount}
               onChange={(e) => setInlineCount(Number(e.target.value))}
@@ -214,7 +223,7 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              Generating...
+              Generating…
             </>
           ) : (
             'Generate Blog Images'

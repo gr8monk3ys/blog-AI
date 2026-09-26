@@ -137,10 +137,12 @@ export default function BlogPostEditor() {
       <aside className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4">
         <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Admin Access</div>
         <input
+          name="adminKey"
+          autoComplete="off"
           type="password"
           value={adminKey}
           onChange={(event) => setAdminKey(event.target.value)}
-          placeholder="BLOG_ADMIN_KEY"
+          placeholder="BLOG_ADMIN_KEY…"
           className="w-full text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2"
         />
         <button
@@ -205,8 +207,10 @@ export default function BlogPostEditor() {
 
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-xs text-gray-500 dark:text-gray-400">Title</label>
-            <input
+            <label htmlFor="admin-post-title" className="text-xs text-gray-500 dark:text-gray-400">Title</label>
+            <input id="admin-post-title"
+              name="title"
+              autoComplete="off"
               type="text"
               value={form.title}
               onChange={(event) => setForm({ ...form, title: event.target.value })}
@@ -214,8 +218,10 @@ export default function BlogPostEditor() {
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500 dark:text-gray-400">Slug</label>
-            <input
+            <label htmlFor="admin-post-slug" className="text-xs text-gray-500 dark:text-gray-400">Slug</label>
+            <input id="admin-post-slug"
+              name="slug"
+              autoComplete="off"
               type="text"
               value={form.slug}
               onChange={(event) => setForm({ ...form, slug: event.target.value })}
@@ -223,8 +229,9 @@ export default function BlogPostEditor() {
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500 dark:text-gray-400">Status</label>
-            <select
+            <label htmlFor="admin-post-status" className="text-xs text-gray-500 dark:text-gray-400">Status</label>
+            <select id="admin-post-status"
+              name="status"
               value={form.status}
               onChange={(event) =>
                 setForm({ ...form, status: event.target.value as BlogPost['status'] })
@@ -237,8 +244,10 @@ export default function BlogPostEditor() {
             </select>
           </div>
           <div>
-            <label className="text-xs text-gray-500 dark:text-gray-400">Published At</label>
-            <input
+            <label htmlFor="admin-post-published-at" className="text-xs text-gray-500 dark:text-gray-400">Published At</label>
+            <input id="admin-post-published-at"
+              name="published_at"
+              autoComplete="off"
               type="datetime-local"
               value={form.published_at ? form.published_at.slice(0, 16) : ''}
               onChange={(event) =>
@@ -255,8 +264,10 @@ export default function BlogPostEditor() {
         </div>
 
         <div className="mt-4">
-          <label className="text-xs text-gray-500 dark:text-gray-400">Excerpt</label>
-          <textarea
+          <label htmlFor="admin-post-excerpt" className="text-xs text-gray-500 dark:text-gray-400">Excerpt</label>
+          <textarea id="admin-post-excerpt"
+            name="excerpt"
+            autoComplete="off"
             value={form.excerpt}
             onChange={(event) => setForm({ ...form, excerpt: event.target.value })}
             className="mt-1 w-full text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 min-h-[90px]"
@@ -264,8 +275,10 @@ export default function BlogPostEditor() {
         </div>
 
         <div className="mt-4">
-          <label className="text-xs text-gray-500 dark:text-gray-400">Body</label>
-          <textarea
+          <label htmlFor="admin-post-body" className="text-xs text-gray-500 dark:text-gray-400">Body</label>
+          <textarea id="admin-post-body"
+            name="body"
+            autoComplete="off"
             value={form.body}
             onChange={(event) => setForm({ ...form, body: event.target.value })}
             className="mt-1 w-full text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 min-h-[240px]"
@@ -274,8 +287,10 @@ export default function BlogPostEditor() {
 
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-xs text-gray-500 dark:text-gray-400">Tags (comma separated)</label>
-            <input
+            <label htmlFor="admin-post-tags" className="text-xs text-gray-500 dark:text-gray-400">Tags (comma separated)</label>
+            <input id="admin-post-tags"
+              name="tags"
+              autoComplete="off"
               type="text"
               value={form.tags.join(', ')}
               onChange={(event) =>
@@ -291,8 +306,10 @@ export default function BlogPostEditor() {
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500 dark:text-gray-400">SEO Title</label>
-            <input
+            <label htmlFor="admin-post-seo-title" className="text-xs text-gray-500 dark:text-gray-400">SEO Title</label>
+            <input id="admin-post-seo-title"
+              name="seo_title"
+              autoComplete="off"
               type="text"
               value={form.seo_title || ''}
               onChange={(event) => setForm({ ...form, seo_title: event.target.value })}
@@ -300,8 +317,10 @@ export default function BlogPostEditor() {
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500 dark:text-gray-400">SEO Description</label>
-            <textarea
+            <label htmlFor="admin-post-seo-description" className="text-xs text-gray-500 dark:text-gray-400">SEO Description</label>
+            <textarea id="admin-post-seo-description"
+              name="seo_description"
+              autoComplete="off"
               value={form.seo_description || ''}
               onChange={(event) =>
                 setForm({ ...form, seo_description: event.target.value })

@@ -214,8 +214,8 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
   }
 
   const getButtonText = (tier: UsageTier) => {
-    if (loading) return 'Loading...'
-    if (upgrading === tier) return 'Processing...'
+    if (loading) return 'Loading…'
+    if (upgrading === tier) return 'Processing…'
     if (tier === currentTier) return 'Current Plan'
     if (tier === 'free' && currentTier && currentTier !== 'free') return 'Manage in Portal'
     return TIER_POSITIONING[tier as Exclude<UsageTier, 'business'>]?.cta || 'Checkout'

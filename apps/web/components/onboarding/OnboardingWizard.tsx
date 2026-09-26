@@ -277,11 +277,12 @@ function useOnboardingWizardView({
             Your name
           </label>
           <input
+            name="onboarding-name"
             id="onboarding-name"
             type="text"
             value={formData.name}
             onChange={(e) => updateField('name', e.target.value)}
-            placeholder="Jane Smith"
+            placeholder="Jane Smith…"
             className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
             autoComplete="name"
           />
@@ -296,11 +297,12 @@ function useOnboardingWizardView({
             <span className="text-gray-400 dark:text-gray-500 font-normal"> (optional)</span>
           </label>
           <input
+            name="onboarding-company"
             id="onboarding-company"
             type="text"
             value={formData.company}
             onChange={(e) => updateField('company', e.target.value)}
-            placeholder="Acme Inc."
+            placeholder="Acme Inc.…"
             className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
             autoComplete="organization"
           />
@@ -330,6 +332,7 @@ function useOnboardingWizardView({
           Writing style
         </label>
         <select
+          name="onboarding-writing-style"
           id="onboarding-writing-style"
           value={formData.writingStyle}
           onChange={(e) =>
@@ -408,11 +411,13 @@ function useOnboardingWizardView({
           vocabulary.
         </p>
         <textarea
+          name="onboarding-sample"
+          autoComplete="off"
           id="onboarding-sample"
           value={formData.sampleWriting}
           onChange={(e) => updateField('sampleWriting', e.target.value)}
           rows={4}
-          placeholder="Paste a paragraph that represents how you write..."
+          placeholder="Paste a paragraph that represents how you write…"
           className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
         />
       </div>
@@ -487,6 +492,8 @@ function useOnboardingWizardView({
           We will carry this into your first bulk workflow so you are not starting from zero.
         </p>
         <input
+          name="onboarding-topic"
+          autoComplete="off"
           id="onboarding-topic"
           type="text"
           value={formData.topicSuggestion}
@@ -715,7 +722,7 @@ function useOnboardingWizardView({
             aria-label={step === totalSteps - 2 ? 'Finish setup' : 'Next step'}
           >
             {saving ? (
-              'Saving...'
+              'Saving…'
             ) : step === totalSteps - 2 ? (
               <>
                 Finish Setup

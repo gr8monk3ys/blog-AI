@@ -13,7 +13,7 @@ interface ToolSearchProps {
 export default function ToolSearch({
   searchQuery,
   onSearchChange,
-  placeholder = 'Search tools...',
+  placeholder = 'Search tools…',
   resultCount,
 }: ToolSearchProps) {
   const handleClear = () => {
@@ -30,6 +30,8 @@ export default function ToolSearch({
           />
         </div>
         <input
+          name="searchQuery"
+          autoComplete="off"
           type="text"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}

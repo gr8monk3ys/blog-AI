@@ -477,6 +477,8 @@ function useBulkGenerationPageView() {
                   Drop a CSV file here, or click to browse
                 </p>
                 <input
+                  name="csv-upload"
+                  autoComplete="off"
                   ref={fileInputRef}
                   type="file"
                   accept=".csv"
@@ -543,23 +545,28 @@ function useBulkGenerationPageView() {
                           </span>
                           <div className="flex-1 space-y-3">
                             <input
+                              name="topic"
+                              autoComplete="off"
                               type="text"
                               value={item.topic}
                               onChange={(e) => updateItem(index, 'topic', e.target.value)}
-                              placeholder="Enter topic..."
+                              placeholder="Enter topic…"
                               disabled={isProcessing}
                               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus-visible:ring-amber-500 focus-visible:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
                             />
                             <div className="flex gap-3">
                               <input
+                                name="keywords"
+                                autoComplete="off"
                                 type="text"
                                 value={item.keywords.join(', ')}
                                 onChange={(e) => updateItem(index, 'keywords', e.target.value)}
-                                placeholder="Keywords (comma separated)"
+                                placeholder="e.g. AI, productivity, remote work…"
                                 disabled={isProcessing}
                                 className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus-visible:ring-amber-500 focus-visible:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
                               />
                               <select
+                                name="tone"
                                 value={item.tone}
                                 onChange={(e) => updateItem(index, 'tone', e.target.value)}
                                 disabled={isProcessing}
@@ -638,6 +645,7 @@ function useBulkGenerationPageView() {
                     Provider Strategy
                   </label>
                   <select
+                    name="provider-strategy"
                     id="provider-strategy"
                     value={providerStrategy}
                     onChange={(e) => {
@@ -665,6 +673,7 @@ function useBulkGenerationPageView() {
                       Provider
                     </label>
                     <select
+                      name="preferred-provider"
                       id="preferred-provider"
                       value={preferredProvider}
                       onChange={(e) => {
@@ -694,6 +703,7 @@ function useBulkGenerationPageView() {
                     Default Tone
                   </label>
                   <select
+                    name="default-tone"
                     id="default-tone"
                     value={sharedTone}
                     onChange={(e) => setSharedTone(e.target.value)}
@@ -713,6 +723,7 @@ function useBulkGenerationPageView() {
                     Parallel Generations
                   </label>
                   <select
+                    name="parallel-limit"
                     id="parallel-limit"
                     value={parallelLimit}
                     onChange={(e) => setParallelLimit(Number(e.target.value))}
@@ -730,6 +741,7 @@ function useBulkGenerationPageView() {
                 <div className="space-y-3 pt-2">
                   <label className="flex items-center gap-3">
                     <input
+                      name="useResearch"
                       type="checkbox"
                       checked={useResearch}
                       onChange={(e) => setUseResearch(e.target.checked)}
@@ -740,6 +752,7 @@ function useBulkGenerationPageView() {
                   </label>
                   <label className="flex items-center gap-3">
                     <input
+                      name="proofread"
                       type="checkbox"
                       checked={proofread}
                       onChange={(e) => setProofread(e.target.checked)}
@@ -750,6 +763,7 @@ function useBulkGenerationPageView() {
                   </label>
                   <label className="flex items-center gap-3">
                     <input
+                      name="humanize"
                       type="checkbox"
                       checked={humanize}
                       onChange={(e) => setHumanize(e.target.checked)}

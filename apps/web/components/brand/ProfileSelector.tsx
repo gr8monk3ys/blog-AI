@@ -85,6 +85,7 @@ function ProfileSelectorComponent({
       <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Select Brand Profile</h2>
       <div className="flex gap-4">
         <select
+          name="profileId"
           value={profileId}
           onChange={(e) => {
             const id = e.target.value
@@ -95,7 +96,7 @@ function ProfileSelectorComponent({
           className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus-visible:ring-2 focus-visible:ring-amber-500 bg-white dark:bg-gray-800 dark:text-gray-100"
         >
           <option value="">
-            {loadingProfiles ? 'Loading profiles...' : 'Select a profile...'}
+            {loadingProfiles ? 'Loading profiles…' : 'Select a profile…'}
           </option>
           {profiles.map((p) => (
             <option key={p.id} value={p.id}>
@@ -108,7 +109,7 @@ function ProfileSelectorComponent({
           disabled={!profileId.trim() || isLoading}
           className="px-6 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 disabled:bg-gray-300 dark:disabled:bg-gray-700"
         >
-          {isLoading ? 'Loading...' : 'Load'}
+          {isLoading ? 'Loading…' : 'Load'}
         </button>
       </div>
 

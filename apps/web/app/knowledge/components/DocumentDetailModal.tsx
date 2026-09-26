@@ -180,7 +180,7 @@ export default function DocumentDetailModal({
                   </h3>
                   {loadingChunks && chunks.length === 0 ? (
                     <div className="py-8 text-center text-sm text-gray-400">
-                      Loading chunks...
+                      Loading chunks…
                     </div>
                   ) : chunks.length === 0 ? (
                     <div className="py-8 text-center text-sm text-gray-400">
@@ -262,7 +262,7 @@ export default function DocumentDetailModal({
                           disabled={loadingChunks}
                           className="w-full py-2 text-sm text-amber-700 hover:text-amber-800 font-medium disabled:opacity-50"
                         >
-                          {loadingChunks ? 'Loading...' : `Load more (${chunks.length}/${totalChunks})`}
+                          {loadingChunks ? 'Loading…' : `Load more (${chunks.length}/${totalChunks})`}
                         </button>
                       )}
                     </div>

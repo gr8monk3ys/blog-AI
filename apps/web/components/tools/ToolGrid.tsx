@@ -108,7 +108,7 @@ export default function ToolGrid({
             <ToolSearch
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
-              placeholder="Search for tools (e.g., blog, email, SEO...)"
+              placeholder="Search for tools (e.g. blog, email, SEO)…"
               resultCount={searchQuery ? filteredTools.length : undefined}
             />
           )}

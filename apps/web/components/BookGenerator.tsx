@@ -182,12 +182,14 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
             </label>
           </div>
           <input
+            name="title"
+            autoComplete="off"
             type="text"
             id="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 bg-white dark:bg-gray-800 dark:text-gray-100"
-            placeholder="Enter book title..."
+            placeholder="Enter book title…"
             required
           />
         </div>
@@ -204,6 +206,9 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
                 Number of Chapters
               </label>
               <input
+                name="numChapters"
+                autoComplete="off"
+                inputMode="decimal"
                 type="number"
                 id="numChapters"
                 value={numChapters}
@@ -218,6 +223,9 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
                 Topics per Chapter
               </label>
               <input
+                name="sectionsPerChapter"
+                autoComplete="off"
+                inputMode="decimal"
                 type="number"
                 id="sectionsPerChapter"
                 value={sectionsPerChapter}
@@ -236,12 +244,14 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
               Keywords (comma separated)
             </label>
             <input
+              name="keywords"
+              autoComplete="off"
               type="text"
               id="keywords"
               value={keywords}
               onChange={(e) => setKeywords(e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500"
-              placeholder="AI, technology, future..."
+              placeholder="AI, technology, future…"
             />
           </div>
 
@@ -250,6 +260,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
               Tone
             </label>
             <select
+              name="tone"
               id="tone"
               value={tone}
               onChange={(e) => setTone(e.target.value as BookGenerationOptions['tone'])}
@@ -269,6 +280,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
               Model Provider
             </label>
             <select
+              name="provider"
               id="provider"
               value={providerType}
               onChange={(e) => {

@@ -254,12 +254,14 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
             </label>
           </div>
           <input
+            name="topic"
+            autoComplete="off"
             type="text"
             id="topic"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 bg-white dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
-            placeholder="Enter your topic..."
+            placeholder="Enter your topic…"
             required
           />
         </div>
@@ -270,12 +272,14 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
               Keywords (comma separated)
             </label>
             <input
+              name="keywords"
+              autoComplete="off"
               type="text"
               id="keywords"
               value={keywords}
               onChange={(e) => setKeywords(e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
-              placeholder="SEO, marketing, content..."
+              placeholder="SEO, marketing, content…"
             />
           </div>
 
@@ -284,6 +288,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
               Tone
             </label>
             <select
+              name="tone"
               id="tone"
               value={tone}
               onChange={(e) => setTone(e.target.value as BlogGenerationOptions['tone'])}
@@ -303,6 +308,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
               Model Provider
             </label>
             <select
+              name="provider"
               id="provider"
               value={providerType}
               onChange={(e) => {
@@ -347,6 +353,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
               <span className="text-sm text-gray-700 dark:text-gray-300" id="research-label">Use web research</span>
               {useResearch && (
                 <select
+                  name="researchDepth"
                   value={researchDepth}
                   onChange={(e) => setResearchDepth(e.target.value as 'basic' | 'deep' | 'comprehensive')}
                   className="ml-2 text-xs rounded border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus-visible:border-amber-500 focus-visible:ring-amber-500"

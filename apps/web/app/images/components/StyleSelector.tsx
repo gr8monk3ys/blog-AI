@@ -34,8 +34,9 @@ export default function StyleSelector({
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
       <div>
-        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Provider</label>
-        <select
+        <label htmlFor="image-style-provider" className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Provider</label>
+        <select id="image-style-provider"
+          name="provider"
           value={provider}
           onChange={(e) => onProviderChange(e.target.value as ImageProvider)}
           className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
@@ -47,8 +48,9 @@ export default function StyleSelector({
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Style</label>
-        <select
+        <label htmlFor="image-style-style" className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Style</label>
+        <select id="image-style-style"
+          name="style"
           value={style}
           onChange={(e) => onStyleChange(e.target.value as ImageStyle)}
           className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
@@ -59,8 +61,9 @@ export default function StyleSelector({
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Quality</label>
-        <select
+        <label htmlFor="image-style-quality" className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Quality</label>
+        <select id="image-style-quality"
+          name="quality"
           value={quality}
           onChange={(e) => onQualityChange(e.target.value as ImageQuality)}
           className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
@@ -72,8 +75,9 @@ export default function StyleSelector({
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Size</label>
-        <select
+        <label htmlFor="image-style-size" className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Size</label>
+        <select id="image-style-size"
+          name="size"
           value={size}
           onChange={(e) => onSizeChange(e.target.value as ImageSize)}
           className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"

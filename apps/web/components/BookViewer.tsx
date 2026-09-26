@@ -57,6 +57,7 @@ export default function BookViewer({ book, filePath }: BookViewerProps) {
         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{book.title}</h1>
         <div className="flex items-center space-x-2">
           <select
+            name="downloadFormat"
             value={downloadFormat}
             onChange={(e) => setDownloadFormat(e.target.value as 'markdown' | 'json')}
             className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500"

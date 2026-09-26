@@ -169,11 +169,13 @@ export default function PlagiarismPageClient() {
             Content to check <span className="text-red-500">*</span>
           </label>
           <textarea
+            name="plag-content"
+            autoComplete="off"
             id="plag-content"
             rows={10}
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Paste the content you want to check for plagiarism (minimum 50 characters)..."
+            placeholder="Paste the content you want to check for plagiarism (minimum 50 characters)…"
             className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             required
             minLength={50}
@@ -191,11 +193,13 @@ export default function PlagiarismPageClient() {
               Title (optional)
             </label>
             <input
+              name="plag-title"
+              autoComplete="off"
               id="plag-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Content title"
+              placeholder="e.g. How We Cut Onboarding Time in Half…"
               className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             />
           </div>
@@ -205,6 +209,7 @@ export default function PlagiarismPageClient() {
               Provider
             </label>
             <select
+              name="plag-provider"
               id="plag-provider"
               value={provider}
               onChange={(e) => setProvider(e.target.value as '' | PlagiarismProvider)}
@@ -219,16 +224,19 @@ export default function PlagiarismPageClient() {
 
         {/* Exclude URLs */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+          <label htmlFor="plagiarism-exclude-urls" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
             Exclude URLs (optional)
           </label>
           <div className="flex gap-2">
-            <input
+            <input id="plagiarism-exclude-urls"
+              name="excludeUrlInput"
+              autoComplete="url"
+              spellCheck={false}
               type="url"
               value={excludeUrlInput}
               onChange={(e) => setExcludeUrlInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addExcludeUrl() } }}
-              placeholder="https://example.com/your-original"
+              placeholder="https://example.com/your-original…"
               className="flex-1 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             />
             <button
@@ -260,6 +268,7 @@ export default function PlagiarismPageClient() {
         {/* Skip cache toggle */}
         <label className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
           <input
+            name="skipCache"
             type="checkbox"
             checked={skipCache}
             onChange={(e) => setSkipCache(e.target.checked)}
@@ -280,7 +289,7 @@ export default function PlagiarismPageClient() {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              Checking...
+              Checking…
             </>
           ) : (
             <>

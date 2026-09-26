@@ -117,7 +117,7 @@ export default function ToolsPageClient() {
     <Suspense
       fallback={
         <main className="min-h-screen flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
-          Loading tools...
+          Loading tools…
         </main>
       }
     >

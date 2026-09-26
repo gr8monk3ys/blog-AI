@@ -125,12 +125,14 @@ export default function HistoryFilters({
             />
           </div>
           <input
+            name="search"
+            autoComplete="off"
             ref={searchInputRef}
             type="text"
             value={filters.search || ''}
             onChange={(e) => handleSearchChange(e.target.value)}
             className="block w-full pl-11 pr-10 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:border-amber-500 text-sm dark:text-gray-100 transition"
-            placeholder="Search your content history..."
+            placeholder="Search your content history…"
             aria-label="Search history"
           />
           <AnimatePresence>

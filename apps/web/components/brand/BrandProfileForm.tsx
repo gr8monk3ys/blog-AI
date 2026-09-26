@@ -154,11 +154,13 @@ function useBrandProfileFormView({
           Profile Name *
         </label>
         <input
+          name="profile-name"
+          autoComplete="name"
           type="text"
           id="profile-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="e.g., Tech Startup Voice"
+          placeholder="e.g. Tech Startup Voice…"
           className="block w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
           required
         />
@@ -173,6 +175,7 @@ function useBrandProfileFormView({
           Writing Style
         </label>
         <select
+          name="writing-style"
           id="writing-style"
           value={writingStyle}
           onChange={(e) => setWritingStyle(e.target.value as WritingStyle)}
@@ -218,12 +221,13 @@ function useBrandProfileFormView({
           Industry
         </label>
         <select
+          name="industry"
           id="industry"
           value={industry || ''}
           onChange={(e) => setIndustry((e.target.value as Industry) || null)}
           className="block w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
         >
-          <option value="">Select an industry...</option>
+          <option value="">Select an industry…</option>
           {INDUSTRIES.map((ind) => (
             <option key={ind.value} value={ind.value}>
               {ind.label}
@@ -241,10 +245,12 @@ function useBrandProfileFormView({
           Target Audience
         </label>
         <textarea
+          name="target-audience"
+          autoComplete="off"
           id="target-audience"
           value={targetAudience}
           onChange={(e) => setTargetAudience(e.target.value)}
-          placeholder="Describe your ideal reader or customer..."
+          placeholder="Describe your ideal reader or customer…"
           rows={2}
           className="block w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
         />
@@ -262,10 +268,12 @@ function useBrandProfileFormView({
           Paste an example of your ideal brand voice for the AI to learn from.
         </p>
         <textarea
+          name="example-content"
+          autoComplete="off"
           id="example-content"
           value={exampleContent}
           onChange={(e) => setExampleContent(e.target.value)}
-          placeholder="Paste a paragraph that exemplifies your brand voice..."
+          placeholder="Paste a paragraph that exemplifies your brand voice…"
           rows={4}
           className="block w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
         />
@@ -281,6 +289,8 @@ function useBrandProfileFormView({
         </label>
         <div className="flex gap-2 mb-2">
           <input
+            name="preferred-words-input"
+            autoComplete="off"
             id="preferred-words-input"
             type="text"
             value={preferredWordInput}
@@ -291,7 +301,7 @@ function useBrandProfileFormView({
                 addToArray(preferredWordInput, setPreferredWords, setPreferredWordInput)
               }
             }}
-            placeholder="Add a word or phrase..."
+            placeholder="Add a word or phrase…"
             className="flex-1 rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm dark:bg-gray-800 dark:text-gray-100"
           />
           <button
@@ -333,6 +343,8 @@ function useBrandProfileFormView({
         </label>
         <div className="flex gap-2 mb-2">
           <input
+            name="avoid-words-input"
+            autoComplete="off"
             id="avoid-words-input"
             type="text"
             value={avoidWordInput}
@@ -343,7 +355,7 @@ function useBrandProfileFormView({
                 addToArray(avoidWordInput, setAvoidWords, setAvoidWordInput)
               }
             }}
-            placeholder="Add a word to avoid..."
+            placeholder="Add a word to avoid…"
             className="flex-1 rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm dark:bg-gray-800 dark:text-gray-100"
           />
           <button
@@ -385,6 +397,8 @@ function useBrandProfileFormView({
         </label>
         <div className="flex gap-2 mb-2">
           <input
+            name="brand-values-input"
+            autoComplete="off"
             id="brand-values-input"
             type="text"
             value={brandValueInput}
@@ -395,7 +409,7 @@ function useBrandProfileFormView({
                 addToArray(brandValueInput, setBrandValues, setBrandValueInput)
               }
             }}
-            placeholder="e.g., Innovation, Transparency..."
+            placeholder="e.g., Innovation, Transparency…"
             className="flex-1 rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm dark:bg-gray-800 dark:text-gray-100"
           />
           <button
@@ -437,6 +451,8 @@ function useBrandProfileFormView({
         </label>
         <div className="flex gap-2 mb-2">
           <input
+            name="content-themes-input"
+            autoComplete="off"
             id="content-themes-input"
             type="text"
             value={contentThemeInput}
@@ -447,7 +463,7 @@ function useBrandProfileFormView({
                 addToArray(contentThemeInput, setContentThemes, setContentThemeInput)
               }
             }}
-            placeholder="e.g., Future of work, Team collaboration..."
+            placeholder="e.g., Future of work, Team collaboration…"
             className="flex-1 rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm dark:bg-gray-800 dark:text-gray-100"
           />
           <button
@@ -496,7 +512,7 @@ function useBrandProfileFormView({
           className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <SparklesIcon className="w-4 h-4" />
-          {isLoading ? 'Saving...' : profile ? 'Update Profile' : 'Create Profile'}
+          {isLoading ? 'Saving…' : profile ? 'Update Profile' : 'Create Profile'}
         </button>
       </div>
     </form>

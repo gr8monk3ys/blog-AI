@@ -74,12 +74,14 @@ export default function CreateOrgModal({ open, onClose, onCreated }: CreateOrgMo
                       Organization Name
                     </label>
                     <input
+                      name="org-name"
+                      autoComplete="name"
                       id="org-name"
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
-                      placeholder="My Team"
+                      placeholder="e.g. Marketing Team…"
                       required
                       maxLength={100}
                     />
@@ -102,7 +104,7 @@ export default function CreateOrgModal({ open, onClose, onCreated }: CreateOrgMo
                       disabled={loading || !name.trim()}
                       className="px-4 py-2 text-sm font-medium text-white bg-amber-700 border border-transparent rounded-lg hover:bg-amber-800 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber-500 transition-colors disabled:opacity-50"
                     >
-                      {loading ? 'Creating...' : 'Create'}
+                      {loading ? 'Creating…' : 'Create'}
                     </button>
                   </div>
                 </form>

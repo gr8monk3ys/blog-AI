@@ -314,6 +314,8 @@ export default function UploadDropZone({
           PDF, DOCX, TXT, or MD (max 10MB)
         </p>
         <input
+          name="files"
+          autoComplete="off"
           ref={inputRef}
           type="file"
           className="hidden"
@@ -403,7 +405,7 @@ export default function UploadDropZone({
                 disabled={isUploading}
                 className="w-full px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isUploading ? 'Uploading...' : `Upload ${queue.filter((f) => f.status === 'queued').length} file(s)`}
+                {isUploading ? 'Uploading…' : `Upload ${queue.filter((f) => f.status === 'queued').length} file(s)`}
               </button>
             )}
           </m.div>

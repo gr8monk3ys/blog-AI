@@ -139,11 +139,13 @@ function useSaveTemplateModalView({
                       Template Name *
                     </label>
                     <input
+                      name="template-name"
+                      autoComplete="name"
                       type="text"
                       id="template-name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="e.g., SaaS Product Launch"
+                      placeholder="e.g. SaaS Product Launch…"
                       className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
                       required
                     />
@@ -157,10 +159,12 @@ function useSaveTemplateModalView({
                       Description
                     </label>
                     <textarea
+                      name="template-description"
+                      autoComplete="off"
                       id="template-description"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Describe what this template is for..."
+                      placeholder="Describe what this template is for…"
                       rows={3}
                       className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
                     />
@@ -174,6 +178,7 @@ function useSaveTemplateModalView({
                       Category
                     </label>
                     <select
+                      name="template-category"
                       id="template-category"
                       value={category}
                       onChange={(e) => setCategory(e.target.value as TemplateCategory)}
@@ -195,17 +200,20 @@ function useSaveTemplateModalView({
                       Tags (comma-separated)
                     </label>
                     <input
+                      name="template-tags"
+                      autoComplete="off"
                       type="text"
                       id="template-tags"
                       value={tagsInput}
                       onChange={(e) => setTagsInput(e.target.value)}
-                      placeholder="e.g., landing-page, conversion, copy"
+                      placeholder="e.g. landing-page, conversion, copy…"
                       className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
                     />
                   </div>
 
                   <div className="flex items-center gap-3">
                     <input
+                      name="template-public"
                       type="checkbox"
                       id="template-public"
                       checked={isPublic}
@@ -242,7 +250,7 @@ function useSaveTemplateModalView({
                       disabled={saving || !name.trim()}
                       className="px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {saving ? 'Saving...' : 'Save Template'}
+                      {saving ? 'Saving…' : 'Save Template'}
                     </button>
                   </div>
                 </form>

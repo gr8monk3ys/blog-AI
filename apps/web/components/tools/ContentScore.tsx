@@ -263,7 +263,7 @@ export default function ContentScore({
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-2 border-amber-200 border-t-amber-600 dark:border-amber-900 dark:border-t-amber-500" />
-          <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">Analyzing content...</span>
+          <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">Analyzing content…</span>
         </div>
       </div>
     )

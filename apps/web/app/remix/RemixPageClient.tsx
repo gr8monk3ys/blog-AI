@@ -238,6 +238,7 @@ function useRemixPageContentView() {
                   Provider
                 </label>
                 <select
+                  name="remix-provider"
                   id="remix-provider"
                   value={provider}
                   onChange={(e) => {

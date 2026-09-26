@@ -106,6 +106,8 @@ export default function ToolInputForm({
             {getInputLabel(tool)}
           </label>
           <textarea
+            name="input"
+            autoComplete="off"
             id="input"
             value={inputText}
             onChange={(e) => onInputTextChange(e.target.value)}
@@ -125,6 +127,7 @@ export default function ToolInputForm({
             Tone
           </label>
           <select
+            name="tone"
             id="tone"
             value={tone}
             onChange={(e) => onToneChange(e.target.value)}
@@ -170,7 +173,7 @@ export default function ToolInputForm({
           {loading ? (
             <>
               <LoadingSpinner />
-              Generating...
+              Generating…
             </>
           ) : (
             <>

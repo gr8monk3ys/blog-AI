@@ -98,6 +98,7 @@ export default function AdvancedOptions({
           </div>
           {generateVariations && (
             <select
+              name="variationCount"
               value={variationCount}
               onChange={(e) => onVariationCountChange(Number(e.target.value))}
               className="text-sm rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus-visible:border-amber-500 focus-visible:ring-amber-500"
@@ -118,11 +119,13 @@ export default function AdvancedOptions({
             Keywords for SEO scoring (comma-separated)
           </label>
           <input
+            name="keywords"
+            autoComplete="off"
             type="text"
             id="keywords"
             value={keywords}
             onChange={(e) => onKeywordsChange(e.target.value)}
-            placeholder="e.g., AI, machine learning, technology"
+            placeholder="e.g. AI, machine learning, technology…"
             className="block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
           />
         </div>
@@ -136,6 +139,7 @@ export default function AdvancedOptions({
             Model Provider
           </label>
           <select
+            name="provider"
             id="provider"
             value={providerType}
             onChange={(e) => onProviderTypeChange(e.target.value as LlmProviderType)}

@@ -27,16 +27,16 @@ export function getInputLabel(tool: Tool): string {
  */
 export function getInputPlaceholder(tool: Tool): string {
   const placeholders: Record<string, string> = {
-    blog: 'e.g., The future of artificial intelligence in healthcare...',
-    email: 'e.g., Following up on our meeting about the Q4 project...',
-    'social-media': 'e.g., Launching our new product line for summer...',
-    business: 'e.g., A SaaS platform that helps small businesses manage...',
-    naming: 'e.g., A tech startup focused on sustainable energy solutions...',
-    video: 'e.g., Tutorial on how to build a React application...',
-    seo: 'e.g., Best practices for remote work in 2024...',
-    rewriting: 'Paste the content you want to improve here...',
+    blog: 'e.g., The future of artificial intelligence in healthcare…',
+    email: 'e.g., Following up on our meeting about the Q4 project…',
+    'social-media': 'e.g., Launching our new product line for summer…',
+    business: 'e.g., A SaaS platform that helps small businesses manage…',
+    naming: 'e.g., A tech startup focused on sustainable energy solutions…',
+    video: 'e.g., Tutorial on how to build a React application…',
+    seo: 'e.g., Best practices for remote work in 2024…',
+    rewriting: 'Paste the content you want to improve here…',
   }
-  return placeholders[tool.category] || 'Enter your input here...'
+  return placeholders[tool.category] || 'Enter your input here…'
 }
 
 /**
