@@ -53,7 +53,6 @@ export default function ToolCard({ tool, index = 0, headingLevel = 3 }: ToolCard
       <Link
         href={`/tools/${tool.slug}`}
         className="block group"
-        aria-label={`Open ${tool.name} tool`}
       >
         <div className="relative h-full bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-amber-200 dark:hover:border-amber-700 transition duration-200 overflow-hidden">
           {/* Top badges row */}

@@ -92,7 +92,7 @@ export default function CategoryFilter({
                   <span
                     className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-xs ${
                       isSelected
-                        ? 'bg-amber-500 text-amber-100'
+                        ? 'bg-amber-700 text-white'
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                     }`}
                   >
