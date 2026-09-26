@@ -1,8 +1,7 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { headers } from 'next/headers'
 import { Inter, Source_Serif_4 } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/react'
-import { SpeedInsights } from '@vercel/speed-insights/next'
+import DeferredAnalytics from '../components/DeferredAnalytics'
 import { Providers } from './providers'
 import { ClerkProvider } from '../lib/clerk-ui'
 import './globals.css'
@@ -44,6 +43,15 @@ export const metadata: Metadata = {
   },
 }
 
+// Browser chrome matches the page background (globals.css
+// --background-start-rgb, light and dark).
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#fff8e6' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f0f0f' },
+  ],
+}
+
 export default async function RootLayout({
   children,
 }: {
@@ -75,8 +83,7 @@ export default async function RootLayout({
         ) : (
           <Providers>{children}</Providers>
         )}
-        <Analytics />
-        <SpeedInsights />
+        <DeferredAnalytics />
       </body>
     </html>
   )
