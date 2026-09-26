@@ -68,7 +68,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 }
 
 function renderMarkdownBlocks(body: string) {
-  const blocks = body.split(/\n\s*\n/).map((block) => block.trim()).filter(Boolean)
+  const blocks = body.split(/\n\s*\n/).flatMap((block) => block.trim() || [])
 
   return blocks.map((block, index) => {
     if (block.startsWith('# ')) {
@@ -93,7 +93,7 @@ function renderMarkdownBlocks(body: string) {
       )
     }
 
-    const lines = block.split('\n').map((line) => line.trim()).filter(Boolean)
+    const lines = block.split('\n').flatMap((line) => line.trim() || [])
     const isList = lines.length > 1 && lines.every((line) => line.startsWith('- '))
     if (isList) {
       return (

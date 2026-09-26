@@ -100,7 +100,10 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
                 autoComplete="off"
                 type="text"
                 value={editingBook.title}
-                onChange={(e) => setEditingBook({ ...editingBook, title: e.target.value })}
+                onChange={(e) => {
+                  const title = e.target.value
+                  setEditingBook((prev) => ({ ...prev, title }))
+                }}
                 className="text-3xl font-bold border-b border-amber-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:bg-transparent dark:text-gray-100"
               />
               <button

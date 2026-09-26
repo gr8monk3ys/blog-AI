@@ -59,13 +59,11 @@ const parseTags = (value: string | undefined): string[] => {
     return trimmed
       .slice(1, -1)
       .split(',')
-      .map((tag) => tag.trim())
-      .filter(Boolean)
+      .flatMap((tag) => tag.trim() || [])
   }
   return trimmed
     .split(',')
-    .map((tag) => tag.trim())
-    .filter(Boolean)
+    .flatMap((tag) => tag.trim() || [])
 }
 
 const buildExcerpt = (body: string, fallbackLength = 160): string => {

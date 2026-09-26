@@ -53,7 +53,7 @@ export function generateMockScore(content: string, keywords: string[]): ContentS
   const contentLower = content.toLowerCase()
   const primaryKeyword = keywords[0]?.toLowerCase() || ''
   const keywordOccurrences = primaryKeyword
-    ? (contentLower.match(new RegExp(primaryKeyword, 'g')) || []).length
+    ? contentLower.split(primaryKeyword).length - 1 // literal count; no per-call RegExp
     : 0
   const keywordDensity = wordCount > 0 ? (keywordOccurrences / wordCount) * 100 : 0
 

@@ -60,6 +60,17 @@ html.dark {
   }
 }
 
+/* Header theme toggle: show the icon for the stored preference. */
+.theme-pref-icon {
+  display: none;
+}
+html:not([data-theme-pref]) .theme-pref-icon[data-pref='system'],
+html[data-theme-pref='light'] .theme-pref-icon[data-pref='light'],
+html[data-theme-pref='dark'] .theme-pref-icon[data-pref='dark'],
+html[data-theme-pref='system'] .theme-pref-icon[data-pref='system'] {
+  display: block;
+}
+
 /* Numbers in tables line up column by column. */
 :where(table) {
   font-variant-numeric: tabular-nums;

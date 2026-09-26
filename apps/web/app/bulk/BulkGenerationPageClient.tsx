@@ -129,7 +129,7 @@ function useBulkGenerationPageView() {
     if (field === 'keywords' && typeof value === 'string') {
       newItems[index] = {
         ...currentItem,
-        keywords: value.split(',').map((k) => k.trim()).filter(Boolean),
+        keywords: value.split(',').flatMap((k) => k.trim() || []),
       }
     } else if (field === 'topic' && typeof value === 'string') {
       newItems[index] = { ...currentItem, topic: value }
@@ -266,7 +266,7 @@ function useBulkGenerationPageView() {
           createDraftItem(
             row.topic,
             row.keywords
-              ? row.keywords.split(',').map((k) => k.trim()).filter(Boolean)
+              ? row.keywords.split(',').flatMap((k) => k.trim() || [])
               : [],
             row.tone || sharedTone
           )

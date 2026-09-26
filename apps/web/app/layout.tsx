@@ -67,6 +67,7 @@ export default async function RootLayout({
   // Static string with no user input; nonce authorises it under the CSP.
   const themeScript =
     "(function(){try{var t=localStorage.getItem('theme');" +
+    "document.documentElement.dataset.themePref=(t==='dark'||t==='light')?t:'system';" +
     "if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches))" +
     "{document.documentElement.classList.add('dark')}}catch(e){}})()"
 

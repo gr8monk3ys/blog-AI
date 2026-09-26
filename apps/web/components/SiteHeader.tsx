@@ -51,7 +51,6 @@ export default function SiteHeader(): React.ReactElement {
     setTheme(next)
   }
 
-  const ThemeIcon = theme === 'dark' ? MoonIcon : theme === 'light' ? SunIcon : ComputerDesktopIcon
   const themeLabel = theme === 'dark' ? 'Dark mode' : theme === 'light' ? 'Light mode' : 'System theme'
 
   const renderNavLink = (link: NavLink): React.ReactElement => (
@@ -104,7 +103,16 @@ export default function SiteHeader(): React.ReactElement {
               aria-label={themeLabel}
               title={themeLabel}
             >
-              <ThemeIcon className="h-5 w-5" aria-hidden="true" />
+              {/* All three icons render; CSS shows the one matching
+                  <html data-theme-pref> (set before first paint), so the
+                  icon never flashes while the stored preference loads. */}
+              <SunIcon className="theme-pref-icon h-5 w-5" data-pref="light" aria-hidden="true" />
+              <MoonIcon className="theme-pref-icon h-5 w-5" data-pref="dark" aria-hidden="true" />
+              <ComputerDesktopIcon
+                className="theme-pref-icon h-5 w-5"
+                data-pref="system"
+                aria-hidden="true"
+              />
             </button>
             {isClerkConfigured ? (
               <>

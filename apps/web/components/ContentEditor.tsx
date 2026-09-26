@@ -61,9 +61,16 @@ const MAX_HISTORY_SIZE = 100
 // Helper: localStorage wrappers
 // ---------------------------------------------------------------------------
 
+// Versioned key; drafts saved under the pre-versioning key are still read.
+const DRAFT_PREFIX = 'content-editor-draft:v1:'
+const LEGACY_DRAFT_PREFIX = 'content-editor-draft:'
+
 function loadDraft(key: string): string | null {
   try {
-    return localStorage.getItem(`content-editor-draft:${key}`)
+    return (
+      localStorage.getItem(`${DRAFT_PREFIX}${key}`) ??
+      localStorage.getItem(`${LEGACY_DRAFT_PREFIX}${key}`)
+    )
   } catch {
     return null
   }
@@ -71,7 +78,7 @@ function loadDraft(key: string): string | null {
 
 function saveDraft(key: string, value: string): void {
   try {
-    localStorage.setItem(`content-editor-draft:${key}`, value)
+    localStorage.setItem(`${DRAFT_PREFIX}${key}`, value)
   } catch {
     // Storage full or unavailable -- silently ignore
   }
@@ -79,7 +86,8 @@ function saveDraft(key: string, value: string): void {
 
 function clearDraft(key: string): void {
   try {
-    localStorage.removeItem(`content-editor-draft:${key}`)
+    localStorage.removeItem(`${DRAFT_PREFIX}${key}`)
+    localStorage.removeItem(`${LEGACY_DRAFT_PREFIX}${key}`)
   } catch {
     // Ignore
   }

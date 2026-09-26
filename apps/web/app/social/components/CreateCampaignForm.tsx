@@ -34,7 +34,7 @@ export default function CreateCampaignForm({ accounts, onClose, onSuccess, showT
   function addTag() {
     const tag = tagsInput.trim()
     if (tag && !tags.includes(tag)) {
-      setTags([...tags, tag])
+      setTags((prev) => [...prev, tag])
       setTagsInput('')
     }
   }

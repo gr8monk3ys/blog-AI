@@ -113,7 +113,7 @@ export default function PlagiarismPageClient() {
   function addExcludeUrl() {
     const url = excludeUrlInput.trim()
     if (url && !excludeUrls.includes(url) && excludeUrls.length < 10) {
-      setExcludeUrls([...excludeUrls, url])
+      setExcludeUrls((prev) => [...prev, url])
       setExcludeUrlInput('')
     }
   }

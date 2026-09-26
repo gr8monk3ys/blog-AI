@@ -31,7 +31,7 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
   function addKeyword() {
     const kw = keywordInput.trim()
     if (kw && !keywords.includes(kw) && keywords.length < 20) {
-      setKeywords([...keywords, kw])
+      setKeywords((prev) => [...prev, kw])
       setKeywordInput('')
     }
   }

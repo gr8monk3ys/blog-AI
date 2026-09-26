@@ -186,7 +186,7 @@ export default function BlogPostEditor() {
             <button
               type="button"
               onClick={() => {
-                setForm({ ...form, slug: slugify(form.title) })
+                setForm((prev) => ({ ...prev, slug: slugify(prev.title) }))
               }}
               className="text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
             >
@@ -213,7 +213,7 @@ export default function BlogPostEditor() {
               autoComplete="off"
               type="text"
               value={form.title}
-              onChange={(event) => setForm({ ...form, title: event.target.value })}
+              onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
               className="mt-1 w-full text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2"
             />
           </div>
@@ -224,7 +224,7 @@ export default function BlogPostEditor() {
               autoComplete="off"
               type="text"
               value={form.slug}
-              onChange={(event) => setForm({ ...form, slug: event.target.value })}
+              onChange={(event) => setForm((prev) => ({ ...prev, slug: event.target.value }))}
               className="mt-1 w-full text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2"
             />
           </div>
@@ -234,7 +234,7 @@ export default function BlogPostEditor() {
               name="status"
               value={form.status}
               onChange={(event) =>
-                setForm({ ...form, status: event.target.value as BlogPost['status'] })
+                setForm((prev) => ({ ...prev, status: event.target.value as BlogPost['status'] }))
               }
               className="mt-1 w-full text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2"
             >
@@ -251,12 +251,12 @@ export default function BlogPostEditor() {
               type="datetime-local"
               value={form.published_at ? form.published_at.slice(0, 16) : ''}
               onChange={(event) =>
-                setForm({
-                  ...form,
+                setForm((prev) => ({
+                  ...prev,
                   published_at: event.target.value
                     ? new Date(event.target.value).toISOString()
                     : null,
-                })
+                }))
               }
               className="mt-1 w-full text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2"
             />
@@ -269,7 +269,7 @@ export default function BlogPostEditor() {
             name="excerpt"
             autoComplete="off"
             value={form.excerpt}
-            onChange={(event) => setForm({ ...form, excerpt: event.target.value })}
+            onChange={(event) => setForm((prev) => ({ ...prev, excerpt: event.target.value }))}
             className="mt-1 w-full text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 min-h-[90px]"
           />
         </div>
@@ -280,7 +280,7 @@ export default function BlogPostEditor() {
             name="body"
             autoComplete="off"
             value={form.body}
-            onChange={(event) => setForm({ ...form, body: event.target.value })}
+            onChange={(event) => setForm((prev) => ({ ...prev, body: event.target.value }))}
             className="mt-1 w-full text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 min-h-[240px]"
           />
         </div>
@@ -294,13 +294,12 @@ export default function BlogPostEditor() {
               type="text"
               value={form.tags.join(', ')}
               onChange={(event) =>
-                setForm({
-                  ...form,
+                setForm((prev) => ({
+                  ...prev,
                   tags: event.target.value
                     .split(',')
-                    .map((tag) => tag.trim())
-                    .filter(Boolean),
-                })
+                    .flatMap((tag) => tag.trim() || []),
+                }))
               }
               className="mt-1 w-full text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2"
             />
@@ -312,7 +311,7 @@ export default function BlogPostEditor() {
               autoComplete="off"
               type="text"
               value={form.seo_title || ''}
-              onChange={(event) => setForm({ ...form, seo_title: event.target.value })}
+              onChange={(event) => setForm((prev) => ({ ...prev, seo_title: event.target.value }))}
               className="mt-1 w-full text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2"
             />
           </div>
@@ -323,7 +322,7 @@ export default function BlogPostEditor() {
               autoComplete="off"
               value={form.seo_description || ''}
               onChange={(event) =>
-                setForm({ ...form, seo_description: event.target.value })
+                setForm((prev) => ({ ...prev, seo_description: event.target.value }))
               }
               className="mt-1 w-full text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 min-h-[80px]"
             />
