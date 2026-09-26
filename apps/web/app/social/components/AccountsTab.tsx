@@ -83,15 +83,15 @@ export default function AccountsTab({ showToast, confirm }: AccountsTabProps) {
           onClick={() => setShowModal(true)}
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-amber-700 text-white hover:bg-amber-800 transition-colors"
         >
-          <PlusIcon className="w-4 h-4" />
+          <PlusIcon aria-hidden="true" className="w-4 h-4" />
           Connect Account
         </button>
       </div>
 
       {accounts.length === 0 ? (
         <div className="text-center py-16">
-          <UserGroupIcon className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">No accounts connected</h3>
+          <UserGroupIcon aria-hidden="true" className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">No Accounts Connected</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
             Connect your social media accounts to start scheduling posts.
           </p>
@@ -100,7 +100,7 @@ export default function AccountsTab({ showToast, confirm }: AccountsTabProps) {
             onClick={() => setShowModal(true)}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-amber-700 text-white hover:bg-amber-800 transition-colors"
           >
-            <PlusIcon className="w-4 h-4" />
+            <PlusIcon aria-hidden="true" className="w-4 h-4" />
             Connect Account
           </button>
         </div>

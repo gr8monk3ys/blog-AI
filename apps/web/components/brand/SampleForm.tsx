@@ -29,20 +29,23 @@ function SampleFormComponent({
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-6">
       <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-        <PlusIcon className="w-5 h-5" />
+        <PlusIcon aria-hidden="true" className="w-5 h-5" />
         Add Voice Sample
       </h2>
 
       <div className="space-y-4">
         <input
+          name="title"
+          autoComplete="off"
           type="text"
           value={title}
           onChange={(e) => onTitleChange(e.target.value)}
-          placeholder="Sample title (optional)"
+          placeholder="e.g. Launch announcement (optional)…"
           className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg"
         />
 
         <select
+          name="contentType"
           value={contentType}
           onChange={(e) => onContentTypeChange(e.target.value)}
           className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg"
@@ -55,9 +58,11 @@ function SampleFormComponent({
         </select>
 
         <textarea
+          name="content"
+          autoComplete="off"
           value={content}
           onChange={(e) => onContentChange(e.target.value)}
-          placeholder="Paste your content sample here... (min 50 characters)"
+          placeholder="Paste your content sample here… (min 50 characters)"
           rows={6}
           className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg resize-none"
         />

@@ -47,7 +47,7 @@ export default function Home(): React.ReactElement {
   return (
     <>
       <SiteHeader />
-      <main className="min-h-screen">
+      <main id="main-content" tabIndex={-1} className="min-h-screen">
 
       {/* ----------------------------------------------------------------- */}
       {/* Hero Section                                                      */}
@@ -180,7 +180,7 @@ export default function Home(): React.ReactElement {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <RevealSection className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
-              The core system for repeatable content production
+              The Core System for Repeatable Content Production
             </h2>
             <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
               Focus on the workflows that actually drive upgrades: brand voice,
@@ -199,7 +199,7 @@ export default function Home(): React.ReactElement {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <RevealSection className="text-center max-w-2xl mx-auto mb-12">
             <h2 className="text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
-              Every content type your team needs
+              Every Content Type Your Team Needs
             </h2>
             <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
               Specialized tools across 8 categories — not one generic prompt box.
@@ -213,7 +213,7 @@ export default function Home(): React.ReactElement {
               href="/tool-directory"
               className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
             >
-              Browse the full directory
+              Browse the Full Directory
               <ArrowRightIcon className="w-3.5 h-3.5" aria-hidden="true" />
             </Link>
           </RevealSection>
@@ -227,7 +227,7 @@ export default function Home(): React.ReactElement {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <RevealSection className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
-              Three steps to a content engine your team can reuse
+              Three Steps to a Content Engine Your Team Can Reuse
             </h2>
             <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
               Stop restarting from prompts and pasting between tools. Save your standards,
@@ -246,7 +246,7 @@ export default function Home(): React.ReactElement {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <RevealSection className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
-              Premium capabilities that pay for themselves
+              Premium Capabilities That Pay for Themselves
             </h2>
             <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
               Each upgrade tier unlocks tools that directly reduce your content production time.
@@ -264,7 +264,7 @@ export default function Home(): React.ReactElement {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <RevealSection className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
-              Plans that grow with you
+              Plans That Grow with You
             </h2>
             <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
               Start with the core workflow, then move up when you need more volume,
@@ -279,7 +279,7 @@ export default function Home(): React.ReactElement {
               href="/pricing"
               className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
             >
-              Compare all features in detail
+              Compare All Features in Detail
               <ArrowRightIcon className="w-3.5 h-3.5" aria-hidden="true" />
             </Link>
           </RevealSection>
@@ -293,7 +293,7 @@ export default function Home(): React.ReactElement {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24 text-center">
           <RevealSection>
             <h2 className="text-3xl sm:text-4xl font-semibold text-white font-serif">
-              Build a workflow your team will actually reuse
+              Build a Workflow Your Team Will Actually Reuse
             </h2>
             <p className="mt-4 text-lg text-amber-100 max-w-xl mx-auto">
               Use Blog AI when prompt-by-prompt writing stops scaling and you need

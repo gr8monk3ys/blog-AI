@@ -146,7 +146,7 @@ export default function TimelineChart({
                   cy={point.y}
                   r="3"
                   fill="#d97706"
-                  className="hover:r-4 transition-all cursor-pointer"
+                  className="hover:r-4 transition cursor-pointer"
                   initial={{ scale: 0.95, opacity: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.5 + i * 0.02 }}

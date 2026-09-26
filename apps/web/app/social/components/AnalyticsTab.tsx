@@ -5,6 +5,7 @@ import { ChartBarIcon } from '@heroicons/react/24/outline'
 import { API_ENDPOINTS, getDefaultHeaders } from '../../../lib/api'
 import type { Campaign, CampaignAnalytics } from '../../../types/social'
 import PlatformIcon from './PlatformIcon'
+import { formatNumber } from '@/lib/format'
 
 export default function AnalyticsTab() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -79,8 +80,8 @@ export default function AnalyticsTab() {
   if (campaigns.length === 0) {
     return (
       <div className="text-center py-16">
-        <ChartBarIcon className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-        <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">No analytics data</h3>
+        <ChartBarIcon aria-hidden="true" className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+        <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">No Analytics Data</h3>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Create and run campaigns to see performance analytics.
         </p>
@@ -96,10 +97,11 @@ export default function AnalyticsTab() {
           Campaign
         </label>
         <select
+          name="analytics-campaign"
           id="analytics-campaign"
           value={selectedCampaignId || ''}
           onChange={(e) => handleSelectCampaign(e.target.value)}
-          className="w-full sm:w-auto rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+          className="w-full sm:w-auto rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
         >
           {campaigns.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
@@ -139,15 +141,15 @@ export default function AnalyticsTab() {
                     className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4"
                   >
                     <div className="flex items-center gap-2 mb-3">
-                      <PlatformIcon platform={stat.platform} size="sm" />
+                      <PlatformIcon aria-hidden="true" platform={stat.platform} size="sm" />
                       <span className="text-sm font-medium text-gray-900 dark:text-gray-100 capitalize">{stat.platform}</span>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                      <MiniStat label="Impressions" value={stat.impressions.toLocaleString()} />
-                      <MiniStat label="Reach" value={stat.reach.toLocaleString()} />
-                      <MiniStat label="Engagements" value={stat.engagements.toLocaleString()} />
-                      <MiniStat label="Clicks" value={stat.clicks.toLocaleString()} />
-                      <MiniStat label="Engagement Rate" value={`${stat.engagement_rate.toFixed(1)}%`} />
+                      <MiniStat label="Impressions" value={formatNumber(stat.impressions)} />
+                      <MiniStat label="Reach" value={formatNumber(stat.reach)} />
+                      <MiniStat label="Engagements" value={formatNumber(stat.engagements)} />
+                      <MiniStat label="Clicks" value={formatNumber(stat.clicks)} />
+                      <MiniStat label="Engagement Rate" value={`${formatNumber(stat.engagement_rate, 1)}%`} />
                     </div>
                   </div>
                 ))}

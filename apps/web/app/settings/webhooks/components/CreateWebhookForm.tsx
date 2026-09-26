@@ -78,11 +78,12 @@ export default function CreateWebhookForm({ editingSubscription, onClose, onSucc
           {isEditing ? 'Edit Webhook' : 'New Webhook'}
         </h2>
         <button
+          aria-label="Close"
           type="button"
           onClick={onClose}
           className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         >
-          <XMarkIcon className="w-5 h-5" />
+          <XMarkIcon aria-hidden="true" className="w-5 h-5" />
         </button>
       </div>
 
@@ -93,23 +94,26 @@ export default function CreateWebhookForm({ editingSubscription, onClose, onSucc
             Endpoint URL <span className="text-red-500">*</span>
           </label>
           <input
+            name="wh-url"
+            autoComplete="url"
+            spellCheck={false}
             id="wh-url"
             type="url"
             value={targetUrl}
             onChange={(e) => setTargetUrl(e.target.value)}
-            placeholder="https://your-app.com/webhooks/blog-ai"
-            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 font-mono"
+            placeholder="https://your-app.com/webhooks/blog-ai…"
+            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500 font-mono"
             required
           />
         </div>
 
         {/* Event types */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Event types <span className="text-red-500">*</span>
-          </label>
+        <fieldset>
+          <legend className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Event Types <span className="text-red-500">*</span>
+          </legend>
           <EventTypeSelector selected={eventTypes} onChange={setEventTypes} />
-        </div>
+        </fieldset>
 
         {/* Secret */}
         <div>
@@ -118,12 +122,14 @@ export default function CreateWebhookForm({ editingSubscription, onClose, onSucc
           </label>
           <div className="relative">
             <input
+              name="wh-secret"
+              autoComplete="off"
               id="wh-secret"
               type={showSecret ? 'text' : 'password'}
               value={secret}
               onChange={(e) => setSecret(e.target.value)}
-              placeholder={isEditing ? 'Leave empty to keep current' : 'Used for HMAC-SHA256 signature verification'}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 pr-10 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 font-mono"
+              placeholder={isEditing ? 'Leave empty to keep current…' : 'e.g. whsec_3f9a…'}
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 pr-10 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500 font-mono"
               maxLength={256}
             />
             <button
@@ -131,7 +137,7 @@ export default function CreateWebhookForm({ editingSubscription, onClose, onSucc
               onClick={() => setShowSecret(!showSecret)}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
-              {showSecret ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
+              {showSecret ? <EyeSlashIcon aria-hidden="true" className="w-4 h-4" /> : <EyeIcon aria-hidden="true" className="w-4 h-4" />}
             </button>
           </div>
         </div>
@@ -142,12 +148,14 @@ export default function CreateWebhookForm({ editingSubscription, onClose, onSucc
             Description (optional)
           </label>
           <input
+            name="wh-desc"
+            autoComplete="off"
             id="wh-desc"
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="What is this webhook for?"
-            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+            placeholder="e.g. Sync published posts to our CMS…"
+            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             maxLength={500}
           />
         </div>
@@ -159,7 +167,7 @@ export default function CreateWebhookForm({ editingSubscription, onClose, onSucc
             disabled={saving}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium bg-amber-700 text-white hover:bg-amber-800 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors"
           >
-            {saving ? 'Saving...' : isEditing ? 'Update Webhook' : 'Create Webhook'}
+            {saving ? 'Saving…' : isEditing ? 'Update Webhook' : 'Create Webhook'}
           </button>
           <button
             type="button"

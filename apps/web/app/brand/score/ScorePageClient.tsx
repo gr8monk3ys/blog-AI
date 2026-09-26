@@ -110,7 +110,7 @@ function useScorePage() {
   return (
     <>
       <SiteHeader />
-      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
 
       {/* Hero */}
       <section className="bg-gradient-to-r from-amber-700 to-amber-800 text-white">
@@ -122,7 +122,7 @@ function useScorePage() {
             className="text-center"
           >
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/10 mb-6">
-              <SparklesIcon className="w-8 h-8 text-white" />
+              <SparklesIcon aria-hidden="true" className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
               Score Your Content
@@ -143,7 +143,7 @@ function useScorePage() {
             href="/brand"
             className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
           >
-            <ArrowLeftIcon className="w-4 h-4" />
+            <ArrowLeftIcon aria-hidden="true" className="w-4 h-4" />
             Back to Brand Profiles
           </Link>
         </div>
@@ -157,7 +157,7 @@ function useScorePage() {
               exit={{ opacity: 0, y: -10 }}
               className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-400 flex items-start gap-3"
             >
-              <ExclamationCircleIcon className="w-5 h-5 shrink-0 mt-0.5" />
+              <ExclamationCircleIcon aria-hidden="true" className="w-5 h-5 shrink-0 mt-0.5" />
               <span className="flex-1 text-sm">{error}</span>
               <button
                 type="button"
@@ -195,13 +195,14 @@ function useScorePage() {
                 <div className="h-10 rounded-xl bg-gray-200 dark:bg-gray-700 animate-pulse" />
               ) : (
                 <select
+                  name="profile-select"
                   id="profile-select"
                   value={selectedProfileId}
                   onChange={(e) => {
                     setSelectedProfileId(e.target.value)
                     setScoreResponse(null)
                   }}
-                  className="w-full rounded-xl border-black/[0.08] dark:border-white/[0.08] bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full rounded-xl border-black/[0.08] dark:border-white/[0.08] bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                 >
                   <option value="">Select a profile…</option>
                   {profiles.map((p) => (
@@ -216,7 +217,7 @@ function useScorePage() {
                 <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                   No profiles found.{' '}
                   <Link href="/brand" className="text-amber-700 hover:underline">
-                    Create one
+                    Create One
                   </Link>{' '}
                   first.
                 </p>
@@ -238,10 +239,11 @@ function useScorePage() {
                 Content Type
               </label>
               <select
+                name="content-type-select"
                 id="content-type-select"
                 value={contentType}
                 onChange={(e) => setContentType(e.target.value as ContentType)}
-                className="w-full rounded-xl border-black/[0.08] dark:border-white/[0.08] bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full rounded-xl border-black/[0.08] dark:border-white/[0.08] bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
               >
                 {CONTENT_TYPES.map((ct) => (
                   <option key={ct.value} value={ct.value}>
@@ -260,6 +262,8 @@ function useScorePage() {
                 Content to Score
               </label>
               <textarea
+                name="content-textarea"
+                autoComplete="off"
                 id="content-textarea"
                 value={content}
                 onChange={(e) => {
@@ -268,7 +272,7 @@ function useScorePage() {
                 }}
                 placeholder="Paste the content you want to score against your brand voice…"
                 rows={8}
-                className="w-full rounded-xl border-black/[0.08] dark:border-white/[0.08] bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full rounded-xl border-black/[0.08] dark:border-white/[0.08] bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
               />
               <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500 text-right">
                 {content.trim().split(/\s+/).filter(Boolean).length} words
@@ -280,7 +284,7 @@ function useScorePage() {
               type="button"
               onClick={handleScore}
               disabled={!canScore}
-              className="w-full py-3 px-6 rounded-xl bg-amber-700 hover:bg-amber-800 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white font-medium text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+              className="w-full py-3 px-6 rounded-xl bg-amber-700 hover:bg-amber-800 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white font-medium text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
             >
               {isScoring ? (
                 <span className="inline-flex items-center gap-2">
@@ -357,7 +361,7 @@ function useScorePage() {
           className="mt-6 rounded-2xl border border-amber-200 bg-amber-50/80 p-5 dark:border-amber-900/40 dark:bg-amber-950/30"
         >
           <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-100 mb-1">
-            Tip: Train first, then score
+            Tip: Train First, Then Score
           </h3>
           <p className="text-sm text-amber-800 dark:text-amber-200">
             For accurate results, make sure your brand profile has been trained with writing

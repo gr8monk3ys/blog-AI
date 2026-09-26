@@ -6,6 +6,7 @@ import type { ToastOptions } from '../../../hooks/useToast'
 import type { BlogImagesResult, ImageProvider, ImageStyle, ImageQuality, ImageStylesResponse } from '../../../types/images'
 import StyleSelector from './StyleSelector'
 import ImageCard from './ImageCard'
+import { formatNumber } from '@/lib/format'
 
 interface BlogImagesTabProps {
   styles: ImageStylesResponse | null
@@ -30,7 +31,7 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
   function addKeyword() {
     const kw = keywordInput.trim()
     if (kw && !keywords.includes(kw) && keywords.length < 20) {
-      setKeywords([...keywords, kw])
+      setKeywords((prev) => [...prev, kw])
       setKeywordInput('')
     }
   }
@@ -87,12 +88,14 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
             Blog title <span className="text-red-500">*</span>
           </label>
           <input
+            name="blog-title"
+            autoComplete="off"
             id="blog-title"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Your blog post title"
-            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+            placeholder="e.g. 10 Ways to Improve Team Focus…"
+            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             required
           />
         </div>
@@ -103,31 +106,35 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
             Blog content <span className="text-red-500">*</span>
           </label>
           <textarea
+            name="blog-content"
+            autoComplete="off"
             id="blog-content"
             rows={8}
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Paste your blog content (minimum 10 characters)..."
-            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+            placeholder="Paste your blog content (minimum 10 characters)…"
+            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             required
             minLength={10}
           />
-          <p className="mt-1 text-xs text-gray-400">{content.length.toLocaleString()} characters</p>
+          <p className="mt-1 text-xs text-gray-400">{formatNumber(content.length)} characters</p>
         </div>
 
         {/* Keywords */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+          <label htmlFor="blog-images-keywords" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
             Keywords (optional)
           </label>
           <div className="flex gap-2">
-            <input
+            <input id="blog-images-keywords"
+              name="keywordInput"
+              autoComplete="off"
               type="text"
               value={keywordInput}
               onChange={(e) => setKeywordInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addKeyword() } }}
-              placeholder="Add keyword"
-              className="flex-1 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+              placeholder="e.g. content strategy…"
+              className="flex-1 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             />
             <button
               type="button"
@@ -159,29 +166,32 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
         <div className="flex flex-wrap items-center gap-6">
           <label className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
             <input
+              name="generateFeatured"
               type="checkbox"
               checked={generateFeatured}
               onChange={(e) => setGenerateFeatured(e.target.checked)}
-              className="rounded border-gray-300 text-amber-700 focus:ring-amber-500"
+              className="rounded border-gray-300 text-amber-700 focus-visible:ring-amber-500"
             />
             Featured image
           </label>
           <label className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
             <input
+              name="generateSocial"
               type="checkbox"
               checked={generateSocial}
               onChange={(e) => setGenerateSocial(e.target.checked)}
-              className="rounded border-gray-300 text-amber-700 focus:ring-amber-500"
+              className="rounded border-gray-300 text-amber-700 focus-visible:ring-amber-500"
             />
             Social image
           </label>
           <div className="inline-flex items-center gap-2">
             <label htmlFor="inline-count" className="text-sm text-gray-600 dark:text-gray-400">Inline images:</label>
             <select
+              name="inline-count"
               id="inline-count"
               value={inlineCount}
               onChange={(e) => setInlineCount(Number(e.target.value))}
-              className="rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+              className="rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             >
               {[0, 1, 2, 3, 4, 5].map((n) => (
                 <option key={n} value={n}>{n}</option>
@@ -210,11 +220,11 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
         >
           {loading ? (
             <>
-              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+              <svg aria-hidden="true" className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              Generating...
+              Generating…
             </>
           ) : (
             'Generate Blog Images'
@@ -223,7 +233,7 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
       </form>
 
       {error && (
-        <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+        <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300" role="alert">
           {error}
         </div>
       )}

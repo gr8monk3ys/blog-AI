@@ -91,7 +91,7 @@ function useSaveTemplateModalView({
           <div className="fixed inset-0 bg-black bg-opacity-25" />
         </Transition.Child>
 
-        <div className="fixed inset-0 overflow-y-auto">
+        <div className="fixed inset-0 overflow-y-auto overscroll-contain">
           <div className="flex min-h-full items-center justify-center p-4 text-center">
             <Transition.Child
               as={Fragment}
@@ -102,30 +102,31 @@ function useSaveTemplateModalView({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-gray-900 p-6 text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-gray-900 p-6 text-left align-middle shadow-xl transition">
                 <div className="flex items-center justify-between mb-4">
                   <Dialog.Title
                     as="h3"
                     className="text-lg font-semibold leading-6 text-gray-900 dark:text-gray-100 flex items-center gap-2"
                   >
-                    <BookmarkIcon className="w-5 h-5 text-amber-700" />
+                    <BookmarkIcon aria-hidden="true" className="w-5 h-5 text-amber-700" />
                     Save as Template
                   </Dialog.Title>
                   <button
+                    aria-label="Close"
                     type="button"
                     onClick={onClose}
                     className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                   >
-                    <XMarkIcon className="w-5 h-5" />
+                    <XMarkIcon aria-hidden="true" className="w-5 h-5" />
                   </button>
                 </div>
 
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                  Save your current settings for &quot;{toolName}&quot; as a reusable template.
+                  Save your current settings for “{toolName}“ as a reusable template.
                 </p>
 
                 {error && (
-                  <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-sm text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800">
+                  <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-sm text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800" role="alert">
                     {error}
                   </div>
                 )}
@@ -139,12 +140,14 @@ function useSaveTemplateModalView({
                       Template Name *
                     </label>
                     <input
+                      name="template-name"
+                      autoComplete="name"
                       type="text"
                       id="template-name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="e.g., SaaS Product Launch"
-                      className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+                      placeholder="e.g. SaaS Product Launch…"
+                      className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
                       required
                     />
                   </div>
@@ -157,12 +160,14 @@ function useSaveTemplateModalView({
                       Description
                     </label>
                     <textarea
+                      name="template-description"
+                      autoComplete="off"
                       id="template-description"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Describe what this template is for..."
+                      placeholder="Describe what this template is for…"
                       rows={3}
-                      className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+                      className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
                     />
                   </div>
 
@@ -174,10 +179,11 @@ function useSaveTemplateModalView({
                       Category
                     </label>
                     <select
+                      name="template-category"
                       id="template-category"
                       value={category}
                       onChange={(e) => setCategory(e.target.value as TemplateCategory)}
-                      className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+                      className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
                     >
                       {Object.entries(TEMPLATE_CATEGORIES).map(([key, info]) => (
                         <option key={key} value={key}>
@@ -195,22 +201,25 @@ function useSaveTemplateModalView({
                       Tags (comma-separated)
                     </label>
                     <input
+                      name="template-tags"
+                      autoComplete="off"
                       type="text"
                       id="template-tags"
                       value={tagsInput}
                       onChange={(e) => setTagsInput(e.target.value)}
-                      placeholder="e.g., landing-page, conversion, copy"
-                      className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+                      placeholder="e.g. landing-page, conversion, copy…"
+                      className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
                     />
                   </div>
 
                   <div className="flex items-center gap-3">
                     <input
+                      name="template-public"
                       type="checkbox"
                       id="template-public"
                       checked={isPublic}
                       onChange={(e) => setIsPublic(e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-amber-700 focus:ring-amber-500 dark:bg-gray-800"
+                      className="h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-amber-700 focus-visible:ring-amber-500 dark:bg-gray-800"
                     />
                     <label
                       htmlFor="template-public"
@@ -233,16 +242,16 @@ function useSaveTemplateModalView({
                     <button
                       type="button"
                       onClick={onClose}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
+                      className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={saving || !name.trim()}
-                      className="px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {saving ? 'Saving...' : 'Save Template'}
+                      {saving ? 'Saving…' : 'Save Template'}
                     </button>
                   </div>
                 </form>

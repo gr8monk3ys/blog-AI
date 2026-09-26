@@ -206,7 +206,7 @@ function useRemixPageContentView() {
   }, [selectedFormats, sourceTitle, sourceContent, provider, brandVoiceEnabled, selectedBrandProfile])
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <main id="main-content" tabIndex={-1} className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -219,7 +219,7 @@ function useRemixPageContentView() {
         {/* Error Alert */}
         <AnimatePresence>
           {error && (
-            <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400">
+            <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400" role="alert">
               {error}
               <button onClick={() => setError(null)} className="ml-4 text-red-500 hover:text-red-700">
                 x
@@ -238,13 +238,14 @@ function useRemixPageContentView() {
                   Provider
                 </label>
                 <select
+                  name="remix-provider"
                   id="remix-provider"
                   value={provider}
                   onChange={(e) => {
                     setProviderTouched(true)
                     setProvider(e.target.value as LlmProviderType)
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100"
+                  className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:border-transparent dark:bg-gray-800 dark:text-gray-100"
                 >
                   {availableProviders.map((p) => {
                     const model = llmConfig?.models?.[p]
@@ -262,7 +263,7 @@ function useRemixPageContentView() {
                 </select>
               </div>
               {llmConfigError && (
-                <p className="mt-2 text-xs text-amber-700">
+                <p className="mt-2 text-xs text-amber-700" role="alert">
                   {llmConfigError}. Showing default providers.
                 </p>
               )}
@@ -309,7 +310,7 @@ function useRemixPageContentView() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   )
 }
 

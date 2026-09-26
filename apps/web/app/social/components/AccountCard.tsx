@@ -4,6 +4,7 @@ import { TrashIcon } from '@heroicons/react/24/outline'
 import type { SocialAccount } from '../../../types/social'
 import { PLATFORM_CONFIG } from '../../../types/social'
 import PlatformIcon from './PlatformIcon'
+import { formatDisplayDate } from '@/lib/format'
 
 interface AccountCardProps {
   account: SocialAccount
@@ -21,7 +22,7 @@ export default function AccountCard({ account, onDisconnect }: AccountCardProps)
     }`}>
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <PlatformIcon platform={account.platform} />
+          <PlatformIcon aria-hidden="true" platform={account.platform} />
           <div>
             <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
               {account.display_name || account.username}
@@ -45,14 +46,14 @@ export default function AccountCard({ account, onDisconnect }: AccountCardProps)
             className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
             title="Disconnect"
           >
-            <TrashIcon className="w-4 h-4" />
+            <TrashIcon aria-hidden="true" className="w-4 h-4" />
           </button>
         </div>
       </div>
       <div className="mt-3 text-xs text-gray-400 dark:text-gray-500">
-        Connected {new Date(account.connected_at).toLocaleDateString()}
+        Connected {formatDisplayDate(account.connected_at)}
         {account.last_used_at && (
-          <> &middot; Last used {new Date(account.last_used_at).toLocaleDateString()}</>
+          <> &middot; Last used {formatDisplayDate(account.last_used_at)}</>
         )}
       </div>
     </div>

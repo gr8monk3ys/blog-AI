@@ -91,7 +91,7 @@ export default function WebhooksPageClient() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <main id="main-content" tabIndex={-1} className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
           <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-amber-100/80 dark:bg-amber-900/40 text-amber-700">
@@ -108,14 +108,14 @@ export default function WebhooksPageClient() {
             onClick={() => { setEditingSubscription(null); setShowForm(true) }}
             className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-medium bg-amber-700 text-white hover:bg-amber-800 transition-colors"
           >
-            <PlusIcon className="w-4 h-4" />
+            <PlusIcon aria-hidden="true" className="w-4 h-4" />
             Add Webhook
           </button>
         )}
       </div>
 
       {error && (
-        <div className="mb-6 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+        <div className="mb-6 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300" role="alert">
           {error}
         </div>
       )}
@@ -124,9 +124,9 @@ export default function WebhooksPageClient() {
       <AnimatePresence mode="wait">
         {showForm && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
             className="mb-8 overflow-hidden"
           >
@@ -152,8 +152,8 @@ export default function WebhooksPageClient() {
         </div>
       ) : subscriptions.length === 0 ? (
         <div className="text-center py-16">
-          <BoltIcon className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">No webhooks configured</h3>
+          <BoltIcon aria-hidden="true" className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">No Webhooks Configured</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Add a webhook to receive real-time notifications when events occur.
           </p>
@@ -178,6 +178,6 @@ export default function WebhooksPageClient() {
 
       <ToastComponent />
       <ConfirmModalComponent />
-    </div>
+    </main>
   )
 }

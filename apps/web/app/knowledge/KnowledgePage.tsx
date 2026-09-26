@@ -83,9 +83,9 @@ export default function KnowledgePage() {
   const tabNames = ['Documents', 'Search', 'Usage']
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <main id="main-content" tabIndex={-1} className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex items-center mb-2">
-        <DocumentTextIcon className="h-6 w-6 text-amber-700 mr-2" />
+        <DocumentTextIcon aria-hidden="true" className="h-6 w-6 text-amber-700 mr-2" />
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
           Knowledge Base
         </h1>
@@ -97,7 +97,7 @@ export default function KnowledgePage() {
       </p>
 
       {backendError && (
-        <div className="glass-card rounded-2xl p-8 text-center mb-6">
+        <div className="glass-card rounded-2xl p-8 text-center mb-6" role="alert">
           <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Knowledge Base Unavailable</p>
           <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{backendError}</p>
         </div>
@@ -143,6 +143,6 @@ export default function KnowledgePage() {
 
       <ToastComponent />
       <ConfirmModalComponent />
-    </div>
+    </main>
   )
 }

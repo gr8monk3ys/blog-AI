@@ -10,7 +10,7 @@ export default function PrivacyPageClient(): React.ReactElement {
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
 
-      <main className="flex-1 py-16 sm:py-20">
+      <main id="main-content" tabIndex={-1} className="flex-1 py-16 sm:py-20">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
             Privacy Policy
@@ -21,7 +21,7 @@ export default function PrivacyPageClient(): React.ReactElement {
 
           <div className="mt-10 prose prose-gray dark:prose-invert max-w-none prose-headings:font-serif prose-headings:font-semibold prose-a:text-amber-700 dark:prose-a:text-amber-400 hover:prose-a:text-amber-700 dark:hover:prose-a:text-amber-300">
             <p>
-              Blog AI (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) is
+              Blog AI (“we”, “our”, or “us”) is
               committed to protecting your privacy. This Privacy Policy explains
               how we collect, use, disclose, and safeguard your information when
               you use our AI content generation platform.
@@ -34,7 +34,7 @@ export default function PrivacyPageClient(): React.ReactElement {
               When you create an account through our authentication provider
               (Clerk), we collect your name, email address, and profile
               information. We do not store passwords directly — authentication
-              is handled by Clerk&apos;s secure infrastructure.
+              is handled by Clerk’s secure infrastructure.
             </p>
 
             <h3>Payment Information</h3>
@@ -132,7 +132,7 @@ export default function PrivacyPageClient(): React.ReactElement {
               We retain your account information and generated content for as
               long as your account is active. You may request deletion of your
               account and associated data at any time by contacting us. Usage
-              logs are retained for up to 90 days.
+              logs are retained for up to 90&nbsp;days.
             </p>
 
             <h2>8. Your Rights</h2>
@@ -149,9 +149,9 @@ export default function PrivacyPageClient(): React.ReactElement {
               address below.
             </p>
 
-            <h2>9. Children&apos;s Privacy</h2>
+            <h2>9. Children’s Privacy</h2>
             <p>
-              Blog AI is not intended for use by individuals under 16 years of
+              Blog AI is not intended for use by individuals under 16&nbsp;years of
               age. We do not knowingly collect personal information from
               children.
             </p>
@@ -160,7 +160,7 @@ export default function PrivacyPageClient(): React.ReactElement {
             <p>
               We may update this Privacy Policy from time to time. We will
               notify you of material changes by posting the updated policy on
-              this page and updating the &quot;Last updated&quot; date.
+              this page and updating the “Last updated” date.
             </p>
 
             <h2>11. Contact Us</h2>

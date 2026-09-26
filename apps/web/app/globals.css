@@ -26,6 +26,61 @@
   --glass-shadow: 0 20px 60px rgba(245, 158, 11, 0.08);
 }
 
+html {
+  color-scheme: light;
+  /* The site header is sticky: keep focused elements and anchor targets
+     clear of it. */
+  scroll-padding-top: 5rem;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+/* Remove the double-tap-zoom delay on controls; pinch zoom still works. */
+:where(a, button, input, select, textarea, label, summary, [role='button']) {
+  touch-action: manipulation;
+}
+
+:where(h1, h2, h3, h4, h5, h6) {
+  text-wrap: balance;
+}
+
+:where(h1, h2, h3, h4, h5, h6)[id] {
+  scroll-margin-top: 5rem;
+}
+
+/* Native <select>: explicit colors so Windows dark mode matches the page. */
+@layer base {
+  select,
+  select option {
+    background-color: rgb(var(--surface-rgb));
+    color: rgb(var(--foreground-rgb));
+  }
+}
+
+/* Header theme toggle: show the icon for the stored preference. */
+.theme-pref-icon {
+  display: none;
+}
+html:not([data-theme-pref]) .theme-pref-icon[data-pref='system'],
+html[data-theme-pref='light'] .theme-pref-icon[data-pref='light'],
+html[data-theme-pref='dark'] .theme-pref-icon[data-pref='dark'],
+html[data-theme-pref='system'] .theme-pref-icon[data-pref='system'] {
+  display: block;
+}
+
+/* The skip link focuses <main> programmatically; no ring on the landmark. */
+main[tabindex='-1']:focus {
+  outline: none;
+}
+
+/* Numbers in tables line up column by column. */
+:where(table) {
+  font-variant-numeric: tabular-nums;
+}
+
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(120deg, rgb(var(--background-start-rgb)) 0%, rgb(var(--background-end-rgb)) 70%);
@@ -120,6 +175,15 @@ body {
 [data-reveal-stagger] > :nth-child(n + 8) { transition-delay: 840ms; }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Tailwind animate-* utilities and hover transitions. */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
   .hero-rise,
   .hero-rise-lcp,
   .hero-fade {

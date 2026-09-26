@@ -64,7 +64,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
             subtopics: [
               {
                 title: "",
-                content: "Artificial intelligence has rapidly evolved from a futuristic concept to a practical tool that's reshaping industries across the globe. In the realm of content creation and marketing, AI technologies are not just supplementing human efforts—they're revolutionizing the entire process from ideation to distribution. This transformation is enabling businesses and creators to produce more engaging, personalized, and effective content at unprecedented scale and speed."
+                content: "Artificial intelligence has rapidly evolved from a futuristic concept to a practical tool that’s reshaping industries across the globe. In the realm of content creation and marketing, AI technologies are not just supplementing human efforts—they’re revolutionizing the entire process from ideation to distribution. This transformation is enabling businesses and creators to produce more engaging, personalized, and effective content at unprecedented scale and speed."
               }
             ]
           },
@@ -73,7 +73,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
             subtopics: [
               {
                 title: "",
-                content: "Today's AI tools can generate blog posts, social media updates, email newsletters, and even video scripts with minimal human input. Natural Language Processing (NLP) models like GPT-4 can produce human-like text that's increasingly difficult to distinguish from content written by people. These advancements have democratized content creation, allowing smaller businesses and individual creators to compete with larger organizations that have traditionally had more resources for content production."
+                content: "Today’s AI tools can generate blog posts, social media updates, email newsletters, and even video scripts with minimal human input. Natural Language Processing (NLP) models like GPT-4 can produce human-like text that’s increasingly difficult to distinguish from content written by people. These advancements have democratized content creation, allowing smaller businesses and individual creators to compete with larger organizations that have traditionally had more resources for content production."
               }
             ]
           },
@@ -100,7 +100,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
             subtopics: [
               {
                 title: "",
-                content: "AI is undeniably transforming content creation and marketing, offering unprecedented opportunities for efficiency, personalization, and scale. While it won't replace human creativity entirely, it's becoming an essential tool in the modern marketer's arsenal. Organizations that successfully integrate AI into their content strategies—while maintaining human oversight and creative direction—will be best positioned to thrive in this new era of content marketing."
+                content: "AI is undeniably transforming content creation and marketing, offering unprecedented opportunities for efficiency, personalization, and scale. While it won’t replace human creativity entirely, it’s becoming an essential tool in the modern marketer’s arsenal. Organizations that successfully integrate AI into their content strategies—while maintaining human oversight and creative direction—will be best positioned to thrive in this new era of content marketing."
               }
             ]
           },
@@ -113,7 +113,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
               },
               {
                 title: "How can small businesses leverage AI for content marketing?",
-                content: "Small businesses can use AI tools to scale their content production, analyze competitor content, generate ideas, and optimize existing content for SEO. Many affordable AI writing assistants, content generators, and analytics platforms are now available that don't require technical expertise to use."
+                content: "Small businesses can use AI tools to scale their content production, analyze competitor content, generate ideas, and optimize existing content for SEO. Many affordable AI writing assistants, content generators, and analytics platforms are now available that don’t require technical expertise to use."
               },
               {
                 title: "What skills should content marketers develop in the age of AI?",
@@ -241,25 +241,27 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
   return (
     <div>
       <div className="flex items-center mb-6">
-        <DocumentTextIcon className="h-5 w-5 text-amber-700 mr-2" />
+        <DocumentTextIcon aria-hidden="true" className="h-5 w-5 text-amber-700 mr-2" />
         <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Blog Post Generator</h2>
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-amber-50 dark:bg-amber-950/30 rounded-lg p-4 border border-amber-100 dark:border-amber-800">
           <div className="flex items-center mb-2">
-            <PencilIcon className="h-4 w-4 text-amber-700 mr-2" />
+            <PencilIcon aria-hidden="true" className="h-4 w-4 text-amber-700 mr-2" />
             <label htmlFor="topic" className="block text-sm font-medium text-amber-700">
               What would you like to write about?
             </label>
           </div>
           <input
+            name="topic"
+            autoComplete="off"
             type="text"
             id="topic"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 bg-white dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
-            placeholder="Enter your topic..."
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 bg-white dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
+            placeholder="Enter your topic…"
             required
           />
         </div>
@@ -270,12 +272,14 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
               Keywords (comma separated)
             </label>
             <input
+              name="keywords"
+              autoComplete="off"
               type="text"
               id="keywords"
               value={keywords}
               onChange={(e) => setKeywords(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
-              placeholder="SEO, marketing, content..."
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
+              placeholder="SEO, marketing, content…"
             />
           </div>
 
@@ -284,10 +288,11 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
               Tone
             </label>
             <select
+              name="tone"
               id="tone"
               value={tone}
               onChange={(e) => setTone(e.target.value as BlogGenerationOptions['tone'])}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
             >
               <option value="informative">Informative</option>
               <option value="conversational">Conversational</option>
@@ -303,13 +308,14 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
               Model Provider
             </label>
             <select
+              name="provider"
               id="provider"
               value={providerType}
               onChange={(e) => {
                 hasUserSelection.current = true
                 setProviderType(e.target.value as LlmProviderType)
               }}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
               disabled={(availableProviders || []).length <= 1}
             >
               {(availableProviders || []).map((p) => (
@@ -323,7 +329,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
 
         <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-800">
           <div className="flex items-center mb-3">
-            <LightBulbIcon className="h-4 w-4 text-amber-700 mr-2" />
+            <LightBulbIcon aria-hidden="true" className="h-4 w-4 text-amber-700 mr-2" />
             <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Advanced Options</h3>
           </div>
           
@@ -335,7 +341,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
                 aria-label="Enable web research"
                 className={`${
                   useResearch ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
-                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2`}
               >
                 <span
                   aria-hidden="true"
@@ -347,9 +353,10 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
               <span className="text-sm text-gray-700 dark:text-gray-300" id="research-label">Use web research</span>
               {useResearch && (
                 <select
+                  name="researchDepth"
                   value={researchDepth}
                   onChange={(e) => setResearchDepth(e.target.value as 'basic' | 'deep' | 'comprehensive')}
-                  className="ml-2 text-xs rounded border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:border-amber-500 focus:ring-amber-500"
+                  className="ml-2 text-xs rounded border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus-visible:border-amber-500 focus-visible:ring-amber-500"
                 >
                   <option value="basic">Basic</option>
                   <option value="deep">Deep</option>
@@ -365,7 +372,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
                 aria-label="Enable proofreading"
                 className={`${
                   proofread ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
-                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2`}
               >
                 <span
                   aria-hidden="true"
@@ -384,7 +391,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
                 aria-label="Enable content humanization"
                 className={`${
                   humanize ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
-                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2`}
               >
                 <span
                   aria-hidden="true"
@@ -403,7 +410,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
                 aria-label="Enable SEO optimization"
                 className={`${
                   seoOptimize ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
-                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2`}
               >
                 <span
                   aria-hidden="true"
@@ -422,7 +429,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
                 aria-label="Enable fact checking"
                 className={`${
                   factCheck ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
-                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2`}
               >
                 <span
                   aria-hidden="true"
@@ -455,7 +462,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
             role="alert"
           >
             <div className="flex items-start gap-3">
-              <ExclamationTriangleIcon
+              <ExclamationTriangleIcon aria-hidden="true"
                 className={`h-5 w-5 flex-shrink-0 ${
                   errorKind === 'limit' || errorKind === 'rate-limit'
                     ? 'text-amber-500'
@@ -500,7 +507,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
                     href="/sign-in"
                     className="inline-flex items-center mt-2 text-sm font-medium text-red-600 hover:text-red-700"
                   >
-                    Sign in
+                    Sign In
                     <span className="ml-1">&rarr;</span>
                   </Link>
                 )}
@@ -509,7 +516,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
                     href="/pricing"
                     className="inline-flex items-center mt-2 text-sm font-medium text-amber-700 hover:text-amber-800"
                   >
-                    Upgrade your plan
+                    Upgrade Your Plan
                     <span className="ml-1">&rarr;</span>
                   </Link>
                 )}
@@ -542,7 +549,7 @@ function useContentGeneratorView({ conversationId, setContent, setLoading }: Con
 
         <button
           type="submit"
-          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all"
+          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber-500 transition"
         >
           Generate Blog Post
         </button>

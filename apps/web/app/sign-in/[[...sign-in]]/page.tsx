@@ -14,7 +14,7 @@ export default function SignInPage() {
   return (
     <>
       <SiteHeader />
-      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         <section className="py-14 sm:py-20">
           <div className="max-w-lg mx-auto px-4 sm:px-6 lg:px-8">
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 sm:p-8">

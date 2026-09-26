@@ -10,7 +10,7 @@ export default function TermsPageClient(): React.ReactElement {
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
 
-      <main className="flex-1 py-16 sm:py-20">
+      <main id="main-content" tabIndex={-1} className="flex-1 py-16 sm:py-20">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
             Terms of Service
@@ -21,10 +21,10 @@ export default function TermsPageClient(): React.ReactElement {
 
           <div className="mt-10 prose prose-gray dark:prose-invert max-w-none prose-headings:font-serif prose-headings:font-semibold prose-a:text-amber-700 dark:prose-a:text-amber-400 hover:prose-a:text-amber-700 dark:hover:prose-a:text-amber-300">
             <p>
-              These Terms of Service (&quot;Terms&quot;) govern your access to
-              and use of Blog AI (&quot;we&quot;, &quot;our&quot;, or
-              &quot;us&quot;), including our website, APIs, and AI content
-              generation services (collectively, the &quot;Service&quot;).
+              These Terms of Service (“Terms”) govern your access to
+              and use of Blog AI (“we”, “our”, or
+              “us”), including our website, APIs, and AI content
+              generation services (collectively, the “Service”).
               By accessing or using the Service, you agree to be bound by
               these Terms.
             </p>
@@ -32,7 +32,7 @@ export default function TermsPageClient(): React.ReactElement {
             <h2>1. Acceptance of Terms</h2>
             <p>
               By creating an account or using the Service, you confirm that
-              you are at least 16 years of age and agree to comply with these
+              you are at least 16&nbsp;years of age and agree to comply with these
               Terms. If you are using the Service on behalf of an organization,
               you represent that you have authority to bind that organization
               to these Terms.
@@ -78,7 +78,7 @@ export default function TermsPageClient(): React.ReactElement {
                 required by applicable law.
               </li>
               <li>
-                We reserve the right to change pricing with 30 days&apos;
+                We reserve the right to change pricing with 30&nbsp;days’
                 notice. Existing subscribers will be notified before price
                 changes take effect.
               </li>
@@ -149,14 +149,14 @@ export default function TermsPageClient(): React.ReactElement {
             </p>
             <p>
               Our total liability for any claims arising from your use of the
-              Service is limited to the amount you paid us in the 12 months
+              Service is limited to the amount you paid us in the 12&nbsp;months
               preceding the claim.
             </p>
 
             <h2>10. Disclaimer of Warranties</h2>
             <p>
-              The Service is provided &quot;as is&quot; and &quot;as
-              available&quot; without warranties of any kind, either express
+              The Service is provided “as is” and “as
+              available” without warranties of any kind, either express
               or implied. We do not warrant that the Service will be
               uninterrupted, error-free, or free of harmful components.
             </p>

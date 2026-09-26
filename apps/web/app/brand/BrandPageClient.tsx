@@ -178,7 +178,7 @@ function useBrandPageView() {
   return (
     <>
       <SiteHeader />
-      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
       {/* Confirm Modal */}
       <ConfirmModalComponent />
 
@@ -192,7 +192,7 @@ function useBrandPageView() {
             className="text-center"
           >
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/10 mb-6">
-              <SparklesIcon className="w-8 h-8 text-white" />
+              <SparklesIcon aria-hidden="true" className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
               Brand Voice Profiles
@@ -216,7 +216,7 @@ function useBrandPageView() {
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h2 className="text-base font-semibold text-amber-900 dark:text-amber-100">
-                Start here if you want content worth paying for
+                Start Here If You Want Content Worth Paying For
               </h2>
               <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">
                 Brand voice is the foundation for the strongest paid workflow in this product.
@@ -242,11 +242,12 @@ function useBrandPageView() {
           >
             <span>{error}</span>
             <button
+              aria-label="Dismiss error"
               type="button"
               onClick={() => setError(null)}
               className="text-red-400 hover:text-red-600 dark:hover:text-red-300"
             >
-              <XMarkIcon className="w-5 h-5" />
+              <XMarkIcon aria-hidden="true" className="w-5 h-5" />
             </button>
           </m.div>
         )}
@@ -265,9 +266,9 @@ function useBrandPageView() {
             <button
               type="button"
               onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
             >
-              <PlusIcon className="w-4 h-4" />
+              <PlusIcon aria-hidden="true" className="w-4 h-4" />
               Create Profile
             </button>
           )}
@@ -289,6 +290,7 @@ function useBrandPageView() {
                     {editingProfile ? 'Edit Profile' : 'Create New Profile'}
                   </h3>
                   <button
+                    aria-label="Close form"
                     type="button"
                     onClick={() => {
                       setShowForm(false)
@@ -296,7 +298,7 @@ function useBrandPageView() {
                     }}
                     className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   >
-                    <XMarkIcon className="w-5 h-5" />
+                    <XMarkIcon aria-hidden="true" className="w-5 h-5" />
                   </button>
                 </div>
                 <BrandProfileForm
@@ -340,10 +342,10 @@ function useBrandPageView() {
               className="text-center py-12 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800"
             >
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                <SparklesIcon className="w-8 h-8 text-gray-400" />
+                <SparklesIcon aria-hidden="true" className="w-8 h-8 text-gray-400" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                No brand profiles yet
+                No Brand Profiles Yet
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-6">
                 Create your first brand voice profile to ensure consistent
@@ -354,7 +356,7 @@ function useBrandPageView() {
                 onClick={() => setShowForm(true)}
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 transition-colors"
               >
-                <PlusIcon className="w-4 h-4" />
+                <PlusIcon aria-hidden="true" className="w-4 h-4" />
                 Create Your First Profile
               </button>
             </m.div>

@@ -31,9 +31,9 @@ export default function ToastNotification({ toast }: ToastNotificationProps) {
         }`}
       >
         {toast.type === 'success' ? (
-          <CheckIcon className="w-5 h-5 text-emerald-500" />
+          <CheckIcon aria-hidden="true" className="w-5 h-5 text-emerald-500" />
         ) : (
-          <svg
+          <svg aria-hidden="true"
             className="w-5 h-5 text-red-500"
             fill="none"
             viewBox="0 0 24 24"

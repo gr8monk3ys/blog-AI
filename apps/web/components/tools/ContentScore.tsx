@@ -125,7 +125,7 @@ function CircularProgress({
     <div className="flex flex-col items-center">
       <div className="relative" style={{ width: size, height: size }}>
         {/* Background circle */}
-        <svg className="transform -rotate-90" width={size} height={size}>
+        <svg aria-hidden="true" className="transform -rotate-90" width={size} height={size}>
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -164,13 +164,13 @@ function CircularProgress({
 function ScoreIcon({ level }: { level: string }) {
   switch (level) {
     case 'excellent':
-      return <CheckCircleIcon className="w-5 h-5 text-emerald-500" />
+      return <CheckCircleIcon aria-hidden="true" className="w-5 h-5 text-emerald-500" />
     case 'good':
-      return <CheckCircleIcon className="w-5 h-5 text-amber-500" />
+      return <CheckCircleIcon aria-hidden="true" className="w-5 h-5 text-amber-500" />
     case 'fair':
-      return <ExclamationTriangleIcon className="w-5 h-5 text-amber-500" />
+      return <ExclamationTriangleIcon aria-hidden="true" className="w-5 h-5 text-amber-500" />
     case 'poor':
-      return <ExclamationCircleIcon className="w-5 h-5 text-red-500" />
+      return <ExclamationCircleIcon aria-hidden="true" className="w-5 h-5 text-red-500" />
     default:
       return null
   }
@@ -198,7 +198,7 @@ function DetailSection({
         className="w-full px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <ScoreIcon level={level} />
+          <ScoreIcon aria-hidden="true" level={level} />
           <span className="font-medium text-gray-900 dark:text-gray-100">{title}</span>
           <span
             className={`px-2 py-0.5 rounded-full text-xs font-medium ${getScoreBgColor(level)} ${getScoreColor(level)}`}
@@ -207,17 +207,17 @@ function DetailSection({
           </span>
         </div>
         {isExpanded ? (
-          <ChevronUpIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+          <ChevronUpIcon aria-hidden="true" className="w-4 h-4 text-gray-500 dark:text-gray-400" />
         ) : (
-          <ChevronDownIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+          <ChevronDownIcon aria-hidden="true" className="w-4 h-4 text-gray-500 dark:text-gray-400" />
         )}
       </button>
 
       {isExpanded && (
         <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
           className="px-4 py-3 bg-white dark:bg-gray-900"
         >
           {/* Metrics grid */}
@@ -234,7 +234,7 @@ function DetailSection({
           {suggestions.length > 0 && (
             <div className="border-t border-gray-100 dark:border-gray-800 pt-3">
               <div className="flex items-center gap-1.5 mb-2">
-                <LightBulbIcon className="w-4 h-4 text-amber-500" />
+                <LightBulbIcon aria-hidden="true" className="w-4 h-4 text-amber-500" />
                 <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Suggestions</span>
               </div>
               <ul className="space-y-1.5">
@@ -263,7 +263,7 @@ export default function ContentScore({
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-2 border-amber-200 border-t-amber-600 dark:border-amber-900 dark:border-t-amber-500" />
-          <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">Analyzing content...</span>
+          <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">Analyzing content…</span>
         </div>
       </div>
     )
@@ -345,7 +345,7 @@ export default function ContentScore({
       {scores.top_improvements && scores.top_improvements.length > 0 && (
         <div className="px-6 py-4 bg-amber-50 dark:bg-amber-900/30 border-b border-amber-100 dark:border-amber-900/50">
           <div className="flex items-center gap-2 mb-2">
-            <LightBulbIcon className="w-5 h-5 text-amber-700 dark:text-amber-400" />
+            <LightBulbIcon aria-hidden="true" className="w-5 h-5 text-amber-700 dark:text-amber-400" />
             <span className="font-medium text-amber-900 dark:text-amber-300">Priority Improvements</span>
           </div>
           <ul className="space-y-1.5">

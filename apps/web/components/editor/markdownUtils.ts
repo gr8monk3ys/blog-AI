@@ -154,7 +154,7 @@ function inlineFormat(text: string): string {
   // Images: ![alt](url)
   result = result.replace(
     /!\[([^\]]*)\]\(([^)]+)\)/g,
-    (_, alt, url) => `<img src="${safeUrl(url)}" alt="${alt}" class="max-w-full rounded my-2" />`
+    (_, alt, url) => `<img src="${safeUrl(url)}" alt="${alt}" loading="lazy" decoding="async" class="max-w-full h-auto rounded my-2" />`
   )
 
   // Links: [text](url)

@@ -47,23 +47,30 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps): React.ReactElement {
-  const [theme, setThemeState] = useState<Theme>('system')
+  // null until the stored preference has been read. The pre-paint script in
+  // app/layout.tsx already applied the right class, so nothing is applied
+  // (and nothing flashes) before we know the stored value.
+  const [storedTheme, setThemeState] = useState<Theme | null>(null)
+  const theme: Theme = storedTheme ?? 'system'
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light')
 
   // Read stored preference on mount
   useEffect(() => {
+    let next: Theme = 'system'
     try {
       const stored = localStorage.getItem(STORAGE_KEY) as Theme | null
       if (stored === 'light' || stored === 'dark' || stored === 'system') {
-        setThemeState(stored)
+        next = stored
       }
     } catch {
       // localStorage unavailable (SSR, test environments)
     }
+    setThemeState(next)
   }, [])
 
   // Resolve and apply theme whenever `theme` changes or OS preference changes
   useEffect(() => {
+    if (storedTheme === null) return undefined
     const resolve = (): void => {
       const resolved = theme === 'system' ? getSystemTheme() : theme
       setResolvedTheme(resolved)
@@ -83,10 +90,11 @@ export function ThemeProvider({ children }: ThemeProviderProps): React.ReactElem
       // matchMedia unavailable (test environments)
       return undefined
     }
-  }, [theme])
+  }, [storedTheme, theme])
 
   const setTheme = useCallback((next: Theme) => {
     setThemeState(next)
+    document.documentElement.dataset.themePref = next
     try {
       localStorage.setItem(STORAGE_KEY, next)
     } catch {

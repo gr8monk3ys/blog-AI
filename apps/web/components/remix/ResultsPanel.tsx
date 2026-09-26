@@ -58,7 +58,7 @@ function ResultsPanelComponent({
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-12 text-center">
         <div className="text-6xl mb-4">(refresh)</div>
         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-          No remixed content yet
+          No Remixed Content Yet
         </h3>
         <p className="mt-2 text-gray-500 dark:text-gray-400">
           Enter your content, select formats, and click Remix to transform it

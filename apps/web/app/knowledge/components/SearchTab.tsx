@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { apiFetch, API_ENDPOINTS } from '../../../lib/api'
 import type { KBDocument, KBSearchResult, KBSearchResponse } from '../../../types/knowledge'
 import DocumentDetailModal from './DocumentDetailModal'
+import { formatNumber } from '@/lib/format'
 
 interface SearchTabProps {
   documents: KBDocument[]
@@ -81,12 +82,14 @@ export default function SearchTab({ documents }: SearchTabProps) {
             <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
           </div>
           <input
+            name="query"
+            autoComplete="off"
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="block w-full pl-11 pr-10 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm text-gray-900 dark:text-gray-100 transition-all"
-            placeholder="Search your knowledge base..."
+            className="block w-full pl-11 pr-10 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 shadow-sm placeholder-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:border-amber-500 text-sm text-gray-900 dark:text-gray-100 transition"
+            placeholder="Search your knowledge base…"
             aria-label="Search knowledge base"
           />
           <AnimatePresence>
@@ -100,7 +103,7 @@ export default function SearchTab({ documents }: SearchTabProps) {
                 className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
                 aria-label="Clear search"
               >
-                <XMarkIcon className="h-5 w-5" />
+                <XMarkIcon aria-hidden="true" className="h-5 w-5" />
               </motion.button>
             )}
           </AnimatePresence>
@@ -113,10 +116,11 @@ export default function SearchTab({ documents }: SearchTabProps) {
               Results:
             </label>
             <select
+              name="topk"
               id="topk"
               value={topK}
               onChange={(e) => setTopK(Number(e.target.value))}
-              className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 text-sm py-1 focus:border-amber-500 focus:ring-amber-500"
+              className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 text-sm py-1 focus-visible:border-amber-500 focus-visible:ring-amber-500"
             >
               {[3, 5, 10, 20].map((n) => (
                 <option key={n} value={n}>
@@ -127,9 +131,10 @@ export default function SearchTab({ documents }: SearchTabProps) {
           </div>
           <div className="flex items-center gap-2">
             <label htmlFor="minscore" className="text-xs text-gray-500 dark:text-gray-400">
-              Min score: {minScore.toFixed(1)}
+              Min score: {formatNumber(minScore, 1)}
             </label>
             <input
+              name="minscore"
               id="minscore"
               type="range"
               min="0.5"
@@ -146,7 +151,7 @@ export default function SearchTab({ documents }: SearchTabProps) {
             disabled={!query.trim() || searching}
             className="ml-auto px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {searching ? 'Searching...' : 'Search'}
+            {searching ? 'Searching…' : 'Search'}
           </button>
         </div>
       </div>
@@ -154,22 +159,22 @@ export default function SearchTab({ documents }: SearchTabProps) {
       {/* Results */}
       {searchTimeMs != null && (
         <div className="flex items-center gap-1 text-xs text-gray-400">
-          <ClockIcon className="h-3.5 w-3.5" />
+          <ClockIcon aria-hidden="true" className="h-3.5 w-3.5" />
           Found {results.length} result{results.length !== 1 ? 's' : ''} in{' '}
-          {searchTimeMs.toFixed(0)}ms
+          {formatNumber(searchTimeMs, 0)}ms
         </div>
       )}
 
       {hasSearched && results.length === 0 && !searching && (
         <div className="text-center py-12 text-gray-400 dark:text-gray-500">
-          <MagnifyingGlassIcon className="h-10 w-10 mx-auto mb-3 opacity-50" />
+          <MagnifyingGlassIcon aria-hidden="true" className="h-10 w-10 mx-auto mb-3 opacity-50" />
           <p>No results found. Try adjusting your query or lowering the minimum score.</p>
         </div>
       )}
 
       {!hasSearched && (
         <div className="text-center py-12 text-gray-400 dark:text-gray-500">
-          <MagnifyingGlassIcon className="h-10 w-10 mx-auto mb-3 opacity-50" />
+          <MagnifyingGlassIcon aria-hidden="true" className="h-10 w-10 mx-auto mb-3 opacity-50" />
           <p>Enter a query and press Enter or click Search to find relevant content.</p>
         </div>
       )}
@@ -198,7 +203,7 @@ export default function SearchTab({ documents }: SearchTabProps) {
                     />
                   </div>
                   <span className="text-xs text-gray-500 font-medium w-10 text-right">
-                    {(result.score * 100).toFixed(0)}%
+                    {formatNumber(result.score * 100, 0)}%
                   </span>
                 </div>
               </div>

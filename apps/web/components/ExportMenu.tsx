@@ -304,9 +304,12 @@ function useExportMenuView({
 
   return (
     <Menu as="div" className={`relative inline-block text-left ${className}`}>
+      <span className="sr-only" role="status">
+        {copied ? 'Copied to clipboard' : ''}
+      </span>
       <Menu.Button
         disabled={disabled}
-        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <ArrowDownTrayIcon className="w-4 h-4" aria-hidden="true" />
         Export
@@ -322,7 +325,7 @@ function useExportMenuView({
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <Menu.Items className="absolute right-0 z-20 mt-2 w-64 origin-top-right rounded-xl bg-white dark:bg-gray-900 shadow-lg ring-1 ring-black ring-opacity-5 dark:ring-gray-700 focus:outline-none divide-y divide-gray-100 dark:divide-gray-800">
+        <Menu.Items className="absolute right-0 z-20 mt-2 w-64 origin-top-right rounded-xl bg-white dark:bg-gray-900 shadow-lg ring-1 ring-black ring-opacity-5 dark:ring-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 divide-y divide-gray-100 dark:divide-gray-800">
           {/* Download options */}
           <div className="p-1">
             <div className="px-3 py-2">
@@ -346,7 +349,7 @@ function useExportMenuView({
                       } flex items-center justify-center transition-colors`}
                     >
                       {loading === option.id ? (
-                        <svg
+                        <svg aria-hidden="true"
                           className="animate-spin w-4 h-4 text-amber-700"
                           xmlns="http://www.w3.org/2000/svg"
                           fill="none"
@@ -367,9 +370,10 @@ function useExportMenuView({
                           />
                         </svg>
                       ) : copied === option.id ? (
-                        <CheckIcon className="w-4 h-4 text-emerald-600" />
+                        <CheckIcon aria-hidden="true" className="w-4 h-4 text-emerald-600" />
                       ) : (
                         <option.icon
+                          aria-hidden="true"
                           className={`w-4 h-4 ${
                             active ? 'text-amber-700' : 'text-gray-500 dark:text-gray-400'
                           } transition-colors`}
@@ -417,7 +421,7 @@ function useExportMenuView({
                       } flex items-center justify-center transition-colors`}
                     >
                       {loading === option.id ? (
-                        <svg
+                        <svg aria-hidden="true"
                           className="animate-spin w-4 h-4 text-amber-700"
                           xmlns="http://www.w3.org/2000/svg"
                           fill="none"
@@ -438,9 +442,10 @@ function useExportMenuView({
                           />
                         </svg>
                       ) : copied === option.id ? (
-                        <CheckIcon className="w-4 h-4 text-emerald-600" />
+                        <CheckIcon aria-hidden="true" className="w-4 h-4 text-emerald-600" />
                       ) : (
                         <option.icon
+                          aria-hidden="true"
                           className={`w-4 h-4 ${
                             active ? 'text-amber-700' : 'text-gray-500 dark:text-gray-400'
                           } transition-colors`}

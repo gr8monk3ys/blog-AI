@@ -16,7 +16,7 @@ export default async function ToolPage() {
     redirect('/sign-in')
   }
   return (
-    <Suspense fallback={<div className="p-8 text-center text-sm text-gray-500">Loading tool...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-sm text-gray-500">Loading tool…</div>}>
       <ToolPageClient />
     </Suspense>
   )

@@ -11,6 +11,7 @@ import type {
   PlagiarismQuotaResponse,
   ProviderQuota,
 } from '../../types/plagiarism'
+import { formatNumber } from '@/lib/format'
 
 function riskStyles(level: string): { badge: string; label: string; gauge: string } {
   switch (level) {
@@ -112,7 +113,7 @@ export default function PlagiarismPageClient() {
   function addExcludeUrl() {
     const url = excludeUrlInput.trim()
     if (url && !excludeUrls.includes(url) && excludeUrls.length < 10) {
-      setExcludeUrls([...excludeUrls, url])
+      setExcludeUrls((prev) => [...prev, url])
       setExcludeUrlInput('')
     }
   }
@@ -125,7 +126,7 @@ export default function PlagiarismPageClient() {
   const sources = result?.matching_sources || []
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <main id="main-content" tabIndex={-1} className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="flex items-center gap-3 mb-8">
         <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-amber-100/80 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
           <ShieldCheckIcon className="w-5 h-5" aria-hidden="true" />
@@ -169,18 +170,20 @@ export default function PlagiarismPageClient() {
             Content to check <span className="text-red-500">*</span>
           </label>
           <textarea
+            name="plag-content"
+            autoComplete="off"
             id="plag-content"
             rows={10}
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Paste the content you want to check for plagiarism (minimum 50 characters)..."
-            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+            placeholder="Paste the content you want to check for plagiarism (minimum 50 characters)…"
+            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             required
             minLength={50}
           />
           <div className="mt-1 flex justify-between text-xs text-gray-400">
             <span>{content.length < 50 ? `${50 - content.length} more characters needed` : 'Ready to check'}</span>
-            <span>{content.length.toLocaleString()} characters</span>
+            <span>{formatNumber(content.length)} characters</span>
           </div>
         </div>
 
@@ -191,12 +194,14 @@ export default function PlagiarismPageClient() {
               Title (optional)
             </label>
             <input
+              name="plag-title"
+              autoComplete="off"
               id="plag-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Content title"
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+              placeholder="e.g. How We Cut Onboarding Time in Half…"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             />
           </div>
 
@@ -205,10 +210,11 @@ export default function PlagiarismPageClient() {
               Provider
             </label>
             <select
+              name="plag-provider"
               id="plag-provider"
               value={provider}
               onChange={(e) => setProvider(e.target.value as '' | PlagiarismProvider)}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             >
               {PROVIDERS.map((p) => (
                 <option key={p.value} value={p.value}>{p.label}</option>
@@ -219,17 +225,20 @@ export default function PlagiarismPageClient() {
 
         {/* Exclude URLs */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+          <label htmlFor="plagiarism-exclude-urls" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
             Exclude URLs (optional)
           </label>
           <div className="flex gap-2">
-            <input
+            <input id="plagiarism-exclude-urls"
+              name="excludeUrlInput"
+              autoComplete="url"
+              spellCheck={false}
               type="url"
               value={excludeUrlInput}
               onChange={(e) => setExcludeUrlInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addExcludeUrl() } }}
-              placeholder="https://example.com/your-original"
-              className="flex-1 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+              placeholder="https://example.com/your-original…"
+              className="flex-1 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
             />
             <button
               type="button"
@@ -260,10 +269,11 @@ export default function PlagiarismPageClient() {
         {/* Skip cache toggle */}
         <label className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
           <input
+            name="skipCache"
             type="checkbox"
             checked={skipCache}
             onChange={(e) => setSkipCache(e.target.checked)}
-            className="rounded border-gray-300 text-amber-700 focus:ring-amber-500"
+            className="rounded border-gray-300 text-amber-700 focus-visible:ring-amber-500"
           />
           Skip cache (force fresh check)
         </label>
@@ -276,15 +286,15 @@ export default function PlagiarismPageClient() {
         >
           {loading ? (
             <>
-              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+              <svg aria-hidden="true" className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              Checking...
+              Checking…
             </>
           ) : (
             <>
-              <ShieldCheckIcon className="w-4 h-4" />
+              <ShieldCheckIcon aria-hidden="true" className="w-4 h-4" />
               {result ? 'Re-check' : 'Check for Plagiarism'}
             </>
           )}
@@ -293,7 +303,7 @@ export default function PlagiarismPageClient() {
 
       {/* Error */}
       {error && (
-        <div className="mt-6 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+        <div className="mt-6 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300" role="alert">
           {error}
         </div>
       )}
@@ -318,7 +328,7 @@ export default function PlagiarismPageClient() {
               </div>
               <div className="h-3 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-500 ${risk?.gauge}`}
+                  className={`h-full rounded-full ${risk?.gauge}`}
                   style={{ width: `${Math.min(result.overall_score, 100)}%` }}
                 />
               </div>
@@ -333,7 +343,7 @@ export default function PlagiarismPageClient() {
                 Provider: {result.provider}
               </span>
               <span className="px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium">
-                {result.total_words_checked.toLocaleString()} words checked
+                {formatNumber(result.total_words_checked)} words checked
               </span>
               {result.cached && (
                 <span className="px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium">
@@ -341,7 +351,7 @@ export default function PlagiarismPageClient() {
                 </span>
               )}
               <span className="text-gray-400 dark:text-gray-500 self-center">
-                {(result.processing_time_ms / 1000).toFixed(1)}s
+                {formatNumber(result.processing_time_ms / 1000, 1)}s
               </span>
             </div>
           </div>
@@ -395,6 +405,6 @@ export default function PlagiarismPageClient() {
       )}
 
       <ToastComponent />
-    </div>
+    </main>
   )
 }

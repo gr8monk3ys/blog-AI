@@ -59,7 +59,7 @@ test.describe('Pricing Page', () => {
     for (const plan of ['Free', 'Starter', 'Pro']) {
       expect(html).toContain(`>${plan}</h2>`)
     }
-    expect(html.match(/included/g)?.length ?? 0).toBeGreaterThanOrEqual(3)
+    expect(html.match(/included/gi)?.length ?? 0).toBeGreaterThanOrEqual(3)
   })
 
   test('plan card headings do not skip a level', async ({ page }) => {

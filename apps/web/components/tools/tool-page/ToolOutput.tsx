@@ -93,11 +93,21 @@ export default function ToolOutput({
 }: ToolOutputProps) {
   return (
     <>
+      {/* Always mounted, so screen readers hear when generated text arrives. */}
+      <p className="sr-only" role="status">
+        {loading
+          ? 'Generating…'
+          : copied
+            ? 'Copied to clipboard'
+            : output
+              ? 'Your generated content is ready.'
+              : ''}
+      </p>
       {/* Variations comparison section */}
       {variations.length > 0 && (
         <m.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
           className="border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950"
         >
           <div className="p-6">
@@ -114,8 +124,8 @@ export default function ToolOutput({
       {/* Output section */}
       {output && (
         <m.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
           className="border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950"
         >
           <div className="p-6">
@@ -143,12 +153,12 @@ export default function ToolOutput({
                 >
                   {copied ? (
                     <>
-                      <CheckIcon className="w-3.5 h-3.5 text-emerald-500" />
+                      <CheckIcon aria-hidden="true" className="w-3.5 h-3.5 text-emerald-500" />
                       Copied!
                     </>
                   ) : (
                     <>
-                      <ClipboardDocumentIcon className="w-3.5 h-3.5" />
+                      <ClipboardDocumentIcon aria-hidden="true" className="w-3.5 h-3.5" />
                       Copy
                     </>
                   )}
@@ -191,7 +201,7 @@ export default function ToolOutput({
                 onClick={onSaveTemplateClick}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
               >
-                <BookmarkIcon className="w-3.5 h-3.5" />
+                <BookmarkIcon aria-hidden="true" className="w-3.5 h-3.5" />
                 Save as Template
               </button>
 
@@ -205,8 +215,8 @@ export default function ToolOutput({
                     href="/history"
                     className="inline-flex items-center gap-1 text-amber-700 hover:text-amber-800 transition-colors"
                   >
-                    View history
-                    <svg
+                    View History
+                    <svg aria-hidden="true"
                       className="w-3 h-3"
                       fill="none"
                       viewBox="0 0 24 24"

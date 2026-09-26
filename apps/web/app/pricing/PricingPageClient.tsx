@@ -18,6 +18,7 @@ import {
 import { UsageTier, TIER_DISPLAY } from '../../types/usage'
 import { API_ENDPOINTS, getDefaultHeaders } from '../../lib/api'
 import { normalizePricingTiers, type PublicPricingTier } from './tiers'
+import { formatNumber } from '@/lib/format'
 
 type BillingCycle = 'monthly' | 'yearly'
 
@@ -214,8 +215,8 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
   }
 
   const getButtonText = (tier: UsageTier) => {
-    if (loading) return 'Loading...'
-    if (upgrading === tier) return 'Processing...'
+    if (loading) return 'Loading…'
+    if (upgrading === tier) return 'Processing…'
     if (tier === currentTier) return 'Current Plan'
     if (tier === 'free' && currentTier && currentTier !== 'free') return 'Manage in Portal'
     return TIER_POSITIONING[tier as Exclude<UsageTier, 'business'>]?.cta || 'Checkout'
@@ -236,7 +237,7 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
   return (
     <>
       <SiteHeader />
-      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
 
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-amber-700 to-amber-800 text-white py-16">
@@ -293,7 +294,7 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
           </div>
         )}
         {error && (
-          <div className="hero-fade mb-6 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-center">
+          <div className="hero-fade mb-6 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-center" role="alert">
             <p className="text-red-700 dark:text-red-400">{error}</p>
           </div>
         )}
@@ -344,7 +345,7 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
                   {/* Header */}
                   <div className="flex items-center gap-3 mb-4">
                     <div className={`p-2 rounded-lg ${TIER_DISPLAY[tier.id].bgColor}`}>
-                      <Icon className={`w-6 h-6 ${TIER_DISPLAY[tier.id].color}`} />
+                      <Icon aria-hidden="true" className={`w-6 h-6 ${TIER_DISPLAY[tier.id].color}`} />
                     </div>
                   <div>
                     {/* h2, not h3: the only heading above it is the hero h1,
@@ -389,9 +390,9 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
                         {tier.monthly_limit === -1
                           ? 'Unlimited'
                           : typeof tier.monthly_limit === 'number'
-                          ? tier.monthly_limit.toLocaleString()
+                          ? formatNumber(tier.monthly_limit)
                           : typeof tier.generations_per_month === 'number'
-                          ? tier.generations_per_month.toLocaleString()
+                          ? formatNumber(tier.generations_per_month)
                           : '—'}
                       </span>
                     </div>
@@ -413,7 +414,7 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
                         <button
                           onClick={() => tier.id !== currentTier && handleUpgrade(tier.id)}
                           disabled={loading || tier.id === currentTier || upgrading !== null}
-                          className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${getButtonStyle(tier.id)} disabled:opacity-50`}
+                          className={`w-full py-3 px-4 rounded-lg font-medium transition ${getButtonStyle(tier.id)} disabled:opacity-50`}
                         >
                           {getButtonText(tier.id)}
                         </button>
@@ -422,7 +423,7 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
                     return (
                       <a
                         href="mailto:support@blogai.com"
-                        className={`w-full py-3 px-4 rounded-lg font-medium transition-all text-center block ${getButtonStyle(tier.id)}`}
+                        className={`w-full py-3 px-4 rounded-lg font-medium transition text-center block ${getButtonStyle(tier.id)}`}
                       >
                         Contact Us
                       </a>
@@ -432,12 +433,12 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
                   {/* Features */}
                   <div className="mt-8">
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                      What&apos;s included
+                      What’s Included
                     </h3>
                     <ul className="space-y-3">
                       {tier.features.map((feature) => (
                         <li key={feature} className="flex items-start gap-3">
-                          <CheckIcon className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                          <CheckIcon aria-hidden="true" className="w-5 h-5 text-emerald-500 flex-shrink-0" />
                           <span className="text-sm text-gray-600 dark:text-gray-400">{feature}</span>
                         </li>
                       ))}
@@ -489,23 +490,23 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
                       <td className="py-4 pr-8 text-sm text-gray-600 dark:text-gray-400">{feature.name}</td>
                       <td className="py-4 px-4 text-center">
                         {feature.free ? (
-                          <CheckIcon className="w-5 h-5 text-emerald-500 mx-auto" />
+                          <CheckIcon aria-hidden="true" className="w-5 h-5 text-emerald-500 mx-auto" />
                         ) : (
-                          <XMarkIcon className="w-5 h-5 text-gray-300 dark:text-gray-600 mx-auto" />
+                          <XMarkIcon aria-hidden="true" className="w-5 h-5 text-gray-300 dark:text-gray-600 mx-auto" />
                         )}
                       </td>
                       <td className="py-4 px-4 text-center">
                         {feature.starter ? (
-                          <CheckIcon className="w-5 h-5 text-emerald-500 mx-auto" />
+                          <CheckIcon aria-hidden="true" className="w-5 h-5 text-emerald-500 mx-auto" />
                         ) : (
-                          <XMarkIcon className="w-5 h-5 text-gray-300 dark:text-gray-600 mx-auto" />
+                          <XMarkIcon aria-hidden="true" className="w-5 h-5 text-gray-300 dark:text-gray-600 mx-auto" />
                         )}
                       </td>
                       <td className="py-4 px-4 text-center">
                         {feature.pro ? (
-                          <CheckIcon className="w-5 h-5 text-emerald-500 mx-auto" />
+                          <CheckIcon aria-hidden="true" className="w-5 h-5 text-emerald-500 mx-auto" />
                         ) : (
-                          <XMarkIcon className="w-5 h-5 text-gray-300 dark:text-gray-600 mx-auto" />
+                          <XMarkIcon aria-hidden="true" className="w-5 h-5 text-gray-300 dark:text-gray-600 mx-auto" />
                         )}
                       </td>
                     </tr>
@@ -565,7 +566,7 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
       {/* Footer CTA */}
       <section className="bg-gradient-to-r from-amber-700 to-amber-800 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl font-bold mb-4">Ready to create amazing content?</h2>
+          <h2 className="text-2xl font-bold mb-4">Ready to Create Amazing Content?</h2>
           <p className="text-amber-100 mb-6">
             Start with our free plan and upgrade when you need more.
           </p>

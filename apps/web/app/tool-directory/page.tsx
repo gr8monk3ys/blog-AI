@@ -56,7 +56,7 @@ export default async function ToolDirectoryPage() {
   return (
     <>
       <SiteHeader />
-      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
       <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -65,7 +65,7 @@ export default async function ToolDirectoryPage() {
                 Tool Directory
               </p>
               <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
-                Browse every AI tool and calculator in one place
+                Browse Every AI Tool and Calculator in One Place
               </h1>
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-2xl">
                 This directory is designed for discovery and internal linking. Use it
@@ -155,7 +155,7 @@ export default async function ToolDirectoryPage() {
                     href={`/tools/category/${category}`}
                     className="text-xs text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300"
                   >
-                    View tools
+                    View Tools
                   </Link>
                 </div>
 
@@ -195,7 +195,7 @@ export default async function ToolDirectoryPage() {
       <section className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
-            Build internal links and topical authority
+            Build Internal Links and Topical Authority
           </h2>
           <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
             Use this directory to connect your calculator pages and blogs. Each tool
@@ -208,13 +208,13 @@ export default async function ToolDirectoryPage() {
               href="/templates"
               className="px-4 py-2 text-sm font-medium text-white bg-amber-700 hover:bg-amber-800 rounded-lg"
             >
-              Explore templates
+              Explore Templates
             </Link>
             <Link
               href="/"
               className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg"
             >
-              Start generating content
+              Start Generating Content
             </Link>
           </div>
         </div>

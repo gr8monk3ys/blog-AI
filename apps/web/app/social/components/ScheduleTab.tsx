@@ -7,12 +7,14 @@ import type { ToastOptions } from '../../../hooks/useToast'
 import type { SocialAccount, ScheduledPost } from '../../../types/social'
 import PostComposer from './PostComposer'
 import ScheduledPostCard from './ScheduledPostCard'
+import type { ConfirmOptions } from '../../../hooks/useConfirmModal'
 
 interface ScheduleTabProps {
   showToast: (opts: ToastOptions) => void
+  confirm: (opts: ConfirmOptions) => Promise<boolean>
 }
 
-export default function ScheduleTab({ showToast }: ScheduleTabProps) {
+export default function ScheduleTab({ showToast, confirm }: ScheduleTabProps) {
   const [accounts, setAccounts] = useState<SocialAccount[]>([])
   const [posts, setPosts] = useState<ScheduledPost[]>([])
   const [loading, setLoading] = useState(true)
@@ -45,6 +47,14 @@ export default function ScheduleTab({ showToast }: ScheduleTabProps) {
   }, [fetchData])
 
   async function handleCancelPost(postId: string) {
+    const confirmed = await confirm({
+      title: 'Cancel scheduled post?',
+      message: 'The post will not be published. This cannot be undone.',
+      variant: 'danger',
+      confirmLabel: 'Cancel Post',
+    })
+    if (!confirmed) return
+
     try {
       const headers = await getDefaultHeaders()
       const res = await fetch(API_ENDPOINTS.social.cancelPost(postId), { method: 'DELETE', headers })
@@ -75,7 +85,7 @@ export default function ScheduleTab({ showToast }: ScheduleTabProps) {
         <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Scheduled Posts</h3>
         {posts.length === 0 ? (
           <div className="text-center py-12">
-            <CalendarIcon className="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+            <CalendarIcon aria-hidden="true" className="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
             <p className="text-sm text-gray-500 dark:text-gray-400">No scheduled posts yet.</p>
           </div>
         ) : (

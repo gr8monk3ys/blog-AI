@@ -25,6 +25,7 @@ import {
   type TextSelection,
   type FormatResult,
 } from './editor/markdownUtils'
+import { formatNumber } from '@/lib/format'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -60,9 +61,16 @@ const MAX_HISTORY_SIZE = 100
 // Helper: localStorage wrappers
 // ---------------------------------------------------------------------------
 
+// Versioned key; drafts saved under the pre-versioning key are still read.
+const DRAFT_PREFIX = 'content-editor-draft:v1:'
+const LEGACY_DRAFT_PREFIX = 'content-editor-draft:'
+
 function loadDraft(key: string): string | null {
   try {
-    return localStorage.getItem(`content-editor-draft:${key}`)
+    return (
+      localStorage.getItem(`${DRAFT_PREFIX}${key}`) ??
+      localStorage.getItem(`${LEGACY_DRAFT_PREFIX}${key}`)
+    )
   } catch {
     return null
   }
@@ -70,7 +78,7 @@ function loadDraft(key: string): string | null {
 
 function saveDraft(key: string, value: string): void {
   try {
-    localStorage.setItem(`content-editor-draft:${key}`, value)
+    localStorage.setItem(`${DRAFT_PREFIX}${key}`, value)
   } catch {
     // Storage full or unavailable -- silently ignore
   }
@@ -78,7 +86,8 @@ function saveDraft(key: string, value: string): void {
 
 function clearDraft(key: string): void {
   try {
-    localStorage.removeItem(`content-editor-draft:${key}`)
+    localStorage.removeItem(`${DRAFT_PREFIX}${key}`)
+    localStorage.removeItem(`${LEGACY_DRAFT_PREFIX}${key}`)
   } catch {
     // Ignore
   }
@@ -395,7 +404,7 @@ function useContentEditorView({
             role="tab"
             aria-selected={mode === 'preview'}
             onClick={() => setMode('preview')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
               mode === 'preview'
                 ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
@@ -409,7 +418,7 @@ function useContentEditorView({
             role="tab"
             aria-selected={mode === 'edit'}
             onClick={() => setMode('edit')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
               mode === 'edit'
                 ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
@@ -424,9 +433,9 @@ function useContentEditorView({
         <div className="flex flex-wrap items-center gap-3">
           {/* Word count / reading time */}
           <span className="text-xs text-gray-500 dark:text-gray-400">
-            {wordCount.toLocaleString()} {wordCount === 1 ? 'word' : 'words'}
+            {formatNumber(wordCount)} {wordCount === 1 ? 'word' : 'words'}
             <span className="mx-1.5 text-gray-300 dark:text-gray-600" aria-hidden="true">|</span>
-            {readingTime} min read
+            {readingTime}&nbsp;min read
           </span>
 
           {/* Copy */}
@@ -435,7 +444,7 @@ function useContentEditorView({
             onClick={handleCopy}
             aria-label="Copy to clipboard"
             title="Copy to clipboard"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 transition-colors"
           >
             {copied ? (
               <>
@@ -456,7 +465,7 @@ function useContentEditorView({
             onClick={handleExportMarkdown}
             aria-label="Export as Markdown"
             title="Export as Markdown"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 transition-colors"
           >
             <ArrowDownTrayIcon className="w-3.5 h-3.5" aria-hidden="true" />
             Export .md
@@ -469,7 +478,7 @@ function useContentEditorView({
               onClick={handleRevert}
               aria-label="Revert to original"
               title="Revert to original"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-md hover:bg-amber-100 dark:hover:bg-amber-900/50 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-md hover:bg-amber-100 dark:hover:bg-amber-900/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 transition-colors"
             >
               <ArrowUturnLeftIcon className="w-3.5 h-3.5" aria-hidden="true" />
               Revert
@@ -495,11 +504,13 @@ function useContentEditorView({
       >
         {mode === 'edit' ? (
           <textarea
+            name="content"
+            autoComplete="off"
             ref={textareaRef}
             value={content}
             onChange={handleTextareaChange}
-            className="w-full min-h-[400px] p-4 font-mono text-sm text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent leading-relaxed"
-            placeholder="Start writing in markdown..."
+            className="w-full min-h-[400px] p-4 font-mono text-sm text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg resize-y focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:border-transparent leading-relaxed"
+            placeholder="Start writing in markdown…"
             aria-label="Content editor"
             spellCheck
           />
