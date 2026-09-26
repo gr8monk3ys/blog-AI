@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { getSqlOrNull } from './db'
+import { cache } from 'react'
 
 export interface BlogPostMeta {
   title: string
@@ -111,7 +112,9 @@ export const loadBlogPosts = async (): Promise<BlogPostMeta[]> => {
 
 const SAFE_SLUG = /^[a-zA-Z0-9-]+$/
 
-export const loadBlogPost = async (slug: string): Promise<BlogPost | null> => {
+// React.cache: generateMetadata and the page both load the same post in one
+// request; this runs the DB/file read once.
+export const loadBlogPost = cache(async (slug: string): Promise<BlogPost | null> => {
   if (!SAFE_SLUG.test(slug)) return null
 
   const cmsPost = await loadBlogPostFromDb(slug)
@@ -140,7 +143,7 @@ export const loadBlogPost = async (slug: string): Promise<BlogPost | null> => {
   } catch {
     return null
   }
-}
+})
 
 const loadBlogPostsFromDb = async (): Promise<BlogPostMeta[]> => {
   const sql = getSqlOrNull()
