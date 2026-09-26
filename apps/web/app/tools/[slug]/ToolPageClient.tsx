@@ -620,7 +620,7 @@ export default function ToolPageClient() {
   return (
     <Suspense
       fallback={
-        <main id="main-content" tabIndex={-1} className="min-h-screen flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+        <main className="min-h-screen flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
           Loading tool…
         </main>
       }

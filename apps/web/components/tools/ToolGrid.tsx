@@ -12,6 +12,7 @@ import {
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline'
 import { useUrlSearchParam } from '../../hooks/useUrlSearchParam'
+import { TOOL_CATEGORIES } from '../../types/tools'
 
 interface ToolGridProps {
   tools?: Tool[]
@@ -26,6 +27,9 @@ interface ToolGridProps {
   headingLevel?: HeadingLevel
 }
 
+const isToolCategoryParam = (value: string): value is ToolCategory | 'all' =>
+  value === 'all' || value in TOOL_CATEGORIES
+
 export default function ToolGrid({
   tools = SAMPLE_TOOLS,
   showFilters = true,
@@ -39,7 +43,8 @@ export default function ToolGrid({
   const [searchQuery, setSearchQuery] = useUrlSearchParam<string>('q', '')
   const [selectedCategory, setSelectedCategory] = useUrlSearchParam<ToolCategory | 'all'>(
     'category',
-    initialCategory
+    initialCategory,
+    isToolCategoryParam
   )
   const [freeParam, setFreeParam] = useUrlSearchParam<'' | '1'>('free', '')
   const showFreeOnly = freeParam === '1'

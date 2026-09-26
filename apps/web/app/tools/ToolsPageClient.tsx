@@ -1,23 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { Suspense, useMemo } from 'react'
+import { Suspense } from 'react'
 import { m } from 'framer-motion'
 import SiteHeader from '../../components/SiteHeader'
 import SiteFooter from '../../components/SiteFooter'
 import ToolGrid from '../../components/tools/ToolGrid'
-import { TOOL_CATEGORIES, type ToolCategory } from '../../types/tools'
 
 function ToolsPageContent() {
-  const initialCategory = useMemo(() => {
-    if (typeof window === 'undefined') return 'all'
-    const categoryParam = new URLSearchParams(window.location.search).get('category')
-    if (categoryParam && categoryParam in TOOL_CATEGORIES) {
-      return categoryParam as ToolCategory
-    }
-    return 'all'
-  }, [])
-
   return (
     <>
       <SiteHeader />
@@ -68,7 +58,9 @@ function ToolsPageContent() {
         >
           {/* The grid is the first content under the page <h1>, so its card titles
               are the h2 level of this page; the CTA below is the other h2. */}
-          <ToolGrid initialCategory={initialCategory} headingLevel={2} />
+          {/* ToolGrid reads ?category= itself, hydration-safely (reading window
+              during render here made server and client HTML differ). */}
+          <ToolGrid headingLevel={2} />
         </m.div>
       </section>
 
@@ -116,7 +108,7 @@ export default function ToolsPageClient() {
   return (
     <Suspense
       fallback={
-        <main id="main-content" tabIndex={-1} className="min-h-screen flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+        <main className="min-h-screen flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
           Loading tools…
         </main>
       }
