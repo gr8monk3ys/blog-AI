@@ -8,6 +8,7 @@ import { useToast } from '../../hooks/useToast'
 import SingleImageTab from './components/SingleImageTab'
 import BlogImagesTab from './components/BlogImagesTab'
 import type { ImageStylesResponse } from '../../types/images'
+import { useUrlSearchParam } from '../../hooks/useUrlSearchParam'
 
 const TABS = [
   { id: 'single', label: 'Single Image' },
@@ -16,8 +17,11 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]['id']
 
+const isTabId = (value: string): value is TabId => TABS.some((tab) => tab.id === value)
+
 export default function ImageGenerationPage() {
-  const [activeTab, setActiveTab] = useState<TabId>('single')
+  // ?tab= deep-links the active tab.
+  const [activeTab, setActiveTab] = useUrlSearchParam<TabId>('tab', 'single', isTabId)
   const [styles, setStyles] = useState<ImageStylesResponse | null>(null)
   const [proAccess, setProAccess] = useState<boolean | null>(null)
   const { showToast, ToastComponent } = useToast()
@@ -56,9 +60,9 @@ export default function ImageGenerationPage() {
 
   if (proAccess === false) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+      <main id="main-content" tabIndex={-1} className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-100/80 dark:bg-amber-900/40 text-amber-700 mb-6">
-          <PhotoIcon className="w-8 h-8" />
+          <PhotoIcon aria-hidden="true" className="w-8 h-8" />
         </div>
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
           AI Image Generation
@@ -72,12 +76,12 @@ export default function ImageGenerationPage() {
         >
           Upgrade to Pro
         </Link>
-      </div>
+      </main>
     )
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <main id="main-content" tabIndex={-1} className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="flex items-center gap-3 mb-8">
         <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-amber-100/80 dark:bg-amber-900/40 text-amber-700">
           <PhotoIcon className="w-5 h-5" aria-hidden="true" />
@@ -112,6 +116,6 @@ export default function ImageGenerationPage() {
       {activeTab === 'blog' && <BlogImagesTab styles={styles} showToast={showToast} />}
 
       <ToastComponent />
-    </div>
+    </main>
   )
 }

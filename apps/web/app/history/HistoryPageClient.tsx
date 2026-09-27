@@ -147,7 +147,7 @@ function useHistoryPageView() {
   return (
     <>
       <SiteHeader />
-      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
 
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-amber-700 to-amber-800 text-white">
@@ -204,7 +204,7 @@ function useHistoryPageView() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center py-16"
           >
-            <ExclamationTriangleIcon className="w-16 h-16 mx-auto text-amber-500 mb-4" />
+            <ExclamationTriangleIcon aria-hidden="true" className="w-16 h-16 mx-auto text-amber-500 mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
               Sign In Required
             </h2>
@@ -215,7 +215,7 @@ function useHistoryPageView() {
               href="/sign-in"
               className="inline-flex items-center gap-2 px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-colors"
             >
-              <DocumentTextIcon className="w-5 h-5" />
+              <DocumentTextIcon aria-hidden="true" className="w-5 h-5" />
               Sign In
             </Link>
           </m.div>
@@ -280,7 +280,7 @@ function useHistoryPageView() {
                 animate={{ opacity: 1, y: 0 }}
                 className="text-center py-16"
               >
-                <DocumentTextIcon className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+                <DocumentTextIcon aria-hidden="true" className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
                   {filters.favorites_only
                     ? 'No Favorites Yet'
@@ -299,7 +299,7 @@ function useHistoryPageView() {
                   href="/tools"
                   className="inline-flex items-center gap-2 px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-colors"
                 >
-                  <SparklesIcon className="w-5 h-5" />
+                  <SparklesIcon aria-hidden="true" className="w-5 h-5" />
                   Start Creating
                 </Link>
               </m.div>
@@ -332,11 +332,11 @@ function useHistoryPageView() {
                       type="button"
                       onClick={handleLoadMore}
                       disabled={isLoadingMore}
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isLoadingMore ? (
                         <>
-                          <svg
+                          <svg aria-hidden="true"
                             className="animate-spin w-4 h-4"
                             xmlns="http://www.w3.org/2000/svg"
                             fill="none"
@@ -356,7 +356,7 @@ function useHistoryPageView() {
                               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                             />
                           </svg>
-                          Loading...
+                          Loading…
                         </>
                       ) : (
                         'Load More'

@@ -155,7 +155,7 @@ export default function GlobalError({
 
           {/* Title */}
           <h1 id="error-title" style={styles.title}>
-            Something went wrong
+            Something Went Wrong
           </h1>
 
           {/* Message */}
@@ -179,10 +179,10 @@ export default function GlobalError({
 	              style={styles.btnPrimary}
 	              type="button"
 	            >
-	              Try again
+	              Try Again
 	            </button>
 	            <Link href="/" style={styles.btnSecondary}>
-	              Return home
+	              Return Home
 	            </Link>
 	          </div>
 	        </main>

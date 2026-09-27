@@ -42,9 +42,9 @@ function UsageBar({
       {!isUnlimited && (
         <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2">
           <m.div
-            initial={{ width: 0 }}
-            animate={{ width: `${Math.min(percentage, 100)}%` }}
-            className={`h-2 rounded-full ${barColor}`}
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: Math.min(Math.max(percentage, 0), 100) / 100 }}
+            className={`h-2 w-full origin-left rounded-full ${barColor}`}
           />
         </div>
       )}
@@ -92,12 +92,12 @@ export default function UsageTab({ stats }: UsageTabProps) {
       {/* Warning banners */}
       {showCritical && (
         <div className="px-4 py-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-400">
-          You&apos;ve reached your plan limits. Upgrade to continue uploading documents.
+          You’ve reached your plan limits. Upgrade to continue uploading documents.
         </div>
       )}
       {showWarning && !showCritical && (
         <div className="px-4 py-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-sm text-amber-700 dark:text-amber-400">
-          You&apos;re approaching your plan limits. Consider upgrading for more capacity.
+          You’re approaching your plan limits. Consider upgrading for more capacity.
         </div>
       )}
 
@@ -164,7 +164,7 @@ export default function UsageTab({ stats }: UsageTabProps) {
       {showUpgradeCTA && (
         <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-lg border border-amber-200 dark:border-amber-800 p-4">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
-            Need more capacity?
+            Need More Capacity?
           </h3>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
             {tier === 'free'

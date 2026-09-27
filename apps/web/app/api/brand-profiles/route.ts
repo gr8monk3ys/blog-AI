@@ -94,11 +94,12 @@ export async function GET(request: NextRequest) {
 
     const whereSql = `WHERE ${where.join(' AND ')}`
 
-    const countRows = await sql.query(
+    // Count and page queries are independent: run them concurrently.
+
+    const countRowsPromise = sql.query(
       `SELECT COUNT(*)::int AS count FROM brand_profiles ${whereSql}`,
       params
     )
-    const total = Number((countRows?.[0] as { count?: unknown } | undefined)?.count ?? 0)
 
     const dataRows = await sql.query(
       `
@@ -127,6 +128,9 @@ export async function GET(request: NextRequest) {
       `,
       [...params, limit, offset]
     )
+
+    const countRows = await countRowsPromise
+    const total = Number((countRows?.[0] as { count?: unknown } | undefined)?.count ?? 0)
 
     if (!dataRows) {
       return NextResponse.json(

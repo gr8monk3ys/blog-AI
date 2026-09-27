@@ -22,10 +22,11 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  const resolvedParams = await params
+  // Cheap synchronous auth check before awaiting anything.
   if (!isAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  const resolvedParams = await params
 
   const sql = getSqlOrNull()
   if (!sql) {
@@ -48,10 +49,11 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  const resolvedParams = await params
+  // Cheap synchronous auth check before awaiting anything.
   if (!isAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  const resolvedParams = await params
 
   const sql = getSqlOrNull()
   if (!sql) {

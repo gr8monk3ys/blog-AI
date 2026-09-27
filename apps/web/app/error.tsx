@@ -46,7 +46,7 @@ export default function Error({
   }, [error])
 
   return (
-    <main
+    <main id="main-content" tabIndex={-1}
       className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 px-4"
       role="main"
       aria-labelledby="error-title"
@@ -75,7 +75,7 @@ export default function Error({
           id="error-title"
           className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3"
         >
-          Something went wrong
+          Something Went Wrong
         </h1>
 
         {/* Description */}
@@ -115,7 +115,7 @@ export default function Error({
                 d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
               />
             </svg>
-            Try again
+            Try Again
           </button>
 
           <Link
@@ -136,7 +136,7 @@ export default function Error({
                 d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"
               />
             </svg>
-            Return home
+            Return Home
           </Link>
         </div>
 
@@ -147,7 +147,7 @@ export default function Error({
             href={`mailto:${SUPPORT_EMAIL}`}
             className="text-amber-700 hover:text-amber-500 dark:text-amber-400 dark:hover:text-amber-300 underline underline-offset-2"
           >
-            Contact support
+            Contact Support
           </a>
         </p>
       </div>

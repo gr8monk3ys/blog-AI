@@ -6,7 +6,8 @@
  * survives page reloads but stays scoped to the device/browser.
  */
 
-const STORAGE_KEY = 'onboarding_completed'
+const STORAGE_KEY = 'onboarding_completed:v1'
+const LEGACY_STORAGE_KEY = 'onboarding_completed'
 const COOKIE_KEY = 'onboarding_completed'
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365
 
@@ -20,7 +21,10 @@ export function hasCompletedOnboarding(): boolean {
   if (typeof window === 'undefined') return false
 
   try {
-    return localStorage.getItem(STORAGE_KEY) === 'true'
+    return (
+      localStorage.getItem(STORAGE_KEY) === 'true' ||
+      localStorage.getItem(LEGACY_STORAGE_KEY) === 'true'
+    )
   } catch {
     // localStorage may be blocked (e.g. private browsing in Safari).
     return false
@@ -53,6 +57,7 @@ export function resetOnboarding(): void {
 
   try {
     localStorage.removeItem(STORAGE_KEY)
+    localStorage.removeItem(LEGACY_STORAGE_KEY)
     document.cookie = `${COOKIE_KEY}=; path=/; max-age=0; samesite=lax`
   } catch {
     // Swallow.

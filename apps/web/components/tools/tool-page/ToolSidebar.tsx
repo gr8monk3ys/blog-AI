@@ -15,7 +15,7 @@ function TipsCard() {
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-5">
       <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
-        Tips for best results
+        Tips for Best Results
       </h3>
       <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
         <li className="flex items-start gap-2">

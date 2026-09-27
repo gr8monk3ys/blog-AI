@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import ToolCard, { type HeadingLevel } from './ToolCard'
 import ToolSearch from './ToolSearch'
@@ -11,6 +11,8 @@ import {
   Squares2X2Icon,
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline'
+import { useUrlSearchParam } from '../../hooks/useUrlSearchParam'
+import { TOOL_CATEGORIES } from '../../types/tools'
 
 interface ToolGridProps {
   tools?: Tool[]
@@ -25,6 +27,9 @@ interface ToolGridProps {
   headingLevel?: HeadingLevel
 }
 
+const isToolCategoryParam = (value: string): value is ToolCategory | 'all' =>
+  value === 'all' || value in TOOL_CATEGORIES
+
 export default function ToolGrid({
   tools = SAMPLE_TOOLS,
   showFilters = true,
@@ -33,11 +38,17 @@ export default function ToolGrid({
   headingLevel = 3,
 }: ToolGridProps) {
   const EmptyStateHeading = `h${headingLevel}` as const
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<ToolCategory | 'all'>(
-    initialCategory
+  // Filters live in the URL (?q=&category=&free=1) so a filtered view can be
+  // shared and survives Back/Forward.
+  const [searchQuery, setSearchQuery] = useUrlSearchParam<string>('q', '')
+  const [selectedCategory, setSelectedCategory] = useUrlSearchParam<ToolCategory | 'all'>(
+    'category',
+    initialCategory,
+    isToolCategoryParam
   )
-  const [showFreeOnly, setShowFreeOnly] = useState(false)
+  const [freeParam, setFreeParam] = useUrlSearchParam<'' | '1'>('free', '')
+  const showFreeOnly = freeParam === '1'
+  const setShowFreeOnly = (next: boolean) => setFreeParam(next ? '1' : '')
 
   // Filter tools based on search, category, and free filter
   const filteredTools = useMemo(() => {
@@ -108,7 +119,7 @@ export default function ToolGrid({
             <ToolSearch
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
-              placeholder="Search for tools (e.g., blog, email, SEO...)"
+              placeholder="Search for tools (e.g. blog, email, SEO)…"
               resultCount={searchQuery ? filteredTools.length : undefined}
             />
           )}
@@ -125,7 +136,7 @@ export default function ToolGrid({
               <button
                 type="button"
                 onClick={() => setShowFreeOnly(!showFreeOnly)}
-                className={`flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 ${
+                className={`flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ${
                   showFreeOnly
                     ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
                     : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
@@ -184,7 +195,7 @@ export default function ToolGrid({
               No tools found
             </EmptyStateHeading>
             <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-              Try adjusting your search or filter criteria to find what you&apos;re
+              Try adjusting your search or filter criteria to find what you’re
               looking for.
             </p>
             <button
@@ -194,9 +205,9 @@ export default function ToolGrid({
                 setSelectedCategory('all')
                 setShowFreeOnly(false)
               }}
-              className="mt-4 inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-colors"
+              className="mt-4 inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 transition-colors"
             >
-              Clear all filters
+              Clear All Filters
             </button>
           </motion.div>
         )}

@@ -12,6 +12,7 @@ import {
 import { apiFetch, API_ENDPOINTS } from '../../../lib/api'
 import type { KBDocument, KBChunk, KBChunksResponse } from '../../../types/knowledge'
 import { FILE_TYPE_CONFIG, formatBytes } from '../../../types/knowledge'
+import { formatDisplayDate, formatNumber } from '@/lib/format'
 
 interface DocumentDetailModalProps {
   document: KBDocument | null
@@ -107,7 +108,7 @@ export default function DocumentDetailModal({
           <div className="fixed inset-0 bg-black/25 backdrop-blur-sm" aria-hidden="true" />
         </Transition.Child>
 
-        <div className="fixed inset-0 overflow-y-auto">
+        <div className="fixed inset-0 overflow-y-auto overscroll-contain">
           <div className="flex min-h-full items-center justify-center p-4">
             <Transition.Child
               as={Fragment}
@@ -118,12 +119,12 @@ export default function DocumentDetailModal({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-3xl transform overflow-hidden rounded-2xl bg-white dark:bg-gray-900 text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-3xl transform overflow-hidden rounded-2xl bg-white dark:bg-gray-900 text-left align-middle shadow-xl transition">
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3 min-w-0">
-                      <DocumentTextIcon
+                      <DocumentTextIcon aria-hidden="true"
                         className={`h-6 w-6 flex-shrink-0 ${typeConfig?.color || 'text-gray-400'}`}
                       />
                       <div className="min-w-0">
@@ -158,17 +159,18 @@ export default function DocumentDetailModal({
                             {document.chunk_count} chunks
                           </span>
                           <span className="text-xs text-gray-400">
-                            {new Date(document.created_at).toLocaleDateString()}
+                            {formatDisplayDate(document.created_at)}
                           </span>
                         </div>
                       </div>
                     </div>
                     <button
+                      aria-label="Close"
                       type="button"
                       onClick={onClose}
                       className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                     >
-                      <XMarkIcon className="h-5 w-5" />
+                      <XMarkIcon aria-hidden="true" className="h-5 w-5" />
                     </button>
                   </div>
                 </div>
@@ -180,7 +182,7 @@ export default function DocumentDetailModal({
                   </h3>
                   {loadingChunks && chunks.length === 0 ? (
                     <div className="py-8 text-center text-sm text-gray-400">
-                      Loading chunks...
+                      Loading chunks…
                     </div>
                   ) : chunks.length === 0 ? (
                     <div className="py-8 text-center text-sm text-gray-400">
@@ -227,7 +229,7 @@ export default function DocumentDetailModal({
                               </div>
                               {isMatched && score != null && (
                                 <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
-                                  Score: {score.toFixed(2)}
+                                  Score: {formatNumber(score, 2)}
                                 </span>
                               )}
                             </div>
@@ -242,11 +244,11 @@ export default function DocumentDetailModal({
                               >
                                 {isExpanded ? (
                                   <>
-                                    Show less <ChevronUpIcon className="h-3 w-3" />
+                                    Show less <ChevronUpIcon aria-hidden="true" className="h-3 w-3" />
                                   </>
                                 ) : (
                                   <>
-                                    Show more <ChevronDownIcon className="h-3 w-3" />
+                                    Show more <ChevronDownIcon aria-hidden="true" className="h-3 w-3" />
                                   </>
                                 )}
                               </button>
@@ -262,7 +264,7 @@ export default function DocumentDetailModal({
                           disabled={loadingChunks}
                           className="w-full py-2 text-sm text-amber-700 hover:text-amber-800 font-medium disabled:opacity-50"
                         >
-                          {loadingChunks ? 'Loading...' : `Load more (${chunks.length}/${totalChunks})`}
+                          {loadingChunks ? 'Loading…' : `Load more (${chunks.length}/${totalChunks})`}
                         </button>
                       )}
                     </div>
@@ -276,7 +278,7 @@ export default function DocumentDetailModal({
                     onClick={() => onDelete(document.id, document.filename)}
                     className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors"
                   >
-                    <TrashIcon className="h-4 w-4" />
+                    <TrashIcon aria-hidden="true" className="h-4 w-4" />
                     Delete
                   </button>
                   <button

@@ -260,9 +260,9 @@ export default function UploadDropZone({
   const statusIcon = (status: FileStatus) => {
     switch (status) {
       case 'done':
-        return <CheckCircleIcon className="h-5 w-5 text-emerald-500" />
+        return <CheckCircleIcon aria-hidden="true" className="h-5 w-5 text-emerald-500" />
       case 'error':
-        return <ExclamationCircleIcon className="h-5 w-5 text-red-500" />
+        return <ExclamationCircleIcon aria-hidden="true" className="h-5 w-5 text-red-500" />
       default:
         return null
     }
@@ -273,7 +273,7 @@ export default function UploadDropZone({
       {/* Quota warnings */}
       {atDocLimit && (
         <div className="px-4 py-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-400">
-          Document limit reached. <a href="/pricing" className="underline font-medium">Upgrade your plan</a> to upload more.
+          Document limit reached. <a href="/pricing" className="underline font-medium">Upgrade Your Plan</a> to upload more.
         </div>
       )}
       {nearDocLimit && (
@@ -298,7 +298,7 @@ export default function UploadDropZone({
               : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer'
         }`}
       >
-        <ArrowUpTrayIcon className={`h-8 w-8 mb-2 ${isDragOver ? 'text-amber-500' : 'text-gray-400'}`} />
+        <ArrowUpTrayIcon aria-hidden="true" className={`h-8 w-8 mb-2 ${isDragOver ? 'text-amber-500' : 'text-gray-400'}`} />
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {atDocLimit ? (
             'Upload disabled — document limit reached'
@@ -314,6 +314,8 @@ export default function UploadDropZone({
           PDF, DOCX, TXT, or MD (max 10MB)
         </p>
         <input
+          name="files"
+          autoComplete="off"
           ref={inputRef}
           type="file"
           className="hidden"
@@ -328,9 +330,9 @@ export default function UploadDropZone({
       <AnimatePresence>
         {queue.length > 0 && (
           <m.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
             className="space-y-2"
           >
             {queue.map((item, idx) => {
@@ -344,7 +346,7 @@ export default function UploadDropZone({
                   exit={{ opacity: 0, x: 20 }}
                   className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
                 >
-                  <DocumentTextIcon
+                  <DocumentTextIcon aria-hidden="true"
                     className={`h-5 w-5 flex-shrink-0 ${typeConfig?.color || 'text-gray-400'}`}
                   />
                   <div className="flex-1 min-w-0">
@@ -360,9 +362,9 @@ export default function UploadDropZone({
                     {item.status === 'uploading' && (
                       <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-1">
                         <m.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${item.progress}%` }}
-                          className="h-1.5 rounded-full bg-amber-500"
+                          initial={{ scaleX: 0 }}
+                          animate={{ scaleX: Math.min(Math.max(item.progress, 0), 100) / 100 }}
+                          className="h-1.5 w-full origin-left rounded-full bg-amber-500"
                         />
                       </div>
                     )}
@@ -388,7 +390,7 @@ export default function UploadDropZone({
                       className="text-gray-400 hover:text-red-500 transition-colors p-0.5"
                       aria-label={`Remove ${item.file.name}`}
                     >
-                      <XMarkIcon className="h-4 w-4" />
+                      <XMarkIcon aria-hidden="true" className="h-4 w-4" />
                     </button>
                   </div>
                 </m.div>
@@ -403,7 +405,7 @@ export default function UploadDropZone({
                 disabled={isUploading}
                 className="w-full px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isUploading ? 'Uploading...' : `Upload ${queue.filter((f) => f.status === 'queued').length} file(s)`}
+                {isUploading ? 'Uploading…' : `Upload ${queue.filter((f) => f.status === 'queued').length} file(s)`}
               </button>
             )}
           </m.div>

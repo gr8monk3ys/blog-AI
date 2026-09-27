@@ -125,12 +125,14 @@ export default function HistoryFilters({
             />
           </div>
           <input
+            name="search"
+            autoComplete="off"
             ref={searchInputRef}
             type="text"
             value={filters.search || ''}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="block w-full pl-11 pr-10 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm dark:text-gray-100 transition-all"
-            placeholder="Search your content history..."
+            className="block w-full pl-11 pr-10 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:border-amber-500 text-sm dark:text-gray-100 transition"
+            placeholder="Search your content history…"
             aria-label="Search history"
           />
           <AnimatePresence>
@@ -156,7 +158,7 @@ export default function HistoryFilters({
           <button
             type="button"
             onClick={handleFavoritesToggle}
-            className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 ${
+            className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ${
               filters.favorites_only
                 ? 'bg-amber-100 text-amber-700 border border-amber-200'
                 : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
@@ -192,7 +194,7 @@ export default function HistoryFilters({
                 exit={{ opacity: 0, scale: 0.9 }}
                 type="button"
                 onClick={clearAllFilters}
-                className="inline-flex items-center gap-1.5 px-3 py-3 rounded-xl text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+                className="inline-flex items-center gap-1.5 px-3 py-3 rounded-xl text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
                 aria-label="Clear all filters"
               >
                 <FunnelIcon className="w-4 h-4" aria-hidden="true" />
@@ -229,7 +231,7 @@ export default function HistoryFilters({
                 tabIndex={isSelected ? 0 : -1}
                 onClick={() => handleCategoryChange(category.id)}
                 onKeyDown={(e) => handleKeyDown(e, index)}
-                className={`relative flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 ${
+                className={`relative flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ${
                   isSelected
                     ? 'bg-amber-700 text-white shadow-sm'
                     : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'

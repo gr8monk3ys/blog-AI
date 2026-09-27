@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useUnsavedChangesWarning } from '../../hooks/useUnsavedChangesWarning'
 
 interface BlogPost {
   id?: string
@@ -36,6 +37,9 @@ export default function BlogPostEditor() {
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [activeSlug, setActiveSlug] = useState<string | null>(null)
   const [form, setForm] = useState<BlogPost>(emptyPost)
+  // Snapshot of the last loaded/saved form, to detect unsaved edits.
+  const [savedForm, setSavedForm] = useState<BlogPost>(emptyPost)
+  useUnsavedChangesWarning(JSON.stringify(form) !== JSON.stringify(savedForm))
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
 
@@ -48,13 +52,15 @@ export default function BlogPostEditor() {
 
   useEffect(() => {
     if (activePost) {
-      setForm({
+      const loaded: BlogPost = {
         ...activePost,
         excerpt: activePost.excerpt || '',
         body: activePost.body || '',
         tags: activePost.tags || [],
         status: activePost.status || 'draft',
-      })
+      }
+      setForm(loaded)
+      setSavedForm(loaded)
     }
   }, [activePost])
 
@@ -98,6 +104,7 @@ export default function BlogPostEditor() {
       if (!response.ok) {
         throw new Error(payload.error || 'Failed to save post')
       }
+      setSavedForm(form)
       setStatus('Post saved.')
       await loadPosts()
       setActiveSlug(payload.data?.slug || form.slug)
@@ -110,6 +117,7 @@ export default function BlogPostEditor() {
 
   const deletePost = async () => {
     if (!activeSlug || !isConfigured) return
+    if (!window.confirm(`Delete “${activeSlug}”? This cannot be undone.`)) return
     setLoading(true)
     setStatus(null)
     try {
@@ -124,6 +132,7 @@ export default function BlogPostEditor() {
       setStatus('Post deleted.')
       setActiveSlug(null)
       setForm(emptyPost)
+      setSavedForm(emptyPost)
       await loadPosts()
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Failed to delete post')
@@ -137,10 +146,12 @@ export default function BlogPostEditor() {
       <aside className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4">
         <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Admin Access</div>
         <input
+          name="adminKey"
+          autoComplete="off"
           type="password"
           value={adminKey}
           onChange={(event) => setAdminKey(event.target.value)}
-          placeholder="BLOG_ADMIN_KEY"
+          placeholder="BLOG_ADMIN_KEY…"
           className="w-full text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2"
         />
         <button
@@ -184,7 +195,7 @@ export default function BlogPostEditor() {
             <button
               type="button"
               onClick={() => {
-                setForm({ ...form, slug: slugify(form.title) })
+                setForm((prev) => ({ ...prev, slug: slugify(prev.title) }))
               }}
               className="text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
             >
@@ -195,6 +206,7 @@ export default function BlogPostEditor() {
               onClick={() => {
                 setActiveSlug(null)
                 setForm(emptyPost)
+                setSavedForm(emptyPost)
               }}
               className="text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
             >
@@ -205,29 +217,34 @@ export default function BlogPostEditor() {
 
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-xs text-gray-500 dark:text-gray-400">Title</label>
-            <input
+            <label htmlFor="admin-post-title" className="text-xs text-gray-500 dark:text-gray-400">Title</label>
+            <input id="admin-post-title"
+              name="title"
+              autoComplete="off"
               type="text"
               value={form.title}
-              onChange={(event) => setForm({ ...form, title: event.target.value })}
+              onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
               className="mt-1 w-full text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2"
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500 dark:text-gray-400">Slug</label>
-            <input
+            <label htmlFor="admin-post-slug" className="text-xs text-gray-500 dark:text-gray-400">Slug</label>
+            <input id="admin-post-slug"
+              name="slug"
+              autoComplete="off"
               type="text"
               value={form.slug}
-              onChange={(event) => setForm({ ...form, slug: event.target.value })}
+              onChange={(event) => setForm((prev) => ({ ...prev, slug: event.target.value }))}
               className="mt-1 w-full text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2"
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500 dark:text-gray-400">Status</label>
-            <select
+            <label htmlFor="admin-post-status" className="text-xs text-gray-500 dark:text-gray-400">Status</label>
+            <select id="admin-post-status"
+              name="status"
               value={form.status}
               onChange={(event) =>
-                setForm({ ...form, status: event.target.value as BlogPost['status'] })
+                setForm((prev) => ({ ...prev, status: event.target.value as BlogPost['status'] }))
               }
               className="mt-1 w-full text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2"
             >
@@ -237,17 +254,19 @@ export default function BlogPostEditor() {
             </select>
           </div>
           <div>
-            <label className="text-xs text-gray-500 dark:text-gray-400">Published At</label>
-            <input
+            <label htmlFor="admin-post-published-at" className="text-xs text-gray-500 dark:text-gray-400">Published At</label>
+            <input id="admin-post-published-at"
+              name="published_at"
+              autoComplete="off"
               type="datetime-local"
               value={form.published_at ? form.published_at.slice(0, 16) : ''}
               onChange={(event) =>
-                setForm({
-                  ...form,
+                setForm((prev) => ({
+                  ...prev,
                   published_at: event.target.value
                     ? new Date(event.target.value).toISOString()
                     : null,
-                })
+                }))
               }
               className="mt-1 w-full text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2"
             />
@@ -255,56 +274,65 @@ export default function BlogPostEditor() {
         </div>
 
         <div className="mt-4">
-          <label className="text-xs text-gray-500 dark:text-gray-400">Excerpt</label>
-          <textarea
+          <label htmlFor="admin-post-excerpt" className="text-xs text-gray-500 dark:text-gray-400">Excerpt</label>
+          <textarea id="admin-post-excerpt"
+            name="excerpt"
+            autoComplete="off"
             value={form.excerpt}
-            onChange={(event) => setForm({ ...form, excerpt: event.target.value })}
+            onChange={(event) => setForm((prev) => ({ ...prev, excerpt: event.target.value }))}
             className="mt-1 w-full text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 min-h-[90px]"
           />
         </div>
 
         <div className="mt-4">
-          <label className="text-xs text-gray-500 dark:text-gray-400">Body</label>
-          <textarea
+          <label htmlFor="admin-post-body" className="text-xs text-gray-500 dark:text-gray-400">Body</label>
+          <textarea id="admin-post-body"
+            name="body"
+            autoComplete="off"
             value={form.body}
-            onChange={(event) => setForm({ ...form, body: event.target.value })}
+            onChange={(event) => setForm((prev) => ({ ...prev, body: event.target.value }))}
             className="mt-1 w-full text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 min-h-[240px]"
           />
         </div>
 
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-xs text-gray-500 dark:text-gray-400">Tags (comma separated)</label>
-            <input
+            <label htmlFor="admin-post-tags" className="text-xs text-gray-500 dark:text-gray-400">Tags (comma separated)</label>
+            <input id="admin-post-tags"
+              name="tags"
+              autoComplete="off"
               type="text"
               value={form.tags.join(', ')}
               onChange={(event) =>
-                setForm({
-                  ...form,
+                setForm((prev) => ({
+                  ...prev,
                   tags: event.target.value
                     .split(',')
-                    .map((tag) => tag.trim())
-                    .filter(Boolean),
-                })
+                    .flatMap((tag) => tag.trim() || []),
+                }))
               }
               className="mt-1 w-full text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2"
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500 dark:text-gray-400">SEO Title</label>
-            <input
+            <label htmlFor="admin-post-seo-title" className="text-xs text-gray-500 dark:text-gray-400">SEO Title</label>
+            <input id="admin-post-seo-title"
+              name="seo_title"
+              autoComplete="off"
               type="text"
               value={form.seo_title || ''}
-              onChange={(event) => setForm({ ...form, seo_title: event.target.value })}
+              onChange={(event) => setForm((prev) => ({ ...prev, seo_title: event.target.value }))}
               className="mt-1 w-full text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2"
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500 dark:text-gray-400">SEO Description</label>
-            <textarea
+            <label htmlFor="admin-post-seo-description" className="text-xs text-gray-500 dark:text-gray-400">SEO Description</label>
+            <textarea id="admin-post-seo-description"
+              name="seo_description"
+              autoComplete="off"
               value={form.seo_description || ''}
               onChange={(event) =>
-                setForm({ ...form, seo_description: event.target.value })
+                setForm((prev) => ({ ...prev, seo_description: event.target.value }))
               }
               className="mt-1 w-full text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 min-h-[80px]"
             />

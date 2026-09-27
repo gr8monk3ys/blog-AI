@@ -17,7 +17,7 @@ export default function AuthPage() {
   return (
     <>
       <SiteHeader />
-      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
 
       <section className="py-14 sm:py-20">
         <div className="max-w-lg mx-auto px-4 sm:px-6 lg:px-8">
@@ -27,7 +27,7 @@ export default function AuthPage() {
             ) : (
               <div className="text-center space-y-4">
                 <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  No sign-in required
+                  No Sign-In Required
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   This deployment runs without authentication, so the full
@@ -37,7 +37,7 @@ export default function AuthPage() {
                   href="/generate"
                   className="inline-flex items-center justify-center rounded-lg bg-amber-700 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-amber-800"
                 >
-                  Open the workspace
+                  Open the Workspace
                 </Link>
                 <p className="text-xs text-gray-400">
                   To require accounts, set <code>NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</code>{' '}

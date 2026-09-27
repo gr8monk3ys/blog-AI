@@ -51,7 +51,6 @@ export default function SiteHeader(): React.ReactElement {
     setTheme(next)
   }
 
-  const ThemeIcon = theme === 'dark' ? MoonIcon : theme === 'light' ? SunIcon : ComputerDesktopIcon
   const themeLabel = theme === 'dark' ? 'Dark mode' : theme === 'light' ? 'Light mode' : 'System theme'
 
   const renderNavLink = (link: NavLink): React.ReactElement => (
@@ -104,7 +103,16 @@ export default function SiteHeader(): React.ReactElement {
               aria-label={themeLabel}
               title={themeLabel}
             >
-              <ThemeIcon className="h-5 w-5" aria-hidden="true" />
+              {/* All three icons render; CSS shows the one matching
+                  <html data-theme-pref> (set before first paint), so the
+                  icon never flashes while the stored preference loads. */}
+              <SunIcon className="theme-pref-icon h-5 w-5" data-pref="light" aria-hidden="true" />
+              <MoonIcon className="theme-pref-icon h-5 w-5" data-pref="dark" aria-hidden="true" />
+              <ComputerDesktopIcon
+                className="theme-pref-icon h-5 w-5"
+                data-pref="system"
+                aria-hidden="true"
+              />
             </button>
             {isClerkConfigured ? (
               <>
@@ -116,7 +124,7 @@ export default function SiteHeader(): React.ReactElement {
                     href="/sign-in"
                     className="px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 transition-colors text-white"
                   >
-                    Sign in
+                    Sign In
                   </Link>
                 </SignedOut>
               </>
@@ -125,12 +133,12 @@ export default function SiteHeader(): React.ReactElement {
                 href="/auth"
                 className="px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 transition-colors text-white"
               >
-                Sign in
+                Sign In
               </Link>
             )}
             <button
               type="button"
-              className="md:hidden -m-2 inline-flex items-center justify-center rounded-md p-2 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-500"
+              className="md:hidden -m-2 inline-flex items-center justify-center rounded-md p-2 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-500"
               aria-expanded={mobileMenuOpen}
               aria-controls="mobile-nav"
               aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}

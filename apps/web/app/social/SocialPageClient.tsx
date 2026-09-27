@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline'
 import { useToast } from '../../hooks/useToast'
 import { useConfirmModal } from '../../hooks/useConfirmModal'
@@ -8,6 +7,7 @@ import AccountsTab from './components/AccountsTab'
 import ScheduleTab from './components/ScheduleTab'
 import CampaignsTab from './components/CampaignsTab'
 import AnalyticsTab from './components/AnalyticsTab'
+import { useUrlSearchParam } from '../../hooks/useUrlSearchParam'
 
 const TABS = [
   { id: 'accounts', label: 'Accounts' },
@@ -18,13 +18,16 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]['id']
 
+const isTabId = (value: string): value is TabId => TABS.some((tab) => tab.id === value)
+
 export default function SocialPageClient() {
-  const [activeTab, setActiveTab] = useState<TabId>('accounts')
+  // ?tab= deep-links the active tab.
+  const [activeTab, setActiveTab] = useUrlSearchParam<TabId>('tab', 'accounts', isTabId)
   const { showToast, ToastComponent } = useToast()
   const { confirm, ConfirmModalComponent } = useConfirmModal()
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <main id="main-content" tabIndex={-1} className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="flex items-center gap-3 mb-8">
         <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-amber-100/80 dark:bg-amber-900/40 text-amber-700">
           <ChatBubbleLeftRightIcon className="w-5 h-5" aria-hidden="true" />
@@ -56,12 +59,12 @@ export default function SocialPageClient() {
       </div>
 
       {activeTab === 'accounts' && <AccountsTab showToast={showToast} confirm={confirm} />}
-      {activeTab === 'schedule' && <ScheduleTab showToast={showToast} />}
+      {activeTab === 'schedule' && <ScheduleTab showToast={showToast} confirm={confirm} />}
       {activeTab === 'campaigns' && <CampaignsTab showToast={showToast} confirm={confirm} />}
       {activeTab === 'analytics' && <AnalyticsTab />}
 
       <ToastComponent />
       <ConfirmModalComponent />
-    </div>
+    </main>
   )
 }

@@ -1,8 +1,7 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { headers } from 'next/headers'
 import { Inter, Source_Serif_4 } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/react'
-import { SpeedInsights } from '@vercel/speed-insights/next'
+import DeferredAnalytics from '../components/DeferredAnalytics'
 import { Providers } from './providers'
 import { ClerkProvider } from '../lib/clerk-ui'
 import './globals.css'
@@ -44,6 +43,15 @@ export const metadata: Metadata = {
   },
 }
 
+// Browser chrome matches the page background (globals.css
+// --background-start-rgb, light and dark).
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#fff8e6' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f0f0f' },
+  ],
+}
+
 export default async function RootLayout({
   children,
 }: {
@@ -59,6 +67,7 @@ export default async function RootLayout({
   // Static string with no user input; nonce authorises it under the CSP.
   const themeScript =
     "(function(){try{var t=localStorage.getItem('theme');" +
+    "document.documentElement.dataset.themePref=(t==='dark'||t==='light')?t:'system';" +
     "if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches))" +
     "{document.documentElement.classList.add('dark')}}catch(e){}})()"
 
@@ -68,6 +77,12 @@ export default async function RootLayout({
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className={`${inter.variable} ${sourceSerif.variable} ${inter.className}`}>
+        <a
+          href="#main-content"
+          className="sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:left-4 focus-visible:top-4 focus-visible:z-[100] focus-visible:rounded-lg focus-visible:bg-amber-700 focus-visible:px-4 focus-visible:py-2 focus-visible:text-white"
+        >
+          Skip to Main Content
+        </a>
         {publishableKey ? (
           <ClerkProvider publishableKey={publishableKey}>
             <Providers>{children}</Providers>
@@ -75,8 +90,7 @@ export default async function RootLayout({
         ) : (
           <Providers>{children}</Providers>
         )}
-        <Analytics />
-        <SpeedInsights />
+        <DeferredAnalytics />
       </body>
     </html>
   )

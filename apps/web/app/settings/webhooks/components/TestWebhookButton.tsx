@@ -54,7 +54,7 @@ export default function TestWebhookButton({ subscriptionId, showToast }: TestWeb
         disabled={testing}
         className="px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
       >
-        {testing ? 'Testing...' : 'Test'}
+        {testing ? 'Testing…' : 'Test'}
       </button>
       {result && (
         <span className={`text-xs font-medium ${result.success ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>

@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import type { CategoryBreakdown } from '../../types/analytics'
+import { formatNumber } from '@/lib/format'
 
 interface PieChartProps {
   data: CategoryBreakdown[]
@@ -123,7 +124,7 @@ export default function PieChart({
                 >
                   <title>
                     {formatCategoryLabel(slice.category)}: {slice.count} (
-                    {slice.percentage.toFixed(1)}%)
+                    {formatNumber(slice.percentage, 1)}%)
                   </title>
                 </motion.path>
               ))}
@@ -144,7 +145,7 @@ export default function PieChart({
                 className="fill-gray-900 dark:fill-gray-100 font-bold"
                 fontSize="18"
               >
-                {data.reduce((sum, d) => sum + d.count, 0).toLocaleString()}
+                {formatNumber(data.reduce((sum, d) => sum + d.count, 0))}
               </text>
               <text
                 x={size / 2}
@@ -177,7 +178,7 @@ export default function PieChart({
                     {formatCategoryLabel(item.category)}
                   </span>
                   <span className="text-sm font-medium text-gray-900 dark:text-gray-100 ml-auto">
-                    {item.percentage.toFixed(0)}%
+                    {formatNumber(item.percentage, 0)}%
                   </span>
                 </motion.div>
               ))}

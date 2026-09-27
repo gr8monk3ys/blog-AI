@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useUnsavedChangesWarning } from '../hooks/useUnsavedChangesWarning';
 import { Disclosure, Dialog, Transition } from '@headlessui/react';
 import { ChevronUpIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { Fragment } from 'react';
@@ -15,6 +16,13 @@ interface BookEditorProps {
 function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
   const { showToast, ToastComponent } = useToast();
   const [editingBook, setEditingBook] = useState<Book>({ ...book });
+  // Edits live in state until "Save"; warn before they are lost.
+  const [isDirty, setIsDirty] = useState(false);
+  const updateEditingBook: typeof setEditingBook = (next) => {
+    setIsDirty(true);
+    setEditingBook(next);
+  };
+  useUnsavedChangesWarning(isDirty);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingTags, setIsEditingTags] = useState(false);
   const [isEditingChapter, setIsEditingChapter] = useState<number | null>(null);
@@ -36,6 +44,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
         throw new Error('Failed to save book');
       }
 
+      setIsDirty(false);
       onSave(editingBook);
       showToast({
         message: 'Book saved successfully!',
@@ -58,21 +67,21 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
     const existingTags = new Set(updatedBook.tags || []);
     if (existingTags.has(trimmedTag)) return;
     updatedBook.tags = [...existingTags, trimmedTag];
-    setEditingBook(updatedBook);
+    updateEditingBook(updatedBook);
     setNewTag('');
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
     const updatedBook = { ...editingBook };
     updatedBook.tags = (updatedBook.tags || []).filter((tag) => tag !== tagToRemove);
-    setEditingBook(updatedBook);
+    updateEditingBook(updatedBook);
   };
 
   const handleUpdateChapterTitle = (chapterIndex: number, newTitle: string) => {
     const updatedBook = { ...editingBook };
     if (updatedBook.chapters[chapterIndex]) {
       updatedBook.chapters[chapterIndex].title = newTitle;
-      setEditingBook(updatedBook);
+      updateEditingBook(updatedBook);
     }
     setIsEditingChapter(null);
   };
@@ -81,7 +90,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
     const updatedBook = { ...editingBook };
     if (updatedBook.chapters[chapterIndex]?.topics[topicIndex]) {
       updatedBook.chapters[chapterIndex].topics[topicIndex].content = newContent;
-      setEditingBook(updatedBook);
+      updateEditingBook(updatedBook);
     }
     setIsEditingTopic(null);
   };
@@ -96,10 +105,15 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
           {isEditingTitle ? (
             <div className="flex items-center">
               <input
+                name="title"
+                autoComplete="off"
                 type="text"
                 value={editingBook.title}
-                onChange={(e) => setEditingBook({ ...editingBook, title: e.target.value })}
-                className="text-3xl font-bold border-b border-amber-500 focus:outline-none dark:bg-transparent dark:text-gray-100"
+                onChange={(e) => {
+                  const title = e.target.value
+                  updateEditingBook((prev) => ({ ...prev, title }))
+                }}
+                className="text-3xl font-bold border-b border-amber-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:bg-transparent dark:text-gray-100"
               />
               <button
                 onClick={() => setIsEditingTitle(false)}
@@ -112,10 +126,11 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
             <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
               {editingBook.title}
               <button
+                aria-label="Edit book title"
                 onClick={() => setIsEditingTitle(true)}
                 className="ml-2 text-gray-400 hover:text-amber-700"
               >
-                <PencilIcon className="h-5 w-5" />
+                <PencilIcon aria-hidden="true" className="h-5 w-5" />
               </button>
             </h1>
           )}
@@ -132,10 +147,11 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
         <div className="flex items-center mb-2">
           <span className="text-sm text-gray-500 dark:text-gray-400 mr-2">Tags:</span>
           <button
+            aria-label={isEditingTags ? "Done editing tags" : "Edit tags"}
             onClick={() => setIsEditingTags(!isEditingTags)}
             className="text-gray-400 hover:text-amber-700"
           >
-            <PencilIcon className="h-4 w-4" />
+            <PencilIcon aria-hidden="true" className="h-4 w-4" />
           </button>
         </div>
         
@@ -145,6 +161,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
               {tag}
               {isEditingTags && (
                 <button
+                  aria-label={`Remove tag ${tag}`}
                   onClick={() => handleRemoveTag(tag)}
                   className="ml-1 text-gray-500 hover:text-red-500"
                 >
@@ -157,11 +174,13 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
           {isEditingTags && (
             <div className="flex items-center">
               <input
+                name="newTag"
+                autoComplete="off"
                 type="text"
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
                 className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-l px-2 py-1 text-sm"
-                placeholder="Add tag..."
+                placeholder="Add tag…"
               />
               <button
                 onClick={handleAddTag}
@@ -179,35 +198,38 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
           <Disclosure key={chapter.number} defaultOpen={chapterIndex === 0}>
             {({ open }) => (
               <>
-                <Disclosure.Button className="flex justify-between w-full px-4 py-2 text-lg font-medium text-left text-amber-900 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900/50 focus:outline-none focus-visible:ring focus-visible:ring-amber-500 focus-visible:ring-opacity-75">
-                  <div className="flex items-center">
-                    <span>{chapter.title}</span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsEditingChapter(chapterIndex);
-                      }}
-                      className="ml-2 text-gray-400 hover:text-amber-700"
-                    >
-                      <PencilIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <ChevronUpIcon
-                    className={`${
-                      open ? 'transform rotate-180' : ''
-                    } w-5 h-5 text-amber-500`}
-                  />
-                </Disclosure.Button>
+                {/* The edit button sits beside the disclosure button, not inside
+                    it: interactive elements must not be nested. */}
+                <div className="flex items-center gap-2">
+                  <Disclosure.Button className="flex min-w-0 flex-1 justify-between px-4 py-2 text-lg font-medium text-left text-amber-900 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900/50 focus-visible:outline-none focus-visible:ring focus-visible:ring-amber-500 focus-visible:ring-opacity-75">
+                    <span className="min-w-0 break-words">{chapter.title}</span>
+                    <ChevronUpIcon aria-hidden="true"
+                      className={`${
+                        open ? 'transform rotate-180' : ''
+                      } w-5 h-5 shrink-0 text-amber-500`}
+                    />
+                  </Disclosure.Button>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingChapter(chapterIndex)}
+                    className="rounded p-1 text-gray-400 hover:text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                    aria-label={`Edit chapter title: ${chapter.title}`}
+                  >
+                    <PencilIcon aria-hidden="true" className="h-4 w-4" />
+                  </button>
+                </div>
                 <Disclosure.Panel className="px-4 pt-4 pb-2 text-gray-500 dark:text-gray-400">
                   {chapter.topics.map((topic, topicIndex) => (
                     <div key={topicIndex} className="mb-6">
                       <div className="flex items-center mb-2">
                         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">{topic.title}</h3>
                         <button
+                          type="button"
                           onClick={() => setIsEditingTopic({ chapterIndex, topicIndex })}
                           className="ml-2 text-gray-400 hover:text-amber-700"
+                          aria-label={`Edit topic: ${topic.title}`}
                         >
-                          <PencilIcon className="h-4 w-4" />
+                          <PencilIcon aria-hidden="true" className="h-4 w-4" />
                         </button>
                       </div>
                       <div className="prose prose-indigo dark:prose-invert">{topic.content}</div>
@@ -235,7 +257,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
             <div className="fixed inset-0 bg-black bg-opacity-25" />
           </Transition.Child>
 
-          <div className="fixed inset-0 overflow-y-auto">
+          <div className="fixed inset-0 overflow-y-auto overscroll-contain">
             <div className="flex min-h-full items-center justify-center p-4 text-center">
               <Transition.Child
                 as={Fragment}
@@ -246,7 +268,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-gray-900 p-6 text-left align-middle shadow-xl transition-all">
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-gray-900 p-6 text-left align-middle shadow-xl transition">
                   <Dialog.Title
                     as="h3"
                     className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100"
@@ -255,6 +277,8 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
                   </Dialog.Title>
                   <div className="mt-2">
                     <input
+                      name="title"
+                      autoComplete="off"
                       type="text"
                       value={isEditingChapter !== null ? editingBook.chapters[isEditingChapter]?.title ?? '' : ''}
                       onChange={(e) => {
@@ -263,7 +287,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
                           if (chapter) {
                             const updatedBook = { ...editingBook };
                             updatedBook.chapters[isEditingChapter] = { ...chapter, title: e.target.value };
-                            setEditingBook(updatedBook);
+                            updateEditingBook(updatedBook);
                           }
                         }
                       }}
@@ -274,14 +298,14 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
                   <div className="mt-4 flex justify-end space-x-2">
                     <button
                       type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-gray-200 dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-700 focus:outline-none"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-gray-200 dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                       onClick={() => setIsEditingChapter(null)}
                     >
                       Cancel
                     </button>
                     <button
                       type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800 focus:outline-none"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                       onClick={() => {
                         if (isEditingChapter !== null && editingBook.chapters[isEditingChapter]) {
                           handleUpdateChapterTitle(
@@ -316,7 +340,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
             <div className="fixed inset-0 bg-black bg-opacity-25" />
           </Transition.Child>
 
-          <div className="fixed inset-0 overflow-y-auto">
+          <div className="fixed inset-0 overflow-y-auto overscroll-contain">
             <div className="flex min-h-full items-center justify-center p-4 text-center">
               <Transition.Child
                 as={Fragment}
@@ -327,7 +351,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white dark:bg-gray-900 p-6 text-left align-middle shadow-xl transition-all">
+                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white dark:bg-gray-900 p-6 text-left align-middle shadow-xl transition">
                   <Dialog.Title
                     as="h3"
                     className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100"
@@ -345,6 +369,8 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
                             {topic.title}
                           </h4>
                           <textarea
+                            name="content"
+                            autoComplete="off"
                             value={topic.content}
                             onChange={(e) => {
                               const updatedBook = { ...editingBook };
@@ -352,7 +378,7 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
                               const topicToUpdate = chapterToUpdate?.topics[isEditingTopic.topicIndex];
                               if (topicToUpdate) {
                                 topicToUpdate.content = e.target.value;
-                                setEditingBook(updatedBook);
+                                updateEditingBook(updatedBook);
                               }
                             }}
                             className="w-full p-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded"
@@ -366,14 +392,14 @@ function useBookEditorView({ book, filePath, onSave }: BookEditorProps) {
                   <div className="mt-4 flex justify-end space-x-2">
                     <button
                       type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-gray-200 dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-700 focus:outline-none"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-gray-200 dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                       onClick={() => setIsEditingTopic(null)}
                     >
                       Cancel
                     </button>
                     <button
                       type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800 focus:outline-none"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                       onClick={() => {
                         if (isEditingTopic) {
                           const chapter = editingBook.chapters[isEditingTopic.chapterIndex];

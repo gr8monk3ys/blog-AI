@@ -61,7 +61,7 @@ function FormatSelectorComponent({
               onClick={() => onToggleFormat(format.format)}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className={`p-4 rounded-lg text-left transition-all ${
+              className={`p-4 rounded-lg text-left transition ${
                 isSelected
                   ? 'bg-amber-50 dark:bg-amber-900/30 border-2 border-amber-500'
                   : 'bg-gray-50 dark:bg-gray-800/50 border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700'
@@ -93,7 +93,7 @@ function FormatSelectorComponent({
       >
         {isTransforming ? (
           <span className="flex items-center justify-center gap-2">
-            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+            <svg aria-hidden="true" className="animate-spin h-5 w-5" viewBox="0 0 24 24">
               <circle
                 className="opacity-25"
                 cx="12"
@@ -109,7 +109,7 @@ function FormatSelectorComponent({
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
               />
             </svg>
-            Transforming...
+            Transforming…
           </span>
         ) : (
           `Remix to ${selectedFormats.length} Format${selectedFormats.length !== 1 ? 's' : ''}`

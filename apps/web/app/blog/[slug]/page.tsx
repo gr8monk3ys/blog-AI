@@ -30,12 +30,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   return (
     <>
       <SiteHeader />
-      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
 
       <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Link href="/blog" className="text-xs text-gray-500 dark:text-gray-400 hover:text-amber-800 dark:hover:text-amber-300">
-            Back to blog
+            Back to Blog
           </Link>
           <h1 className="mt-3 text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
             {post.title}
@@ -68,7 +68,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 }
 
 function renderMarkdownBlocks(body: string) {
-  const blocks = body.split(/\n\s*\n/).map((block) => block.trim()).filter(Boolean)
+  const blocks = body.split(/\n\s*\n/).flatMap((block) => block.trim() || [])
 
   return blocks.map((block, index) => {
     if (block.startsWith('# ')) {
@@ -93,7 +93,7 @@ function renderMarkdownBlocks(body: string) {
       )
     }
 
-    const lines = block.split('\n').map((line) => line.trim()).filter(Boolean)
+    const lines = block.split('\n').flatMap((line) => line.trim() || [])
     const isList = lines.length > 1 && lines.every((line) => line.startsWith('- '))
     if (isList) {
       return (

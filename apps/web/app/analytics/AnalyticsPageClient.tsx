@@ -28,6 +28,7 @@ import type {
   TimeRangeOption,
 } from '../../types/analytics'
 import { TIME_RANGE_OPTIONS } from '../../types/analytics'
+import { formatNumber } from '@/lib/format'
 
 function useAnalyticsPageView() {
   const [timeRange, setTimeRange] = useState<TimeRangeOption>('30d')
@@ -81,7 +82,7 @@ function useAnalyticsPageView() {
 
   const formatExecutionTime = (ms: number): string => {
     if (ms < 1000) return `${ms}ms`
-    return `${(ms / 1000).toFixed(1)}s`
+    return `${formatNumber(ms / 1000, 1)}s`
   }
 
   const formatToolName = (toolId: string | null): string => {
@@ -95,7 +96,7 @@ function useAnalyticsPageView() {
   return (
     <>
       <SiteHeader />
-      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
 
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-amber-700 to-amber-800 text-white">
@@ -122,7 +123,7 @@ function useAnalyticsPageView() {
                     <button
                       key={range}
                       onClick={() => setTimeRange(range)}
-                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
                         timeRange === range
                           ? 'bg-white text-amber-700'
                           : 'text-white/80 hover:text-white hover:bg-white/10'
@@ -170,7 +171,7 @@ function useAnalyticsPageView() {
         >
           <StatCard
             title="Total Generations"
-            value={overviewStats?.totalGenerations.toLocaleString() || '0'}
+            value={formatNumber(overviewStats?.totalGenerations ?? 0)}
             icon={ChartBarIcon}
             change={overviewStats?.generationsChange}
             changeLabel="vs previous period"
@@ -178,7 +179,7 @@ function useAnalyticsPageView() {
           />
           <StatCard
             title="Active Today"
-            value={overviewStats?.activeToday.toLocaleString() || '0'}
+            value={formatNumber(overviewStats?.activeToday ?? 0)}
             icon={FireIcon}
             subtitle="Generations today"
             loading={loading}
@@ -256,13 +257,13 @@ function useAnalyticsPageView() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/"
-              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 shadow-sm transition-all"
+              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 shadow-sm transition"
             >
               Generate Content
             </Link>
             <Link
               href="/tools"
-              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm transition-all"
+              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm transition"
             >
               Browse Tools
             </Link>
@@ -270,7 +271,7 @@ function useAnalyticsPageView() {
               onClick={() => {
                 setTimeRange('7d')
               }}
-              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm transition-all"
+              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm transition"
             >
               <ClockIcon className="w-4 h-4 mr-2" aria-hidden="true" />
               View Last 7 Days

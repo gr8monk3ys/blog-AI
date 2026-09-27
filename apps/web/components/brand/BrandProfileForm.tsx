@@ -140,7 +140,7 @@ function useBrandProfileFormView({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-sm text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800">
+        <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-sm text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800" role="alert">
           {error}
         </div>
       )}
@@ -154,12 +154,14 @@ function useBrandProfileFormView({
           Profile Name *
         </label>
         <input
+          name="profile-name"
+          autoComplete="name"
           type="text"
           id="profile-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="e.g., Tech Startup Voice"
-          className="block w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
+          placeholder="e.g. Tech Startup Voice…"
+          className="block w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
           required
         />
       </div>
@@ -173,10 +175,11 @@ function useBrandProfileFormView({
           Writing Style
         </label>
         <select
+          name="writing-style"
           id="writing-style"
           value={writingStyle}
           onChange={(e) => setWritingStyle(e.target.value as WritingStyle)}
-          className="block w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
+          className="block w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
         >
           {WRITING_STYLES.map((style) => (
             <option key={style.value} value={style.value}>
@@ -197,7 +200,7 @@ function useBrandProfileFormView({
               key={keyword.value}
               type="button"
               onClick={() => handleToneToggle(keyword.value)}
-              className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+              className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition ${
                 toneKeywords.includes(keyword.value)
                   ? 'bg-amber-700 text-white'
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -218,12 +221,13 @@ function useBrandProfileFormView({
           Industry
         </label>
         <select
+          name="industry"
           id="industry"
           value={industry || ''}
           onChange={(e) => setIndustry((e.target.value as Industry) || null)}
-          className="block w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
+          className="block w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
         >
-          <option value="">Select an industry...</option>
+          <option value="">Select an industry…</option>
           {INDUSTRIES.map((ind) => (
             <option key={ind.value} value={ind.value}>
               {ind.label}
@@ -241,12 +245,14 @@ function useBrandProfileFormView({
           Target Audience
         </label>
         <textarea
+          name="target-audience"
+          autoComplete="off"
           id="target-audience"
           value={targetAudience}
           onChange={(e) => setTargetAudience(e.target.value)}
-          placeholder="Describe your ideal reader or customer..."
+          placeholder="Describe your ideal reader or customer…"
           rows={2}
-          className="block w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
+          className="block w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
         />
       </div>
 
@@ -262,12 +268,14 @@ function useBrandProfileFormView({
           Paste an example of your ideal brand voice for the AI to learn from.
         </p>
         <textarea
+          name="example-content"
+          autoComplete="off"
           id="example-content"
           value={exampleContent}
           onChange={(e) => setExampleContent(e.target.value)}
-          placeholder="Paste a paragraph that exemplifies your brand voice..."
+          placeholder="Paste a paragraph that exemplifies your brand voice…"
           rows={4}
-          className="block w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
+          className="block w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
         />
       </div>
 
@@ -281,6 +289,8 @@ function useBrandProfileFormView({
         </label>
         <div className="flex gap-2 mb-2">
           <input
+            name="preferred-words-input"
+            autoComplete="off"
             id="preferred-words-input"
             type="text"
             value={preferredWordInput}
@@ -291,17 +301,18 @@ function useBrandProfileFormView({
                 addToArray(preferredWordInput, setPreferredWords, setPreferredWordInput)
               }
             }}
-            placeholder="Add a word or phrase..."
-            className="flex-1 rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm dark:bg-gray-800 dark:text-gray-100"
+            placeholder="Add a word or phrase…"
+            className="flex-1 rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm dark:bg-gray-800 dark:text-gray-100"
           />
           <button
+            aria-label="Add preferred word"
             type="button"
             onClick={() =>
               addToArray(preferredWordInput, setPreferredWords, setPreferredWordInput)
             }
             className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
-            <PlusIcon className="w-4 h-4" />
+            <PlusIcon aria-hidden="true" className="w-4 h-4" />
           </button>
         </div>
         <div className="flex flex-wrap gap-1">
@@ -312,11 +323,12 @@ function useBrandProfileFormView({
             >
               {word}
               <button
+                aria-label={`Remove preferred word ${word}`}
                 type="button"
                 onClick={() => removeFromArray(word, setPreferredWords)}
                 className="hover:text-emerald-900 dark:hover:text-emerald-100"
               >
-                <XMarkIcon className="w-3 h-3" />
+                <XMarkIcon aria-hidden="true" className="w-3 h-3" />
               </button>
             </span>
           ))}
@@ -333,6 +345,8 @@ function useBrandProfileFormView({
         </label>
         <div className="flex gap-2 mb-2">
           <input
+            name="avoid-words-input"
+            autoComplete="off"
             id="avoid-words-input"
             type="text"
             value={avoidWordInput}
@@ -343,17 +357,18 @@ function useBrandProfileFormView({
                 addToArray(avoidWordInput, setAvoidWords, setAvoidWordInput)
               }
             }}
-            placeholder="Add a word to avoid..."
-            className="flex-1 rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm dark:bg-gray-800 dark:text-gray-100"
+            placeholder="Add a word to avoid…"
+            className="flex-1 rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm dark:bg-gray-800 dark:text-gray-100"
           />
           <button
+            aria-label="Add word to avoid"
             type="button"
             onClick={() =>
               addToArray(avoidWordInput, setAvoidWords, setAvoidWordInput)
             }
             className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
-            <PlusIcon className="w-4 h-4" />
+            <PlusIcon aria-hidden="true" className="w-4 h-4" />
           </button>
         </div>
         <div className="flex flex-wrap gap-1">
@@ -364,11 +379,12 @@ function useBrandProfileFormView({
             >
               {word}
               <button
+                aria-label={`Remove word to avoid ${word}`}
                 type="button"
                 onClick={() => removeFromArray(word, setAvoidWords)}
                 className="hover:text-red-900 dark:hover:text-red-100"
               >
-                <XMarkIcon className="w-3 h-3" />
+                <XMarkIcon aria-hidden="true" className="w-3 h-3" />
               </button>
             </span>
           ))}
@@ -385,6 +401,8 @@ function useBrandProfileFormView({
         </label>
         <div className="flex gap-2 mb-2">
           <input
+            name="brand-values-input"
+            autoComplete="off"
             id="brand-values-input"
             type="text"
             value={brandValueInput}
@@ -395,17 +413,18 @@ function useBrandProfileFormView({
                 addToArray(brandValueInput, setBrandValues, setBrandValueInput)
               }
             }}
-            placeholder="e.g., Innovation, Transparency..."
-            className="flex-1 rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm dark:bg-gray-800 dark:text-gray-100"
+            placeholder="e.g., Innovation, Transparency…"
+            className="flex-1 rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm dark:bg-gray-800 dark:text-gray-100"
           />
           <button
+            aria-label="Add brand value"
             type="button"
             onClick={() =>
               addToArray(brandValueInput, setBrandValues, setBrandValueInput)
             }
             className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
-            <PlusIcon className="w-4 h-4" />
+            <PlusIcon aria-hidden="true" className="w-4 h-4" />
           </button>
         </div>
         <div className="flex flex-wrap gap-1">
@@ -416,11 +435,12 @@ function useBrandProfileFormView({
             >
               {value}
               <button
+                aria-label={`Remove brand value ${value}`}
                 type="button"
                 onClick={() => removeFromArray(value, setBrandValues)}
                 className="hover:text-amber-900 dark:hover:text-amber-100"
               >
-                <XMarkIcon className="w-3 h-3" />
+                <XMarkIcon aria-hidden="true" className="w-3 h-3" />
               </button>
             </span>
           ))}
@@ -437,6 +457,8 @@ function useBrandProfileFormView({
         </label>
         <div className="flex gap-2 mb-2">
           <input
+            name="content-themes-input"
+            autoComplete="off"
             id="content-themes-input"
             type="text"
             value={contentThemeInput}
@@ -447,17 +469,18 @@ function useBrandProfileFormView({
                 addToArray(contentThemeInput, setContentThemes, setContentThemeInput)
               }
             }}
-            placeholder="e.g., Future of work, Team collaboration..."
-            className="flex-1 rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm dark:bg-gray-800 dark:text-gray-100"
+            placeholder="e.g., Future of work, Team collaboration…"
+            className="flex-1 rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm dark:bg-gray-800 dark:text-gray-100"
           />
           <button
+            aria-label="Add content theme"
             type="button"
             onClick={() =>
               addToArray(contentThemeInput, setContentThemes, setContentThemeInput)
             }
             className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
-            <PlusIcon className="w-4 h-4" />
+            <PlusIcon aria-hidden="true" className="w-4 h-4" />
           </button>
         </div>
         <div className="flex flex-wrap gap-1">
@@ -468,11 +491,12 @@ function useBrandProfileFormView({
             >
               {theme}
               <button
+                aria-label={`Remove content theme ${theme}`}
                 type="button"
                 onClick={() => removeFromArray(theme, setContentThemes)}
                 className="hover:text-amber-900 dark:hover:text-amber-100"
               >
-                <XMarkIcon className="w-3 h-3" />
+                <XMarkIcon aria-hidden="true" className="w-3 h-3" />
               </button>
             </span>
           ))}
@@ -485,7 +509,7 @@ function useBrandProfileFormView({
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 transition-colors"
           >
             Cancel
           </button>
@@ -493,10 +517,10 @@ function useBrandProfileFormView({
         <button
           type="submit"
           disabled={isLoading}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <SparklesIcon className="w-4 h-4" />
-          {isLoading ? 'Saving...' : profile ? 'Update Profile' : 'Create Profile'}
+          <SparklesIcon aria-hidden="true" className="w-4 h-4" />
+          {isLoading ? 'Saving…' : profile ? 'Update Profile' : 'Create Profile'}
         </button>
       </div>
     </form>

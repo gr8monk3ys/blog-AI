@@ -39,7 +39,7 @@ function RadialGauge({ score, passed }: { score: number; passed: boolean }) {
 
   return (
     <div className="relative flex items-center justify-center w-28 h-28">
-      <svg className="w-28 h-28 -rotate-90" viewBox="0 0 100 100">
+      <svg aria-hidden="true" className="w-28 h-28 -rotate-90" viewBox="0 0 100 100">
         <circle
           cx="50"
           cy="50"
@@ -115,7 +115,7 @@ export default function SEOScorePanel({ score }: SEOScorePanelProps) {
                 </div>
                 <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all ${barColor(value, thresholdDefault)}`}
+                    className={`h-full rounded-full ${barColor(value, thresholdDefault)}`}
                     style={{ width: `${Math.min(value, 100)}%` }}
                   />
                 </div>

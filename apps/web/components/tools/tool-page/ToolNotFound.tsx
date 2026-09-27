@@ -8,17 +8,17 @@ import { ArrowLeftIcon } from '@heroicons/react/24/outline'
  */
 export default function ToolNotFound() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 flex items-center justify-center">
+    <main id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 flex items-center justify-center">
       <div className="text-center">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Tool Not Found</h1>
         <p className="text-gray-600 dark:text-gray-400 mb-6">
-          The tool you&apos;re looking for doesn&apos;t exist or has been removed.
+          The tool you’re looking for doesn’t exist or has been removed.
         </p>
         <Link
           href="/tools"
           className="inline-flex items-center gap-2 px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-colors"
         >
-          <ArrowLeftIcon className="w-4 h-4" />
+          <ArrowLeftIcon aria-hidden="true" className="w-4 h-4" />
           Back to Tools
         </Link>
       </div>

@@ -5,6 +5,7 @@ import {
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
 } from '@heroicons/react/24/outline'
+import { formatNumber } from '@/lib/format'
 
 interface StatCardProps {
   title: string
@@ -64,7 +65,7 @@ export default function StatCard({
                 ) : (
                   <ArrowTrendingDownIcon className="w-4 h-4 mr-0.5" aria-hidden="true" />
                 )}
-                {Math.abs(change).toFixed(1)}%
+                {formatNumber(Math.abs(change), 1)}%
               </span>
             )}
           </div>

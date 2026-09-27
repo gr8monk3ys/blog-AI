@@ -41,6 +41,7 @@ import {
 } from './constants'
 import { createDraftItem, parseCSV, type BulkDraftItem } from './csv'
 import { ActivationHint, BulkHero, WorkflowBanner } from './components/PageBanners'
+import { formatCurrency, formatNumber } from '@/lib/format'
 
 function useBulkGenerationPageView() {
   const [conversationId] = useState(() => uuidv4())
@@ -128,7 +129,7 @@ function useBulkGenerationPageView() {
     if (field === 'keywords' && typeof value === 'string') {
       newItems[index] = {
         ...currentItem,
-        keywords: value.split(',').map((k) => k.trim()).filter(Boolean),
+        keywords: value.split(',').flatMap((k) => k.trim() || []),
       }
     } else if (field === 'topic' && typeof value === 'string') {
       newItems[index] = { ...currentItem, topic: value }
@@ -265,7 +266,7 @@ function useBulkGenerationPageView() {
           createDraftItem(
             row.topic,
             row.keywords
-              ? row.keywords.split(',').map((k) => k.trim()).filter(Boolean)
+              ? row.keywords.split(',').flatMap((k) => k.trim() || [])
               : [],
             row.tone || sharedTone
           )
@@ -440,7 +441,7 @@ function useBulkGenerationPageView() {
   return (
     <>
       <SiteHeader />
-      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
 
       <BulkHero />
 
@@ -472,11 +473,13 @@ function useBulkGenerationPageView() {
                 the template if you want the fastest path.
               </p>
               <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center hover:border-amber-400 dark:hover:border-amber-500 transition-colors">
-                <ArrowUpTrayIcon className="w-8 h-8 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
+                <ArrowUpTrayIcon aria-hidden="true" className="w-8 h-8 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                   Drop a CSV file here, or click to browse
                 </p>
                 <input
+                  name="csv-upload"
+                  autoComplete="off"
                   ref={fileInputRef}
                   type="file"
                   accept=".csv"
@@ -494,7 +497,7 @@ function useBulkGenerationPageView() {
                   onClick={downloadTemplate}
                   className="ml-2 text-sm text-amber-700 hover:text-amber-800"
                 >
-                  Download template
+                  Download Template
                 </button>
               </div>
             </m.div>
@@ -515,14 +518,14 @@ function useBulkGenerationPageView() {
                   disabled={isProcessing}
                   className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-amber-700 hover:text-amber-800 disabled:opacity-50"
                 >
-                  <PlusIcon className="w-4 h-4" />
+                  <PlusIcon aria-hidden="true" className="w-4 h-4" />
                   Add Topic
                 </button>
               </div>
 
               {items.length === 0 ? (
                 <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <DocumentTextIcon className="w-12 h-12 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
+                  <DocumentTextIcon aria-hidden="true" className="w-12 h-12 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
                   <p>No topics added yet.</p>
                   <p className="text-sm">Upload a CSV or add topics manually to build a batch.</p>
                 </div>
@@ -532,9 +535,9 @@ function useBulkGenerationPageView() {
                     {items.map((item, index) => (
                       <m.div
                         key={item.localId}
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
                         className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
                       >
                         <div className="flex items-start gap-4">
@@ -543,27 +546,32 @@ function useBulkGenerationPageView() {
                           </span>
                           <div className="flex-1 space-y-3">
                             <input
+                              name="topic"
+                              autoComplete="off"
                               type="text"
                               value={item.topic}
                               onChange={(e) => updateItem(index, 'topic', e.target.value)}
-                              placeholder="Enter topic..."
+                              placeholder="Enter topic…"
                               disabled={isProcessing}
-                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus-visible:ring-amber-500 focus-visible:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
                             />
                             <div className="flex gap-3">
                               <input
+                                name="keywords"
+                                autoComplete="off"
                                 type="text"
                                 value={item.keywords.join(', ')}
                                 onChange={(e) => updateItem(index, 'keywords', e.target.value)}
-                                placeholder="Keywords (comma separated)"
+                                placeholder="e.g. AI, productivity, remote work…"
                                 disabled={isProcessing}
-                                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
+                                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus-visible:ring-amber-500 focus-visible:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
                               />
                               <select
+                                name="tone"
                                 value={item.tone}
                                 onChange={(e) => updateItem(index, 'tone', e.target.value)}
                                 disabled={isProcessing}
-                                className="px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
+                                className="px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus-visible:ring-amber-500 focus-visible:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
                               >
                                 {TONE_OPTIONS.map((option) => (
                                   <option key={option.value} value={option.value}>
@@ -574,11 +582,12 @@ function useBulkGenerationPageView() {
                             </div>
                           </div>
                           <button
+                            aria-label={`Remove item ${index + 1}`}
                             onClick={() => removeItem(index)}
                             disabled={isProcessing}
                             className="p-2 text-gray-400 hover:text-red-500 disabled:opacity-50"
                           >
-                            <TrashIcon className="w-5 h-5" />
+                            <TrashIcon aria-hidden="true" className="w-5 h-5" />
                           </button>
                         </div>
 
@@ -591,9 +600,9 @@ function useBulkGenerationPageView() {
                           }`}>
                             <div className="flex items-center gap-2">
                               {results[index].success ? (
-                                <CheckCircleIcon className="w-5 h-5 text-emerald-500" />
+                                <CheckCircleIcon aria-hidden="true" className="w-5 h-5 text-emerald-500" />
                               ) : (
-                                <XCircleIcon className="w-5 h-5 text-red-500" />
+                                <XCircleIcon aria-hidden="true" className="w-5 h-5 text-red-500" />
                               )}
                               <span className={`text-sm font-medium ${
                                 results[index].success ? 'text-emerald-700' : 'text-red-700'
@@ -634,10 +643,11 @@ function useBulkGenerationPageView() {
                 {/* Provider Strategy */}
                 <div>
                   <label htmlFor="provider-strategy" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    <ServerStackIcon className="w-4 h-4 inline mr-1" />
+                    <ServerStackIcon aria-hidden="true" className="w-4 h-4 inline mr-1" />
                     Provider Strategy
                   </label>
                   <select
+                    name="provider-strategy"
                     id="provider-strategy"
                     value={providerStrategy}
                     onChange={(e) => {
@@ -645,7 +655,7 @@ function useBulkGenerationPageView() {
                       setCostEstimate(null)
                     }}
                     disabled={isProcessing}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus-visible:ring-amber-500 focus-visible:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
                   >
                     {STRATEGY_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -665,6 +675,7 @@ function useBulkGenerationPageView() {
                       Provider
                     </label>
                     <select
+                      name="preferred-provider"
                       id="preferred-provider"
                       value={preferredProvider}
                       onChange={(e) => {
@@ -673,7 +684,7 @@ function useBulkGenerationPageView() {
                         setCostEstimate(null)
                       }}
                       disabled={isProcessing}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus-visible:ring-amber-500 focus-visible:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
                     >
                       {availableProviders.map((p) => {
                         const meta = PROVIDER_META[p]
@@ -694,11 +705,12 @@ function useBulkGenerationPageView() {
                     Default Tone
                   </label>
                   <select
+                    name="default-tone"
                     id="default-tone"
                     value={sharedTone}
                     onChange={(e) => setSharedTone(e.target.value)}
                     disabled={isProcessing}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus-visible:ring-amber-500 focus-visible:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
                   >
                     {TONE_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -713,11 +725,12 @@ function useBulkGenerationPageView() {
                     Parallel Generations
                   </label>
                   <select
+                    name="parallel-limit"
                     id="parallel-limit"
                     value={parallelLimit}
                     onChange={(e) => setParallelLimit(Number(e.target.value))}
                     disabled={isProcessing}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus-visible:ring-amber-500 focus-visible:border-amber-500 disabled:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900"
                   >
                     {[1, 2, 3, 5, 10].map((n) => (
                       <option key={n} value={n}>
@@ -730,31 +743,34 @@ function useBulkGenerationPageView() {
                 <div className="space-y-3 pt-2">
                   <label className="flex items-center gap-3">
                     <input
+                      name="useResearch"
                       type="checkbox"
                       checked={useResearch}
                       onChange={(e) => setUseResearch(e.target.checked)}
                       disabled={isProcessing}
-                      className="w-4 h-4 text-amber-700 border-gray-300 rounded focus:ring-amber-500"
+                      className="w-4 h-4 text-amber-700 border-gray-300 rounded focus-visible:ring-amber-500"
                     />
                     <span className="text-sm text-gray-700 dark:text-gray-300">Use web research</span>
                   </label>
                   <label className="flex items-center gap-3">
                     <input
+                      name="proofread"
                       type="checkbox"
                       checked={proofread}
                       onChange={(e) => setProofread(e.target.checked)}
                       disabled={isProcessing}
-                      className="w-4 h-4 text-amber-700 border-gray-300 rounded focus:ring-amber-500"
+                      className="w-4 h-4 text-amber-700 border-gray-300 rounded focus-visible:ring-amber-500"
                     />
                     <span className="text-sm text-gray-700 dark:text-gray-300">Proofread content</span>
                   </label>
                   <label className="flex items-center gap-3">
                     <input
+                      name="humanize"
                       type="checkbox"
                       checked={humanize}
                       onChange={(e) => setHumanize(e.target.checked)}
                       disabled={isProcessing}
-                      className="w-4 h-4 text-amber-700 border-gray-300 rounded focus:ring-amber-500"
+                      className="w-4 h-4 text-amber-700 border-gray-300 rounded focus-visible:ring-amber-500"
                     />
                     <span className="text-sm text-gray-700 dark:text-gray-300">Humanize content</span>
                   </label>
@@ -770,7 +786,7 @@ function useBulkGenerationPageView() {
                 className="bg-gradient-to-br from-emerald-50 to-emerald-50 dark:from-emerald-900/20 dark:to-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800 p-6"
               >
                 <div className="flex items-center gap-2 mb-3">
-                  <CurrencyDollarIcon className="w-5 h-5 text-emerald-600" />
+                  <CurrencyDollarIcon aria-hidden="true" className="w-5 h-5 text-emerald-600" />
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     Cost Estimate
                   </h2>
@@ -779,11 +795,11 @@ function useBulkGenerationPageView() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600 dark:text-gray-400">Estimated Cost</span>
                     <span className="text-lg font-bold text-emerald-700">
-                      ${costEstimate.estimated_cost_usd.toFixed(4)}
+                      {formatCurrency(costEstimate.estimated_cost_usd, 4)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-xs text-gray-500">
-                    <span>~{costEstimate.estimated_output_tokens.toLocaleString()} tokens</span>
+                    <span>~{formatNumber(costEstimate.estimated_output_tokens)} tokens</span>
                     <span>{Math.round(costEstimate.confidence * 100)}% confidence</span>
                   </div>
                   {costEstimate.provider_recommendations.length > 1 && (
@@ -793,7 +809,7 @@ function useBulkGenerationPageView() {
                         {costEstimate.provider_recommendations.slice(0, 3).map((rec) => (
                           <div key={rec.provider} className="flex items-center justify-between text-xs">
                             <span className="text-gray-600 dark:text-gray-400">{rec.display_name}</span>
-                            <span className="font-medium text-gray-900 dark:text-gray-100">${rec.estimated_cost.toFixed(4)}</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">{formatCurrency(rec.estimated_cost, 4)}</span>
                           </div>
                         ))}
                       </div>
@@ -822,9 +838,9 @@ function useBulkGenerationPageView() {
                   </div>
                   <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
                     <m.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${status.progress_percentage}%` }}
-                      className="bg-amber-500 h-3 rounded-full"
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: Math.min(Math.max(status.progress_percentage, 0), 100) / 100 }}
+                      className="bg-amber-500 h-3 w-full origin-left rounded-full"
                     />
                   </div>
                   <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
@@ -857,7 +873,7 @@ function useBulkGenerationPageView() {
                     <div className="flex items-center justify-between text-sm pt-2">
                       <span className="text-gray-600 dark:text-gray-400">Cost so far</span>
                       <span className="font-medium text-emerald-600">
-                        ${actualCost.toFixed(4)}
+                        {formatCurrency(actualCost, 4)}
                       </span>
                     </div>
                   )}
@@ -884,7 +900,7 @@ function useBulkGenerationPageView() {
                   <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
                     Usage limit reached.{' '}
                     <Link href="/pricing" className="font-medium underline">
-                      Upgrade your plan
+                      Upgrade Your Plan
                     </Link>{' '}
                     to continue.
                   </div>
@@ -894,16 +910,16 @@ function useBulkGenerationPageView() {
                     onClick={cancelJob}
                     className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors"
                   >
-                    <StopIcon className="w-5 h-5" />
+                    <StopIcon aria-hidden="true" className="w-5 h-5" />
                     Cancel Generation
                   </button>
                 ) : (
                   <button
                     onClick={startGeneration}
                     disabled={items.length === 0 || !canGenerate}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <PlayIcon className="w-5 h-5" />
+                    <PlayIcon aria-hidden="true" className="w-5 h-5" />
                     Generate {items.length} Post{items.length !== 1 ? 's' : ''}
                   </button>
                 )}
@@ -914,7 +930,7 @@ function useBulkGenerationPageView() {
                       onClick={() => setShowExportMenu(!showExportMenu)}
                       className="w-full flex items-center justify-center gap-2 py-3 px-4 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                     >
-                      <ArrowDownTrayIcon className="w-5 h-5" />
+                      <ArrowDownTrayIcon aria-hidden="true" className="w-5 h-5" />
                       Export Results
                     </button>
                     {showExportMenu && (
@@ -944,7 +960,7 @@ function useBulkGenerationPageView() {
                     onClick={retryFailed}
                     className="w-full flex items-center justify-center gap-2 py-3 px-4 border border-orange-300 bg-orange-50 text-orange-700 font-medium rounded-lg hover:bg-orange-100 transition-colors"
                   >
-                    <ArrowPathIcon className="w-5 h-5" />
+                    <ArrowPathIcon aria-hidden="true" className="w-5 h-5" />
                     Retry {results.filter(r => !r.success).length} Failed
                   </button>
                 )}
@@ -958,7 +974,7 @@ function useBulkGenerationPageView() {
                     }}
                     className="w-full flex items-center justify-center gap-2 py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
                   >
-                    <TrashIcon className="w-4 h-4" />
+                    <TrashIcon aria-hidden="true" className="w-4 h-4" />
                     Clear All
                   </button>
                 )}
@@ -992,7 +1008,7 @@ function useBulkGenerationPageView() {
               className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6"
             >
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                Suggested operating flow
+                Suggested Operating Flow
               </h2>
               <ol className="mt-4 space-y-3 text-sm text-gray-600 dark:text-gray-400">
                 <li>1. Save one brand profile that reflects your real positioning.</li>

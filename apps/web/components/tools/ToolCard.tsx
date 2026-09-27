@@ -53,9 +53,8 @@ export default function ToolCard({ tool, index = 0, headingLevel = 3 }: ToolCard
       <Link
         href={`/tools/${tool.slug}`}
         className="block group"
-        aria-label={`Open ${tool.name} tool`}
       >
-        <div className="relative h-full bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-amber-200 dark:hover:border-amber-700 transition-all duration-200 overflow-hidden">
+        <div className="relative h-full bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-amber-200 dark:hover:border-amber-700 transition duration-200 overflow-hidden">
           {/* Top badges row */}
           <div className="absolute top-3 right-3 flex items-center gap-2">
             {tool.isNew && (
@@ -105,7 +104,7 @@ export default function ToolCard({ tool, index = 0, headingLevel = 3 }: ToolCard
 
           {/* Bottom action indicator */}
           <div className="px-5 pb-4">
-            <div className="flex items-center text-sm font-medium text-amber-700 group-hover:text-amber-800 transition-colors">
+            <div className="flex items-center text-sm font-medium text-amber-700 group-hover:text-amber-800 dark:text-amber-400 dark:group-hover:text-amber-300 transition-colors">
               <span>Try it now</span>
               <svg
                 className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform"

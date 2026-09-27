@@ -28,7 +28,7 @@ function SamplesListComponent({ samples, onDelete }: SamplesListProps) {
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-6">
       <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-        <DocumentTextIcon className="w-5 h-5" />
+        <DocumentTextIcon aria-hidden="true" className="w-5 h-5" />
         Voice Samples ({samples.length})
       </h2>
 
@@ -61,7 +61,7 @@ function SamplesListComponent({ samples, onDelete }: SamplesListProps) {
                 className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
                 aria-label="Delete sample"
               >
-                <TrashIcon className="w-4 h-4" />
+                <TrashIcon aria-hidden="true" className="w-4 h-4" />
               </button>
             </div>
           ))}

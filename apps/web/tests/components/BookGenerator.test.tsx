@@ -383,7 +383,7 @@ describe('BookGenerator', () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText(/sign in required to generate books/i)
+          screen.getByText(/sign in to generate books/i)
         ).toBeInTheDocument()
       })
     })

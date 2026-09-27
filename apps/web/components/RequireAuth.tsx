@@ -46,7 +46,7 @@ export default function RequireAuth({
     }
 
     return (
-      <main className="min-h-screen flex items-center justify-center">
+      <main id="main-content" tabIndex={-1} className="min-h-screen flex items-center justify-center">
         <div className="flex items-center gap-3" role="status" aria-label="Loading">
           <div className="h-2.5 w-2.5 rounded-full bg-amber-400 animate-pulse" />
           <div
@@ -65,7 +65,7 @@ export default function RequireAuth({
   // User is not signed in.
   if (!isSignedIn) {
     return (
-      <main className="min-h-screen flex items-center justify-center px-4">
+      <main id="main-content" tabIndex={-1} className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
           <p className="text-sm text-gray-600 mb-4">
             You need to sign in to view this page.

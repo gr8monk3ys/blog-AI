@@ -49,12 +49,15 @@ export default function InviteForm({ orgId, onInviteSent }: InviteFormProps) {
           Invite by email
         </label>
         <input
+          name="invite-email"
+          autoComplete="email"
+          spellCheck={false}
           id="invite-email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
-          placeholder="colleague@company.com"
+          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
+          placeholder="colleague@company.com…"
           required
         />
       </div>
@@ -64,10 +67,11 @@ export default function InviteForm({ orgId, onInviteSent }: InviteFormProps) {
           Role
         </label>
         <select
+          name="invite-role"
           id="invite-role"
           value={role}
           onChange={(e) => setRole(e.target.value as OrganizationRole)}
-          className="mt-1 block rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
+          className="mt-1 block rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
         >
           {INVITABLE_ROLES.map((r) => (
             <option key={r} value={r}>{r}</option>
@@ -78,9 +82,9 @@ export default function InviteForm({ orgId, onInviteSent }: InviteFormProps) {
       <button
         type="submit"
         disabled={loading || !email.trim()}
-        className="px-4 py-2 text-sm font-medium text-white bg-amber-700 border border-transparent rounded-lg hover:bg-amber-800 focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors disabled:opacity-50"
+        className="px-4 py-2 text-sm font-medium text-white bg-amber-700 border border-transparent rounded-lg hover:bg-amber-800 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber-500 transition-colors disabled:opacity-50"
       >
-        {loading ? 'Sending...' : 'Send Invite'}
+        {loading ? 'Sending…' : 'Send Invite'}
       </button>
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}

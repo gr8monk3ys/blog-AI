@@ -215,7 +215,7 @@ function useToolPageContentView() {
       if (status === 401 || status === 403) {
         setExportToast({
           show: true,
-          message: 'Sign in required to use the tool.',
+          message: 'Sign in to use this tool.',
           type: 'error',
         })
       } else if (status === 429) {
@@ -406,7 +406,7 @@ function useToolPageContentView() {
     } catch (err: unknown) {
       const status = getErrorStatus(err)
       if (status === 401 || status === 403) {
-        setPlagiarismError('Sign in required to run checks.')
+        setPlagiarismError('Sign in to run plagiarism checks.')
       } else if (status === 429) {
         setPlagiarismError('Usage limit reached. Upgrade your plan to run checks.')
       } else {
@@ -521,7 +521,7 @@ function useToolPageContentView() {
   ).slice(0, 3)
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+    <main id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
       {/* Toast notification for export */}
       <ToastNotification toast={exportToast} />
 
@@ -621,7 +621,7 @@ export default function ToolPageClient() {
     <Suspense
       fallback={
         <main className="min-h-screen flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
-          Loading tool...
+          Loading tool…
         </main>
       }
     >

@@ -3,6 +3,7 @@
 import { PauseIcon, PlayIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import type { Campaign } from '../../../types/social'
 import PlatformIcon from './PlatformIcon'
+import { formatDisplayDate } from '@/lib/format'
 
 interface CampaignCardProps {
   campaign: Campaign
@@ -41,7 +42,7 @@ export default function CampaignCard({ campaign, onPause, onResume, onCancel }: 
           {/* Platforms */}
           <div className="flex items-center gap-2 mb-2">
             {campaign.platforms.map((pc) => (
-              <PlatformIcon key={pc.platform} platform={pc.platform} size="sm" />
+              <PlatformIcon aria-hidden="true" key={pc.platform} platform={pc.platform} size="sm" />
             ))}
           </div>
 
@@ -49,7 +50,7 @@ export default function CampaignCard({ campaign, onPause, onResume, onCancel }: 
           <div className="flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-400">
             <span>{campaign.post_count} post{campaign.post_count !== 1 ? 's' : ''}</span>
             {campaign.scheduled_at && (
-              <span>Scheduled: {new Date(campaign.scheduled_at).toLocaleDateString()}</span>
+              <span>Scheduled: {formatDisplayDate(campaign.scheduled_at)}</span>
             )}
             {campaign.tags && campaign.tags.length > 0 && (
               <span className="flex gap-1">
@@ -72,7 +73,7 @@ export default function CampaignCard({ campaign, onPause, onResume, onCancel }: 
               className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
               title="Pause campaign"
             >
-              <PauseIcon className="w-4 h-4" />
+              <PauseIcon aria-hidden="true" className="w-4 h-4" />
             </button>
           )}
           {canResume && (
@@ -82,7 +83,7 @@ export default function CampaignCard({ campaign, onPause, onResume, onCancel }: 
               className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
               title="Resume campaign"
             >
-              <PlayIcon className="w-4 h-4" />
+              <PlayIcon aria-hidden="true" className="w-4 h-4" />
             </button>
           )}
           {canCancel && (
@@ -92,7 +93,7 @@ export default function CampaignCard({ campaign, onPause, onResume, onCancel }: 
               className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
               title="Cancel campaign"
             >
-              <XMarkIcon className="w-4 h-4" />
+              <XMarkIcon aria-hidden="true" className="w-4 h-4" />
             </button>
           )}
         </div>

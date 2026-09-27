@@ -115,7 +115,7 @@ export default function CampaignsTab({ showToast, confirm }: CampaignsTabProps) 
             onClick={() => setShowForm(true)}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-amber-700 text-white hover:bg-amber-800 transition-colors"
           >
-            <PlusIcon className="w-4 h-4" />
+            <PlusIcon aria-hidden="true" className="w-4 h-4" />
             New Campaign
           </button>
         )}
@@ -124,9 +124,9 @@ export default function CampaignsTab({ showToast, confirm }: CampaignsTabProps) 
       <AnimatePresence mode="wait">
         {showForm && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
             className="mb-6 overflow-hidden"
           >
@@ -142,8 +142,8 @@ export default function CampaignsTab({ showToast, confirm }: CampaignsTabProps) 
 
       {campaigns.length === 0 ? (
         <div className="text-center py-16">
-          <RocketLaunchIcon className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">No campaigns yet</h3>
+          <RocketLaunchIcon aria-hidden="true" className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">No Campaigns Yet</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Create a campaign to schedule content across multiple platforms.
           </p>

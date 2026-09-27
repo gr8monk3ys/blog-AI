@@ -27,28 +27,32 @@ function SourceContentFormComponent({
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor="remix-source-title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Title
           </label>
-          <input
+          <input id="remix-source-title"
+            name="sourceTitle"
+            autoComplete="off"
             type="text"
             value={sourceTitle}
             onChange={(e) => onTitleChange(e.target.value)}
-            placeholder="Enter your content title..."
-            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            placeholder="Enter your content title…"
+            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:border-transparent"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor="remix-source-content-body" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Content Body
           </label>
-          <textarea
+          <textarea id="remix-source-content-body"
+            name="sourceContent"
+            autoComplete="off"
             value={sourceContent}
             onChange={(e) => onContentChange(e.target.value)}
-            placeholder="Paste your blog post, article, or any content here..."
+            placeholder="Paste your blog post, article, or any content here…"
             rows={12}
-            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-none"
+            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:border-transparent resize-none"
           />
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{wordCount} words</p>
         </div>
@@ -58,7 +62,7 @@ function SourceContentFormComponent({
           disabled={isAnalyzing || !sourceContent.trim()}
           className="w-full py-2 px-4 bg-gray-800 dark:bg-gray-700 text-white rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:cursor-not-allowed transition-colors"
         >
-          {isAnalyzing ? 'Analyzing...' : 'Analyze Content'}
+          {isAnalyzing ? 'Analyzing…' : 'Analyze Content'}
         </button>
       </div>
     </div>

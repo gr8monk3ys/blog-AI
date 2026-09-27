@@ -30,7 +30,7 @@ export default function GeneratePageClient() {
     content && content.success && content.type === 'blog' ? content.content : null
 
   return (
-    <div className="min-h-screen">
+    <main id="main-content" tabIndex={-1} className="min-h-screen">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Generator form */}
         <div className="glass-card rounded-2xl p-8 mb-8">
@@ -155,6 +155,6 @@ export default function GeneratePageClient() {
           </div>
         )}
       </div>
-    </div>
+    </main>
   )
 }

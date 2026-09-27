@@ -121,7 +121,7 @@ describe('CreateOrgModal', () => {
     fireEvent.click(screen.getByText('Create'))
 
     await waitFor(() => {
-      expect(screen.getByText('Creating...')).toBeDefined()
+      expect(screen.getByText('Creating…')).toBeDefined()
     })
 
     resolveApi!({ success: true })

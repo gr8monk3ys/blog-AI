@@ -17,7 +17,7 @@ export default function NotFound() {
   const router = useRouter()
 
   return (
-    <main
+    <main id="main-content" tabIndex={-1}
       className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900"
       role="main"
       aria-labelledby="not-found-title"
@@ -36,7 +36,7 @@ export default function NotFound() {
           id="not-found-title"
           className="mt-4 text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100 sm:text-4xl"
         >
-          Page not found
+          Page Not Found
         </h1>
 
         {/* Description */}
@@ -65,7 +65,7 @@ export default function NotFound() {
                 d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"
               />
             </svg>
-            Go back home
+            Go Back Home
           </Link>
 
           <button
@@ -87,7 +87,7 @@ export default function NotFound() {
                 d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
               />
             </svg>
-            Go back
+            Go Back
           </button>
         </nav>
 

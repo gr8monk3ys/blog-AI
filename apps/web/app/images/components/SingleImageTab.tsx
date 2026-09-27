@@ -116,12 +116,14 @@ export default function SingleImageTab({ styles, showToast }: SingleImageTabProp
               Image prompt <span className="text-red-500">*</span>
             </label>
             <textarea
+              name="img-prompt"
+              autoComplete="off"
               id="img-prompt"
               rows={4}
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Describe the image you want to generate..."
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+              placeholder="Describe the image you want to generate…"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
               required
             />
           </div>
@@ -131,12 +133,14 @@ export default function SingleImageTab({ styles, showToast }: SingleImageTabProp
               Content <span className="text-red-500">*</span>
             </label>
             <textarea
+              name="img-content"
+              autoComplete="off"
               id="img-content"
               rows={6}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Paste your blog content and we'll generate a relevant image..."
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+              placeholder="Paste your blog content and we’ll generate a relevant image…"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
               required
             />
           </div>
@@ -148,10 +152,11 @@ export default function SingleImageTab({ styles, showToast }: SingleImageTabProp
             Image type
           </label>
           <select
+            name="img-type"
             id="img-type"
             value={imageType}
             onChange={(e) => setImageType(e.target.value as ImageType)}
-            className="w-full sm:w-auto rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+            className="w-full sm:w-auto rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
           >
             {IMAGE_TYPES.map((t) => (
               <option key={t.value} value={t.value}>{t.label}</option>
@@ -178,12 +183,14 @@ export default function SingleImageTab({ styles, showToast }: SingleImageTabProp
             Negative prompt (optional)
           </label>
           <input
+            name="neg-prompt"
+            autoComplete="off"
             id="neg-prompt"
             type="text"
             value={negativePrompt}
             onChange={(e) => setNegativePrompt(e.target.value)}
-            placeholder="Elements to exclude from the image..."
-            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+            placeholder="Elements to exclude from the image…"
+            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500"
           />
         </div>
 
@@ -195,11 +202,11 @@ export default function SingleImageTab({ styles, showToast }: SingleImageTabProp
         >
           {loading ? (
             <>
-              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+              <svg aria-hidden="true" className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              Generating...
+              Generating…
             </>
           ) : (
             'Generate Image'
@@ -208,7 +215,7 @@ export default function SingleImageTab({ styles, showToast }: SingleImageTabProp
       </form>
 
       {error && (
-        <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+        <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300" role="alert">
           {error}
         </div>
       )}
