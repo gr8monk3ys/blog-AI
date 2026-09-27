@@ -16,12 +16,10 @@ function ToolsPageContent() {
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-amber-700 to-amber-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-          <m.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-center"
-          >
+          {/* No entrance animation here: this hero text is the LCP element, and
+              m.* stays at its `initial` style until LazyMotion's async features
+              load, which held mobile LCP at ~5s. */}
+          <div className="text-center">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
               AI Writing Tools
             </h1>
@@ -45,7 +43,7 @@ function ToolsPageContent() {
                 <div className="text-sm text-amber-200">Content Formats</div>
               </div>
             </div>
-          </m.div>
+          </div>
         </div>
       </section>
 
