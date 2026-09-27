@@ -104,7 +104,7 @@ export default function ToolCard({ tool, index = 0, headingLevel = 3 }: ToolCard
 
           {/* Bottom action indicator */}
           <div className="px-5 pb-4">
-            <div className="flex items-center text-sm font-medium text-amber-700 group-hover:text-amber-800 transition-colors">
+            <div className="flex items-center text-sm font-medium text-amber-700 group-hover:text-amber-800 dark:text-amber-400 dark:group-hover:text-amber-300 transition-colors">
               <span>Try it now</span>
               <svg
                 className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform"
