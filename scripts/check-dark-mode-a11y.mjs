@@ -76,6 +76,23 @@ try {
     });
     await page.waitForTimeout(600);
 
+    // Entrance animations (framer-motion fades, the staggered tool cards on
+    // /tools) can still be mid-fade here, and axe then measures blended,
+    // half-transparent colours. Wait until every finite animation has finished
+    // and no element sits at a fractional inline opacity.
+    await page.waitForFunction(
+      () =>
+        document
+          .getAnimations()
+          .every((a) => a.playState !== "running" || a.effect?.getTiming().iterations === Infinity) &&
+        ![...document.querySelectorAll("[style*='opacity']")].some((el) => {
+          const opacity = parseFloat(el.style.opacity);
+          return opacity > 0 && opacity < 1;
+        }),
+      null,
+      { timeout: 15_000, polling: 100 }
+    );
+
     const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
     writeFileSync(
       join(artifactDir, `${artifactSlug(route)}-dark-axe.json`),
