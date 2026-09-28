@@ -216,7 +216,16 @@ def google_serp_search(
     query: str, options: SearchOptions
 ) -> Optional[GoogleSerpResult]:
     """
-    Search using Google SERP API.
+    Search using a Google SERP API provider.
+
+    The provider is selected with the ``SERP_PROVIDER`` environment variable:
+
+    - ``serpapi`` (default) — https://serpapi.com/search, uses ``SERP_API_KEY``
+    - ``serpbase`` — https://api.serpbase.dev/google/search, uses
+      ``SERPBASE_API_KEY`` (pay-as-you-go, see https://serpbase.dev)
+
+    Both providers return the same JSON shape (``organic_results``,
+    ``related_questions``, ``related_searches``), so parsing is shared.
 
     Args:
         query: The search query.
@@ -231,23 +240,44 @@ def google_serp_search(
     try:
         import requests
 
-        api_key = os.environ.get("SERP_API_KEY")
-        if not api_key:
-            raise ResearchError("SERP_API_KEY environment variable not set")
+        provider = os.environ.get("SERP_PROVIDER", "serpapi").strip().lower()
+        if provider not in ("serpapi", "serpbase"):
+            logger.warning(
+                "Unknown SERP_PROVIDER %r, falling back to serpapi", provider
+            )
+            provider = "serpapi"
 
-        url = "https://serpapi.com/search"
+        if provider == "serpbase":
+            api_key = os.environ.get("SERPBASE_API_KEY")
+            if not api_key:
+                raise ResearchError(
+                    "SERPBASE_API_KEY environment variable not set "
+                    "(required when SERP_PROVIDER=serpbase)"
+                )
 
-        params = {
-            "api_key": api_key,
-            "q": query,
-            "location": options.location,
-            "hl": options.language,
-            "num": options.num_results,
-            "tbm": "search",
-            "tbs": (
-                f"qdr:{options.time_range}" if options.time_range != "anytime" else ""
-            ),
-        }
+            url = "https://api.serpbase.dev/google/search"
+            params = {
+                "api_key": api_key,
+                "q": query,
+                "num": min(options.num_results, 20),  # SerpBase caps at 20/request
+            }
+        else:
+            api_key = os.environ.get("SERP_API_KEY")
+            if not api_key:
+                raise ResearchError("SERP_API_KEY environment variable not set")
+
+            url = "https://serpapi.com/search"
+            params = {
+                "api_key": api_key,
+                "q": query,
+                "location": options.location,
+                "hl": options.language,
+                "num": options.num_results,
+                "tbm": "search",
+                "tbs": (
+                    f"qdr:{options.time_range}" if options.time_range != "anytime" else ""
+                ),
+            }
 
         response = requests.get(url, params=params)
         response.raise_for_status()
