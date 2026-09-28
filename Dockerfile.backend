@@ -14,13 +14,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+COPY --from=ghcr.io/astral-sh/uv:0.10.0 /uv /uvx /bin/
 
-COPY apps/api/requirements.txt ./
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt && \
-    pip uninstall -y pip
+# uv builds the venv at /opt/venv straight from the lockfile; it never installs
+# pip into it, so the pip-uninstall hack the pip path needed is gone.
+ENV UV_PROJECT_ENVIRONMENT=/opt/venv \
+    UV_PYTHON_DOWNLOADS=never \
+    UV_COMPILE_BYTECODE=1 \
+    PATH="/opt/venv/bin:$PATH"
+
+COPY apps/api/pyproject.toml apps/api/uv.lock ./
+RUN uv sync --locked --no-dev
 
 # -----------------------------------------------------------------------------
 # Stage 2: Runtime - lean production image
