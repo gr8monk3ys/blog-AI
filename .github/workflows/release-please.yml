@@ -1,0 +1,52 @@
+# Releases are cut by release-please from conventional commits on main.
+#
+# Every push to main, the action opens (or refreshes) one "release PR" that
+# bumps the version fields and writes CHANGELOG.md from the commits since the
+# last release. Merging that PR creates the vX.Y.Z tag and a GitHub Release,
+# and the merge commit deploys through deploy.yml like any other main push.
+#
+# One version for the whole repo: release-please-config.json tracks the root
+# package.json and mirrors its version into apps/web/package.json,
+# apps/api/pyproject.toml and apps/api/uv.lock via extra-files, so the web app
+# and the API always carry the same number as the tag. uv.lock is in the list
+# because it records the API's own version and Dockerfile.backend runs
+# `uv sync --locked`, which fails when pyproject.toml and uv.lock disagree.
+# Its jsonpath filters on `@.name.value` (not `@.name`): release-please's TOML
+# parser wraps every scalar in a {start, end, value} record so it can replace
+# it in place, and a filter on the bare key matches nothing.
+#
+# The release PR is opened with GITHUB_TOKEN, and GitHub does not run workflows
+# for events that token creates, so the checks main requires never report on
+# it. Merging it needs `gh pr merge --admin`, which bypasses those required
+# checks: do it only after confirming the PR's diff is exactly CHANGELOG.md
+# plus the version fields in the four files above, and nothing else. To give
+# release PRs a real CI run instead, add a fine-grained PAT (contents: write,
+# pull-requests: write) as the RELEASE_PLEASE_TOKEN secret and pass it as
+# `token:` below.
+#
+# The action is pinned to a commit, not a tag, so a moved tag upstream cannot
+# change what runs with write access to this repo. Dependabot keeps the pin
+# and the version comment in step.
+name: release-please
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

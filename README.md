@@ -25,7 +25,7 @@ scripts/         migrate, seed, runtime audit, post-deploy health check
 
 ## Run locally
 
-Needs Bun 1.3+, Python 3.12, and one LLM API key.
+Needs Bun 1.4.3 (the pinned version; see `packageManager`), Python 3.12, and one LLM API key.
 
 ```bash
 git clone https://github.com/gr8monk3ys/blog-AI.git && cd blog-AI
