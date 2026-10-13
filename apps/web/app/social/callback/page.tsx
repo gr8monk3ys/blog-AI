@@ -9,11 +9,14 @@ export default function SocialCallbackPage() {
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing')
   const [errorMessage, setErrorMessage] = useState('')
 
-  useEffect(() => {
-    handleCallback()
-    // OAuth callback runs exactly once on mount; deps intentionally empty.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  function notifyParent(type: 'success' | 'error', error?: string) {
+    if (window.opener) {
+      window.opener.postMessage(
+        { type: type === 'success' ? 'social-oauth-success' : 'social-oauth-error', error },
+        window.location.origin
+      )
+    }
+  }
 
   async function handleCallback() {
     const code = searchParams.get('code')
@@ -68,14 +71,11 @@ export default function SocialCallbackPage() {
     }
   }
 
-  function notifyParent(type: 'success' | 'error', error?: string) {
-    if (window.opener) {
-      window.opener.postMessage(
-        { type: type === 'success' ? 'social-oauth-success' : 'social-oauth-error', error },
-        window.location.origin
-      )
-    }
-  }
+  useEffect(() => {
+    handleCallback()
+    // OAuth callback runs exactly once on mount; deps intentionally empty.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
