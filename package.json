@@ -20,6 +20,7 @@
     "db:migrate": "bun scripts/migrate_db.mjs",
     "analyze": "bun run --cwd apps/web analyze",
     "audit:runtime": "bun scripts/audit-runtime.mjs",
+    "env:check": "node scripts/check-env.mjs",
     "lighthouse:ci": "bun run lighthouse:scores && bun run a11y:dark",
     "lighthouse:scores": "node scripts/check-lighthouse-score.mjs http://127.0.0.1:3000 / /pricing /blog /tools",
     "a11y:dark": "node scripts/check-dark-mode-a11y.mjs http://127.0.0.1:3000 / /pricing /blog /tools",

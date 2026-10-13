@@ -52,11 +52,17 @@ jobs:
         shell: bash
         run: echo "Using bunx vercel@50.13.2 for production checks."
 
+      # Public routes, then GET /api/health (the web app's own report on its
+      # database, the FastAPI backend and Clerk; 503 fails the run), then the
+      # Vercel deployment status and recent production logs when a token exists.
+      # The script prints status codes and aggregate health words only: no
+      # response bodies and no log lines, since this log is public.
       - name: Run production health check
         shell: bash
         env:
           APP_URL: https://blog-ai.vivancedata.com
           ROUTES: / /pricing /blog /tool-directory /sitemap.xml
+          HEALTH_ROUTE: /api/health
           LOOKBACK: 1h
           LOG_LIMIT: 200
           FAIL_ON_WARNINGS: "false"
@@ -65,6 +71,10 @@ jobs:
           VERCEL_PROJECT: ${{ secrets.VERCEL_PROJECT_ID }}
         run: bash scripts/post_deploy_health_check.sh
 
+      # The FastAPI backend runs on Vercel's Python runtime (project blog-ai-api,
+      # https://blog-ai-api-gr8monk3ys-projects.vercel.app), not on Railway. Its
+      # host is taken from vars.API_BASE_URL when set, else from the live site's
+      # CSP connect-src, which names whichever API origin the web app may call.
       - name: Check backend API health
         shell: bash
         env:
@@ -78,9 +88,9 @@ jobs:
             api="$(curl -sSI "$APP_URL/" \
               | grep -i '^content-security-policy:' \
               | grep -oE 'connect-src[^;]*' \
-              | grep -oE 'https://[^ ]*(railway\.app|vercel\.app)' | head -n1 || true)"
+              | grep -oE 'https://[^ ]*blog-ai-api[^ ]*\.vercel\.app|https://[^ ]*\.(vercel|railway)\.app' | head -n1 || true)"
             if [ -z "$api" ]; then
-              echo "::error::Could not resolve API base URL: vars.API_BASE_URL is unset and no railway.app/vercel.app host found in $APP_URL CSP connect-src."
+              echo "::error::Could not resolve API base URL: vars.API_BASE_URL is unset and no API host found in $APP_URL CSP connect-src."
               exit 1
             fi
             echo "Resolved API base URL from CSP connect-src: $api"

@@ -64,7 +64,7 @@ deployed:
 | Runtime | Deployed signal | Set by |
 |---------|-----------------|--------|
 | `apps/web` (Vercel) | `VERCEL_ENV` is `production` or `preview` | Vercel, on deployed builds only |
-| `apps/api` (Railway) | `RAILWAY_ENVIRONMENT_NAME` (or `RAILWAY_ENVIRONMENT`) is set | Railway, in every running deployment |
+| `apps/api` | `RAILWAY_ENVIRONMENT_NAME` (or `RAILWAY_ENVIRONMENT`) is set, or `SENTRY_FORCE_ENABLE=1` | Railway sets the former in every running deployment. **Production runs on Vercel's Python runtime, which sets neither**, so today the API reports nothing unless `SENTRY_FORCE_ENABLE=1` is set in the `blog-ai-api` project (see `docs/DEPLOYMENT.md`, owner to-do). |
 
 `NODE_ENV` / `SENTRY_ENVIRONMENT` are deliberately **not** the signal: a local
 `next build && next start` sets `NODE_ENV=production`, and `SENTRY_ENVIRONMENT`
@@ -83,7 +83,7 @@ just `start`):
 # Turn reporting ON off-deployment, e.g. to test SDK wiring. Point the DSN at a
 # throwaway project first: the shared quota is what this gate protects.
 NEXT_PUBLIC_SENTRY_FORCE_ENABLE=1   # apps/web
-SENTRY_FORCE_ENABLE=1               # apps/api (also: a non-Railway container host)
+SENTRY_FORCE_ENABLE=1               # apps/api (also: Vercel or any non-Railway host)
 
 # Kill switch for a deployment flooding the shared quota.
 NEXT_PUBLIC_SENTRY_FORCE_DISABLE=1  # apps/web

@@ -20,7 +20,8 @@ if (isVercelProductionBuild) {
   if (!process.env.NEXT_PUBLIC_API_URL) {
     throw new Error(
       'NEXT_PUBLIC_API_URL is required in production. ' +
-      'Set it to your backend API URL (e.g. https://api.blogai.com).'
+      'Set it to your backend API URL ' +
+      '(production: https://blog-ai-api-gr8monk3ys-projects.vercel.app).'
     )
   }
   if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {

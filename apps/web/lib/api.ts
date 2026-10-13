@@ -33,7 +33,8 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (() => {
   if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined') {
     console.error(
       '[api] NEXT_PUBLIC_API_URL is not set. ' +
-      'API calls will fail. Set it to your backend URL (e.g. https://api.blogai.com).'
+      'API calls will fail. Set it to your backend URL ' +
+      '(production: https://blog-ai-api-gr8monk3ys-projects.vercel.app).'
     )
   }
   return 'http://localhost:8000'
@@ -231,7 +232,7 @@ export const getDefaultHeaders = async (): Promise<HeadersInit> => {
 
   // In the cloud SaaS, clients authenticate with Clerk session JWTs.
   // We attach the current session token as `Authorization: Bearer ...` so the
-  // backend (Railway) can verify it.
+  // FastAPI backend can verify it against Clerk's JWKS.
   if (typeof window !== 'undefined') {
     try {
       // Clerk injects a global `window.Clerk` when configured.
