@@ -108,7 +108,7 @@ export default function ConfirmModal({
           leaveTo="opacity-0"
         >
           <div
-            className="fixed inset-0 bg-black/25 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/25 backdrop-blur-xs"
             aria-hidden="true"
           />
         </Transition.Child>
@@ -131,7 +131,7 @@ export default function ConfirmModal({
                 <div className="flex items-start gap-4">
                   {/* Icon */}
                   <div
-                    className={`flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-full ${config.iconBgColor}`}
+                    className={`shrink-0 flex items-center justify-center w-12 h-12 rounded-full ${config.iconBgColor}`}
                   >
                     <Icon
                       aria-hidden="true"
@@ -160,7 +160,7 @@ export default function ConfirmModal({
                     ref={cancelButtonRef}
                     type="button"
                     onClick={onClose}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 transition-colors"
+                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 transition-colors"
                   >
                     {cancelLabel}
                   </button>
@@ -168,7 +168,7 @@ export default function ConfirmModal({
                     ref={confirmButtonRef}
                     type="button"
                     onClick={onConfirm}
-                    className={`px-4 py-2 text-sm font-medium text-white rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-colors ${config.confirmButtonColor} ${config.confirmButtonHoverColor} ${variant === 'danger' ? 'focus:ring-red-500' : 'focus:ring-amber-500'}`}
+                    className={`px-4 py-2 text-sm font-medium text-white rounded-lg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2 transition-colors ${config.confirmButtonColor} ${config.confirmButtonHoverColor} ${variant === 'danger' ? 'focus:ring-red-500' : 'focus:ring-amber-500'}`}
                   >
                     {confirmLabel}
                   </button>

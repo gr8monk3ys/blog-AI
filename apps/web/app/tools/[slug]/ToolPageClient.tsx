@@ -521,7 +521,7 @@ function useToolPageContentView() {
   ).slice(0, 3)
 
   return (
-    <main id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+    <main id="main-content" tabIndex={-1} className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
       {/* Toast notification for export */}
       <ToastNotification toast={exportToast} />
 
@@ -541,7 +541,7 @@ function useToolPageContentView() {
             transition={{ duration: 0.4, delay: 0.1 }}
             className="lg:col-span-2"
           >
-            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xs border border-gray-200 dark:border-gray-800 overflow-hidden">
               <ToolInputForm
                 tool={tool}
                 inputText={inputText}

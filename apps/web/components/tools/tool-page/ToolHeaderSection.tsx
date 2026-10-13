@@ -48,7 +48,7 @@ export default function ToolHeaderSection({
         >
           <div className="flex items-start gap-4">
             <div
-              className={`flex-shrink-0 w-14 h-14 rounded-xl ${categoryInfo.bgColor} flex items-center justify-center`}
+              className={`shrink-0 w-14 h-14 rounded-xl ${categoryInfo.bgColor} flex items-center justify-center`}
             >
               <Icon
                 aria-hidden="true"
@@ -66,7 +66,7 @@ export default function ToolHeaderSection({
                   </span>
                 )}
                 {tool.isNew && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-linear-to-r from-amber-500 to-amber-600 text-white">
                     New
                   </span>
                 )}

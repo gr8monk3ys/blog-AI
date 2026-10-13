@@ -80,8 +80,8 @@ export default function UsageIndicator({
   if (loading) {
     return (
       <div className="animate-pulse flex items-center gap-2">
-        <div className="h-4 w-4 bg-gray-200 dark:bg-gray-700 rounded" />
-        <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+        <div className="h-4 w-4 bg-gray-200 dark:bg-gray-700 rounded-sm" />
+        <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded-sm" />
       </div>
     )
   }
@@ -252,7 +252,7 @@ function UsageDetails({ usage, showUpgradePrompt }: UsageDetailsProps) {
       {/* Warning message */}
       {isAtLimit && (
         <div className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-800">
-          <ExclamationTriangleIcon aria-hidden="true" className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+          <ExclamationTriangleIcon aria-hidden="true" className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
           <div className="text-sm">
             <p className="font-medium text-red-800 dark:text-red-400">Limit reached</p>
             <p className="text-red-600 dark:text-red-500">
@@ -264,7 +264,7 @@ function UsageDetails({ usage, showUpgradePrompt }: UsageDetailsProps) {
 
       {isNearLimit && !isAtLimit && (
         <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/30 rounded-lg border border-amber-200 dark:border-amber-800">
-          <ExclamationTriangleIcon aria-hidden="true" className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+          <ExclamationTriangleIcon aria-hidden="true" className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
           <div className="text-sm">
             <p className="font-medium text-amber-800 dark:text-amber-400">Running low</p>
             <p className="text-amber-700 dark:text-amber-500">
@@ -282,7 +282,7 @@ function UsageDetails({ usage, showUpgradePrompt }: UsageDetailsProps) {
       {showUpgradePrompt && usage.tier !== 'pro' && usage.tier !== 'business' && (
         <Link
           href="/pricing"
-          className="flex items-center justify-center gap-2 w-full py-2 px-4 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white text-sm font-medium rounded-lg transition"
+          className="flex items-center justify-center gap-2 w-full py-2 px-4 bg-linear-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white text-sm font-medium rounded-lg transition"
         >
           <ArrowUpCircleIcon aria-hidden="true" className="h-4 w-4" />
           {usage.tier === 'free' ? 'Upgrade to Starter' : 'Upgrade to Pro'}

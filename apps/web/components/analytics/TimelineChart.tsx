@@ -67,12 +67,12 @@ export default function TimelineChart({
   }, [chartData])
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-6">
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-xs p-6">
       <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">{title}</h3>
 
       {loading ? (
         <div className="animate-pulse" style={{ height }}>
-          <div className="h-full bg-gray-100 dark:bg-gray-800 rounded" />
+          <div className="h-full bg-gray-100 dark:bg-gray-800 rounded-sm" />
         </div>
       ) : data.length === 0 ? (
         <div className="flex items-center justify-center" style={{ height }}>
@@ -193,7 +193,7 @@ export default function TimelineChart({
                 style={{ cursor: 'crosshair' }}
               >
                 <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                  <div className="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded px-2 py-1 whitespace-nowrap">
+                  <div className="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-sm px-2 py-1 whitespace-nowrap">
                     <div className="font-medium">{point.label}</div>
                     <div>{point.count} generations</div>
                   </div>

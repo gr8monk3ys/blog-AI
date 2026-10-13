@@ -118,7 +118,7 @@ export default function GeneratePageClient() {
               </header>
 
               {/* Sections */}
-              <div className="divide-y divide-black/[0.06] dark:divide-white/[0.06]">
+              <div className="divide-y divide-black/6 dark:divide-white/6">
                 {blogContent.sections.map((section, sectionIdx) => (
                   <section key={sectionIdx} className="pt-6 first:pt-0">
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">

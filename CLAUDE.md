@@ -6,7 +6,7 @@ uv-managed Python app (`apps/api`). Live at https://blog-ai.vivancedata.com. The
 public: nothing committed here is private.
 
 ## Layout
-- `apps/web` — Next.js 16 (App Router, React 19, TypeScript 6, Tailwind 3, Clerk, Sentry).
+- `apps/web` — Next.js 16 (App Router, React 19, TypeScript 6, Tailwind 4, Clerk, Sentry).
   `proxy.ts` is the middleware (per-request CSP nonce). Unit tests in `tests/` (Vitest + jsdom),
   Playwright journeys in `e2e/`.
 - `apps/api` — FastAPI. `server.py` wires routes from `app/routes/`; logic in `src/`; config in
@@ -104,8 +104,13 @@ nothing (verified against release-please 17.x).
   the best-practices score for reasons unrelated to the change under test.
 - Python style: ruff + ruff-format (line length 88, `py312`), enforced by `.pre-commit-config.yaml`.
   The old black/isort config is gone; do not reintroduce it.
-- Dependabot ignores TypeScript ≥ 7 (no JS compiler API for typescript-eslint) and Tailwind ≥ 4
-  (a deliberate migration, not a bump); see `.github/dependabot.yml` before "fixing" that.
+- Dependabot ignores TypeScript ≥ 7 (no JS compiler API for typescript-eslint); see
+  `.github/dependabot.yml` before "fixing" that.
+- Tailwind is v4 and CSS-first: there is no `tailwind.config.js`. Tokens live in `@theme` blocks
+  in `apps/web/app/globals.css` (the v3 palette is pinned there until the design-system tokens
+  land), custom classes that take variants are `@utility`, and
+  `apps/web/tests/lib/tailwind-v4-renames.test.ts` rejects v3-only spellings
+  (`outline-none`, `bg-gradient-to-*`, `flex-shrink-0`, `*-opacity-*`).
 
 ## Agent skills
 

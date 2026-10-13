@@ -14,12 +14,6 @@ export default function AnalyticsTab() {
   const [loading, setLoading] = useState(true)
   const [analyticsLoading, setAnalyticsLoading] = useState(false)
 
-  useEffect(() => {
-    fetchCampaigns()
-    // Mount-only fetch; fetchCampaigns is intentionally excluded to avoid refetch loops.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   async function fetchCampaigns() {
     try {
       const headers = await getDefaultHeaders()
@@ -59,6 +53,12 @@ export default function AnalyticsTab() {
     }
   }
 
+  useEffect(() => {
+    fetchCampaigns()
+    // Mount-only fetch; fetchCampaigns is intentionally excluded to avoid refetch loops.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   function handleSelectCampaign(id: string) {
     setSelectedCampaignId(id)
     fetchAnalytics(id)
@@ -67,7 +67,7 @@ export default function AnalyticsTab() {
   if (loading) {
     return (
       <div className="animate-pulse space-y-4">
-        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-1/3" />
+        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-sm w-1/3" />
         <div className="grid grid-cols-2 gap-4">
           {[1, 2, 3, 4].map((n) => (
             <div key={n} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-xl" />

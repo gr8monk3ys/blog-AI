@@ -101,7 +101,7 @@ function VariationCard({
       className={`relative rounded-xl border-2 transition duration-200 ${
         isSelected
           ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-900/20 shadow-md'
-          : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm'
+          : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-xs'
       }`}
     >
       {/* Header */}
@@ -208,7 +208,7 @@ function VariationCard({
           onClick={onSelect}
           className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition ${
             isSelected
-              ? 'bg-amber-700 text-white shadow-sm'
+              ? 'bg-amber-700 text-white shadow-xs'
               : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-800'
           }`}
         >
@@ -255,14 +255,14 @@ function LoadingSkeleton() {
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full" />
               <div className="space-y-2">
-                <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded" />
-                <div className="h-3 w-20 bg-gray-100 dark:bg-gray-800 rounded" />
+                <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded-sm" />
+                <div className="h-3 w-20 bg-gray-100 dark:bg-gray-800 rounded-sm" />
               </div>
             </div>
             <div className="space-y-2">
-              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full" />
-              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-4/5" />
-              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-sm w-full" />
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-sm w-4/5" />
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-sm w-3/4" />
             </div>
           </div>
         ))}

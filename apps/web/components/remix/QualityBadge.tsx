@@ -27,7 +27,7 @@ function QualityBadgeComponent({ score }: QualityBadgeProps) {
         : 'bg-red-100 text-red-800'
 
   return (
-    <span className={`px-2 py-1 rounded text-sm font-medium ${color}`}>
+    <span className={`px-2 py-1 rounded-sm text-sm font-medium ${color}`}>
       {grade} ({Math.round(score.overall * 100)}%)
     </span>
   )

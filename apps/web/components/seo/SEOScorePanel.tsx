@@ -79,7 +79,7 @@ export default function SEOScorePanel({ score }: SEOScorePanelProps) {
           SEO Analysis
         </h3>
         <span
-          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+          className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${
             score.passed
               ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
               : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
@@ -91,7 +91,7 @@ export default function SEOScorePanel({ score }: SEOScorePanelProps) {
 
       <div className="flex items-start gap-6">
         {/* Radial gauge */}
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <RadialGauge score={score.overall_score} passed={score.passed} />
           <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-1">
             {score.passes_used} pass{score.passes_used !== 1 ? 'es' : ''} &middot;{' '}

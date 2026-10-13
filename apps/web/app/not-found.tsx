@@ -18,7 +18,7 @@ export default function NotFound() {
 
   return (
     <main id="main-content" tabIndex={-1}
-      className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900"
+      className="min-h-screen flex items-center justify-center bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900"
       role="main"
       aria-labelledby="not-found-title"
     >
@@ -49,7 +49,7 @@ export default function NotFound() {
         <nav className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
             href="/"
-            className="inline-flex items-center justify-center rounded-md bg-amber-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-amber-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600 transition-colors"
+            className="inline-flex items-center justify-center rounded-md bg-amber-700 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-amber-800 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600 transition-colors"
           >
             <svg
               className="mr-2 h-4 w-4"
@@ -71,7 +71,7 @@ export default function NotFound() {
           <button
             type="button"
             onClick={() => router.back()}
-            className="inline-flex items-center justify-center rounded-md bg-white dark:bg-gray-800 px-5 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600 transition-colors"
+            className="inline-flex items-center justify-center rounded-md bg-white dark:bg-gray-800 px-5 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600 transition-colors"
           >
             <svg
               className="mr-2 h-4 w-4"

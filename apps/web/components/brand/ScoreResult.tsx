@@ -31,19 +31,19 @@ function ScoreResultComponent({ score }: ScoreResultProps) {
       </div>
 
       <div className="grid grid-cols-3 gap-2 text-sm">
-        <div className="text-center p-2 bg-white dark:bg-gray-900 rounded">
+        <div className="text-center p-2 bg-white dark:bg-gray-900 rounded-sm">
           <div className="font-medium text-gray-900 dark:text-gray-100">
             {Math.round(score.tone_match * 100)}%
           </div>
           <div className="text-gray-500 dark:text-gray-400">Tone</div>
         </div>
-        <div className="text-center p-2 bg-white dark:bg-gray-900 rounded">
+        <div className="text-center p-2 bg-white dark:bg-gray-900 rounded-sm">
           <div className="font-medium text-gray-900 dark:text-gray-100">
             {Math.round(score.vocabulary_match * 100)}%
           </div>
           <div className="text-gray-500 dark:text-gray-400">Vocabulary</div>
         </div>
-        <div className="text-center p-2 bg-white dark:bg-gray-900 rounded">
+        <div className="text-center p-2 bg-white dark:bg-gray-900 rounded-sm">
           <div className="font-medium text-gray-900 dark:text-gray-100">
             {Math.round(score.style_match * 100)}%
           </div>

@@ -80,7 +80,7 @@ export default function CreateOrgModal({ open, onClose, onCreated }: CreateOrgMo
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
+                      className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-xs focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
                       placeholder="e.g. Marketing Team…"
                       required
                       maxLength={100}

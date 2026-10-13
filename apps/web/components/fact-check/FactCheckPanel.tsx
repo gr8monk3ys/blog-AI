@@ -119,14 +119,14 @@ export default function FactCheckPanel({ result }: FactCheckPanelProps) {
                   className="w-full text-left px-3 py-2.5 flex items-start gap-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                 >
                   <span
-                    className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium flex-shrink-0 mt-0.5 ${config.bg} ${config.color}`}
+                    className={`inline-flex items-center px-1.5 py-0.5 rounded-sm text-xs font-medium shrink-0 mt-0.5 ${config.bg} ${config.color}`}
                   >
                     {config.label}
                   </span>
                   <span className="text-sm text-gray-700 dark:text-gray-300 flex-1 line-clamp-2">
                     {claim.text}
                   </span>
-                  <span className="text-xs text-gray-400 flex-shrink-0">
+                  <span className="text-xs text-gray-400 shrink-0">
                     {Math.round(claim.confidence * 100)}%
                   </span>
                 </button>

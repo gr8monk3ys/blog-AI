@@ -178,12 +178,12 @@ function useBrandPageView() {
   return (
     <>
       <SiteHeader />
-      <main id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
       {/* Confirm Modal */}
       <ConfirmModalComponent />
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-amber-700 to-amber-800 text-white">
+      <section className="bg-linear-to-r from-amber-700 to-amber-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
           <m.div
             initial={{ opacity: 0, y: 20 }}
@@ -266,7 +266,7 @@ function useBrandPageView() {
             <button
               type="button"
               onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-700 rounded-lg hover:bg-amber-800 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
             >
               <PlusIcon aria-hidden="true" className="w-4 h-4" />
               Create Profile
@@ -284,7 +284,7 @@ function useBrandPageView() {
               exit={{ opacity: 0, y: -20 }}
               className="mb-8"
             >
-              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
+              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xs border border-gray-200 dark:border-gray-800 p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {editingProfile ? 'Edit Profile' : 'Create New Profile'}

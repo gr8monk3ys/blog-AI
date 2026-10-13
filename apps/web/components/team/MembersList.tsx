@@ -105,7 +105,7 @@ export default function MembersList({
                   </div>
                 </td>
                 <td className="px-4 py-3">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${ROLE_COLORS[member.role]}`}>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${ROLE_COLORS[member.role]}`}>
                     {member.role}
                   </span>
                 </td>
@@ -121,7 +121,7 @@ export default function MembersList({
                           value={member.role}
                           onChange={(e) => handleRoleChange(member.user_id, e.target.value as OrganizationRole)}
                           disabled={isUpdating}
-                          className="text-xs rounded border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                          className="text-xs rounded-sm border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                         >
                           {ASSIGNABLE_ROLES.map((r) => (
                             <option key={r} value={r}>{r}</option>

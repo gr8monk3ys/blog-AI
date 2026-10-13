@@ -54,11 +54,11 @@ export default function ToolCard({ tool, index = 0, headingLevel = 3 }: ToolCard
         href={`/tools/${tool.slug}`}
         className="block group"
       >
-        <div className="relative h-full bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-amber-200 dark:hover:border-amber-700 transition duration-200 overflow-hidden">
+        <div className="relative h-full bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-xs hover:shadow-md hover:border-amber-200 dark:hover:border-amber-700 transition duration-200 overflow-hidden">
           {/* Top badges row */}
           <div className="absolute top-3 right-3 flex items-center gap-2">
             {tool.isNew && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-linear-to-r from-amber-500 to-amber-600 text-white">
                 New
               </span>
             )}
@@ -78,7 +78,7 @@ export default function ToolCard({ tool, index = 0, headingLevel = 3 }: ToolCard
             {/* Icon and Category */}
             <div className="flex items-start gap-4 mb-3">
               <div
-                className={`flex-shrink-0 w-10 h-10 rounded-lg ${categoryInfo.bgColor} flex items-center justify-center`}
+                className={`shrink-0 w-10 h-10 rounded-lg ${categoryInfo.bgColor} flex items-center justify-center`}
               >
                 <Icon className={`w-5 h-5 ${categoryInfo.color}`} aria-hidden="true" />
               </div>

@@ -110,10 +110,10 @@ function useScorePage() {
   return (
     <>
       <SiteHeader />
-      <main id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
 
       {/* Hero */}
-      <section className="bg-gradient-to-r from-amber-700 to-amber-800 text-white">
+      <section className="bg-linear-to-r from-amber-700 to-amber-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
           <m.div
             initial={{ opacity: 0, y: 20 }}
@@ -176,7 +176,7 @@ function useScorePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="glass-card rounded-2xl p-6 sm:p-8 border border-black/[0.08] dark:border-white/[0.08] bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm shadow-sm"
+          className="glass-card rounded-2xl p-6 sm:p-8 border border-black/8 dark:border-white/8 bg-white/70 dark:bg-gray-800/70 backdrop-blur-xs shadow-xs"
         >
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6">
             Scoring Configuration
@@ -202,7 +202,7 @@ function useScorePage() {
                     setSelectedProfileId(e.target.value)
                     setScoreResponse(null)
                   }}
-                  className="w-full rounded-xl border-black/[0.08] dark:border-white/[0.08] bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                  className="w-full rounded-xl border-black/8 dark:border-white/8 bg-white/70 dark:bg-gray-800/70 backdrop-blur-xs border px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500"
                 >
                   <option value="">Select a profile…</option>
                   {profiles.map((p) => (
@@ -243,7 +243,7 @@ function useScorePage() {
                 id="content-type-select"
                 value={contentType}
                 onChange={(e) => setContentType(e.target.value as ContentType)}
-                className="w-full rounded-xl border-black/[0.08] dark:border-white/[0.08] bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                className="w-full rounded-xl border-black/8 dark:border-white/8 bg-white/70 dark:bg-gray-800/70 backdrop-blur-xs border px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500"
               >
                 {CONTENT_TYPES.map((ct) => (
                   <option key={ct.value} value={ct.value}>
@@ -272,7 +272,7 @@ function useScorePage() {
                 }}
                 placeholder="Paste the content you want to score against your brand voice…"
                 rows={8}
-                className="w-full rounded-xl border-black/[0.08] dark:border-white/[0.08] bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                className="w-full rounded-xl border-black/8 dark:border-white/8 bg-white/70 dark:bg-gray-800/70 backdrop-blur-xs border px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 resize-none focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500"
               />
               <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500 text-right">
                 {content.trim().split(/\s+/).filter(Boolean).length} words
@@ -284,7 +284,7 @@ function useScorePage() {
               type="button"
               onClick={handleScore}
               disabled={!canScore}
-              className="w-full py-3 px-6 rounded-xl bg-amber-700 hover:bg-amber-800 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white font-medium text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+              className="w-full py-3 px-6 rounded-xl bg-amber-700 hover:bg-amber-800 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white font-medium text-sm transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
             >
               {isScoring ? (
                 <span className="inline-flex items-center gap-2">
@@ -324,7 +324,7 @@ function useScorePage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="mt-6 pt-6 border-t border-black/[0.06] dark:border-white/[0.06]"
+                className="mt-6 pt-6 border-t border-black/6 dark:border-white/6"
               >
                 {/* Grade badge */}
                 <div className="flex items-center justify-between mb-4">

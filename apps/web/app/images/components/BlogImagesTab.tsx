@@ -170,7 +170,7 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
               type="checkbox"
               checked={generateFeatured}
               onChange={(e) => setGenerateFeatured(e.target.checked)}
-              className="rounded border-gray-300 text-amber-700 focus-visible:ring-amber-500"
+              className="rounded-sm border-gray-300 text-amber-700 focus-visible:ring-amber-500"
             />
             Featured image
           </label>
@@ -180,7 +180,7 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
               type="checkbox"
               checked={generateSocial}
               onChange={(e) => setGenerateSocial(e.target.checked)}
-              className="rounded border-gray-300 text-amber-700 focus-visible:ring-amber-500"
+              className="rounded-sm border-gray-300 text-amber-700 focus-visible:ring-amber-500"
             />
             Social image
           </label>

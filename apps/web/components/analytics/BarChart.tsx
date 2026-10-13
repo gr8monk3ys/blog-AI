@@ -22,7 +22,7 @@ export default function BarChart({
   const maxCount = Math.max(...displayData.map((d) => d.count), 1)
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-6">
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-xs p-6">
       <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6">{title}</h3>
 
       {loading ? (
@@ -30,10 +30,10 @@ export default function BarChart({
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="animate-pulse">
               <div className="flex items-center justify-between mb-2">
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32" />
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12" />
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-sm w-32" />
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-sm w-12" />
               </div>
-              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded" />
+              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-sm" />
             </div>
           ))}
         </div>
@@ -61,7 +61,7 @@ export default function BarChart({
                       {item.toolName}
                     </span>
                     <span
-                      className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium"
+                      className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-xs font-medium"
                       style={{ backgroundColor: bgColor, color: barColor }}
                     >
                       {formatCategoryLabel(item.category)}

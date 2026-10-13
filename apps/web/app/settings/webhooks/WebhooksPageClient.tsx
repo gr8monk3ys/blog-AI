@@ -145,8 +145,8 @@ export default function WebhooksPageClient() {
         <div className="space-y-4">
           {[1, 2].map((n) => (
             <div key={n} className="rounded-xl border border-gray-200 dark:border-gray-700 p-6 animate-pulse">
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-3" />
-              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3" />
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-sm w-1/3 mb-3" />
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-sm w-2/3" />
             </div>
           ))}
         </div>

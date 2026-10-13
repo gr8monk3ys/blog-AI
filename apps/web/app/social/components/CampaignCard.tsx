@@ -55,7 +55,7 @@ export default function CampaignCard({ campaign, onPause, onResume, onCancel }: 
             {campaign.tags && campaign.tags.length > 0 && (
               <span className="flex gap-1">
                 {campaign.tags.map((tag) => (
-                  <span key={tag} className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                  <span key={tag} className="px-1.5 py-0.5 rounded-sm bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
                     {tag}
                   </span>
                 ))}

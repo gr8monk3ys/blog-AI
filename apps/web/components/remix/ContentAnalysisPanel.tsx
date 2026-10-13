@@ -13,7 +13,7 @@ function ContentAnalysisPanelComponent({ analysis }: ContentAnalysisPanelProps) 
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-6"
+      className="bg-white dark:bg-gray-900 rounded-xl shadow-xs p-6"
     >
       <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Content Analysis</h2>
 
@@ -50,7 +50,7 @@ function ContentAnalysisPanelComponent({ analysis }: ContentAnalysisPanelProps) 
           <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Keywords</h4>
           <div className="flex flex-wrap gap-2 mt-1">
             {analysis.keywords.map((keyword: string, i: number) => (
-              <span key={i} className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-sm">
+              <span key={i} className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-sm text-sm">
                 {keyword}
               </span>
             ))}

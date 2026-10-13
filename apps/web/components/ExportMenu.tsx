@@ -309,7 +309,7 @@ function useExportMenuView({
       </span>
       <Menu.Button
         disabled={disabled}
-        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <ArrowDownTrayIcon className="w-4 h-4" aria-hidden="true" />
         Export
@@ -325,7 +325,7 @@ function useExportMenuView({
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <Menu.Items className="absolute right-0 z-20 mt-2 w-64 origin-top-right rounded-xl bg-white dark:bg-gray-900 shadow-lg ring-1 ring-black ring-opacity-5 dark:ring-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 divide-y divide-gray-100 dark:divide-gray-800">
+        <Menu.Items className="absolute right-0 z-20 mt-2 w-64 origin-top-right rounded-xl bg-white dark:bg-gray-900 shadow-lg ring-1 ring-black/5 dark:ring-gray-700 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 divide-y divide-gray-100 dark:divide-gray-800">
           {/* Download options */}
           <div className="p-1">
             <div className="px-3 py-2">
@@ -344,7 +344,7 @@ function useExportMenuView({
                     } group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors disabled:opacity-50`}
                   >
                     <span
-                      className={`flex-shrink-0 w-8 h-8 rounded-lg ${
+                      className={`shrink-0 w-8 h-8 rounded-lg ${
                         active ? 'bg-amber-100 dark:bg-amber-900/40' : 'bg-gray-100 dark:bg-gray-800'
                       } flex items-center justify-center transition-colors`}
                     >
@@ -416,7 +416,7 @@ function useExportMenuView({
                     } group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors disabled:opacity-50`}
                   >
                     <span
-                      className={`flex-shrink-0 w-8 h-8 rounded-lg ${
+                      className={`shrink-0 w-8 h-8 rounded-lg ${
                         active ? 'bg-amber-100 dark:bg-amber-900/40' : 'bg-gray-100 dark:bg-gray-800'
                       } flex items-center justify-center transition-colors`}
                     >

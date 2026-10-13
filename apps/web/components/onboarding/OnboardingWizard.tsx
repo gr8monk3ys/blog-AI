@@ -283,7 +283,7 @@ function useOnboardingWizardView({
             value={formData.name}
             onChange={(e) => updateField('name', e.target.value)}
             placeholder="Jane Smith…"
-            className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
+            className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-xs focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
             autoComplete="name"
           />
         </div>
@@ -303,7 +303,7 @@ function useOnboardingWizardView({
             value={formData.company}
             onChange={(e) => updateField('company', e.target.value)}
             placeholder="Acme Inc.…"
-            className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
+            className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-xs focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
             autoComplete="organization"
           />
         </div>
@@ -338,7 +338,7 @@ function useOnboardingWizardView({
           onChange={(e) =>
             updateField('writingStyle', e.target.value as WritingStyle)
           }
-          className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
+          className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-xs focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
         >
           {WRITING_STYLES.map((style) => (
             <option key={style.value} value={style.value}>
@@ -372,10 +372,10 @@ function useOnboardingWizardView({
                 aria-pressed={selected}
                 className={`
                   inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium
-                  transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2
+                  transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2
                   ${
                     selected
-                      ? 'bg-amber-700 text-white shadow-sm'
+                      ? 'bg-amber-700 text-white shadow-xs'
                       : disabled
                         ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-800 dark:hover:text-amber-400'
@@ -418,7 +418,7 @@ function useOnboardingWizardView({
           onChange={(e) => updateField('sampleWriting', e.target.value)}
           rows={4}
           placeholder="Paste a paragraph that represents how you write…"
-          className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
+          className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-xs focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
         />
       </div>
     </div>
@@ -453,7 +453,7 @@ function useOnboardingWizardView({
               onClick={() => selectContentType(option.value)}
               className={`
                 relative rounded-xl p-5 text-left transition
-                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2
+                focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2
                 ${
                   selected
                     ? 'glass-card ring-2 ring-amber-500 shadow-lg'
@@ -498,7 +498,7 @@ function useOnboardingWizardView({
           type="text"
           value={formData.topicSuggestion}
           onChange={(e) => updateField('topicSuggestion', e.target.value)}
-          className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
+          className="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-xs focus-visible:border-amber-500 focus-visible:ring-amber-500 text-sm"
         />
       </div>
     </div>
@@ -555,7 +555,7 @@ function useOnboardingWizardView({
       <div className="max-w-sm mx-auto grid gap-3">
         <Link
           href={buildActivationHref()}
-          className="flex items-center justify-center gap-2 rounded-lg bg-amber-700 px-5 py-3 text-sm font-medium text-white hover:bg-amber-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+          className="flex items-center justify-center gap-2 rounded-lg bg-amber-700 px-5 py-3 text-sm font-medium text-white hover:bg-amber-800 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
           data-autofocus="true"
         >
           <SparklesIcon className="h-4 w-4" aria-hidden="true" />
@@ -563,13 +563,13 @@ function useOnboardingWizardView({
         </Link>
         <Link
           href="/brand"
-          className="flex items-center justify-center rounded-lg border border-amber-200 bg-amber-50/70 px-5 py-3 text-sm font-medium text-amber-800 hover:bg-amber-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+          className="flex items-center justify-center rounded-lg border border-amber-200 bg-amber-50/70 px-5 py-3 text-sm font-medium text-amber-800 hover:bg-amber-100 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
         >
           Review Brand Voice
         </Link>
         <Link
           href="/tools"
-          className="flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-5 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+          className="flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-5 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
         >
           Explore Individual Tools
         </Link>
@@ -604,10 +604,10 @@ function useOnboardingWizardView({
                 aria-label={`${s.title}${isComplete ? ' (completed)' : ''}${isCurrent ? ' (current)' : ''}`}
                 className={`
                   flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium transition
-                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2
+                  focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2
                   ${
                     isCurrent
-                      ? 'bg-amber-700 text-white shadow-sm'
+                      ? 'bg-amber-700 text-white shadow-xs'
                       : isComplete
                         ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/60'
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -649,7 +649,7 @@ function useOnboardingWizardView({
               aria-label={`Go to step ${i + 1}: ${s.title}`}
               aria-current={i === step ? 'step' : undefined}
               className={`
-                h-2.5 rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2
+                h-2.5 rounded-full transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2
                 ${
                   i === step
                     ? 'w-8 bg-amber-600'
@@ -686,7 +686,7 @@ function useOnboardingWizardView({
           disabled={isFirstStep}
           className={`
             inline-flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2
+            focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2
             ${
               isFirstStep
                 ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
@@ -703,7 +703,7 @@ function useOnboardingWizardView({
           <button
             type="button"
             onClick={next}
-            className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 rounded px-2 py-1"
+            className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 rounded-sm px-2 py-1"
           >
             Skip
           </button>
@@ -718,7 +718,7 @@ function useOnboardingWizardView({
               next()
             }}
             disabled={saving}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-amber-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-amber-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-amber-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-amber-800 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
             aria-label={step === totalSteps - 2 ? 'Finish setup' : 'Next step'}
           >
             {saving ? (

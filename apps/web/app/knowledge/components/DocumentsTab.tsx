@@ -38,7 +38,7 @@ export default function DocumentsTab({
       {loading ? (
         <div className="animate-pulse space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-12 bg-gray-200 dark:bg-gray-800 rounded" />
+            <div key={i} className="h-12 bg-gray-200 dark:bg-gray-800 rounded-sm" />
           ))}
         </div>
       ) : documents.length === 0 ? (
@@ -97,7 +97,7 @@ export default function DocumentsTab({
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                        className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${
                           doc.status === 'ready'
                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
                             : doc.status === 'processing'

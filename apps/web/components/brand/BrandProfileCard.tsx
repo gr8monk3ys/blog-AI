@@ -34,7 +34,7 @@ export default function BrandProfileCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
-      className={`relative bg-white dark:bg-gray-900 rounded-xl border shadow-sm hover:shadow-md transition duration-200 overflow-hidden ${
+      className={`relative bg-white dark:bg-gray-900 rounded-xl border shadow-xs hover:shadow-md transition duration-200 overflow-hidden ${
         profile.isDefault ? 'border-amber-300 dark:border-amber-700 ring-2 ring-amber-100 dark:ring-amber-900/50' : 'border-gray-200 dark:border-gray-800'
       }`}
     >
@@ -52,7 +52,7 @@ export default function BrandProfileCard({
         {/* Profile name and status */}
         <div className="flex items-start gap-3 mb-4">
           <div
-            className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
+            className={`shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
               profile.isActive ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-gray-100 dark:bg-gray-800'
             }`}
           >
@@ -86,13 +86,13 @@ export default function BrandProfileCard({
               {profile.toneKeywords.slice(0, 4).map((keyword) => (
                 <span
                   key={keyword}
-                  className="inline-flex items-center px-2 py-0.5 rounded text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 capitalize"
+                  className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 capitalize"
                 >
                   {keyword}
                 </span>
               ))}
               {profile.toneKeywords.length > 4 && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs text-gray-400">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs text-gray-400">
                   +{profile.toneKeywords.length - 4}
                 </span>
               )}
@@ -118,13 +118,13 @@ export default function BrandProfileCard({
               {profile.brandValues.slice(0, 3).map((value) => (
                 <span
                   key={value}
-                  className="inline-flex items-center px-2 py-0.5 rounded text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 border border-amber-100 dark:border-amber-800"
+                  className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 border border-amber-100 dark:border-amber-800"
                 >
                   {value}
                 </span>
               ))}
               {profile.brandValues.length > 3 && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs text-gray-400">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs text-gray-400">
                   +{profile.brandValues.length - 3}
                 </span>
               )}
@@ -139,7 +139,7 @@ export default function BrandProfileCard({
           <button
             type="button"
             onClick={() => onSetDefault(profile)}
-            className="flex-1 inline-flex justify-center items-center gap-1.5 py-2 px-3 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+            className="flex-1 inline-flex justify-center items-center gap-1.5 py-2 px-3 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
           >
             <StarIcon aria-hidden="true" className="w-3.5 h-3.5" />
             Set Default
@@ -149,7 +149,7 @@ export default function BrandProfileCard({
           <button
             type="button"
             onClick={() => onEdit(profile)}
-            className="inline-flex justify-center items-center p-2 text-gray-500 dark:text-gray-400 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+            className="inline-flex justify-center items-center p-2 text-gray-500 dark:text-gray-400 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
             title="Edit profile"
           >
             <PencilSquareIcon aria-hidden="true" className="w-4 h-4" />
@@ -159,7 +159,7 @@ export default function BrandProfileCard({
           <button
             type="button"
             onClick={() => onDelete(profile)}
-            className="inline-flex justify-center items-center p-2 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+            className="inline-flex justify-center items-center p-2 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
             title="Delete profile"
           >
             <TrashIcon aria-hidden="true" className="w-4 h-4" />

@@ -81,7 +81,7 @@ function ProfileSelectorComponent({
   }, [])
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-6 mb-6 dark:border dark:border-gray-800">
+    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xs p-6 mb-6 dark:border dark:border-gray-800">
       <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Select Brand Profile</h2>
       <div className="flex gap-4">
         <select

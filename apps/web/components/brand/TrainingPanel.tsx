@@ -20,7 +20,7 @@ function TrainingPanelComponent({
   onTrain,
 }: TrainingPanelProps) {
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-6">
+    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xs p-6">
       <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
         <BeakerIcon aria-hidden="true" className="w-5 h-5" />
         Voice Training
@@ -45,7 +45,7 @@ function TrainingPanelComponent({
         <button
           onClick={onTrain}
           disabled={isTraining || sampleCount === 0}
-          className="w-full py-3 bg-gradient-to-r from-amber-700 to-amber-800 text-white rounded-lg hover:from-amber-800 hover:to-amber-900 disabled:from-gray-400 disabled:to-gray-400 dark:disabled:from-gray-700 dark:disabled:to-gray-700 font-medium"
+          className="w-full py-3 bg-linear-to-r from-amber-700 to-amber-800 text-white rounded-lg hover:from-amber-800 hover:to-amber-900 disabled:from-gray-400 disabled:to-gray-400 dark:disabled:from-gray-700 dark:disabled:to-gray-700 font-medium"
         >
           {isTraining ? 'Training…' : 'Train Voice'}
         </button>

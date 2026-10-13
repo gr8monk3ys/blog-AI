@@ -6,16 +6,20 @@ import { Providers } from './providers'
 import { ClerkProvider } from '../lib/clerk-ui'
 import './globals.css'
 
+// The variables are named after the typefaces, not after Tailwind's
+// --font-sans / --font-serif: Tailwind v4's theme owns those two names and
+// maps them onto these in app/globals.css (@theme inline). Naming them the
+// same would make `--font-sans: var(--font-sans)` refer to itself.
 const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-sans',
+  variable: '--font-inter',
 })
 
 const sourceSerif = Source_Serif_4({
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-serif',
+  variable: '--font-source-serif',
 })
 
 export const metadata: Metadata = {
@@ -79,7 +83,7 @@ export default async function RootLayout({
       <body className={`${inter.variable} ${sourceSerif.variable} ${inter.className}`}>
         <a
           href="#main-content"
-          className="sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:left-4 focus-visible:top-4 focus-visible:z-[100] focus-visible:rounded-lg focus-visible:bg-amber-700 focus-visible:px-4 focus-visible:py-2 focus-visible:text-white"
+          className="sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:left-4 focus-visible:top-4 focus-visible:z-100 focus-visible:rounded-lg focus-visible:bg-amber-700 focus-visible:px-4 focus-visible:py-2 focus-visible:text-white"
         >
           Skip to Main Content
         </a>

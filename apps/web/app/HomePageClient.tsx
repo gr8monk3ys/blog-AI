@@ -83,7 +83,7 @@ export default function Home(): React.ReactElement {
 
               {/* Headline */}
               <h1
-                className="hero-rise-lcp [animation-delay:120ms] mt-6 text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 font-serif leading-[1.1]"
+                className="hero-rise-lcp [animation-delay:120ms] mt-6 text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 font-serif leading-[1.1] sm:leading-none"
               >
                 Brand-Consistent AI Content For{' '}
                 <span className="text-amber-700">Lean Marketing Teams</span>
@@ -91,7 +91,7 @@ export default function Home(): React.ReactElement {
 
               {/* Subheading */}
               <p
-                className="hero-rise [animation-delay:240ms] mt-6 text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed"
+                className="hero-rise [animation-delay:240ms] mt-6 text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed sm:leading-7"
               >
                 Train your voice once, run repeatable SEO content workflows, and generate
                 publish-ready drafts faster without sounding generic.
@@ -105,14 +105,14 @@ export default function Home(): React.ReactElement {
                   <>
                     <Link
                       href="/generate"
-                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white bg-amber-700 hover:bg-amber-800 rounded-xl transition-colors shadow-sm shadow-amber-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white bg-amber-700 hover:bg-amber-800 rounded-xl transition-colors shadow-xs shadow-amber-600/20 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
                     >
                       Start Generating
                       <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
                     </Link>
                     <Link
                       href="/brand"
-                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-gray-700 dark:text-gray-300 bg-white/70 dark:bg-gray-900/60 border border-black/[0.08] dark:border-white/[0.08] hover:border-black/[0.12] dark:hover:border-white/[0.12] hover:bg-white/90 dark:hover:bg-gray-800/70 rounded-xl backdrop-blur-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-gray-700 dark:text-gray-300 bg-white/70 dark:bg-gray-900/60 border border-black/8 dark:border-white/8 hover:border-black/12 dark:hover:border-white/12 hover:bg-white/90 dark:hover:bg-gray-800/70 rounded-xl backdrop-blur-xs transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
                     >
                       Open Brand Voice
                     </Link>
@@ -121,14 +121,14 @@ export default function Home(): React.ReactElement {
                   <>
                     <Link
                       href={startFreeHref}
-                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white bg-amber-700 hover:bg-amber-800 rounded-xl transition-colors shadow-sm shadow-amber-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white bg-amber-700 hover:bg-amber-800 rounded-xl transition-colors shadow-xs shadow-amber-600/20 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
                     >
                       Start Free
                       <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
                     </Link>
                     <Link
                       href="/pricing"
-                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-gray-700 dark:text-gray-300 bg-white/70 dark:bg-gray-900/60 border border-black/[0.08] dark:border-white/[0.08] hover:border-black/[0.12] dark:hover:border-white/[0.12] hover:bg-white/90 dark:hover:bg-gray-800/70 rounded-xl backdrop-blur-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-gray-700 dark:text-gray-300 bg-white/70 dark:bg-gray-900/60 border border-black/8 dark:border-white/8 hover:border-black/12 dark:hover:border-white/12 hover:bg-white/90 dark:hover:bg-gray-800/70 rounded-xl backdrop-blur-xs transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
                     >
                       View Plans
                     </Link>
@@ -150,7 +150,7 @@ export default function Home(): React.ReactElement {
       {/* ----------------------------------------------------------------- */}
       {/* Social Proof Bar                                                  */}
       {/* ----------------------------------------------------------------- */}
-      <section className="border-y border-black/[0.04] dark:border-white/[0.04] glass-surface">
+      <section className="border-y border-black/4 dark:border-white/4 glass-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <RevealSection>
             <div className="text-center mb-8">
@@ -195,7 +195,7 @@ export default function Home(): React.ReactElement {
       {/* ----------------------------------------------------------------- */}
       {/* Tool Breadth Strip                                                */}
       {/* ----------------------------------------------------------------- */}
-      <section className="py-16 sm:py-20 glass-surface border-y border-black/[0.04] dark:border-white/[0.04]">
+      <section className="py-16 sm:py-20 glass-surface border-y border-black/4 dark:border-white/4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <RevealSection className="text-center max-w-2xl mx-auto mb-12">
             <h2 className="text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
@@ -242,7 +242,7 @@ export default function Home(): React.ReactElement {
       {/* ----------------------------------------------------------------- */}
       {/* Capabilities Showcase                                             */}
       {/* ----------------------------------------------------------------- */}
-      <section className="py-20 sm:py-28 glass-surface border-y border-black/[0.04] dark:border-white/[0.04]">
+      <section className="py-20 sm:py-28 glass-surface border-y border-black/4 dark:border-white/4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <RevealSection className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
@@ -289,7 +289,7 @@ export default function Home(): React.ReactElement {
       {/* ----------------------------------------------------------------- */}
       {/* Final CTA                                                         */}
       {/* ----------------------------------------------------------------- */}
-      <section className="bg-gradient-to-r from-amber-700 to-amber-800">
+      <section className="bg-linear-to-r from-amber-700 to-amber-800">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24 text-center">
           <RevealSection>
             <h2 className="text-3xl sm:text-4xl font-semibold text-white font-serif">
@@ -303,7 +303,7 @@ export default function Home(): React.ReactElement {
               {showSignedInCta ? (
                 <Link
                   href="/generate"
-                  className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-amber-700 bg-white hover:bg-amber-50 rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-700"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-amber-700 bg-white hover:bg-amber-50 rounded-lg transition-colors shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-700"
                 >
                   Start Generating
                   <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
@@ -311,7 +311,7 @@ export default function Home(): React.ReactElement {
               ) : (
                 <Link
                   href={startFreeHref}
-                  className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-amber-700 bg-white hover:bg-amber-50 rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-700"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-amber-700 bg-white hover:bg-amber-50 rounded-lg transition-colors shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-700"
                 >
                   Start Free
                   <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
@@ -319,7 +319,7 @@ export default function Home(): React.ReactElement {
               )}
               <Link
                 href="/brand"
-                className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white border border-white/30 hover:bg-white/10 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-700"
+                className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white border border-white/30 hover:bg-white/10 rounded-lg transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-700"
               >
                 See Brand Voice
               </Link>
@@ -404,7 +404,7 @@ function StepsSection(): React.ReactElement {
               />
             )}
 
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-amber-50/50 dark:bg-amber-950/30 border border-amber-200/40 dark:border-amber-700/30 mb-6 backdrop-blur-sm">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-amber-50/50 dark:bg-amber-950/30 border border-amber-200/40 dark:border-amber-700/30 mb-6 backdrop-blur-xs">
               <Icon className="w-8 h-8 text-amber-700" aria-hidden="true" />
             </div>
             <div className="text-xs font-medium text-amber-700 uppercase tracking-wider mb-2">
@@ -435,7 +435,7 @@ function CapabilitiesShowcase(): React.ReactElement {
             className="glass-card rounded-2xl p-6 sm:p-8"
           >
             <div className="flex items-start gap-4">
-              <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-amber-100/80 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 flex-shrink-0">
+              <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-amber-100/80 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 shrink-0">
                 <Icon className="w-5 h-5" aria-hidden="true" />
               </div>
               <div className="flex-1 min-w-0">
@@ -497,7 +497,7 @@ function PricingGrid(): React.ReactElement {
 
           <Link
             href={tier.href}
-            className={`mt-6 block w-full py-3 px-4 text-center text-sm font-medium rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ${
+            className={`mt-6 block w-full py-3 px-4 text-center text-sm font-medium rounded-lg transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ${
               tier.highlighted
                 ? 'bg-amber-700 text-white hover:bg-amber-800'
                 : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -510,7 +510,7 @@ function PricingGrid(): React.ReactElement {
             {tier.features.map((feature) => (
               <li key={feature} className="flex items-start gap-3 text-sm text-gray-600 dark:text-gray-400">
                 <CheckIcon
-                  className="w-5 h-5 text-amber-500 flex-shrink-0 mt-px"
+                  className="w-5 h-5 text-amber-500 shrink-0 mt-px"
                   aria-hidden="true"
                 />
                 {feature}

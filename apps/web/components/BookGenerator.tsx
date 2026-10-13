@@ -188,7 +188,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
             id="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 bg-white dark:bg-gray-800 dark:text-gray-100"
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-xs focus-visible:border-amber-500 focus-visible:ring-amber-500 bg-white dark:bg-gray-800 dark:text-gray-100"
             placeholder="Enter book title…"
             required
           />
@@ -215,7 +215,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
                 onChange={(e) => setNumChapters(parseInt(e.target.value, 10))}
                 min={1}
                 max={20}
-                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500"
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-xs focus-visible:border-amber-500 focus-visible:ring-amber-500"
               />
             </div>
             <div>
@@ -232,7 +232,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
                 onChange={(e) => setSectionsPerChapter(parseInt(e.target.value, 10))}
                 min={1}
                 max={10}
-                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500"
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-xs focus-visible:border-amber-500 focus-visible:ring-amber-500"
               />
             </div>
           </div>
@@ -250,7 +250,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
               id="keywords"
               value={keywords}
               onChange={(e) => setKeywords(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-xs focus-visible:border-amber-500 focus-visible:ring-amber-500"
               placeholder="AI, technology, future…"
             />
           </div>
@@ -264,7 +264,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
               id="tone"
               value={tone}
               onChange={(e) => setTone(e.target.value as BookGenerationOptions['tone'])}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-xs focus-visible:border-amber-500 focus-visible:ring-amber-500"
             >
               <option value="informative">Informative</option>
               <option value="conversational">Conversational</option>
@@ -287,7 +287,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
                 hasUserSelection.current = true
                 setProviderType(e.target.value as LlmProviderType)
               }}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 shadow-xs focus-visible:border-amber-500 focus-visible:ring-amber-500"
               disabled={(availableProviders || []).length <= 1}
             >
               {(availableProviders || []).map((p) => (
@@ -313,7 +313,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
                 aria-label="Use web research"
                 className={`${
                   useResearch ? 'bg-amber-600' : 'bg-gray-200'
-                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2`}
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2`}
               >
                 <span
                   className={`${
@@ -331,7 +331,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
                 aria-label="Proofread content"
                 className={`${
                   proofread ? 'bg-amber-600' : 'bg-gray-200'
-                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2`}
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2`}
               >
                 <span
                   className={`${
@@ -349,7 +349,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
                 aria-label="Humanize content"
                 className={`${
                   humanize ? 'bg-amber-600' : 'bg-gray-200'
-                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2`}
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2`}
               >
                 <span
                   className={`${
@@ -378,7 +378,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
             <button
               type="button"
               onClick={() => setError(null)}
-              className="mt-2 text-xs bg-red-100 hover:bg-red-200 px-2 py-1 rounded transition-colors"
+              className="mt-2 text-xs bg-red-100 hover:bg-red-200 px-2 py-1 rounded-sm transition-colors"
             >
               Dismiss
             </button>
@@ -387,7 +387,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
 
         <button
           type="submit"
-          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber-500 transition"
+          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-xs text-sm font-medium text-white bg-linear-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber-500 transition"
         >
           Generate Book
         </button>

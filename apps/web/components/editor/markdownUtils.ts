@@ -154,7 +154,7 @@ function inlineFormat(text: string): string {
   // Images: ![alt](url)
   result = result.replace(
     /!\[([^\]]*)\]\(([^)]+)\)/g,
-    (_, alt, url) => `<img src="${safeUrl(url)}" alt="${alt}" loading="lazy" decoding="async" class="max-w-full h-auto rounded my-2" />`
+    (_, alt, url) => `<img src="${safeUrl(url)}" alt="${alt}" loading="lazy" decoding="async" class="max-w-full h-auto rounded-sm my-2" />`
   )
 
   // Links: [text](url)
@@ -166,7 +166,7 @@ function inlineFormat(text: string): string {
   // Inline code
   result = result.replace(
     /`([^`]+)`/g,
-    '<code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono">$1</code>'
+    '<code class="bg-gray-100 px-1.5 py-0.5 rounded-sm text-sm font-mono">$1</code>'
   )
 
   // Bold + italic
