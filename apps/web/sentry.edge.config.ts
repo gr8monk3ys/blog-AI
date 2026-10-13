@@ -7,7 +7,12 @@
 
 import * as Sentry from '@sentry/nextjs'
 
-import { SENTRY_DSN, SENTRY_ENABLED, SENTRY_ENVIRONMENT } from './lib/sentry-env'
+import {
+  SENTRY_DATA_COLLECTION,
+  SENTRY_DSN,
+  SENTRY_ENABLED,
+  SENTRY_ENVIRONMENT,
+} from './lib/sentry-env'
 
 // Only initialize Sentry when a DSN is configured AND this is a deployed
 // Vercel app — same gate as the server and client runtimes.
@@ -20,6 +25,9 @@ if (SENTRY_ENABLED) {
 
     // Environment tagging: "production" or "preview", from VERCEL_ENV.
     environment: SENTRY_ENVIRONMENT,
+
+    // Keep the restrictive v10 data-collection baseline (lib/sentry-env.ts).
+    dataCollection: SENTRY_DATA_COLLECTION,
 
     // Remove PII before sending
     beforeSend(event) {
