@@ -4,83 +4,122 @@
 
 /* types/usage.ts holds the per-tier class names (TIER_DISPLAY). v4's
    automatic source detection happens to cover it today; this keeps the
-   dependency explicit, as tailwind.config.js's `content` did. Those classes
-   were once generated only by coincidence — adding a dark: variant there
-   produced a class that was never emitted and a tier chip that silently lost
-   its colour. */
+   dependency explicit, as tailwind.config.js's `content` did. */
 @source '../types';
 
 /* Dark mode is a class on <html>, set by the inline theme script in
-   app/layout.tsx before first paint (v3: darkMode: 'class'). */
+   app/layout.tsx before first paint. */
 @custom-variant dark (&:is(.dark *));
 
-/* Theme tokens, moved here from tailwind.config.js (theme.extend).
+/* `can-hover:` — a real mouse, not a wide screen. Copy about hovering is
+   gated on the capability it describes, not on viewport width. */
+@custom-variant can-hover (@media (hover: hover) and (pointer: fine));
+
+/* ============================================================
+ * THEME — the notebook's tokens, DESIGN.md is the law
  *
- * `inline` matters for the fonts: --font-inter / --font-source-serif are set
- * on <body> by next/font, so a `font-sans` utility has to carry the var()
- * itself and resolve it on the element. Without `inline` Tailwind would emit
- * `--font-sans: var(--font-inter), …` on :root, where --font-inter does not
- * exist, and every font-sans would fall back to the browser default.
- *
- * The colour values are the amber / emerald / red scales from
- * tailwindcss/colors (v3), written out so the output is byte-identical.
+ * `inline` matters: every colour here is hsl(var(--x)), and --x is swapped by
+ * the .dark class. Without `inline` Tailwind would emit
+ * `--color-primary: hsl(var(--primary))` on :root, resolve var(--primary)
+ * there once, and every utility would inherit the light value under .dark.
+ * With `inline` utilities carry `hsl(var(--primary))` themselves and resolve
+ * it on the element. The same goes for the fonts: --font-display/--font-body/
+ * --font-mono are set on <html> by next/font (lib/fonts.ts).
  *
  * NOTE: never define --spacing-xs/sm/md/lg/xl/2xl here. In Tailwind v4 they
  * generate spacing-suffixed utilities (max-w-2xl, w-lg, …) that shadow the
- * container scale and silently collapse layouts. */
+ * container scale and silently collapse layouts.
+ * ============================================================ */
 @theme inline {
-  --color-primary-50: #fffbeb;
-  --color-primary-100: #fef3c7;
-  --color-primary-200: #fde68a;
-  --color-primary-300: #fcd34d;
-  --color-primary-400: #fbbf24;
-  --color-primary-500: #f59e0b;
-  --color-primary-600: #d97706;
-  --color-primary-700: #b45309;
-  --color-primary-800: #92400e;
-  --color-primary-900: #78350f;
-  --color-primary-950: #451a03;
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-scrim: hsl(var(--scrim));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
 
-  --color-success-50: #ecfdf5;
-  --color-success-100: #d1fae5;
-  --color-success-200: #a7f3d0;
-  --color-success-300: #6ee7b7;
-  --color-success-400: #34d399;
-  --color-success-500: #10b981;
-  --color-success-600: #059669;
-  --color-success-700: #047857;
-  --color-success-800: #065f46;
-  --color-success-900: #064e3b;
-  --color-success-950: #022c22;
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
 
-  --color-danger-50: #fef2f2;
-  --color-danger-100: #fee2e2;
-  --color-danger-200: #fecaca;
-  --color-danger-300: #fca5a5;
-  --color-danger-400: #f87171;
-  --color-danger-500: #ef4444;
-  --color-danger-600: #dc2626;
-  --color-danger-700: #b91c1c;
-  --color-danger-800: #991b1b;
-  --color-danger-900: #7f1d1d;
-  --color-danger-950: #450a0a;
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-source-serif), 'Iowan Old Style', 'Times New Roman', serif;
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-destructive-muted: hsl(var(--destructive-muted));
+
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-success-muted: hsl(var(--success-muted));
+
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-warning-muted: hsl(var(--warning-muted));
+
+  --color-info: hsl(var(--info));
+  --color-info-foreground: hsl(var(--info-foreground));
+  --color-info-muted: hsl(var(--info-muted));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  /* Soft-cornered interface: fields 8px, small controls 10px, controls 14px,
+   * Card and dialogs 18px. The scale is clamped at 18px, so `rounded-3xl` /
+   * `-4xl` from the amber era resolve to the card radius. Draft sheets are
+   * square — see the `plate` utility. */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.125rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.125rem;
+  --radius-4xl: 1.125rem;
+
+  /* Three voices with fixed jobs. Fraunces speaks, Instrument Sans reads,
+   * IBM Plex Mono catalogues. The variables come from lib/fonts.ts.
+   * `--font-sans` and `--font-serif` are the pre-notebook names; they map
+   * onto the body and display voices so the existing `font-sans`/`font-serif`
+   * call sites render in the new faces until the page PRs rename them
+   * (`font-serif` is ratcheted by scripts/check-design-system.mjs). */
+  --font-display: var(--font-display), ui-serif, Georgia, serif;
+  --font-body: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-display), ui-serif, Georgia, serif;
+
+  --default-transition-duration: var(--duration-default);
+  --transition-duration-fast: var(--duration-fast);
+  --transition-duration-slow: var(--duration-slow);
 }
 
-/* The v3 colour palette, pinned. Tailwind v4 redesigned its default palette
-   in oklch and the values moved: gray-900 #111827 -> #101828, amber-800
-   #92400e -> #9a3d00, emerald-500 #10b981 -> #00bc7d, indigo-600 #4f46e5 ->
-   #4f39f6. The accessibility floors in scripts/check-lighthouse-score.mjs and
-   scripts/check-dark-mode-a11y.mjs were measured against the v3 values, so
-   every hue keeps them here (tailwindcss@3.4.19 `colors`); the design-system
-   PR replaces this block with its own tokens.
-
-   `inline` here too: with literal hex values Tailwind resolves `bg-white/70`
-   and friends at build time instead of emitting a color-mix() plus an
-   @supports fallback per utility, which is ~15 KB of the stylesheet that
-   experimental.inlineCss puts into every document. */
+/* ============================================================
+ * RETIRED — the Tailwind v3 palette, ratcheted by
+ * scripts/check-design-system.mjs and removed by the page PRs.
+ *
+ * Every raw hue below (`text-gray-600`, `bg-amber-700`, …) is off-system:
+ * DESIGN.md → Colors → The One Pen Rule routes colour through the tokens
+ * above. The call sites still exist, so the names still have to compile, and
+ * they compile to the v3 values the accessibility floors in
+ * scripts/check-lighthouse-score.mjs and check-dark-mode-a11y.mjs were
+ * measured against (tailwindcss@3.4.19 `colors`), not v4's redesigned oklch
+ * palette. Only the families the call sites use are kept; `zinc`, `neutral`,
+ * `stone`, `teal`, `fuchsia`, `rose` and `lime` were unused and are gone.
+ *
+ * `inline` here too: with literal hex values Tailwind resolves `bg-white/70`
+ * and friends at build time instead of emitting a color-mix() plus an
+ * @supports fallback per utility, which is ~15 KB of the stylesheet that
+ * experimental.inlineCss puts into every document. Measured cost of this
+ * block in the home document: see the PR that landed it.
+ * ============================================================ */
 @theme inline {
   --color-white: #fff;
   --color-black: #000;
@@ -108,42 +147,6 @@
   --color-gray-800: #1f2937;
   --color-gray-900: #111827;
   --color-gray-950: #030712;
-
-  --color-zinc-50: #fafafa;
-  --color-zinc-100: #f4f4f5;
-  --color-zinc-200: #e4e4e7;
-  --color-zinc-300: #d4d4d8;
-  --color-zinc-400: #a1a1aa;
-  --color-zinc-500: #71717a;
-  --color-zinc-600: #52525b;
-  --color-zinc-700: #3f3f46;
-  --color-zinc-800: #27272a;
-  --color-zinc-900: #18181b;
-  --color-zinc-950: #09090b;
-
-  --color-neutral-50: #fafafa;
-  --color-neutral-100: #f5f5f5;
-  --color-neutral-200: #e5e5e5;
-  --color-neutral-300: #d4d4d4;
-  --color-neutral-400: #a3a3a3;
-  --color-neutral-500: #737373;
-  --color-neutral-600: #525252;
-  --color-neutral-700: #404040;
-  --color-neutral-800: #262626;
-  --color-neutral-900: #171717;
-  --color-neutral-950: #0a0a0a;
-
-  --color-stone-50: #fafaf9;
-  --color-stone-100: #f5f5f4;
-  --color-stone-200: #e7e5e4;
-  --color-stone-300: #d6d3d1;
-  --color-stone-400: #a8a29e;
-  --color-stone-500: #78716c;
-  --color-stone-600: #57534e;
-  --color-stone-700: #44403c;
-  --color-stone-800: #292524;
-  --color-stone-900: #1c1917;
-  --color-stone-950: #0c0a09;
 
   --color-red-50: #fef2f2;
   --color-red-100: #fee2e2;
@@ -193,18 +196,6 @@
   --color-yellow-900: #713f12;
   --color-yellow-950: #422006;
 
-  --color-lime-50: #f7fee7;
-  --color-lime-100: #ecfccb;
-  --color-lime-200: #d9f99d;
-  --color-lime-300: #bef264;
-  --color-lime-400: #a3e635;
-  --color-lime-500: #84cc16;
-  --color-lime-600: #65a30d;
-  --color-lime-700: #4d7c0f;
-  --color-lime-800: #3f6212;
-  --color-lime-900: #365314;
-  --color-lime-950: #1a2e05;
-
   --color-green-50: #f0fdf4;
   --color-green-100: #dcfce7;
   --color-green-200: #bbf7d0;
@@ -228,18 +219,6 @@
   --color-emerald-800: #065f46;
   --color-emerald-900: #064e3b;
   --color-emerald-950: #022c22;
-
-  --color-teal-50: #f0fdfa;
-  --color-teal-100: #ccfbf1;
-  --color-teal-200: #99f6e4;
-  --color-teal-300: #5eead4;
-  --color-teal-400: #2dd4bf;
-  --color-teal-500: #14b8a6;
-  --color-teal-600: #0d9488;
-  --color-teal-700: #0f766e;
-  --color-teal-800: #115e59;
-  --color-teal-900: #134e4a;
-  --color-teal-950: #042f2e;
 
   --color-cyan-50: #ecfeff;
   --color-cyan-100: #cffafe;
@@ -313,18 +292,6 @@
   --color-purple-900: #581c87;
   --color-purple-950: #3b0764;
 
-  --color-fuchsia-50: #fdf4ff;
-  --color-fuchsia-100: #fae8ff;
-  --color-fuchsia-200: #f5d0fe;
-  --color-fuchsia-300: #f0abfc;
-  --color-fuchsia-400: #e879f9;
-  --color-fuchsia-500: #d946ef;
-  --color-fuchsia-600: #c026d3;
-  --color-fuchsia-700: #a21caf;
-  --color-fuchsia-800: #86198f;
-  --color-fuchsia-900: #701a75;
-  --color-fuchsia-950: #4a044e;
-
   --color-pink-50: #fdf2f8;
   --color-pink-100: #fce7f3;
   --color-pink-200: #fbcfe8;
@@ -336,40 +303,135 @@
   --color-pink-800: #9d174d;
   --color-pink-900: #831843;
   --color-pink-950: #500724;
+}
 
-  --color-rose-50: #fff1f2;
-  --color-rose-100: #ffe4e6;
-  --color-rose-200: #fecdd3;
-  --color-rose-300: #fda4af;
-  --color-rose-400: #fb7185;
-  --color-rose-500: #f43f5e;
-  --color-rose-600: #e11d48;
-  --color-rose-700: #be123c;
-  --color-rose-800: #9f1239;
-  --color-rose-900: #881337;
-  --color-rose-950: #4c0519;
+/* ============================================================
+ * TOKENS — the stationery
+ * Paper and night are the same neutrals as lscaturchio.xyz and InfiniStar;
+ * only the ink differs. Bare HSL triplets so utilities can add alpha
+ * (`bg-primary/5`). tests/lib/design-tokens.test.ts measures every text/
+ * ground pair below against WCAG AA in both themes.
+ * ============================================================ */
+@layer base {
+  :root {
+    /* Paper. Warm off-white, hue 38. */
+    --background: 38 25% 97%;
+    --foreground: 210 15% 12%;
+    --card: 38 25% 98%;
+    --card-foreground: 210 15% 12%;
+    --popover: 38 25% 98%;
+    --popover-foreground: 210 15% 12%;
+
+    /* Iron Gall Ink — the one pen. #2a3f79: 9.48:1 on paper, 8.53:1 on
+     * tinted paper; white on it 10.07:1. The editor's ink on a manuscript. */
+    --primary: 224 48% 32%;
+    --primary-foreground: 0 0% 100%;
+    /* Iron Gall Soft — a lighter dilution for the rare secondary fill, so a
+     * second ink never has to be invented. #465a91, 6.31:1 on paper. */
+    --secondary: 224 35% 42%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Paper Tinted: the recessed tone — draft sheets, disabled controls. */
+    --muted: 38 18% 92%;
+    --muted-foreground: 215 10% 42%;
+    /* Paper Warm: a sand highlight for hover fills. */
+    --accent: 32 50% 92%;
+    --accent-foreground: 215 15% 16%;
+
+    /* 38%, not shadcn's 60.2%: #ef4444 measures 3.58:1 on paper, under the
+     * body floor, and this app paints error text as body copy. */
+    --destructive: 0 72% 38%;
+    --destructive-foreground: 0 0% 98%;
+    --destructive-muted: 0 72% 38% / 0.1;
+
+    /* The sand hairline. Never neutral grey. */
+    --border: 30 18% 86%;
+    --input: 30 18% 86%;
+    --ring: 224 48% 32%;
+    --radius: 0.875rem;
+
+    /* Scrim: ink in both themes, never --foreground (which inverts). */
+    --scrim: 0 0% 4%;
+    --scrim-alpha: 0.25;
+
+    /* Status. Each clears 4.5:1 on paper; the -muted tint is a 10% wash. */
+    --success: 142 76% 26%;
+    --success-foreground: 0 0% 100%;
+    --success-muted: 142 76% 26% / 0.1;
+    --warning: 38 92% 30%;
+    --warning-foreground: 0 0% 100%;
+    --warning-muted: 38 92% 30% / 0.1;
+    --info: 217 91% 40%;
+    --info-foreground: 0 0% 100%;
+    --info-muted: 217 91% 40% / 0.1;
+
+    --duration-fast: 150ms;
+    --duration-default: 200ms;
+    --duration-slow: 300ms;
+  }
+
+  .dark {
+    /* Night: the same manuscript read at night. Cool hue 220, ink lifted. */
+    --background: 220 15% 8%;
+    --foreground: 0 0% 98%;
+    --card: 220 15% 10%;
+    --card-foreground: 0 0% 98%;
+    --popover: 220 15% 10%;
+    --popover-foreground: 0 0% 98%;
+
+    /* #a0b2e3: 8.83:1 on night, 7.09:1 on night-tinted; night text on it 8.83:1. */
+    --primary: 224 55% 76%;
+    --primary-foreground: 220 15% 8%;
+    --secondary: 224 35% 36%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 220 10% 16%;
+    --muted-foreground: 220 10% 70%;
+    --accent: 210 16% 16%;
+    --accent-foreground: 0 0% 98%;
+
+    /* Lighter at night, like every other token; shadcn's 30.6% was the only
+     * token that got darker in dark mode (1.86:1 on night). */
+    --destructive: 0 70% 70%;
+    --destructive-foreground: 220 15% 8%;
+    --destructive-muted: 0 70% 70% / 0.15;
+
+    --border: 220 10% 18%;
+    --input: 220 10% 18%;
+    --ring: 224 55% 76%;
+
+    --scrim-alpha: 0.55;
+
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 0%;
+    --success-muted: 142 71% 45% / 0.15;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 0%;
+    --warning-muted: 38 92% 50% / 0.15;
+    --info: 217 91% 65%;
+    --info-foreground: 0 0% 0%;
+    --info-muted: 217 91% 65% / 0.15;
+  }
 }
 
 /* ---------------------------------------------------------------------------
-   Tailwind v3 preflight defaults that v4 changed. Each rule keeps the v3
-   rendering until the call sites name what they want; drop a rule once
-   nothing depends on it.
+   Tailwind v3 preflight defaults that v4 changed, kept until the call sites
+   name what they want; drop a rule once nothing depends on it. The colours
+   are the notebook's: a bare `border` is the sand hairline, a placeholder is
+   Ink Muted.
    --------------------------------------------------------------------------- */
 @layer base {
-  /* v4 defaults border-color to currentColor; v3 used gray-200 (#e5e7eb).
-     Every bare `border` in the app was written against that. */
   *,
   ::after,
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: #e5e7eb;
+    border-color: hsl(var(--border));
   }
 
-  /* v4 colours placeholders at 50% of the text colour; v3 used gray-400. */
   input::placeholder,
   textarea::placeholder {
-    color: #9ca3af;
+    color: hsl(var(--muted-foreground) / 0.8);
   }
 
   /* v4 leaves buttons at cursor: default; v3 gave them the hand. */
@@ -390,61 +452,123 @@
   }
 }
 
-:root {
-  --foreground-rgb: 23, 23, 23;
-  --background-start-rgb: 255, 248, 230;
-  --background-end-rgb: 255, 255, 255;
-  --surface-rgb: 255, 255, 255;
-  --muted-rgb: 110, 98, 77;
-  --accent-rgb: 217, 119, 6;
-  --glass-bg: 255, 255, 255, 0.55;
-  --glass-border: 255, 255, 255, 0.35;
-  --glass-shadow: 0 20px 60px rgba(217, 119, 6, 0.12);
-}
-
-.dark {
-  --foreground-rgb: 229, 229, 229;
-  --background-start-rgb: 15, 15, 15;
-  --background-end-rgb: 23, 23, 23;
-  --surface-rgb: 30, 30, 30;
-  --muted-rgb: 160, 160, 160;
-  --accent-rgb: 245, 158, 11;
-  --glass-bg: 30, 30, 30, 0.55;
-  --glass-border: 55, 55, 55, 0.35;
-  --glass-shadow: 0 20px 60px rgba(245, 158, 11, 0.08);
-}
-
-html {
-  color-scheme: light;
-  /* The site header is sticky: keep focused elements and anchor targets
-     clear of it. */
-  scroll-padding-top: 5rem;
-  -webkit-tap-highlight-color: transparent;
-}
-
-html.dark {
-  color-scheme: dark;
-}
-
-/* Remove the double-tap-zoom delay on controls; pinch zoom still works. */
-:where(a, button, input, select, textarea, label, summary, [role='button']) {
-  touch-action: manipulation;
-}
-
-:where(h1, h2, h3, h4, h5, h6) {
-  text-wrap: balance;
-}
-
-:where(h1, h2, h3, h4, h5, h6)[id] {
-  scroll-margin-top: 5rem;
-}
-
-/* Native <select>: explicit colors so Windows dark mode matches the page. */
+/* ============================================================
+ * BASE — paper, type, focus, selection, grain
+ * ============================================================ */
 @layer base {
+  html {
+    color-scheme: light;
+    /* The site header is sticky: keep focused elements and anchor targets
+       clear of it. */
+    scroll-padding-top: 5rem;
+    /* Intentional, ink-tinted tap feedback instead of the platform grey. */
+    -webkit-tap-highlight-color: hsl(var(--primary) / 0.12);
+    caret-color: hsl(var(--primary));
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-body);
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
+    line-height: 1.65;
+    overflow-x: clip;
+  }
+
+  /* The Serif Speaks Rule: Fraunces on what the site says, nowhere else. The
+   * type-scale utilities below set the same face on themselves. */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    text-wrap: balance;
+  }
+
+  :where(h1, h2, h3, h4, h5, h6)[id] {
+    scroll-margin-top: 5rem;
+  }
+
+  /* Controls: no double-tap-zoom delay (pinch zoom still works), and the
+   * focus outline colour pre-set so it never interpolates from currentColor
+   * on the first frame. */
+  :where(a, button, input, select, textarea, label, summary, [tabindex], [role='button']) {
+    touch-action: manipulation;
+    outline-color: hsl(var(--primary));
+  }
+
+  /* Native <select>: explicit colours so Windows dark mode matches the page. */
   select,
   select option {
-    background-color: rgb(var(--surface-rgb));
-    color: rgb(var(--foreground-rgb));
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+
+  /* One focus treatment, as a default rather than an opt-in: a 2px ink
+   * outline at a 2px offset on everything focusable. */
+  :focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+  }
+
+  /* The skip link focuses <main> programmatically; no ring on the landmark. */
+  main[tabindex='-1']:focus {
+    outline: none;
+  }
+
+  /* Selecting text tints it with the ink — a small signature every reader touches. */
+  ::selection {
+    background: hsl(var(--primary) / 0.22);
+    color: hsl(var(--foreground));
+  }
+
+  /* Numbers in tables line up column by column. */
+  :where(table) {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Paper grain: a fixed, near-invisible noise field that keeps large flat
+   * areas from reading as sterile screen-white. Pure CSS, no asset request. */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Reduced motion, actually collapsed. 0.01ms rather than 0s, because a
+   * zero duration can skip `transitionend` and hang code waiting on it. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+
+    /* Stated exception: a loading indicator still has to read as loading.
+     * Slowed, not stopped. */
+    .animate-pulse,
+    .animate-spin {
+      animation-duration: 3s !important;
+      animation-iteration-count: infinite !important;
+    }
   }
 }
 
@@ -459,68 +583,290 @@ html[data-theme-pref='system'] .theme-pref-icon[data-pref='system'] {
   display: block;
 }
 
-/* The skip link focuses <main> programmatically; no ring on the landmark. */
-main[tabindex='-1']:focus {
-  outline: none;
+/* ============================================================
+ * NOTEBOOK UTILITIES
+ * ============================================================ */
+
+/* The wall label: mono, small, tracked, uppercase, muted. Every piece of
+ * metadata — a date, a word count, a kicker, the catalogue line under a draft
+ * sheet — is one of these. */
+@utility label-mono {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  font-feature-settings: 'tnum' 1;
 }
 
-/* Numbers in tables line up column by column. */
-:where(table) {
-  font-variant-numeric: tabular-nums;
+/* A wall label that is also a tap target: WCAG 2.5.8's 24px floor on every
+ * pointer, 44px where the pointer is a finger. Deterministic (viewport or
+ * coarse pointer), not device-sniffed. */
+@utility label-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;
+  min-width: 1.5rem;
+  @media (max-width: 767px), (hover: none) and (pointer: coarse) {
+    min-height: 2.75rem;
+  }
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(120deg, rgb(var(--background-start-rgb)) 0%, rgb(var(--background-end-rgb)) 70%);
-  /* Font families come from next/font variables wired up in app/layout.tsx
-     and exposed through Tailwind's font-sans / font-serif utilities. */
+/* The pen gesture, and the site's only authored motion: a link's underline
+ * is scored in from the left under the cursor or the focus ring. It cannot
+ * fail closed and strand content the way an entrance animation can. */
+@utility ink-underline {
+  position: relative;
+  text-decoration: none;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    top: calc(50% + 0.62em);
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  &:hover::after,
+  &:focus-visible::after,
+  /* Kept on the active nav link and the pressed tag filter. */
+  &[aria-current='page']::after,
+  &[aria-pressed='true']::after {
+    transform: scaleX(1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::after {
+      transition: none;
+    }
+  }
 }
 
-.glass-card {
-  background: rgba(var(--glass-bg));
-  border: 1px solid rgba(var(--glass-border));
-  box-shadow: var(--glass-shadow);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+/* The header sheet: 90% paper with a 12px blur over whatever scrolls under
+ * it, a 40% hairline beneath, and the one structural shadow — the only glass
+ * surface and one of the two sanctioned shadows (DESIGN.md → Elevation → The
+ * Two Sheets Rule). One utility rather than four classes because the
+ * stylesheet is inlined into every document and Tailwind's backdrop-filter
+ * utility alone costs 600 bytes. */
+@utility header-sheet {
+  background: hsl(var(--background) / 0.9);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid hsl(var(--border) / 0.4);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
 }
 
-/* Common dark-mode-aware utility patterns. @utility rather than
-   @layer components: v4 rejects @apply with a variant (dark:) inside a layer,
-   and @utility classes also take variants at the call site. */
+/* The one filled button: Iron Gall, with a 1px ledge beneath its border so it
+ * feels pressed onto the page. One per view. One of the two sanctioned
+ * shadows (DESIGN.md → Elevation → The Two Sheets Rule). */
+@utility cta-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border: 1px solid hsl(var(--primary) / 0.42);
+  box-shadow: 0 1px 0 hsl(var(--primary) / 0.25);
+  transition:
+    filter var(--duration-fast) ease,
+    transform 100ms ease;
+
+  &:hover {
+    color: hsl(var(--primary-foreground));
+    filter: brightness(1.08);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &:disabled,
+  &[aria-disabled='true'] {
+    background-color: hsl(var(--muted));
+    color: hsl(var(--muted-foreground));
+    border-color: hsl(var(--border));
+    box-shadow: none;
+    filter: none;
+  }
+}
+
+/* Paper Card surface with a hairline. Hover warms the border and tints the
+ * paper. It never lifts (The Flat Paper Rule). */
+@utility cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  transition:
+    background-color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    transform 100ms ease;
+
+  &:hover {
+    color: hsl(var(--primary));
+    border-color: hsl(var(--primary) / 0.45);
+    background: hsl(var(--primary) / 0.05);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &:disabled,
+  &[aria-disabled='true'] {
+    color: hsl(var(--muted-foreground));
+    border-color: hsl(var(--border));
+    background: hsl(var(--card));
+  }
+}
+
+/* Field: Paper Card fill, hairline, focus warms the border. The global
+ * :focus-visible outline is the ring. */
+@utility input-field {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--input));
+  color: hsl(var(--foreground));
+  transition: border-color var(--duration-fast) ease;
+
+  &::placeholder {
+    color: hsl(var(--muted-foreground) / 0.8);
+  }
+
+  &:focus {
+    border-color: hsl(var(--primary) / 0.5);
+  }
+
+  &[aria-invalid='true'] {
+    border-color: hsl(var(--destructive));
+  }
+}
+
+/* The draft sheet: square corners and a hairline on tinted paper — a post or
+ * book preview pasted onto the page. Squareness marks the work; roundness
+ * marks the interface. */
+@utility plate {
+  border: 1px solid hsl(var(--border));
+  border-radius: 0;
+  background: hsl(var(--muted));
+  overflow: hidden;
+  transition: border-color var(--duration-default) ease;
+}
+
+/* Full-width hairline between sections. */
+@utility gallery-rule {
+  border: 0;
+  border-top: 1px solid hsl(var(--border));
+  width: 100%;
+  margin: 0;
+}
+
+/* A modal separates with a scrim, not a shadow (The Scrim Rule). */
+@utility overlay-scrim {
+  background: hsl(var(--scrim) / var(--scrim-alpha));
+}
+
+/* Type scale: fluid, weights stepping 720 → 700 → 650 → 620 → 560, tracking
+ * loosening as size falls. Each carries the display face itself, so an
+ * unused step costs the stylesheet nothing. */
+@utility text-display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  text-wrap: balance;
+  font-size: clamp(2.4rem, 5.2vw, 4.9rem);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  font-weight: 720;
+  font-variant-numeric: oldstyle-nums;
+}
+
+@utility text-page-title {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  text-wrap: balance;
+  font-size: clamp(1.9rem, 3.6vw, 3.2rem);
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+
+@utility text-section-title {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  text-wrap: balance;
+  font-size: clamp(1.55rem, 2.4vw, 2.25rem);
+  line-height: 1.18;
+  letter-spacing: -0.026em;
+  font-weight: 650;
+}
+
+@utility text-card-title {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  text-wrap: balance;
+  font-size: 1.25rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-weight: 620;
+}
+
+@utility text-subsection {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  text-wrap: balance;
+  font-size: 1.075rem;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  font-weight: 560;
+}
+
+/* ============================================================
+ * RETIRED SHIMS — flat-paper versions of the amber-era helpers, so the pages
+ * that still use them render on the new stationery immediately. Tinted paper
+ * and a hairline; no blur, no shadow, no gradient. Each is ratcheted by
+ * scripts/check-design-system.mjs and deleted by the page PRs.
+ * ============================================================ */
 @utility page-gradient {
-  @apply bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900;
+  background: hsl(var(--background));
 }
 
 @utility card-surface {
-  @apply bg-white border border-gray-200 dark:bg-gray-900 dark:border-gray-800;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
 }
 
 @utility input-surface {
-  @apply bg-white border border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--input));
+  color: hsl(var(--foreground));
 }
 
-@utility text-primary {
-  @apply text-gray-900 dark:text-gray-100;
-}
+/* The amber-era `text-primary` / `text-secondary` / `text-muted` helpers are
+ * not shimmed: those names are now the token utilities (Iron Gall, Iron Gall
+ * Soft, tinted paper) and no call site used the old ones. */
 
-@utility text-secondary {
-  @apply text-gray-600 dark:text-gray-400;
-}
-
-@utility text-muted {
-  @apply text-gray-500 dark:text-gray-500;
+/* The glass helpers, de-glassed: a sheet of paper card with a hairline.
+ * `glass-surface` gets no rule at all: the amber era never defined it either,
+ * and a tint under it drops the pages' `text-gray-500` below 4.5:1. */
+.glass-card,
+.glass-panel {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
 }
 
 /* ---------------------------------------------------------------------------
-   Entrance motion (app/HomePageClient.tsx, app/pricing/PricingPageClient.tsx,
-   app/_home/Reveal.tsx)
-
-   The hero animates with keyframes so its text is painted in the first frame
-   of the server HTML: the h1 is the page's LCP element, so it rises but never
-   starts transparent (Chrome does not count an opacity:0 element as painted).
-   Sections below the fold fade-and-rise once they scroll into view; a small
-   IntersectionObserver hook flips `data-inview`. Timings mirror the previous
-   framer-motion variants: 0.5 s ease-out, children 120 ms apart.
+   RETIRED — entrance motion (app/HomePageClient.tsx, app/_home/Reveal.tsx).
+   DESIGN.md → Motion: content does not animate itself in. These keyframes
+   stay only until the pages PR deletes the call sites; `hero-rise*` and
+   `data-reveal` are ratcheted by scripts/check-design-system.mjs.
    --------------------------------------------------------------------------- */
 @keyframes home-rise {
   from { opacity: 0; transform: translateY(24px); }
@@ -535,8 +881,6 @@ body {
   to { opacity: 1; }
 }
 
-/* In the components layer so per-element Tailwind utilities such as
-   [animation-delay:120ms] still win over the `animation` shorthand. */
 @layer components {
   .hero-rise { animation: home-rise 0.5s ease-out both; }
   .hero-rise-lcp { animation: home-rise-painted 0.5s ease-out both; }
@@ -563,15 +907,6 @@ body {
 [data-reveal-stagger] > :nth-child(n + 8) { transition-delay: 840ms; }
 
 @media (prefers-reduced-motion: reduce) {
-  /* Tailwind animate-* utilities and hover transitions. */
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
   .hero-rise,
   .hero-rise-lcp,
   .hero-fade {

@@ -146,6 +146,11 @@ jobs:
       - name: Lint
         run: bun run lint
 
+      # DESIGN.md's mechanically checkable rules plus the legacy ratchet
+      # (scripts/check-design-system.mjs). Zero dependencies, sub-second.
+      - name: Design check
+        run: bun run design:check
+
       - name: Type check
         run: bun run type-check
 

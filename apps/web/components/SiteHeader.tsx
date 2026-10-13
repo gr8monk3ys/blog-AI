@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { SparklesIcon, Bars3Icon, XMarkIcon, SunIcon, MoonIcon, ComputerDesktopIcon } from '@heroicons/react/24/outline'
+import { Bars3Icon, XMarkIcon, SunIcon, MoonIcon, ComputerDesktopIcon } from '@heroicons/react/24/outline'
 import { useTheme } from '../hooks/useTheme'
 import { SignedIn, SignedOut, UserButton } from '../lib/clerk-ui'
+import { Logo } from './brand/Logo'
 
 interface NavLink {
   href: string
@@ -57,7 +58,7 @@ export default function SiteHeader(): React.ReactElement {
     <Link
       key={link.href}
       href={link.href}
-      className="hover:text-amber-700 transition-colors"
+      className="ink-underline hover:text-primary transition-colors"
     >
       {link.label}
     </Link>
@@ -67,7 +68,7 @@ export default function SiteHeader(): React.ReactElement {
     <li key={link.href}>
       <Link
         href={link.href}
-        className="block rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-amber-400 transition-colors"
+        className="block rounded-md px-3 py-2 text-sm text-foreground hover:bg-card hover:text-primary transition-colors"
         onClick={() => setMobileMenuOpen(false)}
       >
         {link.label}
@@ -75,15 +76,17 @@ export default function SiteHeader(): React.ReactElement {
     </li>
   )
 
+  // The header sheet (`header-sheet` in globals.css): 90% paper with a 12px
+  // blur over the content scrolling under it, a 40% hairline beneath, and the
+  // one structural shadow (DESIGN.md → Elevation → The Two Sheets Rule).
   return (
-    <header className="sticky top-0 z-20 bg-white border-b border-gray-200 dark:bg-gray-900 dark:border-gray-800">
+    <header className="header-sheet sticky top-0 z-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <SparklesIcon className="w-5 h-5 text-amber-700" aria-hidden="true" />
-            <span className="font-semibold text-gray-900 dark:text-gray-100">Blog AI</span>
+          <Link href="/" className="flex items-center">
+            <Logo size={18} />
           </Link>
-          <nav className="hidden md:flex items-center gap-6 text-sm text-gray-700 dark:text-gray-300">
+          <nav className="hidden md:flex items-center gap-6 text-sm text-foreground">
             {isClerkConfigured ? (
               <>
                 {publicLinks.map(renderNavLink)}
@@ -99,7 +102,7 @@ export default function SiteHeader(): React.ReactElement {
             <button
               type="button"
               onClick={cycleTheme}
-              className="rounded-md p-1.5 text-gray-500 hover:text-amber-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-amber-400 dark:hover:bg-gray-800 transition-colors"
+              className="rounded-md p-1.5 text-muted-foreground hover:text-primary hover:bg-card transition-colors"
               aria-label={themeLabel}
               title={themeLabel}
             >
@@ -120,25 +123,19 @@ export default function SiteHeader(): React.ReactElement {
                   <UserButton afterSignOutUrl="/" />
                 </SignedIn>
                 <SignedOut>
-                  <Link
-                    href="/sign-in"
-                    className="px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 transition-colors text-white"
-                  >
+                  <Link href="/sign-in" className="cta-primary rounded-lg px-3 py-1.5">
                     Sign In
                   </Link>
                 </SignedOut>
               </>
             ) : (
-              <Link
-                href="/auth"
-                className="px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 transition-colors text-white"
-              >
+              <Link href="/auth" className="cta-primary rounded-lg px-3 py-1.5">
                 Sign In
               </Link>
             )}
             <button
               type="button"
-              className="md:hidden -m-2 inline-flex items-center justify-center rounded-md p-2 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-500"
+              className="md:hidden -m-2 inline-flex items-center justify-center rounded-md p-2 text-foreground hover:bg-card hover:text-primary transition-colors"
               aria-expanded={mobileMenuOpen}
               aria-controls="mobile-nav"
               aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
@@ -157,7 +154,7 @@ export default function SiteHeader(): React.ReactElement {
       {mobileMenuOpen && (
         <nav
           id="mobile-nav"
-          className="md:hidden border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
+          className="md:hidden border-t border-border bg-background"
         >
           <ul className="space-y-1 px-4 py-3">
             {isClerkConfigured ? (

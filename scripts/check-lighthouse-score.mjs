@@ -134,10 +134,22 @@ const PROFILES = [
 // `experimental.inlineCss` moved the stylesheet into the document, so the
 // response grew from a few KB to tens of KB and it now sits on the critical
 // path of every first paint. Measured 2026-09-16: 57,366-57,379 bytes; the
-// cap is ~25% above that. The
-// measured number is printed on every run so drift is visible before it
-// bites. Raise it deliberately, with the reason in the commit message.
-const HOME_DOCUMENT_BYTE_CAP = 72_000;
+// cap was set ~25% above that, at 72,000. The measured number is printed on
+// every run so drift is visible before it bites. Raise it deliberately, with
+// the reason in the commit message.
+//
+// Raised to 75,000 on 2026-10-13 with the notebook design system. Measured
+// the same way on the same machine: 69,763-69,782 bytes before (Tailwind v4,
+// #223) and 72,321-72,338 after. The growth is CSS, and inlineCss counts
+// every CSS byte twice (once in <style>, once in the RSC flight payload that
+// carries it for client navigations): the token blocks (:root/.dark, +1.1 KB
+// raw), the notebook utilities the header, footer and dialogs use, three
+// self-hosted font declarations and the new primitives. Everything cheap was
+// already cut (one header-sheet utility instead of four Tailwind classes,
+// inline aspect ratios, no scrollbar styling). The pages PRs retire the
+// ~5,300 raw-palette utilities that make up most of the stylesheet; lower
+// this back under 72,000 in the PR that does.
+const HOME_DOCUMENT_BYTE_CAP = 75_000;
 
 const MAX_ATTEMPTS = 4;
 const artifactDir = join(process.cwd(), "artifacts", "lighthouse");

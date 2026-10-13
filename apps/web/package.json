@@ -21,6 +21,10 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.2",
+    "@fontsource-variable/fraunces": "^5.3.0",
+    "@fontsource-variable/instrument-sans": "^5.3.0",
+    "@fontsource/fraunces": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
     "@headlessui/react": "^2.2.10",
     "@heroicons/react": "^2.1.1",
     "@neondatabase/serverless": "^1.0.2",
@@ -45,6 +49,7 @@
     "@eslint/js": "^10.0.1",
     "@next/bundle-analyzer": "16.4.0",
     "@playwright/test": "^1.58.2",
+    "@resvg/resvg-js": "^2.6.2",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
@@ -58,6 +63,8 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "globals": "^17.4.0",
     "jsdom": "^30.1.0",
+    "opentype.js": "^2.0.0",
+    "png-to-ico": "^3.0.2",
     "typescript": "^6",
     "vitest": "^5.0.1"
   }

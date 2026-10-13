@@ -1,42 +1,427 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-13T23:15:00.000Z",
+  "generatedAt": "2026-10-13T13:00:00-07:00",
   "title": "Design System: Blog AI",
   "extensions": {
     "colorMeta": {
-      "primary": { "role": "primary", "displayName": "Burnt Amber", "canonical": "#b45309", "tonalRamp": ["#451a03", "#78350f", "#92400e", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fef3c7"] },
-      "primary-fill": { "role": "primary", "displayName": "Live Amber", "canonical": "#d97706", "tonalRamp": ["#451a03", "#78350f", "#92400e", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fef3c7"] },
-      "primary-dark": { "role": "primary", "displayName": "Lamp Amber", "canonical": "#fbbf24", "tonalRamp": ["#451a03", "#78350f", "#92400e", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fef3c7"] },
-      "success": { "role": "tertiary", "displayName": "Status Green", "canonical": "#059669", "tonalRamp": ["#022c22", "#064e3b", "#065f46", "#047857", "#059669", "#10b981", "#6ee7b7", "#d1fae5"] },
-      "danger": { "role": "tertiary", "displayName": "Status Red", "canonical": "#dc2626", "tonalRamp": ["#450a0a", "#7f1d1d", "#991b1b", "#b91c1c", "#dc2626", "#ef4444", "#fca5a5", "#fee2e2"] },
-      "tier-pro": { "role": "secondary", "displayName": "Pro Indigo", "canonical": "#4338ca", "tonalRamp": ["#1e1b4b", "#312e81", "#3730a3", "#4338ca", "#4f46e5", "#6366f1", "#a5b4fc", "#e0e7ff"] },
-      "canvas": { "role": "neutral", "displayName": "Cream Canvas", "canonical": "#fff8e6", "tonalRamp": ["#111827", "#374151", "#6b7280", "#9ca3af", "#d1d5db", "#e5e7eb", "#f9fafb", "#fff8e6"] },
-      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#111827", "tonalRamp": ["#030712", "#111827", "#1f2937", "#374151", "#4b5563", "#6b7280", "#9ca3af", "#f3f4f6"] },
-      "muted": { "role": "neutral", "displayName": "Muted", "canonical": "#6b7280", "tonalRamp": ["#030712", "#111827", "#1f2937", "#374151", "#4b5563", "#6b7280", "#9ca3af", "#f3f4f6"] }
+      "iron-gall": {
+        "role": "primary",
+        "displayName": "Iron Gall",
+        "canonical": "hsl(224 48% 32%)",
+        "tonalRamp": [
+          "hsl(224 48% 12%)",
+          "hsl(224 48% 20%)",
+          "hsl(224 48% 32%)",
+          "hsl(224 48% 42%)",
+          "hsl(224 48% 54%)",
+          "hsl(224 48% 66%)",
+          "hsl(224 48% 76%)",
+          "hsl(224 48% 88%)"
+        ]
+      },
+      "iron-gall-dark": {
+        "role": "primary",
+        "displayName": "Iron Gall (night)",
+        "canonical": "hsl(224 55% 76%)",
+        "tonalRamp": [
+          "hsl(224 55% 12%)",
+          "hsl(224 55% 20%)",
+          "hsl(224 55% 32%)",
+          "hsl(224 55% 44%)",
+          "hsl(224 55% 56%)",
+          "hsl(224 55% 66%)",
+          "hsl(224 55% 76%)",
+          "hsl(224 55% 88%)"
+        ]
+      },
+      "iron-gall-soft": {
+        "role": "secondary",
+        "displayName": "Iron Gall Soft",
+        "canonical": "hsl(224 35% 42%)",
+        "tonalRamp": [
+          "hsl(224 35% 14%)",
+          "hsl(224 35% 24%)",
+          "hsl(224 35% 36%)",
+          "hsl(224 35% 42%)",
+          "hsl(224 35% 52%)",
+          "hsl(224 35% 64%)",
+          "hsl(224 35% 78%)",
+          "hsl(224 35% 92%)"
+        ]
+      },
+      "iron-gall-soft-dark": {
+        "role": "secondary",
+        "displayName": "Iron Gall Soft (night)",
+        "canonical": "hsl(224 35% 36%)",
+        "tonalRamp": [
+          "hsl(224 35% 14%)",
+          "hsl(224 35% 24%)",
+          "hsl(224 35% 36%)",
+          "hsl(224 35% 42%)",
+          "hsl(224 35% 52%)",
+          "hsl(224 35% 64%)",
+          "hsl(224 35% 78%)",
+          "hsl(224 35% 92%)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "hsl(38 25% 97%)",
+        "tonalRamp": [
+          "hsl(38 25% 20%)",
+          "hsl(38 25% 35%)",
+          "hsl(38 25% 50%)",
+          "hsl(38 25% 65%)",
+          "hsl(38 25% 80%)",
+          "hsl(38 25% 90%)",
+          "hsl(38 25% 94%)",
+          "hsl(38 25% 97%)"
+        ]
+      },
+      "paper-card": {
+        "role": "neutral",
+        "displayName": "Paper Card",
+        "canonical": "hsl(38 25% 98%)",
+        "tonalRamp": [
+          "hsl(38 25% 22%)",
+          "hsl(38 25% 38%)",
+          "hsl(38 25% 54%)",
+          "hsl(38 25% 70%)",
+          "hsl(38 25% 84%)",
+          "hsl(38 25% 92%)",
+          "hsl(38 25% 96%)",
+          "hsl(38 25% 98%)"
+        ]
+      },
+      "paper-tinted": {
+        "role": "neutral",
+        "displayName": "Paper Tinted",
+        "canonical": "hsl(38 18% 92%)",
+        "tonalRamp": [
+          "hsl(38 18% 16%)",
+          "hsl(38 18% 28%)",
+          "hsl(38 18% 40%)",
+          "hsl(38 18% 54%)",
+          "hsl(38 18% 68%)",
+          "hsl(38 18% 80%)",
+          "hsl(38 18% 88%)",
+          "hsl(38 18% 92%)"
+        ]
+      },
+      "paper-warm": {
+        "role": "neutral",
+        "displayName": "Paper Warm",
+        "canonical": "hsl(32 50% 92%)",
+        "tonalRamp": [
+          "hsl(32 50% 18%)",
+          "hsl(32 50% 30%)",
+          "hsl(32 50% 42%)",
+          "hsl(32 50% 54%)",
+          "hsl(32 50% 66%)",
+          "hsl(32 50% 78%)",
+          "hsl(32 50% 86%)",
+          "hsl(32 50% 92%)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "hsl(210 15% 12%)",
+        "tonalRamp": [
+          "hsl(210 15% 12%)",
+          "hsl(210 15% 20%)",
+          "hsl(210 15% 28%)",
+          "hsl(210 15% 38%)",
+          "hsl(210 15% 50%)",
+          "hsl(210 15% 64%)",
+          "hsl(210 15% 78%)",
+          "hsl(210 15% 92%)"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Ink Muted",
+        "canonical": "hsl(215 10% 42%)",
+        "tonalRamp": [
+          "hsl(215 10% 14%)",
+          "hsl(215 10% 22%)",
+          "hsl(215 10% 32%)",
+          "hsl(215 10% 42%)",
+          "hsl(215 10% 54%)",
+          "hsl(215 10% 66%)",
+          "hsl(215 10% 80%)",
+          "hsl(215 10% 92%)"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "hsl(30 18% 86%)",
+        "tonalRamp": [
+          "hsl(30 18% 16%)",
+          "hsl(30 18% 28%)",
+          "hsl(30 18% 40%)",
+          "hsl(30 18% 52%)",
+          "hsl(30 18% 64%)",
+          "hsl(30 18% 76%)",
+          "hsl(30 18% 86%)",
+          "hsl(30 18% 94%)"
+        ]
+      },
+      "night": {
+        "role": "neutral",
+        "displayName": "Night",
+        "canonical": "hsl(220 15% 8%)",
+        "tonalRamp": [
+          "hsl(220 15% 8%)",
+          "hsl(220 15% 12%)",
+          "hsl(220 15% 18%)",
+          "hsl(220 15% 26%)",
+          "hsl(220 15% 38%)",
+          "hsl(220 15% 52%)",
+          "hsl(220 15% 70%)",
+          "hsl(220 15% 90%)"
+        ]
+      },
+      "night-card": {
+        "role": "neutral",
+        "displayName": "Night Card",
+        "canonical": "hsl(220 15% 10%)",
+        "tonalRamp": [
+          "hsl(220 15% 10%)",
+          "hsl(220 15% 14%)",
+          "hsl(220 15% 20%)",
+          "hsl(220 15% 28%)",
+          "hsl(220 15% 40%)",
+          "hsl(220 15% 54%)",
+          "hsl(220 15% 72%)",
+          "hsl(220 15% 90%)"
+        ]
+      },
+      "night-tinted": {
+        "role": "neutral",
+        "displayName": "Night Tinted",
+        "canonical": "hsl(220 10% 16%)",
+        "tonalRamp": [
+          "hsl(220 10% 16%)",
+          "hsl(220 10% 22%)",
+          "hsl(220 10% 30%)",
+          "hsl(220 10% 40%)",
+          "hsl(220 10% 52%)",
+          "hsl(220 10% 64%)",
+          "hsl(220 10% 78%)",
+          "hsl(220 10% 92%)"
+        ]
+      },
+      "night-ink": {
+        "role": "neutral",
+        "displayName": "Night Ink",
+        "canonical": "hsl(0 0% 98%)",
+        "tonalRamp": [
+          "hsl(0 0% 10%)",
+          "hsl(0 0% 25%)",
+          "hsl(0 0% 40%)",
+          "hsl(0 0% 55%)",
+          "hsl(0 0% 70%)",
+          "hsl(0 0% 82%)",
+          "hsl(0 0% 92%)",
+          "hsl(0 0% 98%)"
+        ]
+      },
+      "night-ink-muted": {
+        "role": "neutral",
+        "displayName": "Night Ink Muted",
+        "canonical": "hsl(220 10% 70%)",
+        "tonalRamp": [
+          "hsl(220 10% 14%)",
+          "hsl(220 10% 24%)",
+          "hsl(220 10% 34%)",
+          "hsl(220 10% 46%)",
+          "hsl(220 10% 58%)",
+          "hsl(220 10% 70%)",
+          "hsl(220 10% 82%)",
+          "hsl(220 10% 94%)"
+        ]
+      },
+      "night-hairline": {
+        "role": "neutral",
+        "displayName": "Night Hairline",
+        "canonical": "hsl(220 10% 18%)",
+        "tonalRamp": [
+          "hsl(220 10% 18%)",
+          "hsl(220 10% 24%)",
+          "hsl(220 10% 32%)",
+          "hsl(220 10% 42%)",
+          "hsl(220 10% 54%)",
+          "hsl(220 10% 66%)",
+          "hsl(220 10% 80%)",
+          "hsl(220 10% 92%)"
+        ]
+      },
+      "signal-error": {
+        "role": "semantic",
+        "displayName": "Error",
+        "canonical": "hsl(0 72% 38%)",
+        "tonalRamp": [
+          "hsl(0 72% 14%)",
+          "hsl(0 72% 24%)",
+          "hsl(0 72% 38%)",
+          "hsl(0 72% 48%)",
+          "hsl(0 72% 58%)",
+          "hsl(0 70% 70%)",
+          "hsl(0 70% 82%)",
+          "hsl(0 70% 94%)"
+        ]
+      },
+      "signal-success": {
+        "role": "semantic",
+        "displayName": "Success",
+        "canonical": "hsl(142 76% 26%)",
+        "tonalRamp": [
+          "hsl(142 76% 10%)",
+          "hsl(142 76% 18%)",
+          "hsl(142 76% 26%)",
+          "hsl(142 74% 34%)",
+          "hsl(142 71% 45%)",
+          "hsl(142 71% 58%)",
+          "hsl(142 71% 74%)",
+          "hsl(142 71% 92%)"
+        ]
+      },
+      "signal-warning": {
+        "role": "semantic",
+        "displayName": "Warning",
+        "canonical": "hsl(38 92% 30%)",
+        "tonalRamp": [
+          "hsl(38 92% 12%)",
+          "hsl(38 92% 20%)",
+          "hsl(38 92% 30%)",
+          "hsl(38 92% 40%)",
+          "hsl(38 92% 50%)",
+          "hsl(38 92% 62%)",
+          "hsl(38 92% 76%)",
+          "hsl(38 92% 92%)"
+        ]
+      },
+      "signal-info": {
+        "role": "semantic",
+        "displayName": "Info",
+        "canonical": "hsl(217 91% 40%)",
+        "tonalRamp": [
+          "hsl(217 91% 14%)",
+          "hsl(217 91% 24%)",
+          "hsl(217 91% 32%)",
+          "hsl(217 91% 40%)",
+          "hsl(217 91% 52%)",
+          "hsl(217 91% 65%)",
+          "hsl(217 91% 80%)",
+          "hsl(217 91% 94%)"
+        ]
+      }
     },
     "typographyMeta": {
-      "display": { "displayName": "Display", "purpose": "Home hero h1 only; Source Serif 4 at semibold with one amber phrase allowed." },
-      "headline": { "displayName": "Headline", "purpose": "Marketing section h2 and page-banner h1." },
-      "title": { "displayName": "Title", "purpose": "Card and feature titles in Inter." },
-      "body": { "displayName": "Body", "purpose": "Descriptions and lead paragraphs, measure capped near 65ch." },
-      "body-sm": { "displayName": "Body Small", "purpose": "Default size inside product UI." },
-      "label": { "displayName": "Label", "purpose": "Badges, chips, step markers, copyright line." }
+      "display": {
+        "displayName": "Display",
+        "purpose": "The home masthead and nothing else. Fraunces 720, oldstyle numerals (text-display)."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "One per page (text-page-title)."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section headings (text-section-title)."
+      },
+      "card-title": {
+        "displayName": "Card Title",
+        "purpose": "A post's title on a draft sheet or row, a dialog title (text-card-title). A subsection step exists at 1.075rem / 560 (text-subsection)."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Reading text. Lead paragraphs use 1.125rem with text-pretty; descriptions 0.875-1rem in Ink Muted."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "The wall label (label-mono): kickers, dates, word counts, the catalogue line under a draft sheet, footer column heads, pricing figures. Uppercase, tracked, tabular numerals, Ink Muted."
+      }
     },
     "shadows": [
-      { "name": "rest", "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)", "purpose": "Buttons, cards and selected chips at rest." },
-      { "name": "lift", "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)", "purpose": "Hover on cards and pills; the featured pricing tier." },
-      { "name": "glass", "value": "0 20px 60px rgba(217, 119, 6, 0.12)", "purpose": "Ambient amber shadow under .glass-card (dark: rgba(245,158,11,0.08))." }
+      {
+        "name": "header-sheet",
+        "value": "0 8px 30px rgba(0,0,0,0.08)",
+        "purpose": "The sticky header only, so it reads as a separate sheet when content scrolls under it. One of the two sanctioned shadows."
+      },
+      {
+        "name": "cta-ledge",
+        "value": "0 1px 0 hsl(var(--primary) / 0.25)",
+        "purpose": "The primary button (cta-primary) only: a 1px ledge beneath its border so the one filled button feels pressed onto the page. Removed when disabled. No other content surface carries a shadow at rest or on hover."
+      }
     ],
     "motion": [
-      { "name": "fade-up", "value": "opacity 0->1, translateY 24px->0, 0.5s ease-out, stagger 0.12s", "purpose": "Single section reveal via framer-motion FADE_UP, once per viewport entry." },
-      { "name": "color-change", "value": "transition-colors 150ms cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Hover and focus color changes on buttons, links and chips." },
-      { "name": "indicator-slide", "value": "framer-motion spring, bounce 0.2, 0.4s", "purpose": "layoutId indicator behind the selected filter chip." }
+      {
+        "name": "duration-fast",
+        "value": "150ms",
+        "purpose": "Button, field and link colour/border transitions (--duration-fast)."
+      },
+      {
+        "name": "duration-default",
+        "value": "200ms",
+        "purpose": "Tailwind default transition duration; plate border warming (--duration-default)."
+      },
+      {
+        "name": "duration-slow",
+        "value": "300ms",
+        "purpose": "Slow state changes (--duration-slow)."
+      },
+      {
+        "name": "ease-standard",
+        "value": "ease",
+        "purpose": "Every hover and focus transition on the notebook utilities."
+      },
+      {
+        "name": "cta-press",
+        "value": "transform 100ms ease; translateY(1px) on :active",
+        "purpose": "Primary and secondary buttons press one pixel down."
+      },
+      {
+        "name": "ink-underline",
+        "value": "transform 240ms cubic-bezier(0.16, 1, 0.3, 1); scaleX(0) to scaleX(1) from the left",
+        "purpose": "A link's underline scored in under the cursor or focus ring. The site's only authored motion; none under prefers-reduced-motion."
+      },
+      {
+        "name": "pulse-soft",
+        "value": "2s ease-in-out infinite; opacity 1 to 0.5",
+        "purpose": "Soft loading pulse."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "animation-duration and transition-duration 0.01ms; loaders (animate-pulse, animate-spin) slow to 3s instead of stopping",
+        "purpose": "prefers-reduced-motion policy. 0.01ms rather than 0s so transitionend still fires."
+      },
+      {
+        "name": "dialog-toast",
+        "value": "200-300ms opacity (and 95%->100% scale) via Headless UI Transition / framer-motion",
+        "purpose": "A dialog or a toast arriving. The interface, not content."
+      }
     ],
     "breakpoints": [
-      { "name": "sm", "value": "640px" },
-      { "name": "md", "value": "768px" },
-      { "name": "lg", "value": "1024px" },
-      { "name": "xl", "value": "1280px" }
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
     ]
   },
   "components": [
@@ -44,91 +429,168 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Burnt Amber fill with white text; the one filled action on a surface.",
-      "html": "<button class=\"ds-btn-primary\">Start Free</button>",
-      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 8px; background: #b45309; color: #fff; font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 500; padding: 8px 16px; border: none; border-radius: 8px; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); cursor: pointer; transition: background-color 150ms cubic-bezier(0.4,0,0.2,1); } .ds-btn-primary:hover { background: #92400e; } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #f59e0b; }"
+      "description": "The one filled button per view (cta-primary). Iron Gall fill, white text, a 1px border of Iron Gall at 42%, the 1px ledge. Hover brightens 8%; active presses 1px down.",
+      "html": "<button class=\"ds-btn-primary\">Generate draft</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 8px 16px; border-radius: 0.875rem; background-color: hsl(var(--primary, 224 48% 32%)); color: hsl(var(--primary-foreground, 0 0% 100%)); border: 1px solid hsl(var(--primary, 224 48% 32%) / 0.42); box-shadow: 0 1px 0 hsl(var(--primary, 224 48% 32%) / 0.25); font-family: var(--font-body, 'Instrument Sans'), ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; white-space: nowrap; cursor: pointer; transition: filter 150ms ease, transform 100ms ease; } .ds-btn-primary:hover { filter: brightness(1.08); } .ds-btn-primary:active { transform: translateY(1px); } .ds-btn-primary:focus-visible { outline: 2px solid hsl(var(--primary, 224 48% 32%)); outline-offset: 2px; } .ds-btn-primary:disabled { background-color: hsl(var(--muted, 38 18% 92%)); color: hsl(var(--muted-foreground, 215 10% 42%)); border-color: hsl(var(--border, 30 18% 86%)); box-shadow: none; filter: none; opacity: .6; pointer-events: none; }"
     },
     {
       "name": "Secondary Button",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "Translucent white with a hairline border; the quiet partner to the primary action.",
-      "html": "<button class=\"ds-btn-secondary\">View Plans</button>",
-      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.7); color: #374151; font-family: Inter, system-ui, sans-serif; font-size: 16px; font-weight: 500; padding: 14px 28px; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; backdrop-filter: blur(4px); cursor: pointer; transition: background-color 150ms, border-color 150ms; } .ds-btn-secondary:hover { background: rgba(255,255,255,0.9); border-color: rgba(0,0,0,0.12); } .ds-btn-secondary:focus-visible { outline: none; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #f59e0b; }"
+      "description": "Every other button (cta-secondary; the outline, secondary and destructive variants). Paper Card fill, hairline, Ink text; hover tints the fill to Iron Gall at 5%, warms the border to 45% and the text to Iron Gall. Never lifts.",
+      "html": "<button class=\"ds-btn-secondary\">Open brand voice</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 8px 16px; border-radius: 0.875rem; color: hsl(var(--foreground, 210 15% 12%)); background: hsl(var(--card, 38 25% 98%)); border: 1px solid hsl(var(--border, 30 18% 86%)); font-family: var(--font-body, 'Instrument Sans'), ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; white-space: nowrap; cursor: pointer; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 100ms ease; } .ds-btn-secondary:hover { color: hsl(var(--primary, 224 48% 32%)); border-color: hsl(var(--primary, 224 48% 32%) / 0.45); background: hsl(var(--primary, 224 48% 32%) / 0.05); } .ds-btn-secondary:active { transform: translateY(1px); } .ds-btn-secondary:focus-visible { outline: 2px solid hsl(var(--primary, 224 48% 32%)); outline-offset: 2px; } .ds-btn-secondary:disabled { color: hsl(var(--muted-foreground, 215 10% 42%)); border-color: hsl(var(--border, 30 18% 86%)); background: hsl(var(--card, 38 25% 98%)); opacity: .6; pointer-events: none; }"
     },
     {
-      "name": "Chip",
-      "kind": "chip",
-      "refersTo": "chip",
-      "description": "Neutral pill that washes amber on hover; selected state inverts to the primary fill.",
-      "html": "<span class=\"ds-chip\">Blog &amp; Articles</span> <span class=\"ds-chip ds-chip--selected\">SEO</span>",
-      "css": ".ds-chip { display: inline-flex; align-items: center; background: #f3f4f6; color: #374151; font-family: Inter, system-ui, sans-serif; font-size: 12px; font-weight: 500; padding: 6px 12px; border-radius: 9999px; cursor: pointer; transition: background-color 150ms, color 150ms; } .ds-chip:hover { background: #fffbeb; color: #b45309; } .ds-chip--selected { background: #b45309; color: #fff; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }"
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Transparent until hovered, then Paper Card with a hairline and Iron Gall text. Toolbar and icon actions.",
+      "html": "<button class=\"ds-btn-ghost\">Cancel</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 8px 16px; border-radius: 0.875rem; border: 1px solid transparent; background: transparent; color: hsl(var(--foreground, 210 15% 12%)); font-family: var(--font-body, 'Instrument Sans'), ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease; } .ds-btn-ghost:hover { border-color: hsl(var(--border, 30 18% 86%)); background: hsl(var(--card, 38 25% 98%)); color: hsl(var(--primary, 224 48% 32%)); } .ds-btn-ghost:focus-visible { outline: 2px solid hsl(var(--primary, 224 48% 32%)); outline-offset: 2px; }"
     },
     {
-      "name": "Badge",
-      "kind": "chip",
-      "refersTo": "badge-primary",
-      "description": "Tier and status badge on the amber tile color.",
-      "html": "<span class=\"ds-badge\">Starter+</span>",
-      "css": ".ds-badge { display: inline-flex; align-items: center; background: #fef3c7; color: #b45309; font-family: Inter, system-ui, sans-serif; font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 9999px; }"
-    },
-    {
-      "name": "Glass Card",
-      "kind": "card",
-      "refersTo": "card-glass",
-      "description": "Translucent marketing card with an icon tile, title and body.",
-      "html": "<article class=\"ds-glass-card\"><div class=\"ds-glass-card__tile\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path d=\"M9.8 15.3 9 18l-.8-2.7a4.5 4.5 0 0 0-3-3L2.5 12l2.7-.8a4.5 4.5 0 0 0 3-3L9 5.5l.8 2.7a4.5 4.5 0 0 0 3 3l2.7.8-2.7.8a4.5 4.5 0 0 0-3 3ZM18 8l.4-1.4a2.3 2.3 0 0 1 1.6-1.6L21.4 4.5 20 4.1a2.3 2.3 0 0 1-1.6-1.6L18 1l-.4 1.4a2.3 2.3 0 0 1-1.6 1.6L14.6 4.5l1.4.4a2.3 2.3 0 0 1 1.6 1.6L18 8Z\"/></svg></div><h3 class=\"ds-glass-card__title\">Brand Voice Training</h3><p class=\"ds-glass-card__body\">Turn your best writing into reusable guidance for every draft.</p></article>",
-      "css": ".ds-glass-card { background: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.35); box-shadow: 0 20px 60px rgba(217,119,6,0.12); backdrop-filter: blur(18px); border-radius: 16px; padding: 32px; max-width: 360px; font-family: Inter, system-ui, sans-serif; transition: box-shadow 150ms; } .ds-glass-card:hover { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); } .ds-glass-card__tile { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 12px; background: rgba(254,243,199,0.8); color: #b45309; margin-bottom: 20px; } .ds-glass-card__title { margin: 0 0 8px; font-size: 18px; font-weight: 600; color: #111827; } .ds-glass-card__body { margin: 0; font-size: 14px; line-height: 1.625; color: #4b5563; }"
-    },
-    {
-      "name": "Text Input",
+      "name": "Text Field",
       "kind": "input",
-      "refersTo": "input",
-      "description": "White field with a gray-300 hairline and an amber focus ring.",
-      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Topic or keyword\" />",
-      "css": ".ds-input { width: 100%; max-width: 320px; background: #fff; color: #111827; font-family: Inter, system-ui, sans-serif; font-size: 14px; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; transition: box-shadow 150ms, border-color 150ms; } .ds-input::placeholder { color: #9ca3af; } .ds-input:focus { outline: none; border-color: #f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,0.5); }"
+      "refersTo": "input-field",
+      "description": "Field (input-field; components/ui/Input.tsx, Textarea.tsx, Select.tsx): Paper Card fill, hairline, 8px radius, 40px tall. Focus warms the border to Iron Gall at 50% plus the global outline; invalid fields take an Error border.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Working title\" />",
+      "css": ".ds-input { display: flex; width: 100%; max-width: 320px; height: 40px; padding: 8px 12px; border-radius: 0.5rem; background: hsl(var(--card, 38 25% 98%)); border: 1px solid hsl(var(--input, 30 18% 86%)); color: hsl(var(--foreground, 210 15% 12%)); font-family: var(--font-body, 'Instrument Sans'), ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; transition: border-color 150ms ease; } .ds-input::placeholder { color: hsl(var(--muted-foreground, 215 10% 42%) / 0.8); } .ds-input:focus { border-color: hsl(var(--primary, 224 48% 32%) / 0.5); } .ds-input:focus-visible { outline: 2px solid hsl(var(--primary, 224 48% 32%)); outline-offset: 2px; } .ds-input[aria-invalid=\"true\"] { border-color: hsl(var(--destructive, 0 72% 38%)); } .ds-input:disabled { opacity: .5; cursor: not-allowed; }"
     },
     {
-      "name": "Header Nav",
+      "name": "Chip / Badge",
+      "kind": "chip",
+      "refersTo": "badge-outline",
+      "description": "Fully round, 12px by 4px padding, 0.75rem semibold. The house chip is the outline: Paper Card with a hairline, Ink text, Iron Gall on hover. The filled badge is Iron Gall and reserved for a single status or count.",
+      "html": "<span class=\"ds-chip\">SEO</span> <span class=\"ds-chip ds-chip--filled\">PRO</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 9999px; border: 1px solid hsl(var(--border, 30 18% 86%)); background: hsl(var(--card, 38 25% 98%)); color: hsl(var(--foreground, 210 15% 12%)); font-family: var(--font-body, 'Instrument Sans'), ui-sans-serif, system-ui, sans-serif; font-size: 0.75rem; font-weight: 600; transition: color 200ms ease; } .ds-chip:hover { color: hsl(var(--primary, 224 48% 32%)); } .ds-chip--filled { border-color: transparent; background: hsl(var(--primary, 224 48% 32%)); color: hsl(var(--primary-foreground, 0 0% 100%)); } .ds-chip--filled:hover { color: hsl(var(--primary-foreground, 0 0% 100%)); }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Paper Card on Paper, 1px hairline, 18px radius, 24px padding, no shadow. Title in Fraunces at Card Title; description in Ink Muted. Most text-led lists (history, templates, tools) are hairline-divided rows rather than cards.",
+      "html": "<div class=\"ds-card\"><p class=\"ds-card__label\">Template</p><h3 class=\"ds-card__title\">Product launch announcement</h3><p class=\"ds-card__desc\">A short, confident post for a new feature, in the brand voice.</p></div>",
+      "css": ".ds-card { display: flex; flex-direction: column; gap: 6px; width: 320px; padding: 24px; border-radius: 1.125rem; border: 1px solid hsl(var(--border, 30 18% 86%)); background: hsl(var(--card, 38 25% 98%)); color: hsl(var(--card-foreground, 210 15% 12%)); font-family: var(--font-body, 'Instrument Sans'), ui-sans-serif, system-ui, sans-serif; } .ds-card__label { margin: 0; font-family: var(--font-mono, 'IBM Plex Mono'), ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.72rem; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: hsl(var(--muted-foreground, 215 10% 42%)); font-feature-settings: 'tnum' 1; } .ds-card__title { margin: 0; font-family: var(--font-display, Fraunces), ui-serif, Georgia, serif; font-optical-sizing: auto; font-size: 1.25rem; font-weight: 620; line-height: 1.2; letter-spacing: -0.02em; text-wrap: balance; } .ds-card__desc { margin: 0; font-size: 0.875rem; line-height: 1.65; color: hsl(var(--muted-foreground, 215 10% 42%)); }"
+    },
+    {
+      "name": "Wall Label",
+      "kind": "custom",
+      "refersTo": "wall-label",
+      "description": "The label-mono utility: IBM Plex Mono 500 at 0.72rem, 0.16em tracking, uppercase, tabular numerals, Ink Muted. The placard beside every piece of metadata; label-link adds the 24px (44px on touch) tap floor.",
+      "html": "<p class=\"ds-label\">1,240 words &middot; conversational &middot; 13 Oct</p> <a class=\"ds-label ds-label--link\" href=\"#\">View all</a>",
+      "css": ".ds-label { margin: 0; font-family: var(--font-mono, 'IBM Plex Mono'), ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.72rem; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; line-height: 1.4; color: hsl(var(--muted-foreground, 215 10% 42%)); font-feature-settings: 'tnum' 1; } .ds-label--link { display: inline-flex; align-items: center; min-height: 1.5rem; min-width: 1.5rem; text-decoration: none; transition: color 150ms ease; } .ds-label--link:hover, .ds-label--link:focus-visible { color: hsl(var(--primary, 224 48% 32%)); } .ds-label--link:focus-visible { outline: 2px solid hsl(var(--primary, 224 48% 32%)); outline-offset: 2px; } @media (max-width: 767px), (hover: none) and (pointer: coarse) { .ds-label--link { min-height: 2.75rem; } }"
+    },
+    {
+      "name": "Draft Sheet",
+      "kind": "custom",
+      "refersTo": "draft-sheet",
+      "description": "The signature object: a square-cornered 3:4 plate with a 1px hairline on tinted paper (the plate utility; components/ui/Plate.tsx), a post or book preview pasted onto the page. Below it, outside the image: the title in Fraunces at Card Title, then one mono catalogue line. Hover: the title turns Iron Gall and the sheet border warms. No scale, no scrim, no rounding.",
+      "html": "<a class=\"ds-plate-entry\" href=\"#\"><div class=\"ds-plate\"><span class=\"ds-plate__initial\">¶</span><span class=\"ds-plate__slug\">draft · 1,240 words</span></div><h3 class=\"ds-plate__name\">Why brand voice beats prompt tricks</h3><p class=\"ds-plate__line\">conversational &middot; seo &middot; 13 Oct</p></a>",
+      "css": ".ds-plate-entry { display: flex; flex-direction: column; gap: 8px; width: 200px; color: hsl(var(--foreground, 210 15% 12%)); text-decoration: none; font-family: var(--font-body, 'Instrument Sans'), ui-sans-serif, system-ui, sans-serif; } .ds-plate { position: relative; display: flex; align-items: center; justify-content: center; aspect-ratio: 3 / 4; border: 1px solid hsl(var(--border, 30 18% 86%)); border-radius: 0; background: hsl(var(--muted, 38 18% 92%)); overflow: hidden; transition: border-color 200ms ease; } .ds-plate__initial { font-family: var(--font-display, Fraunces), ui-serif, Georgia, serif; font-optical-sizing: auto; font-size: 4rem; font-weight: 650; color: hsl(var(--primary, 224 48% 32%)); } .ds-plate__slug { position: absolute; left: 12px; right: 12px; bottom: 10px; font-family: var(--font-mono, 'IBM Plex Mono'), ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: hsl(var(--muted-foreground, 215 10% 42%)); } .ds-plate__name { margin: 0; font-family: var(--font-display, Fraunces), ui-serif, Georgia, serif; font-optical-sizing: auto; font-size: 1.25rem; font-weight: 620; line-height: 1.2; letter-spacing: -0.02em; transition: color 150ms ease; } .ds-plate__line { margin: 0; font-family: var(--font-mono, 'IBM Plex Mono'), ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.72rem; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: hsl(var(--muted-foreground, 215 10% 42%)); font-feature-settings: 'tnum' 1; } .ds-plate-entry:hover .ds-plate__name { color: hsl(var(--primary, 224 48% 32%)); } .ds-plate-entry:hover .ds-plate { border-color: hsl(var(--primary, 224 48% 32%) / 0.45); } .ds-plate-entry:focus-visible { outline: 2px solid hsl(var(--primary, 224 48% 32%)); outline-offset: 2px; }"
+    },
+    {
+      "name": "Header",
       "kind": "nav",
-      "refersTo": "button-primary",
-      "description": "Sticky white bar with the sparkles wordmark, 14px links and a filled sign-in.",
-      "html": "<header class=\"ds-nav\"><a class=\"ds-nav__brand\" href=\"#\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path d=\"M9.8 15.3 9 18l-.8-2.7a4.5 4.5 0 0 0-3-3L2.5 12l2.7-.8a4.5 4.5 0 0 0 3-3L9 5.5l.8 2.7a4.5 4.5 0 0 0 3 3l2.7.8-2.7.8a4.5 4.5 0 0 0-3 3ZM18 8l.4-1.4a2.3 2.3 0 0 1 1.6-1.6L21.4 4.5 20 4.1a2.3 2.3 0 0 1-1.6-1.6L18 1l-.4 1.4a2.3 2.3 0 0 1-1.6 1.6L14.6 4.5l1.4.4a2.3 2.3 0 0 1 1.6 1.6L18 8Z\"/></svg><span>Blog AI</span></a><nav class=\"ds-nav__links\"><a href=\"#\">Pricing</a><a href=\"#\">Blog</a><a href=\"#\">Tools</a></nav><a class=\"ds-nav__cta\" href=\"#\">Sign in</a></header>",
-      "css": ".ds-nav { display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 64px; padding: 0 24px; background: #fff; border-bottom: 1px solid #e5e7eb; font-family: Inter, system-ui, sans-serif; font-size: 14px; } .ds-nav__brand { display: inline-flex; align-items: center; gap: 8px; color: #b45309; text-decoration: none; } .ds-nav__brand span { color: #111827; font-weight: 600; font-size: 16px; } .ds-nav__links { display: flex; gap: 24px; } .ds-nav__links a { color: #374151; text-decoration: none; transition: color 150ms; } .ds-nav__links a:hover { color: #b45309; } .ds-nav__cta { background: #b45309; color: #fff; padding: 6px 12px; border-radius: 8px; text-decoration: none; transition: background-color 150ms; } .ds-nav__cta:hover { background: #92400e; }"
+      "refersTo": "wall-label",
+      "description": "The site header: sticky, 64px, 90% paper with a 12px blur, a 40% hairline beneath and the one structural shadow; <Logo> at the left, nav links in body sans with the ink underline, the sign-in button as the header cta-primary.",
+      "html": "<header class=\"ds-header\"><a class=\"ds-brand\" href=\"#\"><span class=\"ds-brand__mark\"></span><span class=\"ds-wordmark\">Blog <span class=\"ds-wordmark__ai\">AI</span></span></a><nav class=\"ds-nav\"><a class=\"ds-nav__link\" href=\"#\">Pricing</a><a class=\"ds-nav__link\" href=\"#\">Blog</a><a class=\"ds-nav__link\" href=\"#\">Tools</a></nav></header>",
+      "css": ".ds-header { position: sticky; top: 0; display: flex; align-items: center; gap: 40px; height: 64px; padding: 0 24px; border-bottom: 1px solid hsl(var(--border, 30 18% 86%)); background: hsl(var(--background, 38 25% 97%) / 0.9); backdrop-filter: blur(12px); box-shadow: 0 8px 30px rgba(0,0,0,0.08); font-family: var(--font-body, 'Instrument Sans'), ui-sans-serif, system-ui, sans-serif; } .ds-brand { display: flex; align-items: center; gap: 10px; color: hsl(var(--foreground, 210 15% 12%)); text-decoration: none; } .ds-brand__mark { width: 12px; height: 12px; background: hsl(var(--primary, 224 48% 32%)); } .ds-wordmark { font-family: var(--font-display, Fraunces), ui-serif, Georgia, serif; font-optical-sizing: auto; font-size: 1.125rem; font-weight: 650; letter-spacing: -0.02em; } .ds-nav { display: flex; gap: 24px; } .ds-nav__link { position: relative; font-size: 0.875rem; font-weight: 500; color: hsl(var(--foreground, 210 15% 12%)); text-decoration: none; transition: color 150ms ease; } .ds-nav__link::after { content: ''; position: absolute; left: 0; right: 0; top: calc(50% + 0.62em); height: 1px; background: currentColor; transform: scaleX(0); transform-origin: left; transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-nav__link:hover { color: hsl(var(--primary, 224 48% 32%)); } .ds-nav__link:hover::after, .ds-nav__link:focus-visible::after { transform: scaleX(1); } .ds-nav__link:focus-visible { outline: 2px solid hsl(var(--primary, 224 48% 32%)); outline-offset: 2px; } @media (prefers-reduced-motion: reduce) { .ds-nav__link::after { transition: none; } } .ds-wordmark__ai { color: hsl(var(--primary, 224 48% 32%)); }"
+    },
+    {
+      "name": "Brand Mark",
+      "kind": "custom",
+      "refersTo": "brand-mark",
+      "description": "The paragraph mark: a square Iron Gall plate with a pilcrow (¶) cut out of it in paper, one evenodd path so the ¶ is a true hole. Beside it the wordmark in Fraunces 700, Ink, with AI in Iron Gall; the mark is as tall as the wordmark capitals, 12px apart. No border, gradient, shadow or rotation. Minimum 16px for the mark, 96px for a lockup; clear space is the pilcrow bowl.",
+      "html": "<a class=\"ds-logo\" href=\"#\" aria-label=\"Blog AI\"><svg class=\"ds-logo__mark\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path fill=\"currentColor\" fill-rule=\"evenodd\" d=\"M0 0H24V24H0ZM9.6 3.2H18.8V5.6H16.8V20.8H14.4V5.6H12.6V20.8H10.2V13.8H9.6C6.7 13.8 4.4 11.4 4.4 8.5C4.4 5.6 6.7 3.2 9.6 3.2Z\"/></svg><span class=\"ds-logo__wordmark\">Blog <span class=\"ds-logo__ai\">AI</span></span></a>",
+      "css": ".ds-logo { display: inline-flex; align-items: center; gap: 12px; color: hsl(var(--foreground, 210 15% 12%)); text-decoration: none; } .ds-logo__mark { width: 24px; height: 24px; flex-shrink: 0; color: hsl(var(--primary, 224 48% 32%)); } .ds-logo__wordmark { font-family: var(--font-display, Fraunces), ui-serif, Georgia, serif; font-optical-sizing: auto; font-size: 34.29px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; } .ds-logo__ai { color: hsl(var(--primary, 224 48% 32%)); }"
     }
   ],
   "narrative": {
-    "northStar": "The Warm Press",
-    "overview": "Blog AI looks like a small, well-run publishing house that happens to be software. The canvas is a faint cream that drifts to white, the accent is a single burnt amber, and every claim on the marketing surfaces is set in a serif while every control is set in Inter. The tone is confident and unhurried: generous section padding, one accent, no decoration that does not carry meaning.\n\nThe system is one hue deep. Amber does all the work: dark amber for text and filled actions, mid amber for switches and progress, pale amber for icon tiles, badges and hover washes. Green and red appear only as status. The Pro tier borrows indigo for its badge and nothing else. The dark theme swaps the cream for near-black and the amber steps two shades lighter; it is a re-lit version of the same room, not a second brand.",
+    "northStar": "The Manuscript",
+    "overview": "Blog AI is a manuscript in progress. Every post, book and template is a sheet of paper pasted into a working notebook: a square draft sheet, a title in serif, a catalogue line in mono underneath (words · tone · date). Every generated draft is the next page, and the only saturated thing on any page is the ink the editor marks it with.\n\nThe notebook is the same stationery as lscaturchio.xyz and InfiniStar, by design: warm off-white paper with a near-invisible grain, structure drawn with hairlines and space rather than boxes, a serif with personality for what the site says, a plain sans for what the reader reads, and a monospace label beside every piece of metadata. What tells the three notebooks apart is the pen. The personal site writes in forest green, InfiniStar in mulberry; Blog AI writes in Iron Gall, the blue-black ink that manuscripts were actually written in — the editor's pen on the draft.\n\nWhat Blog AI keeps that the sibling sites do not have: the draft sheet as the recurring unit of the work, hairline-divided rows for history, templates and tools, and a working surface of forms, generators and settings that the notebook language extends to.\n\nThe system deliberately is not three things. It is not the amber-on-cream SaaS it replaced: no body gradient, no radial orbs behind the hero, no glass cards, no glow or lift shadows, no sparkle pill, no sections that fade in as you scroll. It is not landing-page chrome: no three-column feature tiles, no badge pills as decoration. And it is not a palette: every Tailwind hue that used to be reached for directly is being driven to zero by a ratchet, and colour arrives through the tokens.",
     "keyCharacteristics": [
-      "Serif display over sans interface, both at semibold, never bold-on-bold.",
-      "One accent hue, four jobs (text, fill, tile, wash), tinted rather than grayed.",
-      "Cream canvas with translucent \"glass\" cards that let the gradient breathe through.",
-      "Hairline borders (1px) carry structure; shadows are quiet and reserved for hover.",
-      "Motion is a single fade-and-rise per section, then stillness."
+      "One paper ground, warm off-white with a fixed 3.5% noise grain; dark mode is a night variant of the same page.",
+      "One ink, Iron Gall, spent sparingly: links, hover, selection, the focus ring, the single primary button per view.",
+      "Hairline rules and tint shifts structure the page; there are no floating cards and no decorative shadows.",
+      "Three type voices with fixed jobs: Fraunces speaks, Instrument Sans reads, IBM Plex Mono catalogues.",
+      "Squareness marks the work (draft sheets); roundness marks the interface (controls, chips).",
+      "Motion is the interface responding to the reader, never the page introducing itself."
     ],
     "rules": [
-      { "name": "The One Hue Rule", "body": "Amber is the only color with a voice. Green and red state a status; indigo names a plan; nothing else gets a hue.", "section": "colors" },
-      { "name": "The Tint-Not-Gray Rule", "body": "Text that sits on a colored surface is a darker shade of that surface's hue (amber-700/900 on amber-50, emerald-700 on emerald-50). Gray text on color is a defect.", "section": "colors" },
-      { "name": "The Contrast Floor Rule", "body": "Small text is at least 4.5:1, icons and fills at least 3:1, in both themes. The gray-400 step is a placeholder and disabled color, not a text color.", "section": "colors" },
-      { "name": "The Serif Speaks Rule", "body": "The serif is reserved for h1 and h2 on marketing and banner surfaces. Product UI headings stay in Inter so the workspace reads as a tool.", "section": "typography" },
-      { "name": "The Quiet Rest Rule", "body": "Nothing floats at rest beyond shadow-sm. Elevation is a response to hover or to being the highlighted option.", "section": "elevation" }
+      {
+        "name": "The One Pen Rule",
+        "body": "Iron Gall is the only chromatic accent on any surface, and it marks action or emphasis, never area. If a screen has the ink in more than a few places, it has too many. No gradient anywhere, on anything.",
+        "section": "colors"
+      },
+      {
+        "name": "The Sand Hairline Rule",
+        "body": "Dividers are 1px of Hairline, sand-toned, never neutral grey and never thicker. Depth of structure is expressed by more rules and more space, not by darker lines.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tinted Paper Rule",
+        "body": "A \"contained\" surface is the same paper at a different tint (Paper Card lighter, Paper Tinted darker), bordered by a hairline. It is never a white box on a grey page.",
+        "section": "colors"
+      },
+      {
+        "name": "The Wall Label Rule",
+        "body": "Every piece of metadata (a date, a count, a tone, a category) is set as a Label: mono, small, uppercase, tracked, muted. Metadata never borrows the body or heading voice. Every section, row and figure introduces itself with one before its title; the kicker is the house device.",
+        "section": "typography"
+      },
+      {
+        "name": "The Serif Speaks Rule",
+        "body": "Fraunces appears only where the site is speaking: h1-h6, the type-scale utilities, the wordmark, titles on draft sheets, stat numerals. Never in body copy, UI controls, generated drafts or labels. font-display on a non-heading fails the build unless the element carries data-voice=\"display\".",
+        "section": "typography"
+      },
+      {
+        "name": "The Fluid Heading Rule",
+        "body": "Headings scale with clamp(), not breakpoints; weights step down the hierarchy (720 → 700 → 650 → 620 → 560) and tracking loosens as size falls. A leading-* class is honoured over a responsive text-* size, so write the line-height you mean.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Paper Rule",
+        "body": "No shadow on any content surface, at rest or on hover. A hovered surface changes tint and border colour; it does not rise.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Two Sheets Rule",
+        "body": "The only elevated objects are the sticky header and the primary button 1px ledge. Nothing else may add a shadow without changing this file first.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Scrim Rule",
+        "body": "A modal separates with a scrim, not a shadow. overlay-scrim (hsl(var(--scrim) / var(--scrim-alpha)), ink in both themes, 25% on paper and 55% at night) is the third sanctioned separation mechanism, and the only one available to an overlay.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Measure Rule",
+        "body": "Running text, including generated drafts, caps at 65-75 characters per line, measured in the DOM, not assumed from the unit.",
+        "section": "elevation"
+      }
     ],
     "dos": [
-      "Do put small text in gray-500 or darker on light surfaces and gray-400 or lighter on dark surfaces; both clear 4.5:1.",
-      "Do use amber-700 for any amber that carries text or sits under white text, and keep amber-600 for fills that only need 3:1.",
-      "Do tint text on a colored wash from that wash's hue (amber-900 on amber-50, red-600 on red-50).",
-      "Do keep the serif for marketing and banner headings, at semibold, with tight tracking only on the display size.",
-      "Do reveal sections once with the shared FADE_UP variant (24px rise, 0.5s ease-out, 0.12s stagger, useInView once) and leave everything else still.",
-      "Do use full-perimeter hairline borders and shadow-sm for structure; lift to shadow-lg only on hover or for the featured option."
+      "Do introduce every section, row and figure with a wall label before its title.",
+      "Do divide with 1px sand hairlines and 64-96px of vertical space; let whitespace and rules do the structuring.",
+      "Do spend Iron Gall on action and emphasis only: links, hover, selection, one primary button per view.",
+      "Do build text-led lists as stacked hairline-divided rows and keep previews as square draft sheets in a gallery grid.",
+      "Do route every colour through the tokens; status is text-success, text-warning, text-info, text-destructive and their -muted washes.",
+      "Do keep numerals tabular in labels and oldstyle in display, and set every date and count in mono.",
+      "Do design dark mode as the same notebook at night: cool hue-220 page, the ink lifted to 224 55% 76%, hairlines at 18% lightness.",
+      "Do give an empty section an honest empty state in the same voice: a wall label, one serif line, one primary action.",
+      "Do set generated drafts in the body sans at the reading measure; the serif is for what the site says, not what the model wrote."
     ],
     "donts": [
-      "Don't set white text on amber-600 or lighter; it fails AA.",
-      "Don't use gray-400 for anything but placeholders and disabled states on a light surface.",
-      "Don't add a colored left or right border thicker than 1px to a card, list row, quote or callout; highlight with a full amber border or a wash instead.",
-      "Don't use bounce or elastic motion; loading states pulse or spin.",
-      "Don't introduce a second accent hue. Indigo exists for the Pro badge only; purple, blue and violet gradients are out.",
-      "Don't put a kicker or eyebrow label above a heading; the serif heading carries the section."
+      "Don't add shadows to content surfaces at rest or on hover; the header sheet and the CTA ledge are the only elevated objects.",
+      "Don't reintroduce gradients, glow, blurred blooms, orbs or glass cards; the amber era is gone.",
+      "Don't build SaaS furniture: three-column feature tiles, pill badges as decoration, sparkle icons.",
+      "Don't use monospace as a voice. It is the label beside the work, never headings or body copy; the site is not a terminal.",
+      "Don't set Fraunces in body text, controls, drafts or labels, and don't set body copy in anything but Instrument Sans.",
+      "Don't use neutral grey for rules or muted surfaces; every neutral is warm paper (hue 30-38) in light mode and cool night (hue 220) in dark.",
+      "Don't introduce a second accent colour; Iron Gall Soft exists for secondary fills and the four signal colours are for status only.",
+      "Don't round a draft sheet or scale it on hover; squareness marks the work.",
+      "Don't define --spacing-xs..4xl tokens in @theme; in Tailwind v4 they shadow the max-w-* container scale and collapse layouts.",
+      "Don't animate content in, and don't ship a skeleton that a reader without JavaScript would keep."
     ]
   }
 }
