@@ -140,8 +140,8 @@ class DatabaseSettings(BaseSettings):
         extra="ignore",
     )
 
-    # Use DATABASE_URL in serverless environments (Vercel) and prefer
-    # DATABASE_URL_DIRECT for long-lived backends (Railway) when available.
+    # Use DATABASE_URL in serverless environments (Vercel, where production runs)
+    # and prefer DATABASE_URL_DIRECT for long-lived container backends when available.
     database_url: Optional[SecretStr] = Field(
         default=None,
         description="Postgres connection string (pooled is fine for serverless)",
@@ -528,8 +528,11 @@ class SentrySettings(BaseSettings):
         description="Sentry profiling sample rate (0.0 to 1.0)",
     )
     sentry_release: Optional[str] = Field(
-        default="blog-ai@1.0.0",
-        description="Sentry release version",
+        default=None,
+        description=(
+            "Sentry release tag. Unset: server.py derives blog-ai@<version> "
+            "from pyproject.toml (app/version.py)."
+        ),
     )
     server_name: str = Field(
         default="blog-ai-api",

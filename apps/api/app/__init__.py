@@ -24,8 +24,7 @@ from .exceptions import (
     StripeServiceError,
     ValidationError,
 )
-
-__version__ = "1.0.0"
+from .version import __version__
 
 __all__ = [
     # Exception classes
@@ -48,4 +47,6 @@ __all__ = [
     "ErrorCode",
     # Error handlers
     "register_exception_handlers",
+    # Version (from pyproject.toml, see app/version.py)
+    "__version__",
 ]
