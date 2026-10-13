@@ -10,8 +10,14 @@ updates:
   groups:
     development-dependencies:
       dependency-type: development
+      update-types:
+      - minor
+      - patch
     production-dependencies:
       dependency-type: production
+      update-types:
+      - minor
+      - patch
     security-updates:
       applies-to: security-updates
       patterns:
@@ -35,8 +41,14 @@ updates:
   groups:
     development-dependencies:
       dependency-type: development
+      update-types:
+      - minor
+      - patch
     production-dependencies:
       dependency-type: production
+      update-types:
+      - minor
+      - patch
     security-updates:
       applies-to: security-updates
       patterns:
