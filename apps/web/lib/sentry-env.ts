@@ -60,4 +60,33 @@ export const SENTRY_ENVIRONMENT: string = VERCEL_ENV || 'local'
 export const SENTRY_ENABLED: boolean =
   Boolean(SENTRY_DSN) && (IS_DEPLOYED || FORCE_ENABLE) && !FORCE_DISABLE
 
+/**
+ * What the SDK may attach to events on its own, shared by all three runtimes.
+ *
+ * Sentry v11 replaced `sendDefaultPii` with `dataCollection` and made the
+ * unset default permissive: user info and IP, cookies, unscrubbed headers,
+ * full request/response bodies, database query data, queue payloads and GenAI
+ * inputs/outputs are all collected unless told otherwise. This app never set
+ * `sendDefaultPii`, so it ran on the restrictive v10 default; this object is
+ * that default spelled out (from the v10 -> v11 migration guide). Do not
+ * delete it or leave `dataCollection` unset: that silently widens what is
+ * sent, and the privacy page describes the restrictive behaviour.
+ */
+const SENSITIVE_KEY_DENYLIST = ['forwarded', '-ip', 'remote-', 'via', '-user']
+
+export const SENTRY_DATA_COLLECTION = {
+  userInfo: false,
+  cookies: false,
+  httpHeaders: {
+    request: { deny: SENSITIVE_KEY_DENYLIST },
+    response: { deny: SENSITIVE_KEY_DENYLIST },
+  },
+  httpBodies: [],
+  urlQueryParams: { deny: SENSITIVE_KEY_DENYLIST },
+  genAI: { inputs: false, outputs: false },
+  databaseQueryData: false,
+  queues: false,
+  graphQL: { document: false, variables: false },
+}
+
 export { SENTRY_DSN }

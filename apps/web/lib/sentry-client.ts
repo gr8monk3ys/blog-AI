@@ -15,7 +15,12 @@
  * the load itself and reports once init has run.
  */
 
-import { SENTRY_DSN, SENTRY_ENABLED, SENTRY_ENVIRONMENT } from './sentry-env'
+import {
+  SENTRY_DATA_COLLECTION,
+  SENTRY_DSN,
+  SENTRY_ENABLED,
+  SENTRY_ENVIRONMENT,
+} from './sentry-env'
 
 type SentryModule = typeof import('./sentry-sdk')
 
@@ -40,6 +45,9 @@ function init(Sentry: SentryModule): SentryModule {
     // Environment tagging: the deployed environment ("production" /
     // "preview"), so the two stay distinguishable in Sentry.
     environment: SENTRY_ENVIRONMENT,
+
+    // Keep the restrictive v10 data-collection baseline (lib/sentry-env.ts).
+    dataCollection: SENTRY_DATA_COLLECTION,
 
     // Filter out common noise
     ignoreErrors: [

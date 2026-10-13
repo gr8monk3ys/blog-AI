@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-import { withSentryConfig } from '@sentry/nextjs'
+import { withSentryConfig } from '@sentry/nextjs/config'
 import { dirname } from 'path'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -264,15 +264,15 @@ const sentryWebpackPluginOptions = {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
 
-  // Only upload source maps if auth token is configured
   silent: true, // Suppress logs
 
-  // Hide source maps from users (security)
-  hideSourceMaps: true,
-
-  // Disable the Sentry webpack plugin if not configured
-  disableServerWebpackPlugin: !process.env.SENTRY_AUTH_TOKEN,
-  disableClientWebpackPlugin: !process.env.SENTRY_AUTH_TOKEN,
+  // Source maps are only uploaded when SENTRY_AUTH_TOKEN is set; without it
+  // skip the source-map handling altogether. (The pre-v8 `hideSourceMaps` and
+  // `disable*WebpackPlugin` options that used to sit here no longer exist:
+  // maps are hidden from the browser and deleted after upload by default.)
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
+  },
 }
 
 // Apply bundle analyzer wrapper
