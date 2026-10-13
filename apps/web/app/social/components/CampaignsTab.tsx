@@ -97,8 +97,8 @@ export default function CampaignsTab({ showToast, confirm }: CampaignsTabProps) 
       <div className="space-y-4 animate-pulse">
         {[1, 2].map((n) => (
           <div key={n} className="rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-2" />
-            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-sm w-1/3 mb-2" />
+            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-sm w-1/2" />
           </div>
         ))}
       </div>

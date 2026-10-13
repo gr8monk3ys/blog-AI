@@ -83,7 +83,7 @@ export default function UsageTab({ stats }: UsageTabProps) {
       {/* Tier badge */}
       <div className="flex items-center gap-3">
         <span
-          className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${tierDisplay.bgColor} ${tierDisplay.color} dark:bg-opacity-20`}
+          className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${tierDisplay.planBgColor} ${tierDisplay.color}`}
         >
           {tierDisplay.name} Plan
         </span>
@@ -162,7 +162,7 @@ export default function UsageTab({ stats }: UsageTabProps) {
 
       {/* Upgrade CTA */}
       {showUpgradeCTA && (
-        <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-lg border border-amber-200 dark:border-amber-800 p-4">
+        <div className="bg-linear-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-lg border border-amber-200 dark:border-amber-800 p-4">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
             Need More Capacity?
           </h3>

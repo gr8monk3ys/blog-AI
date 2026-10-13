@@ -347,14 +347,14 @@ export default function UploadDropZone({
                   className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
                 >
                   <DocumentTextIcon aria-hidden="true"
-                    className={`h-5 w-5 flex-shrink-0 ${typeConfig?.color || 'text-gray-400'}`}
+                    className={`h-5 w-5 shrink-0 ${typeConfig?.color || 'text-gray-400'}`}
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <p className="text-sm text-gray-900 dark:text-gray-100 truncate">
                         {item.file.name}
                       </p>
-                      <span className="text-xs text-gray-400 ml-2 flex-shrink-0">
+                      <span className="text-xs text-gray-400 ml-2 shrink-0">
                         {formatBytes(item.file.size)}
                       </span>
                     </div>
@@ -373,7 +373,7 @@ export default function UploadDropZone({
                     )}
                   </div>
                   {/* Status / remove */}
-                  <div className="flex-shrink-0 flex items-center gap-1">
+                  <div className="shrink-0 flex items-center gap-1">
                     {statusIcon(item.status)}
                     {item.status === 'uploading' && (
                       <span className="text-xs text-amber-700 font-medium">{item.progress}%</span>

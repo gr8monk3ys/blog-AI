@@ -1,6 +1,113 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@plugin '@tailwindcss/typography';
+
+/* types/usage.ts holds the per-tier class names (TIER_DISPLAY). v4's
+   automatic source detection happens to cover it today; this keeps the
+   dependency explicit, as tailwind.config.js's `content` did. Those classes
+   were once generated only by coincidence — adding a dark: variant there
+   produced a class that was never emitted and a tier chip that silently lost
+   its colour. */
+@source '../types';
+
+/* Dark mode is a class on <html>, set by the inline theme script in
+   app/layout.tsx before first paint (v3: darkMode: 'class'). */
+@custom-variant dark (&:is(.dark *));
+
+/* Theme tokens, moved here from tailwind.config.js (theme.extend).
+ *
+ * `inline` matters for the fonts: --font-inter / --font-source-serif are set
+ * on <body> by next/font, so a `font-sans` utility has to carry the var()
+ * itself and resolve it on the element. Without `inline` Tailwind would emit
+ * `--font-sans: var(--font-inter), …` on :root, where --font-inter does not
+ * exist, and every font-sans would fall back to the browser default.
+ *
+ * The colour values are the amber / emerald / red scales from
+ * tailwindcss/colors (v3), written out so the output is byte-identical.
+ *
+ * NOTE: never define --spacing-xs/sm/md/lg/xl/2xl here. In Tailwind v4 they
+ * generate spacing-suffixed utilities (max-w-2xl, w-lg, …) that shadow the
+ * container scale and silently collapse layouts. */
+@theme inline {
+  --color-primary-50: #fffbeb;
+  --color-primary-100: #fef3c7;
+  --color-primary-200: #fde68a;
+  --color-primary-300: #fcd34d;
+  --color-primary-400: #fbbf24;
+  --color-primary-500: #f59e0b;
+  --color-primary-600: #d97706;
+  --color-primary-700: #b45309;
+  --color-primary-800: #92400e;
+  --color-primary-900: #78350f;
+  --color-primary-950: #451a03;
+
+  --color-success-50: #ecfdf5;
+  --color-success-100: #d1fae5;
+  --color-success-200: #a7f3d0;
+  --color-success-300: #6ee7b7;
+  --color-success-400: #34d399;
+  --color-success-500: #10b981;
+  --color-success-600: #059669;
+  --color-success-700: #047857;
+  --color-success-800: #065f46;
+  --color-success-900: #064e3b;
+  --color-success-950: #022c22;
+
+  --color-danger-50: #fef2f2;
+  --color-danger-100: #fee2e2;
+  --color-danger-200: #fecaca;
+  --color-danger-300: #fca5a5;
+  --color-danger-400: #f87171;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+  --color-danger-800: #991b1b;
+  --color-danger-900: #7f1d1d;
+  --color-danger-950: #450a0a;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-source-serif), 'Iowan Old Style', 'Times New Roman', serif;
+}
+
+/* ---------------------------------------------------------------------------
+   Tailwind v3 preflight defaults that v4 changed. Each rule keeps the v3
+   rendering until the call sites name what they want; drop a rule once
+   nothing depends on it.
+   --------------------------------------------------------------------------- */
+@layer base {
+  /* v4 defaults border-color to currentColor; v3 used gray-200 (#e5e7eb).
+     Every bare `border` in the app was written against that. */
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: #e5e7eb;
+  }
+
+  /* v4 colours placeholders at 50% of the text colour; v3 used gray-400. */
+  input::placeholder,
+  textarea::placeholder {
+    color: #9ca3af;
+  }
+
+  /* v4 leaves buttons at cursor: default; v3 gave them the hand. */
+  button,
+  [role='button'] {
+    cursor: pointer;
+  }
+  :disabled {
+    cursor: default;
+  }
+
+  /* v4 zeroes padding on every element; v3 left the browser's 1px on table
+     cells, so a cell with `py-4 pr-8` kept 1px on the left and the auto
+     table layout sized every column around it. */
+  td,
+  th {
+    padding: 1px;
+  }
+}
 
 :root {
   --foreground-rgb: 23, 23, 23;
@@ -96,31 +203,31 @@ body {
   -webkit-backdrop-filter: blur(18px);
 }
 
-/* Common dark-mode-aware utility patterns */
-@layer components {
-  .page-gradient {
-    @apply bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900;
-  }
+/* Common dark-mode-aware utility patterns. @utility rather than
+   @layer components: v4 rejects @apply with a variant (dark:) inside a layer,
+   and @utility classes also take variants at the call site. */
+@utility page-gradient {
+  @apply bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900;
+}
 
-  .card-surface {
-    @apply bg-white border border-gray-200 dark:bg-gray-900 dark:border-gray-800;
-  }
+@utility card-surface {
+  @apply bg-white border border-gray-200 dark:bg-gray-900 dark:border-gray-800;
+}
 
-  .input-surface {
-    @apply bg-white border border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100;
-  }
+@utility input-surface {
+  @apply bg-white border border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100;
+}
 
-  .text-primary {
-    @apply text-gray-900 dark:text-gray-100;
-  }
+@utility text-primary {
+  @apply text-gray-900 dark:text-gray-100;
+}
 
-  .text-secondary {
-    @apply text-gray-600 dark:text-gray-400;
-  }
+@utility text-secondary {
+  @apply text-gray-600 dark:text-gray-400;
+}
 
-  .text-muted {
-    @apply text-gray-500 dark:text-gray-500;
-  }
+@utility text-muted {
+  @apply text-gray-500 dark:text-gray-500;
 }
 
 /* ---------------------------------------------------------------------------

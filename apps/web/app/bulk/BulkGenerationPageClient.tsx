@@ -441,7 +441,7 @@ function useBulkGenerationPageView() {
   return (
     <>
       <SiteHeader />
-      <main id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
 
       <BulkHero />
 
@@ -748,7 +748,7 @@ function useBulkGenerationPageView() {
                       checked={useResearch}
                       onChange={(e) => setUseResearch(e.target.checked)}
                       disabled={isProcessing}
-                      className="w-4 h-4 text-amber-700 border-gray-300 rounded focus-visible:ring-amber-500"
+                      className="w-4 h-4 text-amber-700 border-gray-300 rounded-sm focus-visible:ring-amber-500"
                     />
                     <span className="text-sm text-gray-700 dark:text-gray-300">Use web research</span>
                   </label>
@@ -759,7 +759,7 @@ function useBulkGenerationPageView() {
                       checked={proofread}
                       onChange={(e) => setProofread(e.target.checked)}
                       disabled={isProcessing}
-                      className="w-4 h-4 text-amber-700 border-gray-300 rounded focus-visible:ring-amber-500"
+                      className="w-4 h-4 text-amber-700 border-gray-300 rounded-sm focus-visible:ring-amber-500"
                     />
                     <span className="text-sm text-gray-700 dark:text-gray-300">Proofread content</span>
                   </label>
@@ -770,7 +770,7 @@ function useBulkGenerationPageView() {
                       checked={humanize}
                       onChange={(e) => setHumanize(e.target.checked)}
                       disabled={isProcessing}
-                      className="w-4 h-4 text-amber-700 border-gray-300 rounded focus-visible:ring-amber-500"
+                      className="w-4 h-4 text-amber-700 border-gray-300 rounded-sm focus-visible:ring-amber-500"
                     />
                     <span className="text-sm text-gray-700 dark:text-gray-300">Humanize content</span>
                   </label>
@@ -783,7 +783,7 @@ function useBulkGenerationPageView() {
               <m.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-br from-emerald-50 to-emerald-50 dark:from-emerald-900/20 dark:to-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800 p-6"
+                className="bg-linear-to-br from-emerald-50 to-emerald-50 dark:from-emerald-900/20 dark:to-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800 p-6"
               >
                 <div className="flex items-center gap-2 mb-3">
                   <CurrencyDollarIcon aria-hidden="true" className="w-5 h-5 text-emerald-600" />
@@ -861,7 +861,7 @@ function useBulkGenerationPageView() {
                         {Object.entries(providersUsed).map(([provider, count]) => (
                           <span
                             key={provider}
-                            className="inline-flex items-center px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs text-gray-700 dark:text-gray-300"
+                            className="inline-flex items-center px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-sm text-xs text-gray-700 dark:text-gray-300"
                           >
                             {provider}: {count}
                           </span>
@@ -917,7 +917,7 @@ function useBulkGenerationPageView() {
                   <button
                     onClick={startGeneration}
                     disabled={items.length === 0 || !canGenerate}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-linear-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <PlayIcon aria-hidden="true" className="w-5 h-5" />
                     Generate {items.length} Post{items.length !== 1 ? 's' : ''}

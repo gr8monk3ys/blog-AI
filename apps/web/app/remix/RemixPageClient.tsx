@@ -231,7 +231,7 @@ function useRemixPageContentView() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Panel - Input */}
           <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-6">
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xs p-6">
               <h2 className="text-lg font-semibold dark:text-gray-100 mb-4">Model Provider</h2>
               <div className="flex items-center gap-3">
                 <label htmlFor="remix-provider" className="text-sm font-medium text-gray-700 dark:text-gray-300 w-20">

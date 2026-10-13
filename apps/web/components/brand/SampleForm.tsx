@@ -27,7 +27,7 @@ function SampleFormComponent({
   const wordCount = content.split(/\s+/).filter(Boolean).length
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-6">
+    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xs p-6">
       <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
         <PlusIcon aria-hidden="true" className="w-5 h-5" />
         Add Voice Sample

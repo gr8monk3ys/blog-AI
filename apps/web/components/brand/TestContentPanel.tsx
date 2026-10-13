@@ -23,7 +23,7 @@ function TestContentPanelComponent({
   scoreResult,
 }: TestContentPanelProps) {
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-6">
+    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xs p-6">
       <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Test Content</h2>
 
       <textarea

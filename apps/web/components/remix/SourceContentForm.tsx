@@ -22,7 +22,7 @@ function SourceContentFormComponent({
   const wordCount = sourceContent.split(/\s+/).filter(Boolean).length
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-6">
+    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xs p-6">
       <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Source Content</h2>
 
       <div className="space-y-4">

@@ -51,7 +51,7 @@ export default function SubscriptionCard({ subscription: sub, onEdit, onDelete, 
             {sub.event_types.map((type) => (
               <span
                 key={type}
-                className="px-2 py-0.5 rounded text-xs font-mono bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+                className="px-2 py-0.5 rounded-sm text-xs font-mono bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
               >
                 {type}
               </span>
@@ -73,7 +73,7 @@ export default function SubscriptionCard({ subscription: sub, onEdit, onDelete, 
 
           {/* Last error */}
           {sub.last_error && (
-            <p className="mt-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded px-2 py-1 border border-red-200 dark:border-red-800">
+            <p className="mt-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-sm px-2 py-1 border border-red-200 dark:border-red-800">
               Last error: {sub.last_error}
             </p>
           )}

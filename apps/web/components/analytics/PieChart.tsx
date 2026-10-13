@@ -89,7 +89,7 @@ export default function PieChart({
   }, [data, size])
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-6">
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-xs p-6">
       <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">{title}</h3>
 
       {loading ? (
@@ -171,7 +171,7 @@ export default function PieChart({
                   transition={{ delay: 0.3 + i * 0.05 }}
                 >
                   <div
-                    className="w-3 h-3 rounded-full flex-shrink-0"
+                    className="w-3 h-3 rounded-full shrink-0"
                     style={{ backgroundColor: item.color }}
                   />
                   <span className="text-sm text-gray-600 dark:text-gray-400 truncate">

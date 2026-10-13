@@ -27,7 +27,7 @@ export default function EventTypeReference() {
               <div className="space-y-2">
                 {group.types.map((type) => (
                   <div key={type} className="flex items-start gap-3">
-                    <code className="text-xs font-mono px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 shrink-0">
+                    <code className="text-xs font-mono px-2 py-0.5 rounded-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 shrink-0">
                       {type}
                     </code>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -43,9 +43,9 @@ export default function EventTypeReference() {
             <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Signature Verification</h4>
             <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
               If you provide a signing secret, each delivery includes an{' '}
-              <code className="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-700">X-Webhook-Signature</code> header
-              in the format <code className="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-700">t=timestamp,v1=signature</code>.
-              Verify by computing HMAC-SHA256 of <code className="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-700">{'{timestamp}.{payload}'}</code> using your secret.
+              <code className="px-1 py-0.5 rounded-sm bg-gray-100 dark:bg-gray-700">X-Webhook-Signature</code> header
+              in the format <code className="px-1 py-0.5 rounded-sm bg-gray-100 dark:bg-gray-700">t=timestamp,v1=signature</code>.
+              Verify by computing HMAC-SHA256 of <code className="px-1 py-0.5 rounded-sm bg-gray-100 dark:bg-gray-700">{'{timestamp}.{payload}'}</code> using your secret.
             </p>
           </div>
         </div>

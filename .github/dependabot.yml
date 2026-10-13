@@ -30,11 +30,6 @@ updates:
     # load against it. Revisit when typescript-eslint supports it.
     - dependency-name: typescript
       versions: ['>=7']
-    # Tailwind 4 is a CSS-first rewrite (new PostCSS plugin, config migration,
-    # changed preflight/ring/border defaults across every page). Taking it is a
-    # deliberate migration, not a dependency bump.
-    - dependency-name: tailwindcss
-      versions: ['>=4']
   groups:
     development-dependencies:
       dependency-type: development

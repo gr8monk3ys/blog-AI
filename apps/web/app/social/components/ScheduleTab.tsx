@@ -70,8 +70,8 @@ export default function ScheduleTab({ showToast, confirm }: ScheduleTabProps) {
     return (
       <div className="space-y-4 animate-pulse">
         <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-4" />
-          <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded" />
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-sm w-1/3 mb-4" />
+          <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-sm" />
         </div>
       </div>
     )

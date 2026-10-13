@@ -71,8 +71,8 @@ export default function TeamPageClient() {
     return (
       <main id="main-content" tabIndex={-1} className="max-w-4xl mx-auto px-4 py-12">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded w-48" />
-          <div className="h-64 bg-gray-200 dark:bg-gray-800 rounded" />
+          <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded-sm w-48" />
+          <div className="h-64 bg-gray-200 dark:bg-gray-800 rounded-sm" />
         </div>
       </main>
     )
@@ -130,7 +130,7 @@ export default function TeamPageClient() {
                       classNames(
                         'w-full rounded-md py-2 text-sm font-medium leading-5 transition-colors',
                         selected
-                          ? 'bg-white dark:bg-gray-900 text-amber-700 dark:text-amber-400 shadow'
+                          ? 'bg-white dark:bg-gray-900 text-amber-700 dark:text-amber-400 shadow-sm'
                           : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                       )
                     }

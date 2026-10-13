@@ -53,23 +53,23 @@ function ClaimRow({ claim, index }: { claim: ClaimVerification; index: number })
   const config = STATUS_CONFIG[claim.status]
 
   return (
-    <div className="border-t border-black/[0.04] dark:border-white/[0.04] first:border-t-0">
+    <div className="border-t border-black/4 dark:border-white/4 first:border-t-0">
       <button
         type="button"
         onClick={() => setExpanded((prev) => !prev)}
-        className="w-full text-left px-5 py-3 flex items-start gap-3 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+        className="w-full text-left px-5 py-3 flex items-start gap-3 hover:bg-black/2 dark:hover:bg-white/2 transition-colors"
         aria-expanded={expanded}
         aria-controls={`claim-detail-${index}`}
       >
         <span
-          className={`mt-0.5 flex-shrink-0 text-xs font-semibold uppercase tracking-wide ${config.color}`}
+          className={`mt-0.5 shrink-0 text-xs font-semibold uppercase tracking-wide ${config.color}`}
         >
           {config.label}
         </span>
         <span className="flex-1 text-sm text-gray-700 dark:text-gray-300 leading-snug">
           {claim.text}
         </span>
-        <span className="flex-shrink-0 text-xs text-gray-400">
+        <span className="shrink-0 text-xs text-gray-400">
           {Math.round(claim.confidence * 100)}%
         </span>
       </button>
@@ -77,7 +77,7 @@ function ClaimRow({ claim, index }: { claim: ClaimVerification; index: number })
       {expanded && (
         <div
           id={`claim-detail-${index}`}
-          className="px-5 pb-4 border-t border-black/[0.04] dark:border-white/[0.04]"
+          className="px-5 pb-4 border-t border-black/4 dark:border-white/4"
         >
           <div className="mt-3">
             <ConfidenceBar confidence={claim.confidence} />
@@ -122,7 +122,7 @@ export default function FactCheckResults({ result }: FactCheckResultsProps) {
       <button
         type="button"
         onClick={() => setPanelOpen((prev) => !prev)}
-        className="w-full flex items-center justify-between px-6 py-4 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+        className="w-full flex items-center justify-between px-6 py-4 hover:bg-black/2 dark:hover:bg-white/2 transition-colors"
         aria-expanded={panelOpen}
         aria-controls="fact-check-body"
       >
@@ -145,7 +145,7 @@ export default function FactCheckResults({ result }: FactCheckResultsProps) {
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-3 flex-shrink-0">
+        <div className="flex items-center gap-3 shrink-0">
           <span className={`text-sm font-bold ${overallColor}`}>
             {overallPercent}% confident
           </span>
@@ -166,7 +166,7 @@ export default function FactCheckResults({ result }: FactCheckResultsProps) {
       {panelOpen && (
         <div
           id="fact-check-body"
-          className="border-t border-black/[0.04] dark:border-white/[0.04]"
+          className="border-t border-black/4 dark:border-white/4"
         >
           {/* Overall confidence bar */}
           <div className="px-6 py-4">
@@ -180,7 +180,7 @@ export default function FactCheckResults({ result }: FactCheckResultsProps) {
 
           {/* Claims */}
           {result.claims.length > 0 && (
-            <div className="border-t border-black/[0.04] dark:border-white/[0.04]">
+            <div className="border-t border-black/4 dark:border-white/4">
               <p className="px-5 pt-3 pb-1 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                 Claims ({result.claims.length})
               </p>

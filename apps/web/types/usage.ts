@@ -59,12 +59,16 @@ export interface UsageCheckResponse {
 // "Free" header was effectively invisible. All four tiers now clear AA in
 // both themes; the measured ratios are in the PR that introduced this note.
 //
-// NOTE: apps/web/tailwind.config.js must keep ./types/** in `content`, or
-// these class names are never generated.
+// NOTE: apps/web/app/globals.css must keep `@source '../types'`, or these
+// class names are never generated.
 export const TIER_DISPLAY: Record<UsageTier, {
   name: string
   color: string
   bgColor: string
+  /** The /knowledge plan badge: the light chip as-is, and in dark mode the
+   *  same colour at 20%. Tailwind v3 spelled that with a separate opacity
+   *  utility at the call site; v4 has none, so the alpha sits on the colour. */
+  planBgColor: string
   borderColor: string
   badgeColor: string
 }> = {
@@ -72,6 +76,7 @@ export const TIER_DISPLAY: Record<UsageTier, {
     name: 'Free',
     color: 'text-gray-700 dark:text-gray-200',
     bgColor: 'bg-gray-100 dark:bg-gray-800',
+    planBgColor: 'bg-gray-100 dark:bg-gray-800/20',
     borderColor: 'border-gray-200',
     badgeColor: 'bg-gray-500',
   },
@@ -79,6 +84,7 @@ export const TIER_DISPLAY: Record<UsageTier, {
     name: 'Starter',
     color: 'text-amber-700 dark:text-amber-300',
     bgColor: 'bg-amber-100 dark:bg-amber-900',
+    planBgColor: 'bg-amber-100 dark:bg-amber-900/20',
     borderColor: 'border-amber-200',
     badgeColor: 'bg-amber-600',
   },
@@ -86,6 +92,7 @@ export const TIER_DISPLAY: Record<UsageTier, {
     name: 'Pro',
     color: 'text-indigo-700 dark:text-indigo-300',
     bgColor: 'bg-indigo-100 dark:bg-indigo-900',
+    planBgColor: 'bg-indigo-100 dark:bg-indigo-900/20',
     borderColor: 'border-indigo-200',
     badgeColor: 'bg-indigo-600',
   },
@@ -93,6 +100,7 @@ export const TIER_DISPLAY: Record<UsageTier, {
     name: 'Business',
     color: 'text-purple-700 dark:text-purple-300',
     bgColor: 'bg-purple-100 dark:bg-purple-900',
+    planBgColor: 'bg-purple-100 dark:bg-purple-900/20',
     borderColor: 'border-purple-200',
     badgeColor: 'bg-purple-600',
   },

@@ -105,7 +105,7 @@ export default function DocumentDetailModal({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black/25 backdrop-blur-sm" aria-hidden="true" />
+          <div className="fixed inset-0 bg-black/25 backdrop-blur-xs" aria-hidden="true" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto overscroll-contain">
@@ -125,7 +125,7 @@ export default function DocumentDetailModal({
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3 min-w-0">
                       <DocumentTextIcon aria-hidden="true"
-                        className={`h-6 w-6 flex-shrink-0 ${typeConfig?.color || 'text-gray-400'}`}
+                        className={`h-6 w-6 shrink-0 ${typeConfig?.color || 'text-gray-400'}`}
                       />
                       <div className="min-w-0">
                         <Dialog.Title className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
@@ -133,7 +133,7 @@ export default function DocumentDetailModal({
                         </Dialog.Title>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
                           <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                            className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${
                               typeConfig
                                 ? `bg-gray-100 dark:bg-gray-800 ${typeConfig.color}`
                                 : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
@@ -142,7 +142,7 @@ export default function DocumentDetailModal({
                             {typeConfig?.label || ext.toUpperCase()}
                           </span>
                           <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                            className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${
                               document.status === 'ready'
                                 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
                                 : document.status === 'processing'
@@ -210,7 +210,7 @@ export default function DocumentDetailModal({
                           >
                             <div className="flex items-center justify-between mb-1">
                               <div className="flex items-center gap-2">
-                                <span className="inline-flex items-center justify-center w-6 h-6 rounded bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-600 dark:text-gray-400">
+                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-sm bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-600 dark:text-gray-400">
                                   #{chunk.chunk_index + 1}
                                 </span>
                                 {chunk.page_number != null && (
@@ -233,7 +233,7 @@ export default function DocumentDetailModal({
                                 </span>
                               )}
                             </div>
-                            <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words">
+                            <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap wrap-break-word">
                               {preview}
                             </p>
                             {chunk.content.length > 300 && (

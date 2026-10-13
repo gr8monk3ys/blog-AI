@@ -96,10 +96,10 @@ function useAnalyticsPageView() {
   return (
     <>
       <SiteHeader />
-      <main id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-amber-700 to-amber-800 text-white">
+      <section className="bg-linear-to-r from-amber-700 to-amber-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
           <m.div
             initial={{ opacity: 0, y: 20 }}
@@ -249,7 +249,7 @@ function useAnalyticsPageView() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
-          className="mt-8 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-6"
+          className="mt-8 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-xs p-6"
         >
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Quick Actions
@@ -257,13 +257,13 @@ function useAnalyticsPageView() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/"
-              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 shadow-sm transition"
+              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white bg-linear-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 shadow-xs transition"
             >
               Generate Content
             </Link>
             <Link
               href="/tools"
-              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm transition"
+              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-xs transition"
             >
               Browse Tools
             </Link>
@@ -271,7 +271,7 @@ function useAnalyticsPageView() {
               onClick={() => {
                 setTimeRange('7d')
               }}
-              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm transition"
+              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-xs transition"
             >
               <ClockIcon className="w-4 h-4 mr-2" aria-hidden="true" />
               View Last 7 Days

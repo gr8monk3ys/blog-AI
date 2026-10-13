@@ -32,22 +32,22 @@ export default function StatCard({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-6 hover:shadow-md transition-shadow"
+      className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-xs p-6 hover:shadow-md transition-shadow"
     >
       {loading ? (
         <div className="animate-pulse">
           <div className="flex items-center justify-between mb-4">
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24" />
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-sm w-24" />
             <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-lg" />
           </div>
-          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-20 mb-2" />
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32" />
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-sm w-20 mb-2" />
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-sm w-32" />
         </div>
       ) : (
         <>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-gray-500">{title}</h3>
-            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+            <div className="shrink-0 w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
               <Icon className="w-5 h-5 text-amber-700" aria-hidden="true" />
             </div>
           </div>

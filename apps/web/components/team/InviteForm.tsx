@@ -56,7 +56,7 @@ export default function InviteForm({ orgId, onInviteSent }: InviteFormProps) {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
+          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-xs focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
           placeholder="colleague@company.com…"
           required
         />
@@ -71,7 +71,7 @@ export default function InviteForm({ orgId, onInviteSent }: InviteFormProps) {
           id="invite-role"
           value={role}
           onChange={(e) => setRole(e.target.value as OrganizationRole)}
-          className="mt-1 block rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
+          className="mt-1 block rounded-md border-gray-300 dark:border-gray-700 shadow-xs focus-visible:border-amber-500 focus-visible:ring-amber-500 dark:bg-gray-800 dark:text-gray-100"
         >
           {INVITABLE_ROLES.map((r) => (
             <option key={r} value={r}>{r}</option>

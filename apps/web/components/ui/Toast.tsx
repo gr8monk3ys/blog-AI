@@ -93,7 +93,7 @@ export default function Toast({
         >
           <Icon
             aria-hidden="true"
-            className={`w-5 h-5 flex-shrink-0 ${config.iconColor}`}
+            className={`w-5 h-5 shrink-0 ${config.iconColor}`}
           />
           <span className={`text-sm font-medium ${config.textColor}`}>
             {message}

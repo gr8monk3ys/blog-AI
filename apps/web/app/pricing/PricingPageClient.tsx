@@ -80,19 +80,6 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
   const router = useRouter()
   const { isSignedIn } = useAuth()
 
-  useEffect(() => {
-    fetchPricing()
-    fetchCurrentTier()
-
-    // Handle Stripe redirect states
-    if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href)
-      const checkout = url.searchParams.get('checkout')
-      if (checkout === 'success') setSuccess('Subscription updated successfully.')
-      if (checkout === 'cancelled') setError('Checkout cancelled.')
-    }
-  }, [])
-
   const fetchPricing = async () => {
     try {
       const response = await fetch(API_ENDPOINTS.payments.pricing, {
@@ -131,6 +118,19 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    fetchPricing()
+    fetchCurrentTier()
+
+    // Handle Stripe redirect states
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      const checkout = url.searchParams.get('checkout')
+      if (checkout === 'success') setSuccess('Subscription updated successfully.')
+      if (checkout === 'cancelled') setError('Checkout cancelled.')
+    }
+  }, [])
 
 
   const handleUpgrade = async (tier: UsageTier) => {
@@ -229,7 +229,7 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
       return 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 cursor-default'
     }
     if (tier === 'starter' || tier === 'pro') {
-      return 'bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white'
+      return 'bg-linear-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white'
     }
     return 'border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
   }
@@ -237,10 +237,10 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
   return (
     <>
       <SiteHeader />
-      <main id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-amber-700 to-amber-800 text-white py-16">
+      <section className="bg-linear-to-r from-amber-700 to-amber-800 text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           {/* hero-rise-lcp moves without ever being transparent: Chrome does not
               count an opacity:0 element as painted, and the <p> below is this
@@ -326,7 +326,7 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
                         700/800 pair used by every other amber CTA on this page
                         is 5.02:1 / 7.09:1. axe cannot score text over a
                         gradient, so nothing ever flagged this one. */}
-                    <span className="bg-gradient-to-r from-amber-700 to-amber-800 text-white text-sm font-medium px-4 py-1 rounded-full">
+                    <span className="bg-linear-to-r from-amber-700 to-amber-800 text-white text-sm font-medium px-4 py-1 rounded-full">
                       Most Popular
                     </span>
                   </div>
@@ -438,7 +438,7 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
                     <ul className="space-y-3">
                       {tier.features.map((feature) => (
                         <li key={feature} className="flex items-start gap-3">
-                          <CheckIcon aria-hidden="true" className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                          <CheckIcon aria-hidden="true" className="w-5 h-5 text-emerald-500 shrink-0" />
                           <span className="text-sm text-gray-600 dark:text-gray-400">{feature}</span>
                         </li>
                       ))}
@@ -564,7 +564,7 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
       </section>
 
       {/* Footer CTA */}
-      <section className="bg-gradient-to-r from-amber-700 to-amber-800 text-white py-12">
+      <section className="bg-linear-to-r from-amber-700 to-amber-800 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl font-bold mb-4">Ready to Create Amazing Content?</h2>
           <p className="text-amber-100 mb-6">

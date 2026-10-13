@@ -289,7 +289,7 @@ function useConversationHistoryView({ conversationId }: ConversationHistoryProps
             <p>{error}</p>
             <button 
               onClick={() => window.location.reload()} 
-              className="mt-2 text-xs bg-red-100 hover:bg-red-200 px-2 py-1 rounded transition-colors"
+              className="mt-2 text-xs bg-red-100 hover:bg-red-200 px-2 py-1 rounded-sm transition-colors"
             >
               Retry
             </button>
@@ -312,11 +312,11 @@ function useConversationHistoryView({ conversationId }: ConversationHistoryProps
                 <div 
                   className={`max-w-[85%] ${
                     group.role === 'user'
-                      ? 'bg-gradient-to-br from-amber-500 to-amber-600 text-white'
-                      : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm'
+                      ? 'bg-linear-to-br from-amber-500 to-amber-600 text-white'
+                      : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xs'
                   } rounded-2xl overflow-hidden`}
                 >
-                  <div className="px-4 py-2 text-xs font-medium border-b border-opacity-10 flex justify-between items-center">
+                  <div className="px-4 py-2 text-xs font-medium border-b flex justify-between items-center">
                     <span className={group.role === 'user' ? 'text-amber-100' : 'text-amber-700 dark:text-amber-500'}>
                       {group.role === 'user' ? 'You' : 'AI Assistant'}
                     </span>
@@ -349,7 +349,7 @@ function useConversationHistoryView({ conversationId }: ConversationHistoryProps
             animate={{ opacity: 1 }}
             className="flex justify-start"
           >
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 shadow-xs">
               <div className="flex space-x-2">
                 <div className="h-2 w-2 bg-amber-400 rounded-full animate-pulse" style={{ animationDelay: '0ms' }}></div>
                 <div className="h-2 w-2 bg-amber-500 rounded-full animate-pulse" style={{ animationDelay: '150ms' }}></div>

@@ -48,7 +48,7 @@ export default function TemplateCard({ template, index = 0, onUse }: TemplateCar
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
     >
-      <div className="relative h-full bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-amber-200 dark:hover:border-amber-700 transition duration-200 overflow-hidden">
+      <div className="relative h-full bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-xs hover:shadow-md hover:border-amber-200 dark:hover:border-amber-700 transition duration-200 overflow-hidden">
         {/* Top badges row */}
         <div className="absolute top-3 right-3 flex items-center gap-2">
           {template.useCount > 100 && (
@@ -62,7 +62,7 @@ export default function TemplateCard({ template, index = 0, onUse }: TemplateCar
           {/* Icon and Category */}
           <div className="flex items-start gap-4 mb-3">
             <div
-              className={`flex-shrink-0 w-10 h-10 rounded-lg ${categoryInfo.bgColor} flex items-center justify-center`}
+              className={`shrink-0 w-10 h-10 rounded-lg ${categoryInfo.bgColor} flex items-center justify-center`}
             >
               <Icon className={`w-5 h-5 ${categoryInfo.color}`} aria-hidden="true" />
             </div>
@@ -91,13 +91,13 @@ export default function TemplateCard({ template, index = 0, onUse }: TemplateCar
               {template.tags.slice(0, 3).map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center px-2 py-0.5 rounded text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800"
+                  className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800"
                 >
                   {tag}
                 </span>
               ))}
               {template.tags.length > 3 && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs text-gray-400">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs text-gray-400">
                   +{template.tags.length - 3}
                 </span>
               )}
@@ -118,7 +118,7 @@ export default function TemplateCard({ template, index = 0, onUse }: TemplateCar
           <button
             type="button"
             onClick={handleUseClick}
-            className="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-lg text-sm font-medium text-white bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+            className="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-lg text-sm font-medium text-white bg-linear-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 shadow-xs transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
           >
             Use Template
           </button>

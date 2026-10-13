@@ -55,7 +55,7 @@ function ContentRendererComponent({ result }: ContentRendererProps) {
     case 'email_newsletter':
       return (
         <div className="space-y-4">
-          <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded">
+          <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-sm">
             <p className="text-sm text-gray-500 dark:text-gray-400">Subject:</p>
             <p className="font-medium">{content.subject_line as string}</p>
           </div>

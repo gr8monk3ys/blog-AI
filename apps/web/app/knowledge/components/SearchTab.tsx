@@ -88,7 +88,7 @@ export default function SearchTab({ documents }: SearchTabProps) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="block w-full pl-11 pr-10 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 shadow-sm placeholder-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:border-amber-500 text-sm text-gray-900 dark:text-gray-100 transition"
+            className="block w-full pl-11 pr-10 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 shadow-xs placeholder-gray-400 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:border-amber-500 text-sm text-gray-900 dark:text-gray-100 transition"
             placeholder="Search your knowledge base…"
             aria-label="Search knowledge base"
           />
@@ -194,7 +194,7 @@ export default function SearchTab({ documents }: SearchTabProps) {
                 >
                   {result.document_title}
                 </button>
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-2 shrink-0">
                   {/* Score bar */}
                   <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                     <div

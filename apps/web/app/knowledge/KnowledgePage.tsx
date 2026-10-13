@@ -112,7 +112,7 @@ export default function KnowledgePage() {
                 classNames(
                   'w-full rounded-md py-2 text-sm font-medium leading-5 transition-colors',
                   selected
-                    ? 'bg-white dark:bg-gray-900 text-amber-700 dark:text-amber-400 shadow'
+                    ? 'bg-white dark:bg-gray-900 text-amber-700 dark:text-amber-400 shadow-sm'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                 )
               }

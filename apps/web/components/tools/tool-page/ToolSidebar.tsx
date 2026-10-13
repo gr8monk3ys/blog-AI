@@ -13,7 +13,7 @@ interface ToolSidebarProps {
  */
 function TipsCard() {
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-5">
+    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xs border border-gray-200 dark:border-gray-800 p-5">
       <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
         Tips for Best Results
       </h3>
@@ -48,7 +48,7 @@ function RelatedToolsCard({ tools }: { tools: Tool[] }) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-5">
+    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xs border border-gray-200 dark:border-gray-800 p-5">
       <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
         Related Tools
       </h3>

@@ -55,7 +55,7 @@ function ResultsPanelComponent({
 
   if (results.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-12 text-center">
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xs p-12 text-center">
         <div className="text-6xl mb-4">(refresh)</div>
         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
           No Remixed Content Yet
@@ -71,7 +71,7 @@ function ResultsPanelComponent({
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="bg-white dark:bg-gray-900 rounded-xl shadow-sm overflow-hidden"
+      className="bg-white dark:bg-gray-900 rounded-xl shadow-xs overflow-hidden"
     >
       {/* Format Tabs */}
       <div className="flex overflow-x-auto border-b dark:border-gray-800">
@@ -83,7 +83,7 @@ function ResultsPanelComponent({
             <button
               key={result.format}
               onClick={() => onSelectResult(result)}
-              className={`flex-shrink-0 px-4 py-3 flex items-center gap-2 border-b-2 transition-colors ${
+              className={`shrink-0 px-4 py-3 flex items-center gap-2 border-b-2 transition-colors ${
                 isActive
                   ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/30'
                   : 'border-transparent hover:bg-gray-50 dark:hover:bg-gray-800'
