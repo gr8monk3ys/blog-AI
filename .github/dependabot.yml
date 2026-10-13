@@ -7,17 +7,14 @@ updates:
   schedule:
     interval: monthly
   open-pull-requests-limit: 3
+  # No update-types filter here: requirements are ranges with no lockfile, so
+  # Dependabot has no current version to classify an update as minor/patch and
+  # a filtered group matches nothing (every update then arrives ungrouped).
   groups:
     development-dependencies:
       dependency-type: development
-      update-types:
-      - minor
-      - patch
     production-dependencies:
       dependency-type: production
-      update-types:
-      - minor
-      - patch
     security-updates:
       applies-to: security-updates
       patterns:
