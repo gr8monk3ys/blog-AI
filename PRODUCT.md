@@ -73,7 +73,7 @@ per-operation rate limits. Brand voice is trained from the user's own samples an
   `app/pricing/PricingPageClient.tsx`). Live prices come from the API; the home page
   hard-codes $0 / $19 / $49 per month **(inferred to be current; verify against Stripe)**.
 - Stack constraints: Next.js 16 with React 18.3 pinned; Node 22.x (Node 24 broke the Vercel
-  build); Bun 1.3+; per-request CSP nonce in `apps/web/proxy.ts`; class-based dark mode
+  build); Bun 1.4.3 pinned; per-request CSP nonce in `apps/web/proxy.ts`; class-based dark mode
   with a FOUC-guard script in `app/layout.tsx`; Sentry on client, server and edge.
 - Terminology used in the product: brand voice / brand profile, workflow, generation,
   bulk, tool, template, remix, fact-check, research mode, knowledge base.

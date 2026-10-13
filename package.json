@@ -2,9 +2,9 @@
   "name": "blog-ai-workspace",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "bun@1.3.10",
+  "packageManager": "bun@1.4.3",
   "engines": {
-    "bun": ">=1.3.10",
+    "bun": ">=1.4.3",
     "node": "22.x"
   },
   "workspaces": [
