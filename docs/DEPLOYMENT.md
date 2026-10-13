@@ -75,8 +75,10 @@ may advertise given this.
   Production deployment attached (the silent-drop failure mode from 2026-09-14).
 - Health endpoints:
   - Web `GET /api/health`: `status`, `version`, `commit`, and `checks.db` / `checks.api`
-    / `checks.clerk`; 200 when every configured dependency is ok, 503 otherwise. No auth,
-    no secrets.
+    / `checks.clerk`, each `ok | degraded | down` with latency; 503 only when something is
+    down. The public body is aggregate only (no variable names, key presence or error
+    text). `Authorization: Bearer $HEALTH_DETAIL_TOKEN` adds a `details` block for
+    operators; with the token unset there is no detail view.
   - API `GET /health`: status, version (from `pyproject.toml`), database/Redis latency,
     configured LLM providers, feature availability. `GET /ready`: 200 when an LLM key is
     present. Per-service `/health/*` routes require an API key.

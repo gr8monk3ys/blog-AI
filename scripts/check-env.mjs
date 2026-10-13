@@ -157,6 +157,10 @@ const ENV_VARS = {
     scope: ['web-runtime'],
     note: 'Shared secret protecting /api/blog-posts/* (x-admin-key or Bearer). Unset: those routes are closed.',
   },
+  HEALTH_DETAIL_TOKEN: {
+    scope: ['web-runtime'],
+    note: 'Bearer token that unlocks the `details` block of GET /api/health (which key is missing, error text, API services). Unset: the public aggregate view is all there is.',
+  },
   DEMO_DATA_ENABLED: {
     scope: ['web-runtime'],
     dev: true,

@@ -55,6 +55,8 @@ jobs:
       # Public routes, then GET /api/health (the web app's own report on its
       # database, the FastAPI backend and Clerk; 503 fails the run), then the
       # Vercel deployment status and recent production logs when a token exists.
+      # The script prints status codes and aggregate health words only: no
+      # response bodies and no log lines, since this log is public.
       - name: Run production health check
         shell: bash
         env:

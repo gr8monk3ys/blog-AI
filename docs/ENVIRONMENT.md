@@ -110,6 +110,7 @@ dropped: the web app has no Stripe.js and never read it.
 | `CI` | platform | web build | Set by GitHub Actions; enables the production-build env checks together with VERCEL. |
 | `CLERK_SECRET_KEY` | required | web runtime | Clerk secret (sk_test_/sk_live_) for proxy.ts and route handlers. Clerk is disabled unless both keys are present. |
 | `DEMO_DATA_ENABLED` | dev only | web runtime | Seeds demo data outside production (lib/server-mode.ts). |
+| `HEALTH_DETAIL_TOKEN` | optional | web runtime | Bearer token that unlocks the `details` block of GET /api/health (which key is missing, error text, API services). Unset: the public aggregate view is all there is. |
 | `NEXT_RUNTIME` | platform | web runtime | nodejs \| edge, set by Next.js (instrumentation.ts). |
 | `NODE_ENV` | platform | web build, web runtime | Set by Next.js. |
 | `PLAYWRIGHT_TEST` | dev only | web runtime | =1 set by the Playwright config; proxy.ts suppresses its auth warning under e2e. |
