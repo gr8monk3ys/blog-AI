@@ -469,8 +469,11 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
     allow_credentials=True,
-    # Restrict to necessary HTTP methods only
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    # Restrict to the methods the web app actually sends. PATCH is used by
+    # webhook edits (PATCH /api/webhooks/{id}) and team role changes
+    # (PATCH /api/organizations/{id}/members/{user_id}); without it the browser's
+    # preflight fails and both forms error out while curl works fine.
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     # Restrict to necessary headers only
     allow_headers=[
         "Authorization",
