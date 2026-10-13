@@ -1,6 +1,6 @@
 [project]
 name = "blog-ai-api"
-version = "0.0.0"
+version = "0.1.0"
 description = "Blog AI FastAPI backend"
 requires-python = ">=3.12,<3.14"
 # Keep in sync with requirements.txt. Vercel's Python runtime resolves this table with uv.
