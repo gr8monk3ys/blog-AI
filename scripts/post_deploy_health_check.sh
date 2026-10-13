@@ -3,6 +3,10 @@ set -euo pipefail
 
 APP_URL="${APP_URL:-https://blog-ai.vivancedata.com}"
 ROUTES="${ROUTES:-/ /pricing /blog /tool-directory /sitemap.xml}"
+# The web app's own dependency report (apps/web/app/api/health/route.ts): 200 when
+# the database, the FastAPI backend and Clerk are each ok or unconfigured, 503
+# otherwise. Set HEALTH_ROUTE= (empty) to skip it.
+HEALTH_ROUTE="${HEALTH_ROUTE-/api/health}"
 LOOKBACK="${LOOKBACK:-1h}"
 LOG_LIMIT="${LOG_LIMIT:-200}"
 VERCEL_PROJECT="${VERCEL_PROJECT:-blog-ai}"
@@ -69,6 +73,42 @@ check_route() {
   log "OK route=${route} status=${status}"
 }
 
+# Pull a top-level string field out of the /api/health JSON without jq.
+json_field() {
+  local key="$1"
+  tr -d '\n ' <"$tmp_response" | grep -oE "\"${key}\":\"[^\"]*\"" | head -n1 | sed -E 's/^"[^"]*":"//; s/"$//' || true
+}
+
+check_health_endpoint() {
+  local url="${APP_URL}${HEALTH_ROUTE}"
+  local status
+
+  if ! status="$(
+    curl \
+      --silent \
+      --show-error \
+      --max-time 20 \
+      --header 'Accept: application/json' \
+      --output "$tmp_response" \
+      --write-out '%{http_code}' \
+      "$url"
+  )"; then
+    log "ERROR route=${HEALTH_ROUTE} request failed"
+    failures=$((failures + 1))
+    return
+  fi
+
+  local summary="status=$(json_field status) version=$(json_field version) commit=$(json_field commit)"
+  if [[ "$status" != "200" ]]; then
+    log "ERROR route=${HEALTH_ROUTE} expected=200 got=${status} ${summary}"
+    log "response: $(head -c 800 "$tmp_response" | tr '\n' ' ' || true)"
+    failures=$((failures + 1))
+    return
+  fi
+
+  log "OK route=${HEALTH_ROUTE} status=${status} ${summary}"
+}
+
 scan_logs() {
   local level="$1"
   local output
@@ -127,6 +167,11 @@ log "Checking key routes for ${APP_URL}"
 for route in $ROUTES; do
   check_route "$route" 200
 done
+
+if [[ -n "$HEALTH_ROUTE" ]]; then
+  log "Checking dependency health at ${APP_URL}${HEALTH_ROUTE}"
+  check_health_endpoint
+fi
 
 if [[ "$vercel_checks_enabled" == "true" ]]; then
   log "Scanning recent Vercel production logs"
