@@ -19,6 +19,7 @@ from pydantic import BaseModel, Field
 import stripe
 
 from src.payments import stripe_service
+from src.payments.stripe_service import card_only_checkout_params
 from src.payments.subscription_sync import sync_webhook_event
 from src.types.payments import (
     CheckoutSessionRequest,
@@ -192,7 +193,7 @@ async def create_org_checkout_session(
             partial(
                 stripe.checkout.Session.create,
                 customer=customer_id,
-                payment_method_types=["card"],
+                **card_only_checkout_params(),
                 line_items=[
                     {
                         "price": request.price_id,

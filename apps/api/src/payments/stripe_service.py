@@ -37,6 +37,30 @@ from src.types.payments import (
 logger = logging.getLogger(__name__)
 
 
+def _stripe_sdk_major() -> int:
+    """Major version of the installed Stripe SDK (0 when it cannot be determined)."""
+    try:
+        from importlib.metadata import version
+
+        return int(version("stripe").split(".", 1)[0])
+    except Exception:  # pragma: no cover - metadata missing or unparsable
+        return 0
+
+
+def card_only_checkout_params() -> dict:
+    """
+    Checkout Session parameter restricting payment to cards.
+
+    stripe>=16 pins API version 2026-09-30.endive, which removed
+    `payment_method_types` from Checkout Session creation in favour of
+    `allowed_payment_method_types` (a filter over the dynamically eligible
+    methods). Older SDKs pin API versions that only know the legacy name.
+    """
+    if _stripe_sdk_major() >= 16:
+        return {"allowed_payment_method_types": ["card"]}
+    return {"payment_method_types": ["card"]}
+
+
 class StripeService:
     """
     Service class for Stripe payment operations.
@@ -218,7 +242,7 @@ class StripeService:
                 partial(
                     stripe.checkout.Session.create,
                     customer=customer_id,
-                    payment_method_types=["card"],
+                    **card_only_checkout_params(),
                     line_items=[
                         {
                             "price": price_id,
