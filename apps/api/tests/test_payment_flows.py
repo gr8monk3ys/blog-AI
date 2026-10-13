@@ -531,6 +531,38 @@ class TestCheckoutSessionCreation(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(result["session_id"], "cs_test123")
             self.assertIn("checkout.stripe.com", result["url"])
 
+    async def test_create_checkout_session_card_param_matches_sdk_major(self):
+        """stripe>=16 (API 2026-09-30.endive) removed `payment_method_types`."""
+        with patch.dict(os.environ, {
+            "STRIPE_SECRET_KEY": "sk_test_12345",
+        }, clear=True):
+            StripeService = get_fresh_stripe_service_class()
+            module = sys.modules[StripeService.__module__]
+
+            mock_customers = MagicMock()
+            mock_customers.data = [MagicMock(id="cus_existing")]
+            mock_stripe.Customer.search.return_value = mock_customers
+            mock_stripe.checkout.Session.create.return_value = MagicMock(
+                id="cs_test123", url="https://checkout.stripe.com/test"
+            )
+
+            cases = (
+                (15, "payment_method_types", "allowed_payment_method_types"),
+                (16, "allowed_payment_method_types", "payment_method_types"),
+            )
+            for major, expected, absent in cases:
+                mock_stripe.checkout.Session.create.reset_mock()
+                with patch.object(module, "_stripe_sdk_major", return_value=major):
+                    await StripeService().create_checkout_session(
+                        price_id="price_pro_123",
+                        user_id="user-456",
+                        success_url="https://app.example.com/success",
+                        cancel_url="https://app.example.com/cancel",
+                    )
+                kwargs = mock_stripe.checkout.Session.create.call_args.kwargs
+                self.assertEqual(kwargs[expected], ["card"])
+                self.assertNotIn(absent, kwargs)
+
     async def test_create_checkout_session_creates_new_customer(self):
         """Test checkout session creates new customer if none exists."""
         with patch.dict(os.environ, {
