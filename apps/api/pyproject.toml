@@ -44,7 +44,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.12"
 openai = ">=2.15,<4.0"
-anthropic = ">=0.76,<1.10"
+anthropic = ">=0.76,<1.14"
 google-generativeai = ">=0.3.1"
 requests = "^2.31.0"
 pydantic = "^2.5.2"
@@ -54,14 +54,14 @@ fastapi = ">=0.115.0,<1.0.0"
 uvicorn = ">=0.27,<0.55"
 websockets = ">=12,<18"
 python-multipart = ">=0.0.31,<0.1.0"
-uvloop = { version = ">=0.19,<0.23", markers = "platform_system != 'Windows'" }
+uvloop = { version = ">=0.19,<0.24", markers = "platform_system != 'Windows'" }
 
 # Transitive dependency pins (security)
 starlette = ">=0.47.2"  # CVE fix: DoS via multipart
 protobuf = ">=5.29.6"  # CVE fix: JSON recursion bypass
 
 # Database client (Neon / managed Postgres)
-asyncpg = ">=0.29,<0.32"
+asyncpg = ">=0.29,<0.33"
 
 # Image generation (Stability AI uses REST API via httpx, no SDK needed)
 Pillow = ">=12.1.1"
@@ -75,7 +75,7 @@ nh3 = ">=0.2.14,<0.4.0"
 redis = ">=5,<9"
 
 # Payment processing
-stripe = ">=7,<16"
+stripe = ">=7,<17"
 
 # Monitoring and error tracking
 sentry-sdk = { version = ">=1.40,<3.0", extras = ["fastapi"] }
