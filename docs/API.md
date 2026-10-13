@@ -40,14 +40,14 @@ Blog AI provides a RESTful API for AI-powered content generation. The API suppor
 
 | Environment | URL |
 |-------------|-----|
-| Production | `https://api.blogai.com` |
+| Production | `https://blog-ai-api-gr8monk3ys-projects.vercel.app` (Vercel project `blog-ai-api`) |
 | Development | `http://localhost:8000` |
 
 ### API Versioning
 
 The API supports versioned endpoints:
-- **Root endpoints**: `https://api.blogai.com/endpoint` (backward compatible)
-- **Versioned endpoints**: `https://api.blogai.com/api/v1/endpoint` (recommended)
+- **Root endpoints**: `https://<your-api-host>/endpoint` (backward compatible)
+- **Versioned endpoints**: `https://<your-api-host>/api/v1/endpoint` (recommended)
 
 ### OpenAPI Specification
 
@@ -71,7 +71,7 @@ API keys are generated when you create an account. Contact support or use the da
 Include your API key in the `X-API-Key` header with every request:
 
 ```bash
-curl -X POST "https://api.blogai.com/generate-blog" \
+curl -X POST "https://<your-api-host>/generate-blog" \
   -H "X-API-Key: your_api_key_here" \
   -H "Content-Type: application/json" \
   -d '{"topic": "AI in Healthcare", "conversation_id": "conv-123"}'
@@ -945,8 +945,8 @@ Create a Stripe checkout session.
 ```json
 {
   "price_id": "price_xxx",
-  "success_url": "https://app.blogai.com/success?session_id={CHECKOUT_SESSION_ID}",
-  "cancel_url": "https://app.blogai.com/pricing"
+  "success_url": "https://blog-ai.vivancedata.com/success?session_id={CHECKOUT_SESSION_ID}",
+  "cancel_url": "https://blog-ai.vivancedata.com/pricing"
 }
 ```
 
@@ -966,7 +966,7 @@ Create a Stripe customer portal session.
 **Request Body**:
 ```json
 {
-  "return_url": "https://app.blogai.com/settings"
+  "return_url": "https://blog-ai.vivancedata.com/settings"
 }
 ```
 
@@ -1041,7 +1041,7 @@ This endpoint receives events from Stripe. It does not require API key authentic
 ### Setting Up Webhooks
 
 1. Go to Stripe Dashboard > Developers > Webhooks
-2. Add endpoint: `https://api.blogai.com/api/payments/webhook`
+2. Add endpoint: `https://<your-api-host>/api/payments/webhook`
 3. Select events to listen for
 4. Copy the signing secret to your environment as `STRIPE_WEBHOOK_SECRET`
 
@@ -1082,7 +1082,7 @@ stripe listen --forward-to localhost:8000/api/payments/webhook
 import requests
 
 API_KEY = "your_api_key"
-BASE_URL = "https://api.blogai.com"
+BASE_URL = "https://<your-api-host>"
 
 headers = {
     "X-API-Key": API_KEY,
@@ -1113,7 +1113,7 @@ else:
 
 ```typescript
 const API_KEY = 'your_api_key';
-const BASE_URL = 'https://api.blogai.com';
+const BASE_URL = 'https://<your-api-host>';
 
 async function generateBlog(topic: string): Promise<BlogResponse> {
   const response = await fetch(`${BASE_URL}/generate-blog`, {
@@ -1148,7 +1148,7 @@ console.log(result.content.title);
 
 **Generate Blog Post**:
 ```bash
-curl -X POST "https://api.blogai.com/generate-blog" \
+curl -X POST "https://<your-api-host>/generate-blog" \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -1162,13 +1162,13 @@ curl -X POST "https://api.blogai.com/generate-blog" \
 
 **Check Usage**:
 ```bash
-curl -X GET "https://api.blogai.com/usage/stats" \
+curl -X GET "https://<your-api-host>/usage/stats" \
   -H "X-API-Key: your_api_key"
 ```
 
 **Export to Markdown**:
 ```bash
-curl -X POST "https://api.blogai.com/export/markdown" \
+curl -X POST "https://<your-api-host>/export/markdown" \
   -H "X-API-Key: your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -1198,7 +1198,7 @@ curl -X POST "https://api.blogai.com/export/markdown" \
 
 ## Support
 
-- **Documentation**: https://docs.blogai.com
-- **API Status**: https://status.blogai.com
-- **Email**: support@blogai.com
-- **Discord**: https://discord.gg/blogai
+- **Documentation**: this file and `{base_url}/docs` (Swagger UI) on a running API
+- **API status**: `GET {base_url}/health` (no auth); the web app's `GET /api/health` at
+  https://blog-ai.vivancedata.com/api/health probes the API too
+- **Email**: support@lscaturchio.xyz (security reports: see `SECURITY.md`)

@@ -15,8 +15,10 @@ public: nothing committed here is private.
 - `apps/extension` — browser extension (see its README).
 - `db/migrations/` — SQL applied by `bun run db:migrate`. `apps/api/migrations/` — applied by
   `python server.py --migrate`. See `docs/DATABASE.md`.
-- `scripts/` — migrate, seed, runtime audit, Lighthouse/a11y gates, post-deploy health check.
-- `Dockerfile.backend` — the API image published to GHCR by `deploy.yml`; it installs with
+- `scripts/` — migrate, seed, runtime audit, Lighthouse/a11y gates, post-deploy health check,
+  `check-env.mjs` (env var inventory, below).
+- `Dockerfile.backend` + `railway.json` — an alternative container path for the API, published
+  to GHCR by `deploy.yml`. It is NOT what production runs (see Deploy below); it installs with
   `uv sync --locked`, so `uv.lock` must match `pyproject.toml` exactly.
 
 ## Run
@@ -51,6 +53,25 @@ other four still have to be green before a PR is considered done. After CI passe
 `post-deploy-health-check.yml` probes production afterwards and hourly, `deploy-watchdog.yml`
 checks daily that the newest main commit has a live production deploy, and `preview.yml`
 deploys a Vercel preview per PR.
+
+## Deploy
+
+Both apps are on Vercel: the web app is project `blog-ai` (root `vercel.json`, live at
+https://blog-ai.vivancedata.com) and the API is project `blog-ai-api` on Vercel's **Python
+runtime** (`apps/api/vercel.json` + `[tool.vercel]` in `pyproject.toml`, live at
+https://blog-ai-api-gr8monk3ys-projects.vercel.app). The API is not on Railway; the GHCR image
+is not pulled by anything. Clerk runs on `clerk.vivancedata.com`. As of 2026-10-13 the
+`blog-ai-api` project still deploys from a deleted branch and does not track `main` — a
+dashboard fix listed under "Owner to-do" in `docs/DEPLOYMENT.md`. Health: web
+`GET /api/health` (`apps/web/app/api/health/route.ts`), API `GET /health` and `/ready`.
+
+`bun run env:check` (`scripts/check-env.mjs`) prints every env var the web app and API read,
+with required/optional and which environment (web build, web runtime, API) reads it;
+`bun run env:check -- --check <dotenv file>` reports the required ones missing from a file
+(e.g. one pulled with `vercel env pull`). Add new `process.env.*` reads and pydantic fields to
+its table, and document them in `docs/ENVIRONMENT.md`. Feature gating for marketing copy goes
+through `apps/web/lib/features.ts` (server-readable booleans from `NEXT_PUBLIC_FEATURE_*` and
+friends) so pages cannot advertise what the API will refuse.
 
 ## Working in this repo
 - Work in a git worktree under `.worktrees/<slug>` (the folder is ignored via

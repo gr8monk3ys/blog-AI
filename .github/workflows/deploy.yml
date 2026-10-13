@@ -140,7 +140,10 @@ jobs:
   # Backend -> GHCR Docker image
   # ---------------------------------------------------------------------------
   deploy-backend:
-    # Only builds and pushes the image to GHCR; the Railway service that runs it is dashboard-managed.
+    # Only builds and pushes the image to GHCR. Nothing in production pulls it: the live API
+    # runs on Vercel's Python runtime (project blog-ai-api, apps/api/vercel.json) through
+    # Vercel's own Git integration. The image is the alternative container path
+    # (Dockerfile.backend + railway.json) described in docs/DEPLOYMENT.md.
     name: Publish Backend Image (Docker)
     runs-on: ubuntu-latest
     needs: changes
