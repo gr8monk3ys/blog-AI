@@ -75,7 +75,7 @@ nh3 = ">=0.2.14,<0.4.0"
 redis = ">=5,<9"
 
 # Payment processing
-stripe = ">=7,<16"
+stripe = ">=7,<17"
 
 # Monitoring and error tracking
 sentry-sdk = { version = ">=1.40,<3.0", extras = ["fastapi"] }
