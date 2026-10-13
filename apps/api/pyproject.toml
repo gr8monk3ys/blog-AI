@@ -61,7 +61,7 @@ starlette = ">=0.47.2"  # CVE fix: DoS via multipart
 protobuf = ">=5.29.6"  # CVE fix: JSON recursion bypass
 
 # Database client (Neon / managed Postgres)
-asyncpg = ">=0.29,<0.32"
+asyncpg = ">=0.29,<0.33"
 
 # Image generation (Stability AI uses REST API via httpx, no SDK needed)
 Pillow = ">=12.1.1"
