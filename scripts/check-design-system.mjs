@@ -96,14 +96,18 @@ const ALLOWLIST = [
  *
  */
 const LEGACY = [
-  // Baselines counted on 2026-10-13, the day the notebook tokens landed.
+  // Baselines counted on 2026-10-13, the day the notebook tokens landed, and
+  // lowered on 2026-10-19 by the marketing-pages PR (home, pricing, blog, the
+  // tools directory, legal, auth and error pages, header, footer).
+  // `entrance-css` (hero-rise*/data-reveal) reached zero there and was deleted
+  // together with its keyframes in globals.css.
   {
     name: 'palette-hue',
     pattern: new RegExp(
       `\\b(?:${PALETTE_PREFIXES})-(?:${PALETTE_FAMILIES.join('|')})-[0-9]{2,3}\\b`,
       'g'
     ),
-    baseline: 5276,
+    baseline: 4584,
     then: 'palette',
   },
   {
@@ -111,41 +115,36 @@ const LEGACY = [
     // Rule); `bg-black/25` is a scrim that is not the scrim.
     name: 'white-black',
     pattern: new RegExp(`\\b(?:${PALETTE_PREFIXES})-(?:white|black)(?![\\w-])`, 'g'),
-    baseline: 407,
+    baseline: 317,
   },
   {
     name: 'shadow',
     pattern: /(?<![\w-])(?:[\w-]+:)*shadow-(?:2xs|xs|sm|md|lg|xl|2xl|\[)/g,
-    baseline: 128,
+    baseline: 105,
     then: 'flat-paper',
   },
   {
     name: 'backdrop-blur',
     pattern: /(?<![\w-])(?:[\w-]+:)*backdrop-blur(?:-[\w]+)?(?![\w-])/g,
-    baseline: 9,
+    baseline: 6,
     then: 'one-glass',
   },
   {
     name: 'gradient',
     pattern:
       /(?<![\w-])(?:[\w-]+:)*(?:bg-linear-|bg-radial|bg-conic)[\w-]*|(?:linear|radial|conic)-gradient\(/g,
-    baseline: 51,
+    baseline: 29,
     then: 'no-gradient',
   },
-  { name: 'glass', pattern: /\bglass-(?:card|surface|panel)\b/g, baseline: 17 },
-  {
-    name: 'entrance-css',
-    pattern: /\bhero-(?:rise(?:-lcp)?|fade)\b|\bdata-reveal(?:-stagger)?\b/g,
-    baseline: 14,
-  },
+  { name: 'glass', pattern: /\bglass-(?:card|surface|panel)\b/g, baseline: 10 },
   {
     name: 'entrance-motion',
     pattern: /initial=\{\{\s*opacity:\s*0/g,
-    baseline: 84,
+    baseline: 77,
     then: 'no-entrance',
   },
   // The pre-notebook serif class name; the notebook speaks in `font-display`.
-  { name: 'font-serif', pattern: /(?<![\w-])font-serif(?![\w-])/g, baseline: 26 },
+  { name: 'font-serif', pattern: /(?<![\w-])font-serif(?![\w-])/g, baseline: 6 },
   {
     name: 'tiny-font',
     pattern: /text-\[(?:[0-9]|1[01])(?:\.[0-9]+)?px\]/g,
