@@ -21,36 +21,35 @@ export interface ConfirmModalProps {
   variant?: ConfirmModalVariant
 }
 
+// The icon takes the signal colour on its -muted wash; the confirm button is
+// the view's one primary button, except for a destructive confirmation, which
+// is the paper-card button with Error text (DESIGN.md → Components → Buttons).
 const variantConfig: Record<
   ConfirmModalVariant,
   {
     icon: React.ElementType
     iconBgColor: string
     iconColor: string
-    confirmButtonColor: string
-    confirmButtonHoverColor: string
+    confirmButton: string
   }
 > = {
   danger: {
     icon: ExclamationCircleIcon,
-    iconBgColor: 'bg-red-100 dark:bg-red-900/30',
-    iconColor: 'text-red-600 dark:text-red-400',
-    confirmButtonColor: 'bg-red-600',
-    confirmButtonHoverColor: 'hover:bg-red-700',
+    iconBgColor: 'bg-destructive-muted',
+    iconColor: 'text-destructive',
+    confirmButton: 'cta-secondary text-destructive hover:text-destructive',
   },
   warning: {
     icon: ExclamationTriangleIcon,
-    iconBgColor: 'bg-amber-100 dark:bg-amber-900/30',
-    iconColor: 'text-amber-700 dark:text-amber-400',
-    confirmButtonColor: 'bg-amber-700',
-    confirmButtonHoverColor: 'hover:bg-amber-800',
+    iconBgColor: 'bg-warning-muted',
+    iconColor: 'text-warning',
+    confirmButton: 'cta-primary',
   },
   info: {
     icon: InformationCircleIcon,
-    iconBgColor: 'bg-amber-100 dark:bg-amber-900/30',
-    iconColor: 'text-amber-700 dark:text-amber-400',
-    confirmButtonColor: 'bg-amber-700',
-    confirmButtonHoverColor: 'hover:bg-amber-800',
+    iconBgColor: 'bg-info-muted',
+    iconColor: 'text-info',
+    confirmButton: 'cta-primary',
   },
 }
 
@@ -97,7 +96,7 @@ export default function ConfirmModal({
         onClose={onClose}
         initialFocus={cancelButtonRef}
       >
-        {/* Backdrop */}
+        {/* Backdrop: a modal separates with the scrim, not a shadow or a blur. */}
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -107,10 +106,7 @@ export default function ConfirmModal({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div
-            className="fixed inset-0 bg-black/25 backdrop-blur-xs"
-            aria-hidden="true"
-          />
+          <div className="fixed inset-0 overlay-scrim" aria-hidden="true" />
         </Transition.Child>
 
         {/* Modal container */}
@@ -125,9 +121,7 @@ export default function ConfirmModal({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel
-                className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-gray-800 p-6 text-left align-middle shadow-xl transition"
-              >
+              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground p-6 text-left align-middle transition">
                 <div className="flex items-start gap-4">
                   {/* Icon */}
                   <div
@@ -141,14 +135,11 @@ export default function ConfirmModal({
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <Dialog.Title
-                      as="h3"
-                      className="text-lg font-semibold leading-6 text-gray-900 dark:text-gray-100"
-                    >
+                    <Dialog.Title as="h3" className="text-card-title font-display">
                       {title}
                     </Dialog.Title>
 
-                    <Dialog.Description className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                    <Dialog.Description className="mt-2 text-sm text-muted-foreground">
                       {message}
                     </Dialog.Description>
                   </div>
@@ -160,7 +151,7 @@ export default function ConfirmModal({
                     ref={cancelButtonRef}
                     type="button"
                     onClick={onClose}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 transition-colors"
+                    className="cta-secondary rounded-lg px-4 py-2 text-sm"
                   >
                     {cancelLabel}
                   </button>
@@ -168,7 +159,7 @@ export default function ConfirmModal({
                     ref={confirmButtonRef}
                     type="button"
                     onClick={onConfirm}
-                    className={`px-4 py-2 text-sm font-medium text-white rounded-lg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2 transition-colors ${config.confirmButtonColor} ${config.confirmButtonHoverColor} ${variant === 'danger' ? 'focus:ring-red-500' : 'focus:ring-amber-500'}`}
+                    className={`rounded-lg px-4 py-2 text-sm ${config.confirmButton}`}
                   >
                     {confirmLabel}
                   </button>

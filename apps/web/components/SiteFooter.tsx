@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Logo } from './brand/Logo'
 
 const FOOTER_LINKS = {
   Product: [
@@ -19,15 +20,17 @@ const FOOTER_LINKS = {
   ],
 }
 
+// The colophon: a hairline above, column heads as wall labels, links in the
+// body sans that take the ink on hover. Flat paper, no fill change.
 export default function SiteFooter(): React.ReactElement {
   return (
-    <footer className="bg-gray-50 border-t border-gray-200 dark:bg-gray-900 dark:border-gray-800">
+    <footer className="border-t border-border bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="col-span-2 sm:col-span-1">
-            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Blog AI</p>
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            <Logo size={16} />
+            <p className="mt-3 text-sm text-muted-foreground">
               AI-powered content generation for blogs, marketing, and more.
             </p>
           </div>
@@ -35,13 +38,13 @@ export default function SiteFooter(): React.ReactElement {
           {/* Link columns */}
           {Object.entries(FOOTER_LINKS).map(([heading, links]) => (
             <div key={heading}>
-              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{heading}</p>
+              <p className="label-mono">{heading}</p>
               <ul className="mt-3 space-y-2">
                 {links.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-sm text-gray-500 dark:text-gray-400 hover:text-amber-700 transition-colors"
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
                     >
                       {link.label}
                     </Link>
@@ -53,11 +56,11 @@ export default function SiteFooter(): React.ReactElement {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-10 pt-6 border-t border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+        <div className="mt-10 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-muted-foreground">
             &copy; {new Date().getFullYear()} Blog AI. All rights reserved.
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-muted-foreground">
             Powered by GPT-4, Claude &amp; Gemini
           </p>
         </div>

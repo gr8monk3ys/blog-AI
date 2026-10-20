@@ -407,7 +407,9 @@ function StepsSection(): React.ReactElement {
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-amber-50/50 dark:bg-amber-950/30 border border-amber-200/40 dark:border-amber-700/30 mb-6 backdrop-blur-xs">
               <Icon className="w-8 h-8 text-amber-700" aria-hidden="true" />
             </div>
-            <div className="text-xs font-medium text-amber-700 uppercase tracking-wider mb-2">
+            {/* The ink, not amber-700: on the flat night page amber measured
+                3.7:1 (the old body gradient hid it from axe). */}
+            <div className="text-xs font-medium text-primary uppercase tracking-wider mb-2">
               Step {step.number}
             </div>
             <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
