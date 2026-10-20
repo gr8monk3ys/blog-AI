@@ -1,35 +1,28 @@
 'use client'
 
 import Link from 'next/link'
+import { CheckIcon } from '@heroicons/react/24/outline'
 import SiteHeader from '../components/SiteHeader'
 import SiteFooter from '../components/SiteFooter'
+import { buttonVariants } from '../components/ui/Button'
 import { useAuth } from '../lib/clerk-ui'
-import { TOOL_CATEGORIES } from '../types/tools'
-import {
-  SparklesIcon,
-  ArrowRightIcon,
-  CheckIcon,
-  UserGroupIcon,
-} from '@heroicons/react/24/outline'
-import { Reveal } from './_home/Reveal'
 import {
   FEATURES,
   STEPS,
   PRICING_TIERS,
   SOCIAL_STATS,
-  TOOL_CATEGORY_PILLS,
+  TOOL_CATEGORY_LINKS,
   CAPABILITIES,
 } from './_home/data'
 
-// Entrance motion lives in app/_home/Reveal.tsx (CSS-driven; see the note
-// there for why this page no longer uses framer-motion).
-function RevealSection({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return <Reveal className={className}>{children}</Reveal>
-}
+// The home page on the notebook (DESIGN.md → Layout, → Components). One
+// centred column on open paper; sections divided by a full-width hairline,
+// never a background change; every section introduced by a wall label; lists
+// as hairline-divided rows with a mono label in the margin; the pricing teaser
+// as a ledger on tinted paper. Nothing animates itself in: the first paint is
+// the final paint.
 
-// ---------------------------------------------------------------------------
-// Page
-// ---------------------------------------------------------------------------
+const labelLink = 'label-mono label-link ink-underline transition-colors hover:text-primary'
 
 export default function Home(): React.ReactElement {
   const isClerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
@@ -44,290 +37,207 @@ export default function Home(): React.ReactElement {
   const showSignedInCta = isClerkConfigured && isLoaded && isSignedIn
   const startFreeHref = isClerkConfigured ? '/sign-up' : '/auth'
 
+  const primaryCta = showSignedInCta
+    ? { href: '/generate', label: 'Start Generating' }
+    : { href: startFreeHref, label: 'Start Free' }
+  const secondaryCta = showSignedInCta
+    ? { href: '/brand', label: 'Open Brand Voice' }
+    : { href: '/pricing', label: 'View Plans' }
+
   return (
     <>
       <SiteHeader />
       <main id="main-content" tabIndex={-1} className="min-h-screen">
+        {/* ------------------------------------------------------------- */}
+        {/* Masthead                                                      */}
+        {/* ------------------------------------------------------------- */}
+        <section className="mx-auto max-w-6xl px-4 pb-16 pt-14 sm:px-6 md:pb-20 md:pt-20 lg:px-8 lg:pb-24 lg:pt-24">
+          <p className="label-mono">AI writing tools · Brand voice training</p>
 
-      {/* ----------------------------------------------------------------- */}
-      {/* Hero Section                                                      */}
-      {/* ----------------------------------------------------------------- */}
-      <section className="relative overflow-hidden">
-        {/* Subtle background gradient orbs */}
-        <div
-          className="pointer-events-none absolute -top-40 -right-40 h-[600px] w-[600px] rounded-full opacity-[0.07]"
-          style={{ background: 'radial-gradient(circle, rgb(217 119 6) 0%, transparent 70%)' }}
-          aria-hidden="true"
-        />
-        <div
-          className="pointer-events-none absolute -bottom-60 -left-40 h-[500px] w-[500px] rounded-full opacity-[0.05]"
-          style={{ background: 'radial-gradient(circle, rgb(217 119 6) 0%, transparent 70%)' }}
-          aria-hidden="true"
-        />
+          {/* The h1 is the LCP element and paints in the server HTML. */}
+          <h1 className="text-display mt-6 max-w-4xl">
+            Brand-Consistent AI Content For{' '}
+            <span className="text-primary">Lean Marketing Teams</span>
+          </h1>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-36">
-          <div className="max-w-3xl mx-auto text-center">
-            {/*
-              The hero is painted by the server HTML and animated purely in CSS
-              (.hero-rise / .hero-fade in globals.css). The h1 is the LCP element:
-              it rises but is never transparent, so first paint == LCP.
-            */}
-            <div>
-              {/* Badge */}
-              <div className="hero-rise">
-                <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-100/70 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 text-xs font-medium tracking-wide">
-                  <SparklesIcon className="w-3.5 h-3.5" aria-hidden="true" />
-                  AI writing tools with Brand Voice Training
-                </span>
-              </div>
+          <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground text-pretty">
+            Train your voice once, run repeatable SEO content workflows, and generate
+            publish-ready drafts faster without sounding generic.
+          </p>
 
-              {/* Headline */}
-              <h1
-                className="hero-rise-lcp [animation-delay:120ms] mt-6 text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 font-serif leading-[1.1] sm:leading-none"
-              >
-                Brand-Consistent AI Content For{' '}
-                <span className="text-amber-700">Lean Marketing Teams</span>
-              </h1>
-
-              {/* Subheading */}
-              <p
-                className="hero-rise [animation-delay:240ms] mt-6 text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed sm:leading-7"
-              >
-                Train your voice once, run repeatable SEO content workflows, and generate
-                publish-ready drafts faster without sounding generic.
-              </p>
-
-              {/* CTAs */}
-              <div
-                className="hero-rise [animation-delay:360ms] mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
-              >
-                {showSignedInCta ? (
-                  <>
-                    <Link
-                      href="/generate"
-                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white bg-amber-700 hover:bg-amber-800 rounded-xl transition-colors shadow-xs shadow-amber-600/20 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
-                    >
-                      Start Generating
-                      <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
-                    </Link>
-                    <Link
-                      href="/brand"
-                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-gray-700 dark:text-gray-300 bg-white/70 dark:bg-gray-900/60 border border-black/8 dark:border-white/8 hover:border-black/12 dark:hover:border-white/12 hover:bg-white/90 dark:hover:bg-gray-800/70 rounded-xl backdrop-blur-xs transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
-                    >
-                      Open Brand Voice
-                    </Link>
-                  </>
-                ) : (
-                  <>
-                    <Link
-                      href={startFreeHref}
-                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white bg-amber-700 hover:bg-amber-800 rounded-xl transition-colors shadow-xs shadow-amber-600/20 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
-                    >
-                      Start Free
-                      <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
-                    </Link>
-                    <Link
-                      href="/pricing"
-                      className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-gray-700 dark:text-gray-300 bg-white/70 dark:bg-gray-900/60 border border-black/8 dark:border-white/8 hover:border-black/12 dark:hover:border-white/12 hover:bg-white/90 dark:hover:bg-gray-800/70 rounded-xl backdrop-blur-xs transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
-                    >
-                      View Plans
-                    </Link>
-                  </>
-                )}
-              </div>
-
-              {/* Trust indicator */}
-              <p
-                className="hero-fade [animation-delay:780ms] mt-6 text-sm text-gray-500 dark:text-gray-400"
-              >
-                No credit card required. Start free, then upgrade when you need bulk and brand controls.
-              </p>
-            </div>
+          <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Link href={primaryCta.href} className={buttonVariants({ size: 'lg' })}>
+              {primaryCta.label}
+            </Link>
+            <Link
+              href={secondaryCta.href}
+              className={buttonVariants({ variant: 'outline', size: 'lg' })}
+            >
+              {secondaryCta.label}
+            </Link>
           </div>
-        </div>
-      </section>
 
-      {/* ----------------------------------------------------------------- */}
-      {/* Social Proof Bar                                                  */}
-      {/* ----------------------------------------------------------------- */}
-      <section className="border-y border-black/4 dark:border-white/4 glass-surface">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <RevealSection>
-            <div className="text-center mb-8">
-                <div className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400">
-                  <UserGroupIcon className="w-5 h-5 text-amber-500" aria-hidden="true" />
-                Best fit for founders, consultants, and lean marketing teams
-                </div>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
-              {SOCIAL_STATS.map((stat) => (
-                <div key={stat.label} className="text-center">
-                  <div className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-gray-100">
-                    {stat.value}
-                  </div>
-                  <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">{stat.label}</div>
-                </div>
-              ))}
-            </div>
-          </RevealSection>
-        </div>
-      </section>
+          <p className="mt-5 text-sm text-muted-foreground">
+            No credit card required. Start free, then upgrade when you need bulk and brand
+            controls.
+          </p>
 
-      {/* ----------------------------------------------------------------- */}
-      {/* Feature Grid                                                      */}
-      {/* ----------------------------------------------------------------- */}
-      <section className="py-20 sm:py-28">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <RevealSection className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
-              The Core System for Repeatable Content Production
-            </h2>
-            <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-              Focus on the workflows that actually drive upgrades: brand voice,
-              SEO drafting, bulk generation, and built-in research.
-            </p>
-          </RevealSection>
+          {/* The old stat band, as one row of wall labels: the figures are
+              catalogue entries, not a display. */}
+          <ul className="label-mono mt-14 flex flex-wrap gap-x-6 gap-y-2 border-t border-border/60 pt-6 md:mt-20">
+            {SOCIAL_STATS.map((stat) => (
+              <li key={stat.label}>
+                <span className="text-foreground">{stat.value}</span> {stat.label}
+              </li>
+            ))}
+          </ul>
+        </section>
 
-          <FeatureGrid />
-        </div>
-      </section>
+        <hr className="gallery-rule" />
 
-      {/* ----------------------------------------------------------------- */}
-      {/* Tool Breadth Strip                                                */}
-      {/* ----------------------------------------------------------------- */}
-      <section className="py-16 sm:py-20 glass-surface border-y border-black/4 dark:border-white/4">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <RevealSection className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
-              Every Content Type Your Team Needs
-            </h2>
-            <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-              Specialized tools across 8 categories — not one generic prompt box.
-            </p>
-          </RevealSection>
+        {/* ------------------------------------------------------------- */}
+        {/* The core system                                               */}
+        {/* ------------------------------------------------------------- */}
+        <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 md:py-20 lg:px-8 lg:py-24">
+          <p className="label-mono">The core system</p>
+          <h2 className="text-section-title mt-3 max-w-2xl">
+            The Core System for Repeatable Content Production
+          </h2>
+          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground text-pretty">
+            Focus on the workflows that actually drive upgrades: brand voice, SEO drafting, bulk
+            generation, and built-in research.
+          </p>
+          <NumberedRows items={FEATURES} />
+        </section>
 
-          <ToolBreadthStrip />
+        <hr className="gallery-rule" />
 
-          <RevealSection className="text-center mt-10">
-            <Link
-              href="/tool-directory"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
-            >
-              Browse the Full Directory
-              <ArrowRightIcon className="w-3.5 h-3.5" aria-hidden="true" />
+        {/* ------------------------------------------------------------- */}
+        {/* Every content type                                            */}
+        {/* ------------------------------------------------------------- */}
+        <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 md:py-20 lg:px-8 lg:py-24">
+          <p className="label-mono">Every content type</p>
+          <h2 className="text-section-title mt-3 max-w-2xl">Every Content Type Your Team Needs</h2>
+          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground text-pretty">
+            Specialized tools across 8 categories — not one generic prompt box.
+          </p>
+
+          {/* Tag lists are not chips (DESIGN.md → Chips): wall-label links. */}
+          <nav
+            className="mt-10 flex flex-wrap items-baseline gap-x-6 gap-y-1 border-y border-border/60 py-5"
+            aria-label="Browse tools by category"
+          >
+            <span className="label-mono">Browse</span>
+            {TOOL_CATEGORY_LINKS.map((category) => (
+              <Link
+                key={category.key}
+                href={`/tools/category/${category.key}`}
+                className={labelLink}
+              >
+                {category.label}
+              </Link>
+            ))}
+          </nav>
+
+          <p className="mt-8">
+            <Link href="/tool-directory" className={labelLink}>
+              Browse the Full Directory →
             </Link>
-          </RevealSection>
-        </div>
-      </section>
+          </p>
+        </section>
 
-      {/* ----------------------------------------------------------------- */}
-      {/* How It Works                                                      */}
-      {/* ----------------------------------------------------------------- */}
-      <section className="py-20 sm:py-28">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <RevealSection className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
-              Three Steps to a Content Engine Your Team Can Reuse
-            </h2>
-            <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-              Stop restarting from prompts and pasting between tools. Save your standards,
-              run the workflow, and publish with less cleanup.
-            </p>
-          </RevealSection>
+        <hr className="gallery-rule" />
 
-          <StepsSection />
-        </div>
-      </section>
+        {/* ------------------------------------------------------------- */}
+        {/* How it works                                                  */}
+        {/* ------------------------------------------------------------- */}
+        <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 md:py-20 lg:px-8 lg:py-24">
+          <p className="label-mono">How it works</p>
+          <h2 className="text-section-title mt-3 max-w-2xl">
+            Three Steps to a Content Engine Your Team Can Reuse
+          </h2>
+          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground text-pretty">
+            Stop restarting from prompts and pasting between tools. Save your standards, run the
+            workflow, and publish with less cleanup.
+          </p>
+          <NumberedRows as="ol" items={STEPS} />
+        </section>
 
-      {/* ----------------------------------------------------------------- */}
-      {/* Capabilities Showcase                                             */}
-      {/* ----------------------------------------------------------------- */}
-      <section className="py-20 sm:py-28 glass-surface border-y border-black/4 dark:border-white/4">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <RevealSection className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
-              Premium Capabilities That Pay for Themselves
-            </h2>
-            <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-              Each upgrade tier unlocks tools that directly reduce your content production time.
-            </p>
-          </RevealSection>
+        <hr className="gallery-rule" />
 
-          <CapabilitiesShowcase />
-        </div>
-      </section>
+        {/* ------------------------------------------------------------- */}
+        {/* Premium capabilities                                          */}
+        {/* ------------------------------------------------------------- */}
+        <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 md:py-20 lg:px-8 lg:py-24">
+          <p className="label-mono">Premium capabilities</p>
+          <h2 className="text-section-title mt-3 max-w-2xl">
+            Premium Capabilities That Pay for Themselves
+          </h2>
+          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground text-pretty">
+            Each upgrade tier unlocks tools that directly reduce your content production time.
+          </p>
+          <ul className="mt-10 divide-y divide-border border-y border-border">
+            {CAPABILITIES.map((cap) => (
+              <li key={cap.title} className="grid gap-2 py-5 sm:grid-cols-[7rem_1fr] sm:gap-8 sm:py-6">
+                <span className="label-mono pt-1.5">{cap.tier}</span>
+                <div className="min-w-0">
+                  <h3 className="text-card-title">{cap.title}</h3>
+                  <p className="mt-1.5 max-w-2xl leading-relaxed text-muted-foreground">
+                    {cap.description}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
 
-      {/* ----------------------------------------------------------------- */}
-      {/* Pricing Preview                                                   */}
-      {/* ----------------------------------------------------------------- */}
-      <section className="py-20 sm:py-28">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <RevealSection className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
-              Plans That Grow with You
-            </h2>
-            <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-              Start with the core workflow, then move up when you need more volume,
-              research depth, brand controls, and bulk production.
-            </p>
-          </RevealSection>
+        <hr className="gallery-rule" />
 
-          <PricingGrid />
+        {/* ------------------------------------------------------------- */}
+        {/* Plans: the ledger                                             */}
+        {/* ------------------------------------------------------------- */}
+        <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 md:py-20 lg:px-8 lg:py-24">
+          <p className="label-mono">Plans</p>
+          <h2 className="text-section-title mt-3 max-w-2xl">Plans That Grow with You</h2>
+          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground text-pretty">
+            Start with the core workflow, then move up when you need more volume, research depth,
+            brand controls, and bulk production.
+          </p>
 
-          <RevealSection className="text-center mt-10">
-            <Link
-              href="/pricing"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
-            >
-              Compare All Features in Detail
-              <ArrowRightIcon className="w-3.5 h-3.5" aria-hidden="true" />
+          <PricingLedger />
+
+          <p className="mt-8">
+            <Link href="/pricing" className={labelLink}>
+              Compare All Features in Detail →
             </Link>
-          </RevealSection>
-        </div>
-      </section>
+          </p>
+        </section>
 
-      {/* ----------------------------------------------------------------- */}
-      {/* Final CTA                                                         */}
-      {/* ----------------------------------------------------------------- */}
-      <section className="bg-linear-to-r from-amber-700 to-amber-800">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24 text-center">
-          <RevealSection>
-            <h2 className="text-3xl sm:text-4xl font-semibold text-white font-serif">
+        <hr className="gallery-rule" />
+
+        {/* ------------------------------------------------------------- */}
+        {/* Final CTA                                                     */}
+        {/* ------------------------------------------------------------- */}
+        <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 md:py-20 lg:px-8 lg:py-24">
+          <div className="max-w-2xl">
+            <p className="label-mono">Get started</p>
+            <h2 className="text-section-title mt-3">
               Build a Workflow Your Team Will Actually Reuse
             </h2>
-            <p className="mt-4 text-lg text-amber-100 max-w-xl mx-auto">
-              Use Blog AI when prompt-by-prompt writing stops scaling and you need
-              faster, more consistent SEO content production.
+            <p className="mt-4 text-lg leading-relaxed text-muted-foreground text-pretty">
+              Use Blog AI when prompt-by-prompt writing stops scaling and you need faster, more
+              consistent SEO content production.
             </p>
-            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              {showSignedInCta ? (
-                <Link
-                  href="/generate"
-                  className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-amber-700 bg-white hover:bg-amber-50 rounded-lg transition-colors shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-700"
-                >
-                  Start Generating
-                  <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
-                </Link>
-              ) : (
-                <Link
-                  href={startFreeHref}
-                  className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-amber-700 bg-white hover:bg-amber-50 rounded-lg transition-colors shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-700"
-                >
-                  Start Free
-                  <ArrowRightIcon className="w-4 h-4" aria-hidden="true" />
-                </Link>
-              )}
-              <Link
-                href="/brand"
-                className="inline-flex items-center gap-2 px-7 py-3.5 text-base font-medium text-white border border-white/30 hover:bg-white/10 rounded-lg transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-700"
-              >
+            <div className="mt-8 flex flex-wrap items-center gap-5">
+              <Link href={primaryCta.href} className={buttonVariants({ size: 'lg' })}>
+                {primaryCta.label}
+              </Link>
+              <Link href="/brand" className={labelLink}>
                 See Brand Voice
               </Link>
             </div>
-          </RevealSection>
-        </div>
-      </section>
-
+          </div>
+        </section>
       </main>
       <SiteFooter />
     </>
@@ -335,192 +245,82 @@ export default function Home(): React.ReactElement {
 }
 
 // ---------------------------------------------------------------------------
-// Section Components
+// Section components
 // ---------------------------------------------------------------------------
 
-function FeatureGrid(): React.ReactElement {
+/**
+ * A numbered row list (DESIGN.md → Components → Cards / Rows): a mono numeral
+ * in the margin, a Fraunces title, a muted description, hairlines between.
+ * The features and the steps share it so they read as the same device.
+ */
+function NumberedRows({
+  items,
+  as: Tag = 'ul',
+}: {
+  items: ReadonlyArray<{ number: string; title: string; description: string }>
+  as?: 'ul' | 'ol'
+}): React.ReactElement {
   return (
-    <Reveal stagger className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8">
-      {FEATURES.map((feature) => {
-        const Icon = feature.icon
-        return (
-          <div
-            key={feature.title}
-            className="glass-card rounded-2xl p-8 hover:shadow-lg transition-shadow"
-          >
-            <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-amber-100/80 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 mb-5">
-              <Icon className="w-5 h-5" aria-hidden="true" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-              {feature.title}
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-              {feature.description}
+    <Tag className="mt-10 divide-y divide-border border-y border-border">
+      {items.map((item) => (
+        <li key={item.number} className="grid gap-3 py-6 sm:grid-cols-[5rem_1fr] sm:gap-8 sm:py-8">
+          <span className="label-mono pt-1.5" aria-hidden="true">
+            {item.number}
+          </span>
+          <div className="min-w-0">
+            <h3 className="text-card-title">{item.title}</h3>
+            <p className="mt-2 max-w-2xl leading-relaxed text-muted-foreground">
+              {item.description}
             </p>
           </div>
-        )
-      })}
-    </Reveal>
+        </li>
+      ))}
+    </Tag>
   )
 }
 
-function ToolBreadthStrip(): React.ReactElement {
+/**
+ * The pricing teaser as a ledger: three columns on tinted paper divided by
+ * hairlines, the price in mono tabular, features as hairline rows with the
+ * check in ink. The masthead holds this view's one primary button, so every
+ * plan's action here is the secondary shape.
+ */
+function PricingLedger(): React.ReactElement {
   return (
-    <Reveal stagger as="ul" className="flex flex-wrap justify-center gap-4">
-      {TOOL_CATEGORY_PILLS.map((pill) => {
-        const Icon = pill.icon
-        const cat = TOOL_CATEGORIES[pill.key]
-        return (
-          <li key={pill.key}>
-            <Link
-              href={`/tools/category/${pill.key}`}
-              className={`inline-flex items-center gap-2.5 px-5 py-3 rounded-xl ${cat.bgColor} ${cat.color} border ${cat.borderColor} text-sm font-medium hover:shadow-md transition-shadow`}
-            >
-              <Icon className="w-4 h-4" aria-hidden="true" />
-              {pill.label}
-            </Link>
-          </li>
-        )
-      })}
-    </Reveal>
-  )
-}
+    <div className="mt-12 grid divide-y divide-border/70 border border-border/70 bg-muted/55 md:grid-cols-3 md:divide-x md:divide-y-0">
+      {PRICING_TIERS.map((tier, index) => (
+        <div key={tier.name} className="flex flex-col p-6 sm:p-8">
+          <p className="label-mono">
+            {String(index + 1).padStart(2, '0')}
+            {tier.highlighted ? ' · Most popular' : ''}
+          </p>
+          <h3 className="text-card-title mt-3">{tier.name}</h3>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{tier.description}</p>
 
-function StepsSection(): React.ReactElement {
-  return (
-    <Reveal stagger className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
-      {STEPS.map((step, index) => {
-        const Icon = step.icon
-        return (
-          <div
-            key={step.number}
-            className="relative text-center"
-          >
-            {/* Connector line between steps on desktop */}
-            {index < STEPS.length - 1 && (
-              <div
-                className="hidden md:block absolute top-10 left-[calc(50%+32px)] w-[calc(100%-64px)] h-px bg-amber-300/40 dark:bg-amber-700/30"
-                aria-hidden="true"
-              />
-            )}
-
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-amber-50/50 dark:bg-amber-950/30 border border-amber-200/40 dark:border-amber-700/30 mb-6 backdrop-blur-xs">
-              <Icon className="w-8 h-8 text-amber-700" aria-hidden="true" />
-            </div>
-            {/* The ink, not amber-700: on the flat night page amber measured
-                3.7:1 (the old body gradient hid it from axe). */}
-            <div className="text-xs font-medium text-primary uppercase tracking-wider mb-2">
-              Step {step.number}
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
-              {step.title}
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed max-w-xs mx-auto">
-              {step.description}
-            </p>
-          </div>
-        )
-      })}
-    </Reveal>
-  )
-}
-
-function CapabilitiesShowcase(): React.ReactElement {
-  return (
-    <Reveal stagger className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8">
-      {CAPABILITIES.map((cap) => {
-        const Icon = cap.icon
-        const isStarter = cap.tier === 'Starter+'
-        return (
-          <article
-            key={cap.title}
-            className="glass-card rounded-2xl p-6 sm:p-8"
-          >
-            <div className="flex items-start gap-4">
-              <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-amber-100/80 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 shrink-0">
-                <Icon className="w-5 h-5" aria-hidden="true" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                    {cap.title}
-                  </h3>
-                  <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                      isStarter
-                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
-                        : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300'
-                    }`}
-                  >
-                    {cap.tier}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                  {cap.description}
-                </p>
-              </div>
-            </div>
-          </article>
-        )
-      })}
-    </Reveal>
-  )
-}
-
-function PricingGrid(): React.ReactElement {
-  return (
-    <Reveal stagger className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
-      {PRICING_TIERS.map((tier) => (
-        <div
-          key={tier.name}
-          className={`relative rounded-2xl p-8 transition-shadow ${
-            tier.highlighted
-              ? 'glass-card border-2 border-amber-500/60 shadow-lg shadow-amber-500/10'
-              : 'glass-card'
-          }`}
-        >
-          {tier.highlighted && (
-            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-              <span className="inline-flex items-center px-3.5 py-1 bg-amber-700 text-white text-xs font-medium rounded-full">
-                Most Popular
-              </span>
-            </div>
-          )}
-
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{tier.name}</h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{tier.description}</p>
-
-          <div className="mt-6 flex items-baseline gap-1">
-            <span className="text-4xl font-semibold text-gray-900 dark:text-gray-100">
+          <p className="mt-6 flex items-baseline gap-2">
+            <span className="text-section-title font-mono font-medium tabular-nums tracking-tight">
               {tier.price}
             </span>
-            <span className="text-sm text-gray-500 dark:text-gray-400">{tier.period}</span>
-          </div>
+            <span className="label-mono">{tier.period}</span>
+          </p>
 
-          <Link
-            href={tier.href}
-            className={`mt-6 block w-full py-3 px-4 text-center text-sm font-medium rounded-lg transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ${
-              tier.highlighted
-                ? 'bg-amber-700 text-white hover:bg-amber-800'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700'
-            }`}
-          >
-            {tier.cta}
-          </Link>
-
-          <ul className="mt-8 space-y-3" role="list">
+          <ul className="mt-8 grow divide-y divide-border/70 border-y border-border/70" role="list">
             {tier.features.map((feature) => (
-              <li key={feature} className="flex items-start gap-3 text-sm text-gray-600 dark:text-gray-400">
-                <CheckIcon
-                  className="w-5 h-5 text-amber-500 shrink-0 mt-px"
-                  aria-hidden="true"
-                />
-                {feature}
+              <li key={feature} className="flex items-start gap-3 py-3 text-sm">
+                <CheckIcon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+                <span>{feature}</span>
               </li>
             ))}
           </ul>
+
+          <Link
+            href={tier.href}
+            className={buttonVariants({ variant: 'outline', className: 'mt-8 w-full' })}
+          >
+            {tier.cta}
+          </Link>
         </div>
       ))}
-    </Reveal>
+    </div>
   )
 }
