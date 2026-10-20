@@ -41,6 +41,15 @@ const authLinks = navLinks.filter((link) => link.authRequired)
 
 const THEME_CYCLE = ['light', 'dark', 'system'] as const
 
+/**
+ * The header sheet (DESIGN.md → Components → Navigation): sticky, 72px, 90%
+ * paper with a 12px blur, a 40% hairline beneath and the one structural
+ * shadow — all four in the `header-sheet` utility in globals.css, so the one
+ * glass surface and one of the two sanctioned shadows live in one place. The
+ * paragraph mark at the left; nav links in the body sans with the ink
+ * underline; the theme toggle and the sign-in control in a round hairline
+ * pill at the right, the sign-in button being the header's `cta-primary`.
+ */
 export default function SiteHeader(): React.ReactElement {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const isClerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
@@ -58,7 +67,7 @@ export default function SiteHeader(): React.ReactElement {
     <Link
       key={link.href}
       href={link.href}
-      className="ink-underline hover:text-primary transition-colors"
+      className="ink-underline py-1 text-sm text-foreground transition-colors hover:text-primary"
     >
       {link.label}
     </Link>
@@ -68,7 +77,7 @@ export default function SiteHeader(): React.ReactElement {
     <li key={link.href}>
       <Link
         href={link.href}
-        className="block rounded-md px-3 py-2 text-sm text-foreground hover:bg-card hover:text-primary transition-colors"
+        className="flex min-h-11 items-center text-foreground transition-colors hover:text-primary"
         onClick={() => setMobileMenuOpen(false)}
       >
         {link.label}
@@ -76,43 +85,47 @@ export default function SiteHeader(): React.ReactElement {
     </li>
   )
 
-  // The header sheet (`header-sheet` in globals.css): 90% paper with a 12px
-  // blur over the content scrolling under it, a 40% hairline beneath, and the
-  // one structural shadow (DESIGN.md → Elevation → The Two Sheets Rule).
+  const signInLink = (href: string): React.ReactElement => (
+    <Link href={href} className="cta-primary h-9 rounded-full px-4 text-sm">
+      Sign In
+    </Link>
+  )
+
   return (
     <header className="header-sheet sticky top-0 z-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-18 items-center justify-between gap-6">
+          <Link href="/" className="flex shrink-0 items-center">
             <Logo size={18} />
           </Link>
-          <nav className="hidden md:flex items-center gap-6 text-sm text-foreground">
+
+          <nav className="hidden items-center gap-7 md:flex" aria-label="Primary">
             {isClerkConfigured ? (
               <>
                 {publicLinks.map(renderNavLink)}
-                <SignedIn>
-                  {authLinks.map(renderNavLink)}
-                </SignedIn>
+                <SignedIn>{authLinks.map(renderNavLink)}</SignedIn>
               </>
             ) : (
               navLinks.map(renderNavLink)
             )}
           </nav>
-          <div className="flex items-center gap-3 text-sm">
+
+          {/* The round hairline pill: theme, then the account control. */}
+          <div className="flex items-center gap-1 rounded-full border border-border bg-card p-1">
             <button
               type="button"
               onClick={cycleTheme}
-              className="rounded-md p-1.5 text-muted-foreground hover:text-primary hover:bg-card transition-colors"
+              className="inline-flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
               aria-label={themeLabel}
               title={themeLabel}
             >
               {/* All three icons render; CSS shows the one matching
                   <html data-theme-pref> (set before first paint), so the
                   icon never flashes while the stored preference loads. */}
-              <SunIcon className="theme-pref-icon h-5 w-5" data-pref="light" aria-hidden="true" />
-              <MoonIcon className="theme-pref-icon h-5 w-5" data-pref="dark" aria-hidden="true" />
+              <SunIcon className="theme-pref-icon size-5" data-pref="light" aria-hidden="true" />
+              <MoonIcon className="theme-pref-icon size-5" data-pref="dark" aria-hidden="true" />
               <ComputerDesktopIcon
-                className="theme-pref-icon h-5 w-5"
+                className="theme-pref-icon size-5"
                 data-pref="system"
                 aria-hidden="true"
               />
@@ -120,31 +133,27 @@ export default function SiteHeader(): React.ReactElement {
             {isClerkConfigured ? (
               <>
                 <SignedIn>
-                  <UserButton afterSignOutUrl="/" />
+                  <span className="inline-flex size-9 items-center justify-center">
+                    <UserButton afterSignOutUrl="/" />
+                  </span>
                 </SignedIn>
-                <SignedOut>
-                  <Link href="/sign-in" className="cta-primary rounded-lg px-3 py-1.5">
-                    Sign In
-                  </Link>
-                </SignedOut>
+                <SignedOut>{signInLink('/sign-in')}</SignedOut>
               </>
             ) : (
-              <Link href="/auth" className="cta-primary rounded-lg px-3 py-1.5">
-                Sign In
-              </Link>
+              signInLink('/auth')
             )}
             <button
               type="button"
-              className="md:hidden -m-2 inline-flex items-center justify-center rounded-md p-2 text-foreground hover:bg-card hover:text-primary transition-colors"
+              className="inline-flex size-9 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted hover:text-primary md:hidden"
               aria-expanded={mobileMenuOpen}
               aria-controls="mobile-nav"
               aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
               onClick={() => setMobileMenuOpen((prev) => !prev)}
             >
               {mobileMenuOpen ? (
-                <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                <XMarkIcon className="size-5" aria-hidden="true" />
               ) : (
-                <Bars3Icon className="h-6 w-6" aria-hidden="true" />
+                <Bars3Icon className="size-5" aria-hidden="true" />
               )}
             </button>
           </div>
@@ -154,15 +163,14 @@ export default function SiteHeader(): React.ReactElement {
       {mobileMenuOpen && (
         <nav
           id="mobile-nav"
-          className="md:hidden border-t border-border bg-background"
+          className="border-t border-border/60 bg-background md:hidden"
+          aria-label="Primary"
         >
-          <ul className="space-y-1 px-4 py-3">
+          <ul className="mx-auto max-w-7xl divide-y divide-border/60 px-4 py-2 sm:px-6">
             {isClerkConfigured ? (
               <>
                 {publicLinks.map(renderMobileNavLink)}
-                <SignedIn>
-                  {authLinks.map(renderMobileNavLink)}
-                </SignedIn>
+                <SignedIn>{authLinks.map(renderMobileNavLink)}</SignedIn>
               </>
             ) : (
               navLinks.map(renderMobileNavLink)

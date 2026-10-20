@@ -20,49 +20,56 @@ const FOOTER_LINKS = {
   ],
 }
 
-// The colophon: a hairline above, column heads as wall labels, links in the
-// body sans that take the ink on hover. Flat paper, no fill change.
+const footerLink =
+  'ink-underline text-sm text-foreground/80 transition-colors hover:text-primary'
+
+/**
+ * The colophon (DESIGN.md → Components → Navigation → Footer): a 60% hairline
+ * above, a `1.1fr / 2fr` editorial split, column heads as wall labels, links
+ * in the body sans that take the ink underline, and a hairline before the
+ * legal line. Flat paper; no fill change.
+ */
 export default function SiteFooter(): React.ReactElement {
   return (
-    <footer className="border-t border-border bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
-          {/* Brand */}
-          <div className="col-span-2 sm:col-span-1">
+    <footer className="border-t border-border/60">
+      <div className="mx-auto grid max-w-7xl gap-12 px-4 py-12 sm:px-6 md:grid-cols-[1.1fr_2fr] md:gap-16 md:py-16 lg:px-8">
+        <div className="max-w-sm">
+          <Link href="/" className="inline-flex items-center">
             <Logo size={16} />
-            <p className="mt-3 text-sm text-muted-foreground">
-              AI-powered content generation for blogs, marketing, and more.
-            </p>
-          </div>
-
-          {/* Link columns */}
-          {Object.entries(FOOTER_LINKS).map(([heading, links]) => (
-            <div key={heading}>
-              <p className="label-mono">{heading}</p>
-              <ul className="mt-3 space-y-2">
-                {links.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          </Link>
+          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+            AI-powered content generation for blogs, marketing, and more.
+          </p>
         </div>
 
-        {/* Bottom bar */}
-        <div className="mt-10 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} Blog AI. All rights reserved.
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Powered by GPT-4, Claude &amp; Gemini
-          </p>
+        <div className="grid grid-cols-2 gap-10 sm:grid-cols-3">
+          {Object.entries(FOOTER_LINKS).map(([heading, links]) => {
+            const id = `footer-${heading.toLowerCase()}-heading`
+            return (
+              <nav key={heading} aria-labelledby={id}>
+                <p id={id} className="label-mono">
+                  {heading}
+                </p>
+                <ul className="mt-4 flex flex-col items-start gap-3">
+                  {links.map((link) => (
+                    <li key={link.href}>
+                      <Link href={link.href} className={footerLink}>
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            )
+          })}
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <hr className="gallery-rule" />
+        <div className="flex flex-col gap-2 py-6 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
+          <p>&copy; {new Date().getFullYear()} Blog AI. All rights reserved.</p>
+          <p>Powered by GPT-4, Claude &amp; Gemini</p>
         </div>
       </div>
     </footer>
