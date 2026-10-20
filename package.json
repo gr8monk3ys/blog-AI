@@ -17,6 +17,8 @@
     "lint": "bun run --cwd apps/web lint",
     "lint:fix": "bun run --cwd apps/web lint:fix",
     "type-check": "bun run --cwd apps/web type-check",
+    "design:check": "node scripts/check-design-system.mjs",
+    "brand:generate": "node scripts/generate-brand.mjs",
     "db:migrate": "bun scripts/migrate_db.mjs",
     "analyze": "bun run --cwd apps/web analyze",
     "audit:runtime": "bun scripts/audit-runtime.mjs",

@@ -1,26 +1,10 @@
 import type { Metadata, Viewport } from 'next'
 import { headers } from 'next/headers'
-import { Inter, Source_Serif_4 } from 'next/font/google'
 import DeferredAnalytics from '../components/DeferredAnalytics'
+import { fontBody, fontDisplay, fontMono } from '../lib/fonts'
 import { Providers } from './providers'
 import { ClerkProvider } from '../lib/clerk-ui'
 import './globals.css'
-
-// The variables are named after the typefaces, not after Tailwind's
-// --font-sans / --font-serif: Tailwind v4's theme owns those two names and
-// maps them onto these in app/globals.css (@theme inline). Naming them the
-// same would make `--font-sans: var(--font-sans)` refer to itself.
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-inter',
-})
-
-const sourceSerif = Source_Serif_4({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-source-serif',
-})
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://blogai.com'),
@@ -30,10 +14,18 @@ export const metadata: Metadata = {
   },
   description:
     'Train your brand voice, run repeatable SEO content workflows, and generate publish-ready drafts faster.',
-  // Without an explicit icon, browsers request /favicon.ico, which does not
-  // exist here (the icon is public/icon.svg, already used by manifest.json).
-  // That was a 404 on every page load and an errors-in-console finding.
-  icons: { icon: '/icon.svg' },
+  // The paragraph mark, rendered by `bun run brand:generate`
+  // (scripts/generate-brand.mjs). favicon.ico answers the request every
+  // browser makes unprompted; the PNGs are the sharp forms for tab strips and
+  // bookmarks; the Apple icon is the mark on paper with no transparency.
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: '48x48' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: '/apple-touch-icon.png',
+  },
   openGraph: {
     type: 'website',
     siteName: 'Blog AI',
@@ -47,12 +39,12 @@ export const metadata: Metadata = {
   },
 }
 
-// Browser chrome matches the page background (globals.css
-// --background-start-rgb, light and dark).
+// Browser chrome matches the page: paper by day, night by night (globals.css
+// --background in :root and .dark; DESIGN.md → Colors → Neutral).
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#fff8e6' },
-    { media: '(prefers-color-scheme: dark)', color: '#0f0f0f' },
+    { media: '(prefers-color-scheme: light)', color: '#f9f8f5' },
+    { media: '(prefers-color-scheme: dark)', color: '#111317' },
   ],
 }
 
@@ -80,10 +72,12 @@ export default async function RootLayout({
       <head>
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className={`${inter.variable} ${sourceSerif.variable} ${inter.className}`}>
+      {/* The three voices as CSS variables (lib/fonts.ts); globals.css gives
+          body the body face and headings the display face. */}
+      <body className={`${fontBody.variable} ${fontDisplay.variable} ${fontMono.variable}`}>
         <a
           href="#main-content"
-          className="sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:left-4 focus-visible:top-4 focus-visible:z-100 focus-visible:rounded-lg focus-visible:bg-amber-700 focus-visible:px-4 focus-visible:py-2 focus-visible:text-white"
+          className="sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:left-4 focus-visible:top-4 focus-visible:z-100 focus-visible:rounded-lg focus-visible:bg-primary focus-visible:px-4 focus-visible:py-2 focus-visible:text-primary-foreground"
         >
           Skip to Main Content
         </a>
