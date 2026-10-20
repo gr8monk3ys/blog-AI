@@ -150,12 +150,13 @@ const PROFILES = [
 // ~5,300 raw-palette utilities that make up most of the stylesheet; lower
 // this back under 72,000 in the PR that does.
 //
-// Lowered to 70,000 on 2026-10-19 by the marketing-pages PR, which took the
+// Lowered to 68,000 on 2026-10-19 by the marketing-pages PR, which took the
 // home page, header and footer off the raw palette, the glass shims and the
-// entrance keyframes: measured 66,709 bytes on the same machine (72,433
-// before), so the cap sits ~5% above the measurement again. The app-pages PR
-// retires the rest of the palette block; lower it again there.
-const HOME_DOCUMENT_BYTE_CAP = 70_000;
+// entrance keyframes: the CI runner measured 64,919 bytes (72,433 before on
+// the development machine, 66,701 after), so the cap sits ~5% above the
+// runner's number again. The app-pages PR retires the rest of the palette
+// block; lower it again there.
+const HOME_DOCUMENT_BYTE_CAP = 68_000;
 
 const MAX_ATTEMPTS = 4;
 const artifactDir = join(process.cwd(), "artifacts", "lighthouse");
