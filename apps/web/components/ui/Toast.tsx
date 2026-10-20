@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect } from 'react'
-import { m, AnimatePresence } from 'framer-motion'
+import { Fragment, useEffect } from 'react'
+import { Transition } from '@headlessui/react'
 import {
   CheckCircleIcon,
   ExclamationCircleIcon,
@@ -21,7 +21,9 @@ export interface ToastProps {
 }
 
 // A toast is a slip of paper card with a hairline; only the icon carries the
-// signal colour (DESIGN.md → Colors → Signal). No shadow, no tinted fill.
+// signal colour (DESIGN.md → Colors → Signal). No shadow, no tinted fill. It
+// fades in over 200ms through Headless UI — a notification is the interface
+// arriving, not content (DESIGN.md → Motion) — so framer-motion is not needed.
 const variantConfig: Record<ToastVariant, { icon: React.ElementType; iconColor: string }> = {
   success: { icon: CheckCircleIcon, iconColor: 'text-success' },
   error: { icon: ExclamationCircleIcon, iconColor: 'text-destructive' },
@@ -49,34 +51,37 @@ export default function Toast({
   }, [isVisible, duration, onClose])
 
   return (
-    <AnimatePresence>
-      {isVisible && (
-        <m.div
-          initial={{ opacity: 0, y: -20, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -20, scale: 0.95 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-lg border border-border bg-card text-card-foreground"
-          role="alert"
-          aria-live="polite"
+    <Transition
+      show={isVisible}
+      as={Fragment}
+      enter="transition duration-200 ease-out"
+      enterFrom="opacity-0 -translate-y-2"
+      enterTo="opacity-100 translate-y-0"
+      leave="transition duration-150 ease-in"
+      leaveFrom="opacity-100 translate-y-0"
+      leaveTo="opacity-0 -translate-y-2"
+    >
+      <div
+        className="fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-lg border border-border bg-card text-card-foreground"
+        role="alert"
+        aria-live="polite"
+      >
+        <Icon
+          aria-hidden="true"
+          className={`w-5 h-5 shrink-0 ${config.iconColor}`}
+        />
+        <span className="text-sm font-medium">
+          {message}
+        </span>
+        <button
+          type="button"
+          onClick={onClose}
+          className="ml-2 p-1 rounded-full text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
+          aria-label="Dismiss notification"
         >
-          <Icon
-            aria-hidden="true"
-            className={`w-5 h-5 shrink-0 ${config.iconColor}`}
-          />
-          <span className="text-sm font-medium">
-            {message}
-          </span>
-          <button
-            type="button"
-            onClick={onClose}
-            className="ml-2 p-1 rounded-full text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
-            aria-label="Dismiss notification"
-          >
-            <XMarkIcon className="w-4 h-4" aria-hidden="true" />
-          </button>
-        </m.div>
-      )}
-    </AnimatePresence>
+          <XMarkIcon className="w-4 h-4" aria-hidden="true" />
+        </button>
+      </div>
+    </Transition>
   )
 }
