@@ -23,7 +23,7 @@ test.describe('Mobile Responsiveness', () => {
 
     expect(response?.status()).toBeLessThan(500)
     await expect(page.locator('body')).toContainText(
-      /Browse every AI tool and calculator/i
+      /Browse every AI tool in one place/i
     )
   })
 

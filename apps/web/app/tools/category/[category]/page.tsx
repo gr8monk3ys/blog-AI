@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import SiteHeader from '../../../../components/SiteHeader'
 import SiteFooter from '../../../../components/SiteFooter'
+import ToolCard from '../../../../components/tools/ToolCard'
 import { notFound } from 'next/navigation'
 import {
   TOOL_CATEGORIES,
@@ -25,6 +26,8 @@ const CATEGORY_ORDER: ToolCategory[] = [
   'rewriting',
 ]
 
+const labelLink = 'label-mono label-link ink-underline transition-colors hover:text-primary'
+
 export async function generateMetadata({ params }: CategoryPageProps) {
   const { category } = await params
   const categoryId = normalizeCategoryParam(category)
@@ -37,6 +40,9 @@ export async function generateMetadata({ params }: CategoryPageProps) {
   }
 }
 
+// A category on the notebook: an index header, the tools as hairline rows,
+// a short essay at the reading measure, and the other categories as a row of
+// wall-label links (DESIGN.md → Chips: tag lists are not chips).
 export default async function ToolCategoryPage({ params }: CategoryPageProps) {
   const { category } = await params
   const categoryId = normalizeCategoryParam(category)
@@ -51,81 +57,74 @@ export default async function ToolCategoryPage({ params }: CategoryPageProps) {
   return (
     <>
       <SiteHeader />
-      <main id="main-content" tabIndex={-1} className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
-
-      <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Link href="/tool-directory" className="text-xs text-gray-500 dark:text-gray-400 hover:text-amber-800 dark:hover:text-amber-300">
-            Back to Directory
+      <main id="main-content" tabIndex={-1} className="min-h-screen">
+        <header className="mx-auto max-w-5xl px-4 pb-10 pt-12 sm:px-6 md:pt-16 lg:px-8">
+          <Link href="/tool-directory" className={labelLink}>
+            ← Back to Directory
           </Link>
-          <h1 className="mt-3 text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
-            {categoryInfo.name} Tools
-          </h1>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-2xl">
-            {categoryInfo.description}. Explore calculators and generators tailored for
+          <p className="label-mono mt-8">
+            {categoryInfo.name} · {tools.length} {tools.length === 1 ? 'tool' : 'tools'}
+          </p>
+          <h1 className="text-page-title mt-3">{categoryInfo.name} Tools</h1>
+          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground text-pretty">
+            {categoryInfo.description}. Explore generators tailored for
             {` ${categoryInfo.name.toLowerCase()} workflows.`}
           </p>
-        </div>
-      </header>
+        </header>
 
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        {tools.length === 0 ? (
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 text-sm text-gray-600 dark:text-gray-400">
-            No tools available yet for this category.
+        <section className="mx-auto max-w-5xl px-4 pb-16 sm:px-6 lg:px-8">
+          {tools.length === 0 ? (
+            <div className="border-y border-border py-10">
+              <p className="label-mono">Nothing here yet</p>
+              <h2 className="text-card-title mt-3">No tools available yet for this category.</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                New tools will appear here as the library expands.
+              </p>
+            </div>
+          ) : (
+            <ul className="border-t border-border md:grid md:grid-cols-2 md:gap-x-12">
+              {tools.map((tool) => (
+                <ToolCard key={tool.id} tool={tool} headingLevel={2} />
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <hr className="gallery-rule" />
+
+        <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6 md:py-20 lg:px-8">
+          <div className="max-w-2xl">
+            <p className="label-mono">Why it matters</p>
+            <h2 className="text-section-title mt-3">
+              Why {categoryInfo.name.toLowerCase()} tools matter
+            </h2>
+            <p className="mt-4 leading-relaxed text-muted-foreground">
+              {categoryInfo.name} workflows benefit from consistent structure and fast iteration.
+              Use these tools to generate drafts, improve quality, and maintain momentum across
+              your content pipeline.
+            </p>
+            <p className="mt-4 leading-relaxed text-muted-foreground">
+              Pair each tool with supporting articles and templates to build topic clusters that
+              increase search visibility.
+            </p>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {tools.map((tool) => (
-              <Link
-                key={tool.id}
-                href={`/tools/${tool.slug}`}
-                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 hover:border-amber-200 dark:hover:border-amber-800 hover:shadow-xs transition"
-              >
-                <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{tool.name}</div>
-                <div className="mt-2 text-xs text-gray-600 dark:text-gray-400">{tool.description}</div>
-                <div className="mt-3 text-xs text-amber-700 dark:text-amber-400">Open tool</div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
+        </section>
 
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Why {categoryInfo.name.toLowerCase()} tools matter
-          </h2>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            {categoryInfo.name} workflows benefit from consistent structure and fast iteration.
-            Use these tools to generate drafts, improve quality, and maintain momentum across your
-            content pipeline.
-          </p>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Pair each tool with supporting articles and templates to build topic clusters that
-            increase search visibility.
-          </p>
-        </div>
-      </section>
+        <hr className="gallery-rule" />
 
-      <section className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
-            Related Categories
-          </h2>
-          <div className="mt-4 flex flex-wrap gap-3">
+        <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 md:py-16 lg:px-8">
+          <h2 className="label-mono">Related Categories</h2>
+          <nav
+            className="mt-4 flex flex-wrap items-baseline gap-x-6 gap-y-1"
+            aria-label="Related categories"
+          >
             {CATEGORY_ORDER.filter((id) => id !== categoryId).map((id) => (
-              <Link
-                key={id}
-                href={`/tools/category/${id}`}
-                className="px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-800 dark:hover:text-amber-300 transition-colors"
-              >
+              <Link key={id} href={`/tools/category/${id}`} className={labelLink}>
                 {TOOL_CATEGORIES[id].name}
               </Link>
             ))}
-          </div>
-        </div>
-      </section>
-
+          </nav>
+        </section>
       </main>
       <SiteFooter />
     </>

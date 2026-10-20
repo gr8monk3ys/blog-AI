@@ -1,16 +1,11 @@
 'use client'
 
 import { useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import ToolCard, { type HeadingLevel } from './ToolCard'
 import ToolSearch from './ToolSearch'
 import CategoryFilter from './CategoryFilter'
+import { buttonVariants } from '../ui/Button'
 import { Tool, ToolCategory, SAMPLE_TOOLS } from '../../types/tools'
-import {
-  FunnelIcon,
-  Squares2X2Icon,
-  MagnifyingGlassIcon,
-} from '@heroicons/react/24/outline'
 import { useUrlSearchParam } from '../../hooks/useUrlSearchParam'
 import { TOOL_CATEGORIES } from '../../types/tools'
 
@@ -20,9 +15,9 @@ interface ToolGridProps {
   showSearch?: boolean
   initialCategory?: ToolCategory | 'all'
   /**
-   * Heading level for the tool card titles and the empty state. Defaults to 3,
-   * which is correct when the grid sits under a section <h2>. Pass 2 when the
-   * grid is the first content under the page <h1>.
+   * Heading level for the tool row titles and the empty state. Defaults to 3,
+   * which is correct when the list sits under a section <h2>. Pass 2 when the
+   * list is the first content under the page <h1>.
    */
   headingLevel?: HeadingLevel
 }
@@ -30,6 +25,10 @@ interface ToolGridProps {
 const isToolCategoryParam = (value: string): value is ToolCategory | 'all' =>
   value === 'all' || value in TOOL_CATEGORIES
 
+// The catalogue: search and filters as wall labels, then the tools as
+// hairline rows in two columns at md (DESIGN.md → Components → Cards / Rows).
+// Filters live in the URL (?q=&category=&free=1) so a filtered view can be
+// shared and survives Back/Forward. Nothing animates in or out.
 export default function ToolGrid({
   tools = SAMPLE_TOOLS,
   showFilters = true,
@@ -38,8 +37,6 @@ export default function ToolGrid({
   headingLevel = 3,
 }: ToolGridProps) {
   const EmptyStateHeading = `h${headingLevel}` as const
-  // Filters live in the URL (?q=&category=&free=1) so a filtered view can be
-  // shared and survives Back/Forward.
   const [searchQuery, setSearchQuery] = useUrlSearchParam<string>('q', '')
   const [selectedCategory, setSelectedCategory] = useUrlSearchParam<ToolCategory | 'all'>(
     'category',
@@ -111,10 +108,10 @@ export default function ToolGrid({
   }, [filteredTools])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Search and filter controls */}
       {(showSearch || showFilters) && (
-        <div className="space-y-4">
+        <div className="space-y-5">
           {showSearch && (
             <ToolSearch
               searchQuery={searchQuery}
@@ -125,25 +122,21 @@ export default function ToolGrid({
           )}
 
           {showFilters && (
-            <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 border-y border-border/60 py-4 sm:flex-row sm:items-baseline sm:justify-between sm:gap-8">
               <CategoryFilter
                 selectedCategory={selectedCategory}
                 onCategoryChange={setSelectedCategory}
                 toolCounts={toolCounts}
               />
 
-              {/* Additional filter toggle */}
               <button
                 type="button"
                 onClick={() => setShowFreeOnly(!showFreeOnly)}
-                className={`shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ${
-                  showFreeOnly
-                    ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                    : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                className={`label-mono label-link ink-underline shrink-0 transition-colors hover:text-primary ${
+                  showFreeOnly ? 'text-primary' : ''
                 }`}
                 aria-pressed={showFreeOnly}
               >
-                <FunnelIcon className="w-4 h-4" aria-hidden="true" />
                 Free Only
               </button>
             </div>
@@ -152,66 +145,37 @@ export default function ToolGrid({
       )}
 
       {/* Results summary */}
-      <div className="flex items-center justify-between text-sm text-gray-500">
-        <div className="flex items-center gap-2">
-          <Squares2X2Icon className="w-4 h-4" aria-hidden="true" />
-          <span>
-            Showing {sortedTools.length} of {tools.length} tools
-          </span>
-        </div>
-      </div>
+      <p className="label-mono">
+        Showing {sortedTools.length} of {tools.length} tools
+      </p>
 
-      {/* Tools grid */}
-      <AnimatePresence mode="wait">
-        {sortedTools.length > 0 ? (
-          <motion.div
-            key="grid"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+      {sortedTools.length > 0 ? (
+        <ul className="border-t border-border md:grid md:grid-cols-2 md:gap-x-12">
+          {sortedTools.map((tool) => (
+            <ToolCard key={tool.id} tool={tool} headingLevel={headingLevel} />
+          ))}
+        </ul>
+      ) : (
+        // An honest empty state: a wall label, one serif line, one action.
+        <div className="border-y border-border py-10">
+          <p className="label-mono">No results</p>
+          <EmptyStateHeading className="text-card-title mt-3">No tools found</EmptyStateHeading>
+          <p className="mt-2 max-w-md text-sm text-muted-foreground">
+            Try adjusting your search or filter criteria to find what you’re looking for.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setSearchQuery('')
+              setSelectedCategory('all')
+              setShowFreeOnly(false)
+            }}
+            className={buttonVariants({ variant: 'outline', className: 'mt-6' })}
           >
-            {sortedTools.map((tool, index) => (
-              <ToolCard
-                key={tool.id}
-                tool={tool}
-                index={index}
-                headingLevel={headingLevel}
-              />
-            ))}
-          </motion.div>
-        ) : (
-          <motion.div
-            key="empty"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="text-center py-12 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800"
-          >
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-              <MagnifyingGlassIcon className="w-8 h-8 text-gray-400" aria-hidden="true" />
-            </div>
-            <EmptyStateHeading className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-              No tools found
-            </EmptyStateHeading>
-            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-              Try adjusting your search or filter criteria to find what you’re
-              looking for.
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                setSearchQuery('')
-                setSelectedCategory('all')
-                setShowFreeOnly(false)
-              }}
-              className="mt-4 inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 transition-colors"
-            >
-              Clear All Filters
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            Clear All Filters
+          </button>
+        </div>
+      )}
     </div>
   )
 }

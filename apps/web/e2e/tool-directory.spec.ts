@@ -11,7 +11,7 @@ test.describe('Tool Directory', () => {
 
   test('tool directory renders page heading', async ({ page }) => {
     await expect(page.locator('body')).toContainText(
-      /Browse every AI tool and calculator in one place/i
+      /Browse every AI tool in one place/i
     )
   })
 

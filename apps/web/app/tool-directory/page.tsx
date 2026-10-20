@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import SiteHeader from '../../components/SiteHeader'
 import SiteFooter from '../../components/SiteFooter'
+import { buttonVariants } from '../../components/ui/Button'
 import {
   TOOL_CATEGORIES,
   SAMPLE_TOOLS,
@@ -12,7 +13,7 @@ import { toolsApi, toFrontendTools } from '../../lib/tools-api'
 export const metadata = {
   title: 'Tool Directory',
   description:
-    'Browse the complete directory of AI writing tools, calculators, and templates to build scalable content.',
+    'Browse the complete directory of AI writing tools and templates to build scalable content.',
 }
 
 const CATEGORY_ORDER: ToolCategory[] = [
@@ -25,6 +26,8 @@ const CATEGORY_ORDER: ToolCategory[] = [
   'video',
   'rewriting',
 ]
+
+const labelLink = 'label-mono label-link ink-underline transition-colors hover:text-primary'
 
 const groupToolsByCategory = (tools: Tool[]) => {
   const grouped: Record<ToolCategory, Tool[]> = CATEGORY_ORDER.reduce(
@@ -48,178 +51,143 @@ const groupToolsByCategory = (tools: Tool[]) => {
   return grouped
 }
 
+// The directory on the notebook: a wide index header with the figures as a
+// row of wall labels, the categories as a row of wall-label jump links, then
+// one hairline-divided ledger per category — the category's name and line on
+// the left, its tools as rows on the right (DESIGN.md → Layout: asymmetric
+// editorial splits, never equal halves).
 export default async function ToolDirectoryPage() {
   const tools = await loadTools()
   const groupedTools = groupToolsByCategory(tools)
   const totalTools = tools.length
 
+  const figures = [
+    { value: `${totalTools}+`, label: 'Tools in the directory' },
+    { value: String(CATEGORY_ORDER.length), label: 'Categories covered' },
+    { value: '2026', label: 'Updated for this year' },
+  ]
+
   return (
     <>
       <SiteHeader />
-      <main id="main-content" tabIndex={-1} className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
-      <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                Tool Directory
-              </p>
-              <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
-                Browse Every AI Tool and Calculator in One Place
-              </h1>
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-2xl">
-                This directory is designed for discovery and internal linking. Use it
-                to find tools by category, jump to a specific section, or explore new
-                ideas for content scale.
-              </p>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Link
-                href="/tools"
-                className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-amber-700 hover:bg-amber-800 rounded-lg transition-colors"
-              >
-                Open Interactive Tools
-              </Link>
-              <Link
-                href="/"
-                className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
-              >
-                Back to Home
-              </Link>
-            </div>
+      <main id="main-content" tabIndex={-1} className="min-h-screen">
+        <header className="mx-auto max-w-7xl px-4 pb-10 pt-12 sm:px-6 md:pt-16 lg:px-8">
+          <p className="label-mono">Tool Directory</p>
+          <h1 className="text-page-title mt-3 max-w-3xl">Browse Every AI Tool in One Place</h1>
+          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground text-pretty">
+            This directory is designed for discovery and internal linking. Use it to find tools
+            by category, jump to a specific section, or explore new ideas for content scale.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center gap-5">
+            <Link href="/tools" className={buttonVariants({ size: 'lg' })}>
+              Open Interactive Tools
+            </Link>
+            <Link href="/" className={labelLink}>
+              Back to Home
+            </Link>
           </div>
-        </div>
-      </header>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
-            <div className="text-3xl font-semibold text-gray-900 dark:text-gray-100">
-              {totalTools}+
-            </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">Tools in the directory</div>
-          </div>
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
-            <div className="text-3xl font-semibold text-gray-900 dark:text-gray-100">
-              {CATEGORY_ORDER.length}
-            </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">Categories covered</div>
-          </div>
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
-            <div className="text-3xl font-semibold text-gray-900 dark:text-gray-100">2026</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">Updated for this year</div>
-          </div>
-        </div>
-      </section>
+          <ul className="label-mono mt-12 flex flex-wrap gap-x-6 gap-y-2 border-t border-border/60 pt-6">
+            {figures.map((figure) => (
+              <li key={figure.label}>
+                <span className="text-foreground">{figure.value}</span> {figure.label}
+              </li>
+            ))}
+          </ul>
+        </header>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-          <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">
-            Jump to category
-          </div>
-          <div className="flex flex-wrap gap-3">
+        <section className="mx-auto max-w-7xl px-4 pb-4 sm:px-6 lg:px-8">
+          <nav
+            className="flex flex-wrap items-baseline gap-x-6 gap-y-1 border-y border-border/60 py-5"
+            aria-label="Jump to category"
+          >
+            <span className="label-mono">Jump to category</span>
             {CATEGORY_ORDER.map((category) => (
-              <a
-                key={category}
-                href={`#${category}`}
-                className="px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-800 dark:hover:text-amber-300 transition-colors"
-              >
+              <a key={category} href={`#${category}`} className={labelLink}>
                 {TOOL_CATEGORIES[category].name}
               </a>
             ))}
-          </div>
-        </div>
-      </section>
+          </nav>
+        </section>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-14">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {CATEGORY_ORDER.map((category) => {
-              const categoryInfo = TOOL_CATEGORIES[category]
-              const tools = groupedTools[category]
+        <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+          {CATEGORY_ORDER.map((category) => {
+            const categoryInfo = TOOL_CATEGORIES[category]
+            const categoryTools = groupedTools[category]
             return (
-              <div
+              <section
                 key={category}
                 id={category}
-                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6"
+                className="grid gap-6 border-b border-border py-10 md:grid-cols-[16rem_1fr] md:gap-12 md:py-12"
+                aria-labelledby={`${category}-heading`}
               >
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <div className={`text-xs font-medium ${categoryInfo.color}`}>
-                      {categoryInfo.name}
-                    </div>
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                      {categoryInfo.description}
-                    </h2>
-                  </div>
-                  <Link
-                    href={`/tools/category/${category}`}
-                    className="text-xs text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300"
-                  >
-                    View Tools
-                  </Link>
+                <div>
+                  <p className="label-mono">
+                    {categoryInfo.name} · {categoryTools.length}
+                  </p>
+                  <h2 id={`${category}-heading`} className="text-card-title mt-2">
+                    {categoryInfo.description}
+                  </h2>
+                  <p className="mt-4">
+                    <Link href={`/tools/category/${category}`} className={labelLink}>
+                      View Tools →
+                    </Link>
+                  </p>
                 </div>
 
-                {tools.length === 0 ? (
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    No tools available yet. New tools will appear here as the
-                    library expands.
-                  </div>
+                {categoryTools.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No tools available yet. New tools will appear here as the library expands.
+                  </p>
                 ) : (
-                  <ul className="space-y-2">
-                    {tools.map((tool) => (
+                  <ul className="divide-y divide-border/70 border-y border-border/70">
+                    {categoryTools.map((tool) => (
                       <li key={tool.id}>
                         <Link
                           href={`/tools/${tool.slug}`}
-                          className="flex items-start justify-between gap-3 rounded-lg px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800"
+                          className="group flex items-start justify-between gap-6 py-4"
                         >
-                          <div>
-                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          <div className="min-w-0">
+                            <h3 className="font-medium text-foreground transition-colors group-hover:text-primary">
                               {tool.name}
-                            </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              {tool.description}
-                            </div>
+                            </h3>
+                            <p className="mt-1 text-sm text-muted-foreground">{tool.description}</p>
                           </div>
-                          <span className="text-xs text-amber-700 dark:text-amber-400">Open</span>
+                          <span
+                            className="label-mono shrink-0 pt-1 transition-colors group-hover:text-primary"
+                            aria-hidden="true"
+                          >
+                            Open →
+                          </span>
                         </Link>
                       </li>
                     ))}
                   </ul>
                 )}
-              </div>
+              </section>
             )
           })}
-        </div>
-      </section>
+        </section>
 
-      <section className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
-            Build Internal Links and Topical Authority
-          </h2>
-          <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
-            Use this directory to connect your calculator pages and blogs. Each tool
-            can anchor supporting articles, FAQs, and templates. This interlinking
-            creates topic clusters that help search engines understand your content
-            breadth.
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              href="/templates"
-              className="px-4 py-2 text-sm font-medium text-white bg-amber-700 hover:bg-amber-800 rounded-lg"
-            >
-              Explore Templates
-            </Link>
-            <Link
-              href="/"
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg"
-            >
-              Start Generating Content
-            </Link>
+        <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 md:py-20 lg:px-8">
+          <div className="max-w-2xl">
+            <p className="label-mono">Internal linking</p>
+            <h2 className="text-section-title mt-3">Build Internal Links and Topical Authority</h2>
+            <p className="mt-4 leading-relaxed text-muted-foreground">
+              Use this directory to connect your tool pages and blogs. Each tool can anchor
+              supporting articles, FAQs, and templates. This interlinking creates topic clusters
+              that help search engines understand your content breadth.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-5">
+              <Link href="/templates" className={buttonVariants({ variant: 'outline' })}>
+                Explore Templates
+              </Link>
+              <Link href="/" className={labelLink}>
+                Start Generating Content
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
-
+        </section>
       </main>
       <SiteFooter />
     </>
