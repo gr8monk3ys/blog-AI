@@ -1,25 +1,24 @@
-'use client'
-
 import SiteHeader from '../../components/SiteHeader'
 import SiteFooter from '../../components/SiteFooter'
 
 const LAST_UPDATED = 'February 22, 2026'
+const PRIVACY_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? 'support@lscaturchio.xyz'
 
+// A legal page on the notebook: the reading column (42rem), a wall label with
+// the date, the title in Fraunces, the policy in `prose` on the tokens.
 export default function PrivacyPageClient(): React.ReactElement {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex min-h-screen flex-col">
       <SiteHeader />
 
-      <main id="main-content" tabIndex={-1} className="flex-1 py-16 sm:py-20">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
-            Privacy Policy
-          </h1>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            Last updated: {LAST_UPDATED}
-          </p>
+      <main id="main-content" tabIndex={-1} className="flex-1 py-12 md:py-16">
+        <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
+          <p className="label-mono">Legal · Last updated {LAST_UPDATED}</p>
+          <h1 className="text-page-title mt-3">Privacy Policy</h1>
 
-          <div className="mt-10 prose prose-gray dark:prose-invert max-w-none prose-headings:font-serif prose-headings:font-semibold prose-a:text-amber-700 dark:prose-a:text-amber-400 prose-a:hover:text-amber-700 dark:prose-a:hover:text-amber-300">
+          <hr className="gallery-rule mt-10" />
+
+          <div className="prose prose-notebook mt-10 max-w-none">
             <p>
               Blog AI (“we”, “our”, or “us”) is
               committed to protecting your privacy. This Privacy Policy explains
@@ -167,7 +166,7 @@ export default function PrivacyPageClient(): React.ReactElement {
             <p>
               If you have questions about this Privacy Policy or our data
               practices, please contact us at{' '}
-              <a href="mailto:privacy@blogai.com">privacy@blogai.com</a>.
+              <a href={`mailto:${PRIVACY_EMAIL}`}>{PRIVACY_EMAIL}</a>.
             </p>
           </div>
         </div>

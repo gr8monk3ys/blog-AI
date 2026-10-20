@@ -2,7 +2,9 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import SiteFooter from '../../components/SiteFooter'
 import SiteHeader from '../../components/SiteHeader'
+import { buttonVariants } from '../../components/ui/Button'
 import { SignIn } from '../../lib/clerk-ui'
+import { clerkAppearance } from '../../lib/clerk-appearance'
 
 // Back-compat route: the app previously used /auth for Supabase email/password.
 // Keep /auth as a Clerk Sign In page.
@@ -11,44 +13,54 @@ export const metadata: Metadata = {
   description: 'Sign in to Blog AI and access your content generation workspace.',
 }
 
+// One centred 28rem column (DESIGN.md → Layout): a wall label, the headline
+// in Fraunces, then Clerk's form on the tokens — or, with no Clerk key, an
+// honest notice in the same voice with the view's one primary action.
 export default function AuthPage() {
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 
   return (
     <>
       <SiteHeader />
-      <main id="main-content" tabIndex={-1} className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
-
-      <section className="py-14 sm:py-20">
-        <div className="max-w-lg mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xs p-6 sm:p-8">
-            {publishableKey ? (
-              <SignIn routing="path" path="/auth" signUpUrl="/sign-up" />
-            ) : (
-              <div className="text-center space-y-4">
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  No Sign-In Required
-                </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  This deployment runs without authentication, so the full
-                  workspace is open. Jump straight in — no account needed.
-                </p>
-                <Link
-                  href="/generate"
-                  className="inline-flex items-center justify-center rounded-lg bg-amber-700 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-amber-800"
-                >
-                  Open the Workspace
-                </Link>
-                <p className="text-xs text-gray-400">
-                  To require accounts, set <code>NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</code>{' '}
-                  and <code>CLERK_SECRET_KEY</code>.
-                </p>
+      <main id="main-content" tabIndex={-1} className="min-h-screen">
+        <section className="mx-auto max-w-md px-4 py-14 sm:px-6 md:py-20">
+          {publishableKey ? (
+            <>
+              <p className="label-mono">Sign in</p>
+              <h1 className="text-page-title mt-3">Welcome back.</h1>
+              <p className="mt-3 text-muted-foreground">
+                Pick up where your last draft left off.
+              </p>
+              <div className="mt-8">
+                <SignIn
+                  routing="path"
+                  path="/auth"
+                  signUpUrl="/sign-up"
+                  appearance={clerkAppearance}
+                />
               </div>
-            )}
-          </div>
-        </div>
-      </section>
-
+            </>
+          ) : (
+            <>
+              <p className="label-mono">Open workspace</p>
+              <h1 className="text-page-title mt-3">
+                No <span className="whitespace-nowrap">Sign-In</span> Required
+              </h1>
+              <p className="mt-4 text-muted-foreground">
+                This deployment runs without authentication, so the full workspace is open. Jump
+                straight in — no account needed.
+              </p>
+              <Link href="/generate" className={buttonVariants({ size: 'lg', className: 'mt-8' })}>
+                Open the Workspace
+              </Link>
+              <p className="mt-8 border-t border-border pt-6 text-sm text-muted-foreground">
+                To require accounts, set{' '}
+                <code className="font-mono text-foreground">NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</code> and{' '}
+                <code className="font-mono text-foreground">CLERK_SECRET_KEY</code>.
+              </p>
+            </>
+          )}
+        </section>
       </main>
       <SiteFooter />
     </>

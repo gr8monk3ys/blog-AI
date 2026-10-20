@@ -1,25 +1,24 @@
-'use client'
-
 import SiteHeader from '../../components/SiteHeader'
 import SiteFooter from '../../components/SiteFooter'
 
 const LAST_UPDATED = 'February 22, 2026'
+const LEGAL_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? 'support@lscaturchio.xyz'
 
+// A legal page on the notebook: the reading column (42rem), a wall label with
+// the date, the title in Fraunces, the terms in `prose` on the tokens.
 export default function TermsPageClient(): React.ReactElement {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex min-h-screen flex-col">
       <SiteHeader />
 
-      <main id="main-content" tabIndex={-1} className="flex-1 py-16 sm:py-20">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 font-serif">
-            Terms of Service
-          </h1>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            Last updated: {LAST_UPDATED}
-          </p>
+      <main id="main-content" tabIndex={-1} className="flex-1 py-12 md:py-16">
+        <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
+          <p className="label-mono">Legal · Last updated {LAST_UPDATED}</p>
+          <h1 className="text-page-title mt-3">Terms of Service</h1>
 
-          <div className="mt-10 prose prose-gray dark:prose-invert max-w-none prose-headings:font-serif prose-headings:font-semibold prose-a:text-amber-700 dark:prose-a:text-amber-400 prose-a:hover:text-amber-700 dark:prose-a:hover:text-amber-300">
+          <hr className="gallery-rule mt-10" />
+
+          <div className="prose prose-notebook mt-10 max-w-none">
             <p>
               These Terms of Service (“Terms”) govern your access to
               and use of Blog AI (“we”, “our”, or
@@ -192,7 +191,7 @@ export default function TermsPageClient(): React.ReactElement {
             <h2>14. Contact Us</h2>
             <p>
               If you have questions about these Terms, please contact us at{' '}
-              <a href="mailto:legal@blogai.com">legal@blogai.com</a>.
+              <a href={`mailto:${LEGAL_EMAIL}`}>{LEGAL_EMAIL}</a>.
             </p>
           </div>
         </div>

@@ -2,6 +2,7 @@
 
 import { Component, ReactNode } from 'react'
 import { getSentry } from '../lib/sentry-client'
+import { buttonVariants } from './ui/Button'
 
 interface Props {
   children: ReactNode
@@ -69,40 +70,26 @@ export default class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback
       }
 
+      // An honest error state in the house voice (DESIGN.md → Do): a wall
+      // label in the signal colour, one serif line, one action. Flat paper.
       return (
-        <div className="min-h-[200px] flex items-center justify-center p-6">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md w-full text-center">
-            <div className="text-red-600 mb-4">
-              <svg
-                className="h-12 w-12 mx-auto"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                />
-              </svg>
-            </div>
-            <h2 className="text-lg font-semibold text-red-800 mb-2">
-              Something Went Wrong
-            </h2>
-            <p className="text-red-700 text-sm mb-4">
+        <div className="flex min-h-[200px] items-center justify-center p-6">
+          <div className="w-full max-w-md border-y border-border py-8" role="alert">
+            <p className="label-mono text-destructive">Error</p>
+            <h2 className="text-card-title mt-3">Something Went Wrong</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
               An unexpected error occurred. Our team has been notified.
             </p>
             {/* Show event ID for support reference without exposing error details */}
             {this.state.eventId && (
-              <p className="text-red-500 text-xs mb-4 font-mono">
+              <p className="label-mono mt-3 normal-case tracking-normal">
                 Error ID: {this.state.eventId.substring(0, 8)}
               </p>
             )}
             <button
+              type="button"
               onClick={this.handleReset}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+              className={buttonVariants({ variant: 'outline', className: 'mt-6' })}
             >
               Try Again
             </button>
