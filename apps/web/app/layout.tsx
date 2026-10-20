@@ -4,10 +4,13 @@ import DeferredAnalytics from '../components/DeferredAnalytics'
 import { fontBody, fontDisplay, fontMono } from '../lib/fonts'
 import { Providers } from './providers'
 import { ClerkProvider } from '../lib/clerk-ui'
+import getBaseUrl from '../lib/site-url'
 import './globals.css'
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://blogai.com'),
+  // The one place the app decides its public origin (lib/site-url.ts); never
+  // a domain this project does not own.
+  metadataBase: new URL(getBaseUrl()),
   title: {
     default: 'Blog AI — Brand-Consistent AI Content',
     template: '%s | Blog AI',
