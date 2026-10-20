@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useAuth } from '../lib/clerk-ui'
+import { buttonVariants } from './ui/Button'
 
 interface RequireAuthProps {
   /** Content to render when the user is authenticated. */
@@ -25,6 +26,9 @@ interface RequireAuthProps {
  * middleware is bypassed or not yet applied (e.g. client-side navigations
  * that skip the middleware layer).
  *
+ * The gate renders inside the app shell's <main>, so its two interim states
+ * are plain blocks, not landmarks.
+ *
  * Usage:
  * ```tsx
  * <RequireAuth>
@@ -46,38 +50,36 @@ export default function RequireAuth({
     }
 
     return (
-      <main id="main-content" tabIndex={-1} className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-[50vh] items-center justify-center">
         <div className="flex items-center gap-3" role="status" aria-label="Loading">
-          <div className="h-2.5 w-2.5 rounded-full bg-amber-400 animate-pulse" />
+          <div className="h-2.5 w-2.5 animate-pulse rounded-full bg-primary/40" />
           <div
-            className="h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse"
+            className="h-2.5 w-2.5 animate-pulse rounded-full bg-primary/70"
             style={{ animationDelay: '150ms' }}
           />
           <div
-            className="h-2.5 w-2.5 rounded-full bg-amber-600 animate-pulse"
+            className="h-2.5 w-2.5 animate-pulse rounded-full bg-primary"
             style={{ animationDelay: '300ms' }}
           />
         </div>
-      </main>
+      </div>
     )
   }
 
   // User is not signed in.
   if (!isSignedIn) {
     return (
-      <main id="main-content" tabIndex={-1} className="min-h-screen flex items-center justify-center px-4">
-        <div className="text-center max-w-sm">
-          <p className="text-sm text-gray-600 mb-4">
+      <div className="flex min-h-[50vh] items-center justify-center px-4">
+        <div className="max-w-sm text-center">
+          <p className="label-mono">Account</p>
+          <p className="mt-3 mb-6 text-sm text-muted-foreground">
             You need to sign in to view this page.
           </p>
-          <Link
-            href={redirectTo}
-            className="inline-flex items-center px-4 py-2 rounded-lg bg-amber-700 text-white text-sm font-medium hover:bg-amber-800 transition-colors"
-          >
+          <Link href={redirectTo} className={buttonVariants()}>
             Sign In
           </Link>
         </div>
-      </main>
+      </div>
     )
   }
 

@@ -1,13 +1,15 @@
 'use client'
 
 import { useRef, useCallback, useMemo } from 'react'
-import { m, AnimatePresence } from 'framer-motion'
 import {
   MagnifyingGlassIcon,
   XMarkIcon,
   StarIcon,
   FunnelIcon,
 } from '@heroicons/react/24/outline'
+import { Input } from '../ui/Input'
+import { Button } from '../ui/Button'
+import { cn } from '../../lib/cn'
 import { ToolCategory, TOOL_CATEGORIES } from '../../types/tools'
 import type { HistoryFilters as HistoryFiltersType } from '../../types/history'
 
@@ -21,6 +23,12 @@ interface HistoryFiltersProps {
   }
 }
 
+/**
+ * The history list's controls: a search field, the Favorites toggle (a
+ * paper-card button that takes the ink when pressed), and the category
+ * filter as a hairline-bottomed row of tabs where the selected tab carries a
+ * 2px ink rule. Counts are mono figures.
+ */
 export default function HistoryFilters({
   filters,
   onFiltersChange,
@@ -115,103 +123,70 @@ export default function HistoryFilters({
   return (
     <div className="space-y-4">
       {/* Search and Quick Filters Row */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row">
         {/* Search */}
         <div className="relative flex-1">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <MagnifyingGlassIcon
-              className="h-5 w-5 text-gray-400"
-              aria-hidden="true"
-            />
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+            <MagnifyingGlassIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           </div>
-          <input
+          <Input
             name="search"
             autoComplete="off"
             ref={searchInputRef}
             type="text"
             value={filters.search || ''}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="block w-full pl-11 pr-10 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 shadow-xs placeholder-gray-400 dark:placeholder-gray-500 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:border-amber-500 text-sm dark:text-gray-100 transition"
+            className="pl-9 pr-9"
             placeholder="Search your content history…"
             aria-label="Search history"
           />
-          <AnimatePresence>
-            {filters.search && (
-              <m.button
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                type="button"
-                onClick={clearSearch}
-                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
-                aria-label="Clear search"
-              >
-                <XMarkIcon className="h-5 w-5" aria-hidden="true" />
-              </m.button>
-            )}
-          </AnimatePresence>
+          {filters.search && (
+            <button
+              type="button"
+              onClick={clearSearch}
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground transition-colors hover:text-primary"
+              aria-label="Clear search"
+            >
+              <XMarkIcon className="h-4 w-4" aria-hidden="true" />
+            </button>
+          )}
         </div>
 
         {/* Quick Filter Buttons */}
         <div className="flex items-center gap-2">
-          {/* Favorites Toggle */}
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={handleFavoritesToggle}
-            className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ${
-              filters.favorites_only
-                ? 'bg-amber-100 text-amber-700 border border-amber-200'
-                : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
-            }`}
+            className={cn(filters.favorites_only && 'border-primary/45 bg-primary/5 text-primary')}
             aria-pressed={filters.favorites_only}
           >
-            <StarIcon
-              className={`w-5 h-5 ${
-                filters.favorites_only ? 'fill-amber-500 text-amber-500' : ''
-              }`}
-              aria-hidden="true"
-            />
+            <StarIcon className="h-4 w-4" aria-hidden="true" />
             <span>Favorites</span>
             {stats?.favorites !== undefined && stats.favorites > 0 && (
-              <span
-                className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-xs ${
-                  filters.favorites_only
-                    ? 'bg-amber-200 text-amber-800'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
-                }`}
-              >
-                {stats.favorites}
-              </span>
+              <span className="font-mono text-xs tabular-nums text-muted-foreground">{stats.favorites}</span>
             )}
-          </button>
+          </Button>
 
-          {/* Clear All Filters */}
-          <AnimatePresence>
-            {hasActiveFilters && (
-              <m.button
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                type="button"
-                onClick={clearAllFilters}
-                className="inline-flex items-center gap-1.5 px-3 py-3 rounded-xl text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
-                aria-label="Clear all filters"
-              >
-                <FunnelIcon className="w-4 h-4" aria-hidden="true" />
-                <XMarkIcon className="w-3 h-3" aria-hidden="true" />
-              </m.button>
-            )}
-          </AnimatePresence>
+          {hasActiveFilters && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={clearAllFilters}
+              aria-label="Clear all filters"
+              className="text-muted-foreground"
+            >
+              <FunnelIcon className="h-4 w-4" aria-hidden="true" />
+              <XMarkIcon className="h-3 w-3" aria-hidden="true" />
+            </Button>
+          )}
         </div>
       </div>
 
       {/* Category Tabs */}
-      <div className="w-full overflow-x-auto scrollbar-hide">
-        <nav
-          className="flex gap-2 pb-2"
-          role="tablist"
-          aria-label="Filter by category"
-        >
+      <div className="w-full overflow-x-auto">
+        <nav className="flex gap-1 border-b border-border" role="tablist" aria-label="Filter by category">
           {categories.map((category, index) => {
             const isSelected = selectedCategory === category.id
             const count =
@@ -231,32 +206,16 @@ export default function HistoryFilters({
                 tabIndex={isSelected ? 0 : -1}
                 onClick={() => handleCategoryChange(category.id)}
                 onKeyDown={(e) => handleKeyDown(e, index)}
-                className={`relative shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ${
+                className={cn(
+                  '-mb-px flex shrink-0 items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium transition-colors',
                   isSelected
-                    ? 'bg-amber-700 text-white shadow-xs'
-                    : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
-                }`}
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                )}
               >
-                <span className="flex items-center gap-2">
-                  {category.name}
-                  {count !== undefined && count > 0 && (
-                    <span
-                      className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-xs ${
-                        isSelected
-                          ? 'bg-amber-500 text-amber-100'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
-                      }`}
-                    >
-                      {count}
-                    </span>
-                  )}
-                </span>
-                {isSelected && (
-                  <m.div
-                    layoutId="historyFilterIndicator"
-                    className="absolute inset-0 bg-amber-700 rounded-lg -z-10"
-                    transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
-                  />
+                {category.name}
+                {count !== undefined && count > 0 && (
+                  <span className="font-mono text-xs tabular-nums text-muted-foreground">{count}</span>
                 )}
               </button>
             )

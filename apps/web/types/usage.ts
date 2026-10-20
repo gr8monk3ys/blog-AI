@@ -47,17 +47,12 @@ export interface UsageCheckResponse {
 
 // Tier display configuration.
 //
-// `color` is used both on its own (the /pricing comparison-table headers, the
-// UsageIndicator icon) and paired with `bgColor` (the tier chips). Every value
-// therefore carries a dark: variant, and the pairs are chosen together: the
-// -700 text belongs on the -100 chip in light mode and the -300 text on the
-// -900 chip in dark mode.
-//
-// Without the dark: variants these classes rendered dark-on-dark wherever the
-// surface follows the theme. On /pricing that made the table headers 1.72:1
-// (gray-700 on gray-900), 3.53:1 (amber-700) and 2.24:1 (indigo-700) — the
-// "Free" header was effectively invisible. All four tiers now clear AA in
-// both themes; the measured ratios are in the PR that introduced this note.
+// A tier is a word, not a colour (DESIGN.md → Colors → The One Pen Rule): the
+// four plans used to be grey, amber, indigo and purple, and every consumer
+// now sets the name as a wall label or the house chip, with the ink-filled
+// chip reserved for the plan the account is on. The class fields are kept so
+// the call sites keep compiling, and all four tiers resolve to the same
+// paper-card tokens; `badgeColor` is the dot beside a plan name.
 //
 // NOTE: apps/web/app/globals.css must keep `@source '../types'`, or these
 // class names are never generated.
@@ -65,44 +60,41 @@ export const TIER_DISPLAY: Record<UsageTier, {
   name: string
   color: string
   bgColor: string
-  /** The /knowledge plan badge: the light chip as-is, and in dark mode the
-   *  same colour at 20%. Tailwind v3 spelled that with a separate opacity
-   *  utility at the call site; v4 has none, so the alpha sits on the colour. */
+  /** The /knowledge plan badge wash. */
   planBgColor: string
   borderColor: string
   badgeColor: string
 }> = {
   free: {
     name: 'Free',
-    color: 'text-gray-700 dark:text-gray-200',
-    bgColor: 'bg-gray-100 dark:bg-gray-800',
-    planBgColor: 'bg-gray-100 dark:bg-gray-800/20',
-    borderColor: 'border-gray-200',
-    badgeColor: 'bg-gray-500',
+    color: 'text-foreground',
+    bgColor: 'bg-card',
+    planBgColor: 'bg-card',
+    borderColor: 'border-border',
+    badgeColor: 'bg-muted-foreground',
   },
   starter: {
     name: 'Starter',
-    color: 'text-amber-700 dark:text-amber-300',
-    bgColor: 'bg-amber-100 dark:bg-amber-900',
-    planBgColor: 'bg-amber-100 dark:bg-amber-900/20',
-    borderColor: 'border-amber-200',
-    badgeColor: 'bg-amber-600',
+    color: 'text-foreground',
+    bgColor: 'bg-card',
+    planBgColor: 'bg-card',
+    borderColor: 'border-border',
+    badgeColor: 'bg-muted-foreground',
   },
   pro: {
     name: 'Pro',
-    color: 'text-indigo-700 dark:text-indigo-300',
-    bgColor: 'bg-indigo-100 dark:bg-indigo-900',
-    planBgColor: 'bg-indigo-100 dark:bg-indigo-900/20',
-    borderColor: 'border-indigo-200',
-    badgeColor: 'bg-indigo-600',
+    color: 'text-foreground',
+    bgColor: 'bg-card',
+    planBgColor: 'bg-card',
+    borderColor: 'border-border',
+    badgeColor: 'bg-primary',
   },
   business: {
     name: 'Business',
-    color: 'text-purple-700 dark:text-purple-300',
-    bgColor: 'bg-purple-100 dark:bg-purple-900',
-    planBgColor: 'bg-purple-100 dark:bg-purple-900/20',
-    borderColor: 'border-purple-200',
-    badgeColor: 'bg-purple-600',
+    color: 'text-foreground',
+    bgColor: 'bg-card',
+    planBgColor: 'bg-card',
+    borderColor: 'border-border',
+    badgeColor: 'bg-primary',
   },
 }
-

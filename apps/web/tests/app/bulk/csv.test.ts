@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseCSV, parseCSVLine, createDraftItem } from '@/app/bulk/csv'
+import { parseCSV, parseCSVLine, createDraftItem } from '@/app/(app)/bulk/csv'
 
 describe('parseCSV', () => {
   it('parses a well-formed CSV with topic, keywords, and tone', () => {

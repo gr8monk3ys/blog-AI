@@ -2,43 +2,23 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
 import {
-  DocumentTextIcon,
-  EnvelopeIcon,
-  ChatBubbleLeftRightIcon,
-  BriefcaseIcon,
-  SparklesIcon,
-  VideoCameraIcon,
-  MagnifyingGlassIcon,
-  ArrowPathIcon,
-  ClockIcon,
   TrashIcon,
   ArrowTopRightOnSquareIcon,
   ClipboardDocumentIcon,
   CheckIcon,
 } from '@heroicons/react/24/outline'
 import FavoriteButton from './FavoriteButton'
+import { Button, buttonVariants } from '../ui/Button'
 import { useConfirmModal } from '../../hooks/useConfirmModal'
+import { cn } from '../../lib/cn'
 import type { GeneratedContentItem } from '../../types/history'
 import { TOOL_CATEGORIES, ToolCategory } from '../../types/tools'
 
 interface HistoryCardProps {
   item: GeneratedContentItem
-  index?: number
   onDelete?: (id: string) => void
   onFavoriteToggle?: (id: string, newStatus: boolean) => void
-}
-
-const categoryIcons: Record<string, React.ElementType> = {
-  blog: DocumentTextIcon,
-  email: EnvelopeIcon,
-  'social-media': ChatBubbleLeftRightIcon,
-  business: BriefcaseIcon,
-  naming: SparklesIcon,
-  video: VideoCameraIcon,
-  seo: MagnifyingGlassIcon,
-  rewriting: ArrowPathIcon,
 }
 
 /**
@@ -129,19 +109,20 @@ function getPreviewTitle(item: GeneratedContentItem): string {
   return truncateText(firstLine || 'Untitled', 60)
 }
 
-export default function HistoryCard({
-  item,
-  index = 0,
-  onDelete,
-  onFavoriteToggle,
-}: HistoryCardProps) {
+/**
+ * One history entry as a row in a hairline-divided list (DESIGN.md →
+ * Components → Cards / Rows): the catalogue line in mono above — category,
+ * tool, when — a semibold title, a two-line clamped preview in Ink Muted,
+ * and the actions beneath. The category used to be a coloured tile; it is
+ * now a word in the wall label.
+ */
+export default function HistoryCard({ item, onDelete, onFavoriteToggle }: HistoryCardProps) {
   const { confirm, ConfirmModalComponent } = useConfirmModal()
   const [copied, setCopied] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
   const category = getToolCategory(item.tool_id)
   const categoryInfo = TOOL_CATEGORIES[category]
-  const Icon = categoryIcons[category] || DocumentTextIcon
 
   const handleCopy = async () => {
     try {
@@ -182,110 +163,66 @@ export default function HistoryCard({
   )
 
   return (
-    <>
-      {/* Confirm Modal */}
+    <li className={cn('py-4 sm:py-5', isDeleting && 'pointer-events-none opacity-50')}>
       <ConfirmModalComponent />
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: 0.3, delay: index * 0.05 }}
-        className={`group relative bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-xs hover:shadow-md hover:border-amber-200 dark:hover:border-amber-700 transition duration-200 overflow-hidden ${
-          isDeleting ? 'opacity-50 pointer-events-none' : ''
-        }`}
-      >
-        {/* Favorite indicator stripe */}
-      {item.is_favorite && (
-        <div
-          className="absolute left-0 top-0 bottom-0 w-1 bg-linear-to-b from-amber-400 to-amber-500"
-          aria-hidden="true"
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <p className="label-mono">
+            {categoryInfo.name} · {item.tool_name || item.tool_id} ·{' '}
+            <time dateTime={item.created_at}>{formatRelativeTime(item.created_at)}</time>
+            {item.is_favorite ? ' · favourite' : null}
+          </p>
+          <h3 className="mt-1.5 truncate text-base font-semibold text-foreground">{previewTitle}</h3>
+          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{previewOutput}</p>
+        </div>
+
+        <FavoriteButton
+          contentId={item.id}
+          isFavorite={item.is_favorite}
+          onToggle={(newStatus) => onFavoriteToggle?.(item.id, newStatus)}
+          size="md"
         />
-      )}
-
-      <div className="p-5">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex items-start gap-3 min-w-0 flex-1">
-            <div
-              className={`shrink-0 w-10 h-10 rounded-lg ${categoryInfo.bgColor} flex items-center justify-center`}
-            >
-              <Icon className={`w-5 h-5 ${categoryInfo.color}`} aria-hidden="true" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">
-                {previewTitle}
-              </h3>
-              <div className="flex items-center gap-2 mt-1">
-                <span
-                  className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium ${categoryInfo.bgColor} ${categoryInfo.color} border ${categoryInfo.borderColor}`}
-                >
-                  {item.tool_name || item.tool_id}
-                </span>
-                <span className="inline-flex items-center text-xs text-gray-500">
-                  <ClockIcon className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
-                  {formatRelativeTime(item.created_at)}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Favorite button */}
-          <FavoriteButton
-            contentId={item.id}
-            isFavorite={item.is_favorite}
-            onToggle={(newStatus) => onFavoriteToggle?.(item.id, newStatus)}
-            size="md"
-          />
-        </div>
-
-        {/* Preview */}
-        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4">{previewOutput}</p>
-
-        {/* Actions */}
-        <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
-              aria-label="Copy to clipboard"
-            >
-              {copied ? (
-                <>
-                  <CheckIcon className="w-3.5 h-3.5 text-emerald-500" aria-hidden="true" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <ClipboardDocumentIcon className="w-3.5 h-3.5" aria-hidden="true" />
-                  Copy
-                </>
-              )}
-            </button>
-
-            <Link
-              href={`/tools/${item.tool_id}?from=${item.id}`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-md hover:bg-amber-100 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
-              aria-label="Reuse this content"
-            >
-              <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" aria-hidden="true" />
-              Reuse
-            </Link>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-gray-400 hover:text-red-600 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 rounded-md opacity-0 group-hover:opacity-100"
-            aria-label="Delete this content"
-          >
-            <TrashIcon className="w-4 h-4" aria-hidden="true" />
-          </button>
-        </div>
       </div>
-    </motion.div>
-    </>
+
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Button type="button" variant="ghost" size="sm" onClick={handleCopy} aria-label="Copy to clipboard">
+            {copied ? (
+              <>
+                <CheckIcon className="h-4 w-4 text-success" aria-hidden="true" />
+                Copied
+              </>
+            ) : (
+              <>
+                <ClipboardDocumentIcon className="h-4 w-4" aria-hidden="true" />
+                Copy
+              </>
+            )}
+          </Button>
+
+          <Link
+            href={`/tools/${item.tool_id}?from=${item.id}`}
+            className={buttonVariants({ variant: 'secondary', size: 'sm' })}
+            aria-label="Reuse this content"
+          >
+            <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden="true" />
+            Reuse
+          </Link>
+        </div>
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={handleDelete}
+          disabled={isDeleting}
+          className="text-muted-foreground hover:text-destructive"
+          aria-label="Delete this content"
+        >
+          <TrashIcon className="h-4 w-4" aria-hidden="true" />
+        </Button>
+      </div>
+    </li>
   )
 }

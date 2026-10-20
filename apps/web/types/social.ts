@@ -35,10 +35,10 @@ export interface PlatformConfig {
 }
 
 export const PLATFORM_CONFIG: Record<SocialPlatform, PlatformConfig> = {
-  twitter: { name: 'Twitter / X', color: 'text-sky-600', bgColor: 'bg-sky-100', maxChars: 280, icon: 'X' },
-  linkedin: { name: 'LinkedIn', color: 'text-blue-700', bgColor: 'bg-blue-100', maxChars: 3000, icon: 'in' },
-  facebook: { name: 'Facebook', color: 'text-blue-600', bgColor: 'bg-blue-100', maxChars: 63206, icon: 'f' },
-  instagram: { name: 'Instagram', color: 'text-pink-600', bgColor: 'bg-pink-100', maxChars: 2200, icon: 'ig' },
+  twitter: { name: 'Twitter / X', color: 'text-foreground', bgColor: 'bg-muted', maxChars: 280, icon: 'X' },
+  linkedin: { name: 'LinkedIn', color: 'text-foreground', bgColor: 'bg-muted', maxChars: 3000, icon: 'in' },
+  facebook: { name: 'Facebook', color: 'text-foreground', bgColor: 'bg-muted', maxChars: 63206, icon: 'f' },
+  instagram: { name: 'Instagram', color: 'text-foreground', bgColor: 'bg-muted', maxChars: 2200, icon: 'ig' },
 }
 
 export interface SocialAccount {

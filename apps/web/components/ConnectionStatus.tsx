@@ -13,6 +13,9 @@ const FAILURES_BEFORE_WARNING = 2
 /**
  * Subtle banner that appears when the backend is unreachable.
  * Polls every 30 seconds and auto-hides once the connection is restored.
+ *
+ * A slip of paper card with a hairline, like the toast; only the icon carries
+ * the warning colour (DESIGN.md → Colors → Signal). No shadow, no tinted fill.
  */
 export default function ConnectionStatus(): React.ReactElement | null {
   const [status, setStatus] = useState<'connected' | 'disconnected' | 'checking'>('checking')
@@ -59,17 +62,15 @@ export default function ConnectionStatus(): React.ReactElement | null {
     <div
       role="status"
       aria-live="polite"
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-md w-full px-4"
+      className="fixed bottom-4 left-1/2 z-50 w-full max-w-md -translate-x-1/2 px-4"
     >
-      <div className="flex items-center gap-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/30 px-4 py-3 shadow-lg text-sm">
-        <ExclamationTriangleIcon className="h-5 w-5 shrink-0 text-amber-500" aria-hidden="true" />
-        <p className="flex-1 text-amber-800 dark:text-amber-400">
-          Unable to reach the server. Retrying automatically.
-        </p>
+      <div className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm text-card-foreground">
+        <ExclamationTriangleIcon className="h-5 w-5 shrink-0 text-warning" aria-hidden="true" />
+        <p className="flex-1">Unable to reach the server. Retrying automatically.</p>
         <button
           type="button"
           onClick={() => setDismissed(true)}
-          className="shrink-0 rounded-sm p-1 text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+          className="shrink-0 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
           aria-label="Dismiss connection warning"
         >
           <XMarkIcon className="h-4 w-4" aria-hidden="true" />

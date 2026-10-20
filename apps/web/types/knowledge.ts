@@ -75,12 +75,12 @@ export interface KBChunksResponse {
 
 /** File type display configuration for badges/icons. */
 export const FILE_TYPE_CONFIG: Record<string, { label: string; color: string }> = {
-  pdf: { label: 'PDF', color: 'text-red-500' },
-  docx: { label: 'DOCX', color: 'text-blue-500' },
-  doc: { label: 'DOC', color: 'text-blue-500' },
-  txt: { label: 'TXT', color: 'text-gray-500' },
-  md: { label: 'MD', color: 'text-green-500' },
-  markdown: { label: 'MD', color: 'text-green-500' },
+  pdf: { label: 'PDF', color: 'text-muted-foreground' },
+  docx: { label: 'DOCX', color: 'text-muted-foreground' },
+  doc: { label: 'DOC', color: 'text-muted-foreground' },
+  txt: { label: 'TXT', color: 'text-muted-foreground' },
+  md: { label: 'MD', color: 'text-muted-foreground' },
+  markdown: { label: 'MD', color: 'text-muted-foreground' },
 }
 
 export function formatBytes(bytes: number): string {

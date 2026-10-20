@@ -2,15 +2,12 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { m, AnimatePresence } from 'framer-motion'
-import {
-  ChartBarIcon,
-  ArrowUpCircleIcon,
-  ExclamationTriangleIcon,
-  SparklesIcon,
-} from '@heroicons/react/24/outline'
+import { ChartBarIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { UsageStats, TIER_DISPLAY } from '../types/usage'
 import { API_ENDPOINTS, getDefaultHeaders } from '../lib/api'
+import { Badge } from './ui/Badge'
+import { buttonVariants } from './ui/Button'
+import { cn } from '../lib/cn'
 
 interface UsageIndicatorProps {
   compact?: boolean
@@ -79,9 +76,9 @@ export default function UsageIndicator({
 
   if (loading) {
     return (
-      <div className="animate-pulse flex items-center gap-2">
-        <div className="h-4 w-4 bg-gray-200 dark:bg-gray-700 rounded-sm" />
-        <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded-sm" />
+      <div className="flex animate-pulse items-center gap-2">
+        <div className="h-4 w-4 rounded-sm bg-muted" />
+        <div className="h-4 w-16 rounded-sm bg-muted" />
       </div>
     )
   }
@@ -117,38 +114,30 @@ export default function UsageIndicator({
     return (
       <div className="relative">
         <button
+          type="button"
           onClick={() => setShowDetails(!showDetails)}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
-            isAtLimit
-              ? 'bg-red-100 text-red-700 hover:bg-red-200'
-              : isNearLimit
-              ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-          }`}
+          aria-expanded={showDetails}
+          className={cn(
+            'cta-secondary rounded-lg px-3 py-1.5 gap-2 font-mono text-sm tabular-nums',
+            isAtLimit ? 'text-destructive hover:text-destructive' : isNearLimit ? 'text-warning hover:text-warning' : ''
+          )}
         >
           <ChartBarIcon aria-hidden="true" className="h-4 w-4" />
-          <span className="text-sm font-medium">{compactLabel}</span>
+          <span>{compactLabel}</span>
         </button>
 
-        <AnimatePresence>
-          {showDetails && (
-            <m.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 p-4 z-50"
-            >
-              <UsageDetails usage={usage} showUpgradePrompt={showUpgradePrompt} />
-            </m.div>
-          )}
-        </AnimatePresence>
+        {showDetails && (
+          <div className="absolute right-0 z-50 mt-2 w-72 rounded-xl border border-border bg-popover p-4 text-popover-foreground">
+            <UsageDetails usage={usage} showUpgradePrompt={showUpgradePrompt} />
+          </div>
+        )}
       </div>
     )
   }
 
   // Full version
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+    <div className="rounded-xl border border-border bg-card p-4 text-card-foreground">
       <UsageDetails usage={usage} showUpgradePrompt={showUpgradePrompt} />
     </div>
   )
@@ -157,6 +146,33 @@ export default function UsageIndicator({
 interface UsageDetailsProps {
   usage: UsageStats
   showUpgradePrompt: boolean
+}
+
+/**
+ * A quota bar: tinted paper with the used share in the ink, Warning from 80%
+ * and Error at the limit. Width is set inline so there is no mount animation
+ * (DESIGN.md → Motion).
+ */
+function QuotaBar({ percent, label }: { percent: number; label: string }) {
+  const clamped = Math.min(Math.max(percent, 0), 100)
+  return (
+    <div
+      className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+      role="progressbar"
+      aria-label={label}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(clamped)}
+    >
+      <div
+        className={cn(
+          'h-full rounded-full',
+          clamped >= 100 ? 'bg-destructive' : clamped >= 80 ? 'bg-warning' : 'bg-primary'
+        )}
+        style={{ width: `${clamped}%` }}
+      />
+    </div>
+  )
 }
 
 function UsageDetails({ usage, showUpgradePrompt }: UsageDetailsProps) {
@@ -178,96 +194,51 @@ function UsageDetails({ usage, showUpgradePrompt }: UsageDetailsProps) {
 
   return (
     <div className="space-y-4">
-      {/* Header with tier badge */}
+      {/* Header with tier badge: the current plan is the one filled chip. */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <SparklesIcon aria-hidden="true" className={`h-5 w-5 ${tierDisplay.color}`} />
-          <span className="font-semibold text-gray-900 dark:text-gray-100">Usage</span>
-        </div>
-        <span
-          className={`px-2 py-0.5 rounded-full text-xs font-medium ${tierDisplay.bgColor} ${tierDisplay.color}`}
-        >
-          {tierDisplay.name}
-        </span>
+        <p className="label-mono">Usage</p>
+        <Badge variant={usage.tier === 'free' ? 'outline' : 'default'}>{tierDisplay.name}</Badge>
       </div>
 
       {/* Daily usage */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600 dark:text-gray-400">Today</span>
-          {isDailyUnlimited ? (
-            <span className="font-medium text-gray-900 dark:text-gray-100">Unlimited</span>
-          ) : (
-            <span className="font-medium text-gray-900 dark:text-gray-100">
-              {usage.daily_usage} / {usage.daily_limit}
-            </span>
-          )}
+          <span className="text-muted-foreground">Today</span>
+          <span className="font-mono tabular-nums text-foreground">
+            {isDailyUnlimited ? 'Unlimited' : `${usage.daily_usage} / ${usage.daily_limit}`}
+          </span>
         </div>
-        {!isDailyUnlimited && (
-          <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2">
-            <m.div
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: Math.min(Math.max(dailyPercentUsed, 0), 100) / 100 }}
-              className={`h-2 w-full origin-left rounded-full ${
-                isAtLimit
-                  ? 'bg-red-500'
-                  : isNearLimit
-                  ? 'bg-amber-500'
-                  : 'bg-amber-500'
-              }`}
-            />
-          </div>
-        )}
+        {!isDailyUnlimited && <QuotaBar percent={dailyPercentUsed} label="Daily usage" />}
       </div>
 
       {/* Monthly usage */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600 dark:text-gray-400">This period</span>
-          {isMonthlyUnlimited ? (
-            <span className="font-medium text-gray-900 dark:text-gray-100">Unlimited</span>
-          ) : (
-            <span className="font-medium text-gray-900 dark:text-gray-100">
-              {usage.current_usage} / {usage.quota_limit}
-            </span>
-          )}
+          <span className="text-muted-foreground">This period</span>
+          <span className="font-mono tabular-nums text-foreground">
+            {isMonthlyUnlimited ? 'Unlimited' : `${usage.current_usage} / ${usage.quota_limit}`}
+          </span>
         </div>
-        {!isMonthlyUnlimited && (
-          <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2">
-            <m.div
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: Math.min(Math.max(monthlyPercentUsed, 0), 100) / 100 }}
-              className={`h-2 w-full origin-left rounded-full ${
-                monthlyPercentUsed >= 100
-                  ? 'bg-red-500'
-                  : monthlyPercentUsed >= 80
-                  ? 'bg-amber-500'
-                  : 'bg-amber-500'
-              }`}
-            />
-          </div>
-        )}
+        {!isMonthlyUnlimited && <QuotaBar percent={monthlyPercentUsed} label="Usage this period" />}
       </div>
 
       {/* Warning message */}
       {isAtLimit && (
-        <div className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-800">
-          <ExclamationTriangleIcon aria-hidden="true" className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive-muted p-3">
+          <ExclamationTriangleIcon aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
           <div className="text-sm">
-            <p className="font-medium text-red-800 dark:text-red-400">Limit reached</p>
-            <p className="text-red-600 dark:text-red-500">
-              Upgrade to continue generating content
-            </p>
+            <p className="font-medium text-destructive">Limit reached</p>
+            <p className="text-destructive">Upgrade to continue generating content</p>
           </div>
         </div>
       )}
 
       {isNearLimit && !isAtLimit && (
-        <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/30 rounded-lg border border-amber-200 dark:border-amber-800">
-          <ExclamationTriangleIcon aria-hidden="true" className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning-muted p-3">
+          <ExclamationTriangleIcon aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
           <div className="text-sm">
-            <p className="font-medium text-amber-800 dark:text-amber-400">Running low</p>
-            <p className="text-amber-700 dark:text-amber-500">
+            <p className="font-medium text-warning">Running low</p>
+            <p className="text-warning">
               {!isDailyUnlimited
                 ? `${usage.daily_remaining} generations remaining today`
                 : !isMonthlyUnlimited
@@ -278,21 +249,15 @@ function UsageDetails({ usage, showUpgradePrompt }: UsageDetailsProps) {
         </div>
       )}
 
-      {/* Upgrade prompt */}
+      {/* Upgrade prompt: the panel's one primary button. */}
       {showUpgradePrompt && usage.tier !== 'pro' && usage.tier !== 'business' && (
-        <Link
-          href="/pricing"
-          className="flex items-center justify-center gap-2 w-full py-2 px-4 bg-linear-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white text-sm font-medium rounded-lg transition"
-        >
-          <ArrowUpCircleIcon aria-hidden="true" className="h-4 w-4" />
+        <Link href="/pricing" className={buttonVariants({ className: 'w-full' })}>
           {usage.tier === 'free' ? 'Upgrade to Starter' : 'Upgrade to Pro'}
         </Link>
       )}
 
       {/* Reset time */}
-      <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-        Resets daily at midnight UTC
-      </p>
+      <p className="label-mono text-center normal-case tracking-normal">Resets daily at midnight UTC</p>
     </div>
   )
 }

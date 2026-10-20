@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import BulkGenerationPageClient from '@/app/bulk/BulkGenerationPageClient'
+import BulkGenerationPageClient from '@/app/(app)/bulk/BulkGenerationPageClient'
 
 /**
  * Characterization net for the bulk generation page ahead of the planned
