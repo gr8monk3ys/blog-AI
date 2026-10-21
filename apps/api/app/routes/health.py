@@ -20,6 +20,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
 from app.auth import verify_api_key
+from app.version import __version__
 from src.config import Settings, get_settings
 from src.db import get_database_url, is_database_configured, fetchrow as db_fetchrow
 from src.storage import redis_client as _redis_client_instance
@@ -28,8 +29,10 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["health"])
 
-# Application version -- single source of truth
-APP_VERSION = "1.0.0"
+# Application version: `[project] version` in pyproject.toml, which release-please
+# bumps on every release (see app/version.py). Was a hard-coded "1.0.0" for a
+# long time while the project said 0.0.0, so /health lied about what was deployed.
+APP_VERSION = __version__
 
 # Timestamp recorded when the module loads (proxy for "server started")
 _server_start_time = time.monotonic()
@@ -207,7 +210,7 @@ included in the response.
                 "application/json": {
                     "example": {
                         "status": "healthy",
-                        "version": "1.0.0",
+                        "version": APP_VERSION,
                         "timestamp": "2026-02-16T12:00:00+00:00",
                         "services": {
                             "database": {"status": "connected", "latency_ms": 5.2},
@@ -527,7 +530,7 @@ async def sentry_health(_: str = Depends(verify_api_key)) -> Dict[str, Any]:
     sentry_status["profiles_sample_rate"] = float(
         os.environ.get("SENTRY_PROFILES_SAMPLE_RATE", "0.1")
     )
-    sentry_status["release"] = os.environ.get("SENTRY_RELEASE", "blog-ai@1.0.0")
+    sentry_status["release"] = os.environ.get("SENTRY_RELEASE", f"blog-ai@{APP_VERSION}")
     sentry_status["server_name"] = os.environ.get("SERVER_NAME", "blog-ai-api")
 
     return {
@@ -612,7 +615,7 @@ async def cleanup_caches(_: str = Depends(verify_api_key)) -> Dict[str, Any]:
                 "application/json": {
                     "example": {
                         "message": "Welcome to the Blog AI API",
-                        "version": "1.0.0",
+                        "version": APP_VERSION,
                         "api_version": "v1",
                         "docs": "/docs",
                         "health": "/health",

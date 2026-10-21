@@ -58,11 +58,14 @@ a fresh-install migration smoke test, and DB-backed tests against Postgres 16.
 
 ## Deploy
 
-Web on Vercel, API as a container (`Dockerfile.backend`, pushed to GHCR by
-`.github/workflows/deploy.yml` on green `main`), database on Neon, auth Clerk, billing Stripe.
-An hourly workflow checks the deployed site's health. Details in
-[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md), schema in [docs/DATABASE.md](docs/DATABASE.md),
-HTTP API in [docs/API.md](docs/API.md).
+Both apps run on Vercel: the web app as project `blog-ai`
+(https://blog-ai.vivancedata.com) and the FastAPI backend as project `blog-ai-api` on
+Vercel's Python runtime (`apps/api/vercel.json`). Database on Neon, auth Clerk
+(`clerk.vivancedata.com`), billing Stripe. `Dockerfile.backend` / `railway.json` and the
+GHCR image `deploy.yml` publishes are an alternative container path, not what production
+runs. An hourly workflow probes the site's `/api/health` and the API's `/health`. Details
+in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md), env in [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md),
+schema in [docs/DATABASE.md](docs/DATABASE.md), HTTP API in [docs/API.md](docs/API.md).
 
 ## License
 

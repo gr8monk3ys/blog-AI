@@ -45,7 +45,7 @@
   ],
   "host_permissions": [
     "http://localhost:8000/*",
-    "https://api.blogai.com/*"
+    "https://blog-ai-api-gr8monk3ys-projects.vercel.app/*"
   ],
   "options_page": "options/options.html",
   "web_accessible_resources": [

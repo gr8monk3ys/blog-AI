@@ -21,10 +21,37 @@ import {
   SENTRY_ENABLED,
   SENTRY_ENVIRONMENT,
 } from './sentry-env'
+import { PRODUCTION_SITE_URL, getSiteHost } from './site-url'
 
 type SentryModule = typeof import('./sentry-sdk')
 
 let sentryPromise: Promise<SentryModule> | null = null
+
+const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+/**
+ * Which script origins may report. Sentry drops events whose stack frames
+ * come from URLs matching none of these, so an incomplete list is a silent
+ * outage of error reporting: the original list had localhost, *.vercel.app
+ * and *.netlify.app and nothing else, which dropped every error raised on the
+ * live domain for as long as it was in place.
+ *
+ * `siteHost` is the host of lib/site-url's `getBaseUrl()`; the production
+ * domain is always included in case NEXT_PUBLIC_SITE_URL is unset at build.
+ */
+export function buildAllowUrls(siteHost: string | null = getSiteHost()): RegExp[] {
+  const hosts = new Set<string>([new URL(PRODUCTION_SITE_URL).hostname])
+  if (siteHost && siteHost !== 'localhost' && siteHost !== '127.0.0.1') {
+    hosts.add(siteHost)
+  }
+  return [
+    /localhost/,
+    /127\.0\.0\.1/,
+    /.*\.vercel\.app/,
+    /.*\.netlify\.app/,
+    ...[...hosts].map((host) => new RegExp(escapeRegExp(host))),
+  ]
+}
 
 function init(Sentry: SentryModule): SentryModule {
   // Gate first: off a Vercel deployment this returns the un-initialised
@@ -68,13 +95,8 @@ function init(Sentry: SentryModule): SentryModule {
       'The operation was aborted',
     ],
 
-    // Only capture errors from our domain
-    allowUrls: [
-      /localhost/,
-      /127\.0\.0\.1/,
-      /.*\.vercel\.app/,
-      /.*\.netlify\.app/,
-    ],
+    // Only capture errors from our own origins (see buildAllowUrls above).
+    allowUrls: buildAllowUrls(),
 
     // Remove PII before sending
     beforeSend(event) {

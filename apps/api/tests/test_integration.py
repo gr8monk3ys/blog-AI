@@ -545,6 +545,43 @@ class TestCORSHeaders:
             f"Preflight must allow POST method, got: {methods}"
         )
 
+    @pytest.mark.parametrize(
+        ("path", "method"),
+        [
+            # Webhook edit (components/settings/CreateWebhookForm.tsx)
+            ("/api/webhooks/sub_123", "PATCH"),
+            # Team role change (components/team/MembersList.tsx)
+            ("/api/organizations/org_123/members/user_456", "PATCH"),
+            ("/api/webhooks/sub_123", "DELETE"),
+            ("/api/v1/generate-blog", "PUT"),
+        ],
+    )
+    def test_preflight_allows_every_method_the_web_app_sends(
+        self, client, path, method
+    ):
+        """The browser preflights PATCH before the webhook-edit and role-change
+        forms submit. PATCH was missing from allow_methods, so both forms failed
+        in the browser while the same calls worked from curl."""
+        allowed_origin = "http://localhost:3000"
+        response = client.options(
+            path,
+            headers={
+                "Origin": allowed_origin,
+                "Access-Control-Request-Method": method,
+                "Access-Control-Request-Headers": "Authorization, Content-Type",
+            },
+        )
+
+        assert response.status_code == 200, (
+            f"Preflight for {method} {path} should return 200, "
+            f"got {response.status_code}: {response.text}"
+        )
+        assert response.headers.get("access-control-allow-origin") == allowed_origin
+        methods = response.headers.get("access-control-allow-methods", "")
+        assert method in methods.upper().split(", ") or method in methods.upper(), (
+            f"Preflight must allow {method}, got: {methods}"
+        )
+
     def test_cors_exposes_custom_headers(self, client):
         """Verify that custom headers (X-Request-ID, rate limit headers)
         are listed in Access-Control-Expose-Headers."""

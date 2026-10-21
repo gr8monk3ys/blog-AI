@@ -60,14 +60,23 @@ describe('NotFound', () => {
       expect(backButton).toBeInTheDocument()
     })
 
-    it('should render a contact support link', () => {
-      render(<NotFound />)
+    it('should render a contact support link to the configured address', async () => {
+      // The page resolves NEXT_PUBLIC_SUPPORT_EMAIL at module load, so stub it
+      // and re-import rather than asserting whichever fallback the page carries.
+      vi.stubEnv('NEXT_PUBLIC_SUPPORT_EMAIL', 'support@lscaturchio.xyz')
+      vi.resetModules()
+      try {
+        const { default: FreshNotFound } = await import('../../app/not-found')
+        render(<FreshNotFound />)
 
-      const supportLink = screen.getByRole('link', {
-        name: /contact support/i,
-      })
-      expect(supportLink).toBeInTheDocument()
-      expect(supportLink).toHaveAttribute('href', 'mailto:support@blogai.com')
+        const supportLink = screen.getByRole('link', {
+          name: /contact support/i,
+        })
+        expect(supportLink).toBeInTheDocument()
+        expect(supportLink).toHaveAttribute('href', 'mailto:support@lscaturchio.xyz')
+      } finally {
+        vi.unstubAllEnvs()
+      }
     })
   })
 

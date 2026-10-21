@@ -59,6 +59,7 @@ except Exception as e:
 # =============================================================================
 
 from app.error_handlers import register_exception_handlers
+from app.version import __version__
 from app.middleware import (
     HTTPSRedirectMiddleware,
     RateLimitMiddleware,
@@ -180,21 +181,26 @@ def filter_sensitive_breadcrumbs(crumb, hint):
 # project stopped receiving errors. Per-DSN rate limits are not on the plan, so
 # refusing to initialise off a deployment is the only control there is.
 #
-# This service is deployed as a container on Railway (railway.json +
-# Dockerfile.backend; see docs/DEPLOYMENT_VERCEL_RAILWAY_NEON.md). Railway
-# injects RAILWAY_ENVIRONMENT_NAME / RAILWAY_ENVIRONMENT into every running
-# deployment and nothing else does: they are absent for `uvicorn server:app`
-# on a laptop, for `docker run` of the same image locally, and in CI. That
-# makes them the API's equivalent of Vercel's VERCEL_ENV for the web app.
+# The gate was written for a Railway container (railway.json + Dockerfile.backend,
+# still the alternative path in docs/DEPLOYMENT.md): Railway injects
+# RAILWAY_ENVIRONMENT_NAME / RAILWAY_ENVIRONMENT into every running deployment
+# and nothing else does -- they are absent for `uvicorn server:app` on a
+# laptop, for `docker run` of the same image locally, and in CI.
+#
+# Production actually runs on Vercel's Python runtime (project blog-ai-api),
+# which sets VERCEL_ENV instead, so on Vercel this gate stays shut unless
+# SENTRY_FORCE_ENABLE=1 is set in the project. That is deliberate for now: the
+# org's Sentry quota is shared, and turning the API on is an owner decision
+# (docs/DEPLOYMENT.md, owner to-do), not a side effect of a deploy.
 #
 # SENTRY_ENVIRONMENT is deliberately NOT used as the signal: it defaults to
 # "development" but is a plain env var a developer may set to anything, and a
 # laptop that copied a production .env would sail straight through.
 #
 # Escape hatches:
-#   SENTRY_FORCE_ENABLE=1  -- report from a non-Railway host (another container
-#                             host, or a deliberate local test; point SENTRY_DSN
-#                             at a throwaway project first).
+#   SENTRY_FORCE_ENABLE=1  -- report from a non-Railway host (Vercel, another
+#                             container host, or a deliberate local test; point
+#                             SENTRY_DSN at a throwaway project first).
 #   SENTRY_FORCE_DISABLE=1 -- kill switch for a deployment that is flooding the
 #                             shared quota.
 
@@ -244,8 +250,9 @@ if _SENTRY_ENABLED:
         attach_stacktrace=True,
         # Server name for identifying the instance
         server_name=sentry_settings.server_name,
-        # Release version for tracking deployments
-        release=sentry_settings.sentry_release,
+        # Release version for tracking deployments: SENTRY_RELEASE when set,
+        # otherwise the pyproject.toml version release-please maintains.
+        release=sentry_settings.sentry_release or f"blog-ai@{__version__}",
     )
     logger.info(f"Sentry initialized for environment: {_sentry_environment}")
 elif not settings.is_sentry_configured:
@@ -375,7 +382,7 @@ The API supports versioning via URL path. Current version: `v1`
 - Documentation: interactive docs at `/docs` (non-production environments)
 - Project: [github.com/gr8monk3ys/blog-AI](https://github.com/gr8monk3ys/blog-AI)
 """,
-    version="1.0.0",
+    version=__version__,
     lifespan=lifespan,
     openapi_tags=[
         {"name": "health", "description": "Health checks and system status"},
@@ -462,8 +469,11 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
     allow_credentials=True,
-    # Restrict to necessary HTTP methods only
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    # Restrict to the methods the web app actually sends. PATCH is used by
+    # webhook edits (PATCH /api/webhooks/{id}) and team role changes
+    # (PATCH /api/organizations/{id}/members/{user_id}); without it the browser's
+    # preflight fails and both forms error out while curl works fine.
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     # Restrict to necessary headers only
     allow_headers=[
         "Authorization",
@@ -765,6 +775,7 @@ if __name__ == "__main__":
         sys.exit(0)
 
     reload_enabled = os.environ.get("UVICORN_RELOAD", "false").lower() == "true"
-    # Railway (and many other PaaS) provide `PORT`.
+    # Container hosts (Railway and most PaaS) provide `PORT`. Not reached on
+    # Vercel, which imports `server:app` directly.
     port = int(os.environ.get("PORT") or os.environ.get("BACKEND_PORT", "8000"))
     uvicorn.run("server:app", host="0.0.0.0", port=port, reload=reload_enabled)

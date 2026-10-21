@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
+# Logging rule: this runs in a public CI log. Print status codes, route paths and
+# the aggregate health fields only -- never response bodies, Vercel log lines
+# verbatim, headers, or anything derived from VERCEL_TOKEN. No `set -x`.
 set -euo pipefail
 
 APP_URL="${APP_URL:-https://blog-ai.vivancedata.com}"
 ROUTES="${ROUTES:-/ /pricing /blog /tool-directory /sitemap.xml}"
+# The web app's own dependency report (apps/web/app/api/health/route.ts): 200
+# unless a configured dependency (database, FastAPI backend, Clerk) is down,
+# then 503. Set HEALTH_ROUTE= (empty) to skip it.
+HEALTH_ROUTE="${HEALTH_ROUTE-/api/health}"
 LOOKBACK="${LOOKBACK:-1h}"
 LOG_LIMIT="${LOG_LIMIT:-200}"
 VERCEL_PROJECT="${VERCEL_PROJECT:-blog-ai}"
@@ -60,13 +67,61 @@ check_route() {
   fi
 
   if [[ "$status" != "$expected" ]]; then
-    log "ERROR route=${route} expected=${expected} got=${status}"
-    log "response: $(head -c 300 "$tmp_response" | tr '\n' ' ' || true)"
+    log "ERROR route=${route} expected=${expected} got=${status} bytes=$(wc -c <"$tmp_response" | tr -d ' ')"
     failures=$((failures + 1))
     return
   fi
 
   log "OK route=${route} status=${status}"
+}
+
+# Pull one string field out of the /api/health JSON without jq. Only the
+# aggregate fields (status words, version, commit) are ever read this way; the
+# body itself is never printed. Values are reduced to a safe character set.
+json_field() {
+  local key="$1"
+  tr -d '\n ' <"$tmp_response" \
+    | grep -oE "\"${key}\":\"[^\"]*\"" | head -n1 \
+    | sed -E 's/^"[^"]*":"//; s/"$//' | tr -cd 'A-Za-z0-9._-' | head -c 64 || true
+}
+
+# status word of one entry under "checks" (db / api / clerk).
+check_status() {
+  local name="$1"
+  tr -d '\n ' <"$tmp_response" \
+    | grep -oE "\"${name}\":\{\"status\":\"[a-z]+\"" | head -n1 \
+    | sed -E 's/.*"status":"//; s/"$//' || true
+}
+
+check_health_endpoint() {
+  local url="${APP_URL}${HEALTH_ROUTE}"
+  local status
+
+  if ! status="$(
+    curl \
+      --silent \
+      --show-error \
+      --max-time 20 \
+      --header 'Accept: application/json' \
+      --output "$tmp_response" \
+      --write-out '%{http_code}' \
+      "$url"
+  )"; then
+    log "ERROR route=${HEALTH_ROUTE} request failed"
+    failures=$((failures + 1))
+    return
+  fi
+
+  local summary
+  summary="health=$(json_field status) version=$(json_field version) commit=$(json_field commit)"
+  summary+=" db=$(check_status db) api=$(check_status api) clerk=$(check_status clerk)"
+  if [[ "$status" != "200" ]]; then
+    log "ERROR route=${HEALTH_ROUTE} expected=200 got=${status} ${summary}"
+    failures=$((failures + 1))
+    return
+  fi
+
+  log "OK route=${HEALTH_ROUTE} status=${status} ${summary}"
 }
 
 scan_logs() {
@@ -88,8 +143,8 @@ scan_logs() {
   fi
 
   if ! output="$("${cmd[@]}" 2>&1)"; then
-    log "ERROR unable to query vercel logs for level=${level}"
-    log "$output"
+    # The CLI's error text can echo its arguments; report the failure, not the text.
+    log "ERROR unable to query vercel logs for level=${level} (vercel logs exited non-zero)"
     failures=$((failures + 1))
     return
   fi
@@ -99,8 +154,11 @@ scan_logs() {
     return
   fi
 
-  log "FOUND ${level} logs in the last ${LOOKBACK}"
-  printf '%s\n' "$output"
+  # Log lines can carry request URLs, headers and error payloads: count them
+  # and point at the dashboard instead of reprinting them into a public CI log.
+  local count
+  count="$(grep -c . <<<"$output" || true)"
+  log "FOUND ${level} logs in the last ${LOOKBACK}: ${count} line(s). Inspect with: vercel logs --environment production --level ${level} --since ${LOOKBACK} --project ${VERCEL_PROJECT}"
 
   if [[ "$level" == "error" || "$FAIL_ON_WARNINGS" == "true" ]]; then
     failures=$((failures + 1))
@@ -110,13 +168,13 @@ scan_logs() {
 log "Checking deployment status for ${APP_URL}"
 if [[ "$vercel_checks_enabled" == "true" ]]; then
   if ! inspect_output="$("${vercel_base[@]}" inspect "$APP_URL" 2>&1)"; then
-    warn "Skipping Vercel deployment inspection and log scans: ${inspect_output}"
+    warn 'Skipping Vercel deployment inspection and log scans: vercel inspect failed.'
     vercel_checks_enabled=false
   elif grep -Eq 'status[[:space:]]+● Ready' <<<"$inspect_output"; then
     log 'OK deployment status is Ready'
   else
-    log 'ERROR deployment is not Ready'
-    printf '%s\n' "$inspect_output"
+    # Print the status line only, not the whole inspect dump.
+    log "ERROR deployment is not Ready: $(grep -E '^[[:space:]]*status' <<<"$inspect_output" | head -n1 | tr -s ' ' || true)"
     failures=$((failures + 1))
   fi
 else
@@ -127,6 +185,11 @@ log "Checking key routes for ${APP_URL}"
 for route in $ROUTES; do
   check_route "$route" 200
 done
+
+if [[ -n "$HEALTH_ROUTE" ]]; then
+  log "Checking dependency health at ${APP_URL}${HEALTH_ROUTE}"
+  check_health_endpoint
+fi
 
 if [[ "$vercel_checks_enabled" == "true" ]]; then
   log "Scanning recent Vercel production logs"

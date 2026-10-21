@@ -96,8 +96,11 @@ vi.mock('@clerk/nextjs', () => ({
   auth: () => ({ userId: 'test-user' }),
 }))
 
-// Mock scrollIntoView
-Element.prototype.scrollIntoView = vi.fn()
+// Mock scrollIntoView. Route-handler tests opt into the node environment
+// (`// @vitest-environment node`), where there is no DOM to patch.
+if (typeof Element !== 'undefined') {
+  Element.prototype.scrollIntoView = vi.fn()
+}
 
 // Mock WebSocket
 class MockWebSocket {
