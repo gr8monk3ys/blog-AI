@@ -2,100 +2,76 @@
 
 import Link from 'next/link'
 import { Suspense } from 'react'
-import { m } from 'framer-motion'
 import SiteHeader from '../../components/SiteHeader'
 import SiteFooter from '../../components/SiteFooter'
 import ToolGrid from '../../components/tools/ToolGrid'
+import { buttonVariants } from '../../components/ui/Button'
 
+const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? 'support@lscaturchio.xyz'
+
+const QUICK_STATS = [
+  { value: '29+', label: 'AI Tools' },
+  { value: '8', label: 'Categories' },
+  { value: '50+', label: 'Content Formats' },
+]
+
+// The tools directory on the notebook: a wide index header (wall label,
+// headline, description, the figures as one row of wall labels), the
+// catalogue as hairline rows, and a closing CTA with the view's one primary
+// button. Nothing animates in: the h1 is the LCP element and paints in the
+// server HTML.
 function ToolsPageContent() {
   return (
     <>
       <SiteHeader />
-      <main id="main-content" tabIndex={-1} className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+      <main id="main-content" tabIndex={-1} className="min-h-screen">
+        <header className="mx-auto max-w-7xl px-4 pb-10 pt-12 sm:px-6 md:pt-16 lg:px-8">
+          <p className="label-mono">Tools</p>
+          <h1 className="text-page-title mt-3 max-w-3xl">AI Writing Tools</h1>
+          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground text-pretty">
+            Discover powerful AI tools to create content for blogs, emails, social media, and
+            more. Start writing smarter today.
+          </p>
+          <ul className="label-mono mt-8 flex flex-wrap gap-x-6 gap-y-2 border-t border-border/60 pt-6">
+            {QUICK_STATS.map((stat) => (
+              <li key={stat.label}>
+                <span className="text-foreground">{stat.value}</span> {stat.label}
+              </li>
+            ))}
+          </ul>
+        </header>
 
-      {/* Hero Section */}
-      <section className="bg-linear-to-r from-amber-700 to-amber-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-          {/* No entrance animation here: this hero text is the LCP element, and
-              m.* stays at its `initial` style until LazyMotion's async features
-              load, which held mobile LCP at ~5s. */}
-          <div className="text-center">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
-              AI Writing Tools
-            </h1>
-            <p className="text-lg sm:text-xl text-amber-100 max-w-2xl mx-auto">
-              Discover powerful AI tools to create content for blogs, emails, social
-              media, and more. Start writing smarter today.
-            </p>
-
-            {/* Quick stats */}
-            <div className="mt-8 flex flex-wrap justify-center gap-8">
-              <div className="text-center">
-                <div className="text-3xl font-bold">29+</div>
-                <div className="text-sm text-amber-200">AI Tools</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold">8</div>
-                <div className="text-sm text-amber-200">Categories</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold">50+</div>
-                <div className="text-sm text-amber-200">Content Formats</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Main Content */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        <m.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          {/* The grid is the first content under the page <h1>, so its card titles
-              are the h2 level of this page; the CTA below is the other h2. */}
-          {/* ToolGrid reads ?category= itself, hydration-safely (reading window
-              during render here made server and client HTML differ). */}
+        <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 md:pb-20 lg:px-8">
+          {/* The rows are the first content under the page <h1>, so their
+              titles are the h2 level of this page; the CTA below is the other
+              h2. ToolGrid reads ?category= itself, hydration-safely (reading
+              window during render here made server and client HTML differ). */}
           <ToolGrid headingLevel={2} />
-        </m.div>
-      </section>
+        </section>
 
-      {/* CTA Section */}
-      <section className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-          <m.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="text-center"
-          >
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-              Can’t Find What You Need?
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 max-w-xl mx-auto mb-6">
-              Use our flexible Blog Post or Book generators for custom content creation
-              with advanced options.
+        <hr className="gallery-rule" />
+
+        <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 md:py-20 lg:px-8">
+          <div className="max-w-2xl">
+            <p className="label-mono">Need something else</p>
+            <h2 className="text-section-title mt-3">Can’t Find What You Need?</h2>
+            <p className="mt-4 text-lg leading-relaxed text-muted-foreground text-pretty">
+              Use our flexible Blog Post or Book generators for custom content creation with
+              advanced options.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/"
-                className="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-lg text-sm font-medium text-white bg-linear-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 shadow-xs transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
-              >
+            <div className="mt-8 flex flex-wrap items-center gap-5">
+              <Link href="/" className={buttonVariants({ size: 'lg' })}>
                 Open Content Generator
               </Link>
               <a
-                href="mailto:support@blog-ai.com?subject=Tool%20Request"
-                className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 shadow-xs transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                href={`mailto:${SUPPORT_EMAIL}?subject=Tool%20Request`}
+                className="label-mono label-link ink-underline transition-colors hover:text-primary"
               >
                 Request a Tool
               </a>
             </div>
-          </m.div>
-        </div>
-      </section>
-
+          </div>
+        </section>
       </main>
       <SiteFooter />
     </>
@@ -106,7 +82,7 @@ export default function ToolsPageClient() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+        <main className="label-mono flex min-h-screen items-center justify-center">
           Loading tools…
         </main>
       }

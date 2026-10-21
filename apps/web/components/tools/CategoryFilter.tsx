@@ -1,7 +1,6 @@
 'use client'
 
 import { useRef, useCallback, useMemo } from 'react'
-import { m } from 'framer-motion'
 import { ToolCategory, TOOL_CATEGORIES } from '../../types/tools'
 
 interface CategoryFilterProps {
@@ -10,6 +9,9 @@ interface CategoryFilterProps {
   toolCounts?: Record<ToolCategory | 'all', number>
 }
 
+// The category filter as a row of wall-label tabs (DESIGN.md → Chips: tag
+// lists are not chips). The selected tab is in the ink with its underline
+// scored in; the count sits beside the name in tabular figures.
 export default function CategoryFilter({
   selectedCategory,
   onCategoryChange,
@@ -60,57 +62,31 @@ export default function CategoryFilter({
   )
 
   return (
-    <div className="w-full overflow-x-auto scrollbar-hide">
-      <nav
-        className="flex gap-2 pb-2"
-        role="tablist"
-        aria-label="Tool categories"
-      >
-        {categories.map((category, index) => {
-          const isSelected = selectedCategory === category.id
-          const count = toolCounts?.[category.id]
+    <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1" role="tablist" aria-label="Tool categories">
+      <span className="label-mono">Filter</span>
+      {categories.map((category, index) => {
+        const isSelected = selectedCategory === category.id
+        const count = toolCounts?.[category.id]
 
-          return (
-            <button
-              key={category.id}
-              ref={(el) => { buttonRefs.current[index] = el }}
-              type="button"
-              role="tab"
-              aria-selected={isSelected}
-              tabIndex={isSelected ? 0 : -1}
-              onClick={() => onCategoryChange(category.id)}
-              onKeyDown={(e) => handleKeyDown(e, index)}
-              className={`relative shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ${
-                isSelected
-                  ? 'bg-amber-700 text-white shadow-xs'
-                  : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                {category.name}
-                {count !== undefined && (
-                  <span
-                    className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-xs ${
-                      isSelected
-                        ? 'bg-amber-700 text-white'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
-                    }`}
-                  >
-                    {count}
-                  </span>
-                )}
-              </span>
-              {isSelected && (
-                <m.div
-                  layoutId="categoryIndicator"
-                  className="absolute inset-0 bg-amber-700 rounded-lg -z-10"
-                  transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
-                />
-              )}
-            </button>
-          )
-        })}
-      </nav>
+        return (
+          <button
+            key={category.id}
+            ref={(el) => { buttonRefs.current[index] = el }}
+            type="button"
+            role="tab"
+            aria-selected={isSelected}
+            tabIndex={isSelected ? 0 : -1}
+            onClick={() => onCategoryChange(category.id)}
+            onKeyDown={(e) => handleKeyDown(e, index)}
+            className={`label-mono label-link ink-underline gap-1.5 transition-colors hover:text-primary ${
+              isSelected ? 'text-primary' : ''
+            }`}
+          >
+            {category.name}
+            {count !== undefined && <span className="tabular-nums">({count})</span>}
+          </button>
+        )
+      })}
     </div>
   )
 }

@@ -1,129 +1,57 @@
-'use client'
-
 import Link from 'next/link'
-import { motion } from 'framer-motion'
 import { Tool, TOOL_CATEGORIES } from '../../types/tools'
-import {
-  DocumentTextIcon,
-  EnvelopeIcon,
-  ChatBubbleLeftRightIcon,
-  BriefcaseIcon,
-  SparklesIcon,
-  VideoCameraIcon,
-  MagnifyingGlassIcon,
-  ArrowPathIcon,
-} from '@heroicons/react/24/outline'
 
 export type HeadingLevel = 2 | 3 | 4 | 5 | 6
 
 interface ToolCardProps {
   tool: Tool
-  index?: number
   /**
-   * Heading level for the card title. Defaults to 3, which is correct when the
-   * grid sits under a section <h2>. Pass 2 when the cards are the first
+   * Heading level for the row title. Defaults to 3, which is correct when the
+   * list sits under a section <h2>. Pass 2 when the rows are the first
    * headings under the page <h1>, so the outline stays sequential (WCAG 1.3.1
    * / axe heading-order).
    */
   headingLevel?: HeadingLevel
 }
 
-const categoryIcons: Record<string, React.ElementType> = {
-  blog: DocumentTextIcon,
-  email: EnvelopeIcon,
-  'social-media': ChatBubbleLeftRightIcon,
-  business: BriefcaseIcon,
-  naming: SparklesIcon,
-  video: VideoCameraIcon,
-  seo: MagnifyingGlassIcon,
-  rewriting: ArrowPathIcon,
-}
-
-export default function ToolCard({ tool, index = 0, headingLevel = 3 }: ToolCardProps) {
+/**
+ * One tool as a hairline row (DESIGN.md → Components → Cards / Rows): a wall
+ * label with the category and its flags, a Fraunces title that takes the ink
+ * on hover, a two-line description in Ink Muted, and "Open" in the margin.
+ * Server-safe: no hooks, no motion. Rendered inside a <ul>.
+ */
+export default function ToolCard({ tool, headingLevel = 3 }: ToolCardProps) {
   const Heading = `h${headingLevel}` as const
   const categoryInfo = TOOL_CATEGORIES[tool.category]
-  const Icon = categoryIcons[tool.category] || DocumentTextIcon
+  const flags = [
+    categoryInfo.name,
+    tool.isNew ? 'New' : null,
+    tool.isPopular ? 'Popular' : null,
+    tool.isFree ? 'Free' : null,
+  ].filter((flag): flag is string => flag !== null)
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.05 }}
-    >
+    <li className="border-b border-border">
       <Link
         href={`/tools/${tool.slug}`}
-        className="block group"
+        className="group flex items-start justify-between gap-6 py-5"
       >
-        <div className="relative h-full bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-xs hover:shadow-md hover:border-amber-200 dark:hover:border-amber-700 transition duration-200 overflow-hidden">
-          {/* Top badges row */}
-          <div className="absolute top-3 right-3 flex items-center gap-2">
-            {tool.isNew && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-linear-to-r from-amber-500 to-amber-600 text-white">
-                New
-              </span>
-            )}
-            {tool.isPopular && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">
-                Popular
-              </span>
-            )}
-            {tool.isFree && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 border border-emerald-200">
-                Free
-              </span>
-            )}
-          </div>
-
-          <div className="p-5">
-            {/* Icon and Category */}
-            <div className="flex items-start gap-4 mb-3">
-              <div
-                className={`shrink-0 w-10 h-10 rounded-lg ${categoryInfo.bgColor} flex items-center justify-center`}
-              >
-                <Icon className={`w-5 h-5 ${categoryInfo.color}`} aria-hidden="true" />
-              </div>
-              <div className="flex-1 min-w-0 pt-1">
-                <span
-                  className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium ${categoryInfo.bgColor} ${categoryInfo.color} border ${categoryInfo.borderColor}`}
-                >
-                  {categoryInfo.name}
-                </span>
-              </div>
-            </div>
-
-            {/* Title */}
-            <Heading className="text-base font-semibold text-gray-900 dark:text-gray-100 group-hover:text-amber-700 transition-colors mb-2 line-clamp-1">
-              {tool.name}
-            </Heading>
-
-            {/* Description */}
-            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed">
-              {tool.description}
-            </p>
-          </div>
-
-          {/* Bottom action indicator */}
-          <div className="px-5 pb-4">
-            <div className="flex items-center text-sm font-medium text-amber-700 group-hover:text-amber-800 dark:text-amber-400 dark:group-hover:text-amber-300 transition-colors">
-              <span>Try it now</span>
-              <svg
-                className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </div>
-          </div>
+        <div className="min-w-0">
+          <p className="label-mono">{flags.join(' · ')}</p>
+          <Heading className="text-card-title mt-1.5 transition-colors group-hover:text-primary">
+            {tool.name}
+          </Heading>
+          <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+            {tool.description}
+          </p>
         </div>
+        <span
+          className="label-mono shrink-0 pt-1 transition-colors group-hover:text-primary"
+          aria-hidden="true"
+        >
+          Open →
+        </span>
       </Link>
-    </motion.div>
+    </li>
   )
 }

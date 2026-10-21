@@ -2,102 +2,57 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { buttonVariants } from '../components/ui/Button'
 
-const SUPPORT_EMAIL =
-  process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@blogai.com'
+const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? 'support@lscaturchio.xyz'
 
 /**
- * Custom 404 Not Found page
- *
- * This page is displayed when a user navigates to a route
- * that does not exist. It provides helpful navigation options
- * and maintains accessibility standards.
+ * The 404 page: an honest empty state in the house voice (DESIGN.md → Do) —
+ * a wall label, one serif line, one primary action — in a single column at
+ * the reading measure. No watermark numeral, no glow.
  */
 export default function NotFound() {
   const router = useRouter()
 
   return (
-    <main id="main-content" tabIndex={-1}
-      className="min-h-screen flex items-center justify-center bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900"
+    <main
+      id="main-content"
+      tabIndex={-1}
+      className="flex min-h-screen flex-col justify-center"
       role="main"
       aria-labelledby="not-found-title"
     >
-      <div className="text-center px-4 py-16 max-w-lg">
-        {/* Status Code */}
-        <p
-          className="text-8xl font-bold text-gray-200 dark:text-gray-800 select-none"
-          aria-hidden="true"
-        >
-          404
+      <div className="mx-auto w-full max-w-2xl px-4 py-16 sm:px-6 md:py-24 lg:px-8">
+        <p className="label-mono">
+          <span aria-hidden="true">404</span>
+          <span className="sr-only">Error 404</span> · Not found
         </p>
 
-        {/* Title */}
-        <h1
-          id="not-found-title"
-          className="mt-4 text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100 sm:text-4xl"
-        >
+        <h1 id="not-found-title" className="text-page-title mt-4">
           Page Not Found
         </h1>
 
-        {/* Description */}
-        <p className="mt-4 text-base leading-7 text-gray-600 dark:text-gray-400">
-          Sorry, we could not find the page you are looking for. It may have
-          been moved, deleted, or the URL might be incorrect.
+        <p className="mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground text-pretty">
+          Sorry, we could not find the page you are looking for. It may have been moved, deleted,
+          or the URL might be incorrect.
         </p>
 
-        {/* Navigation Options */}
-        <nav className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link
-            href="/"
-            className="inline-flex items-center justify-center rounded-md bg-amber-700 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-amber-800 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600 transition-colors"
-          >
-            <svg
-              className="mr-2 h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"
-              />
-            </svg>
+        <nav className="mt-8 flex flex-wrap items-center gap-5" aria-label="Where to go next">
+          <Link href="/" className={buttonVariants({ size: 'lg' })}>
             Go Back Home
           </Link>
-
           <button
             type="button"
             onClick={() => router.back()}
-            className="inline-flex items-center justify-center rounded-md bg-white dark:bg-gray-800 px-5 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600 transition-colors"
+            className="label-mono label-link ink-underline transition-colors hover:text-primary"
           >
-            <svg
-              className="mr-2 h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
-              />
-            </svg>
             Go Back
           </button>
         </nav>
 
-        {/* Help Text */}
-        <p className="mt-10 text-sm text-gray-500 dark:text-gray-400">
+        <p className="mt-12 border-t border-border pt-6 text-sm text-muted-foreground">
           If you believe this is a mistake, please{' '}
-          <a
-            href={`mailto:${SUPPORT_EMAIL}`}
-            className="text-amber-700 hover:text-amber-500 dark:text-amber-400 dark:hover:text-amber-300 underline underline-offset-2"
-          >
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="ink-underline text-primary">
             contact support
           </a>
           .

@@ -1,7 +1,7 @@
 'use client'
 
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline'
-import { motion, AnimatePresence } from 'framer-motion'
+import { inputClassName } from '../ui/Input'
 
 interface ToolSearchProps {
   searchQuery: string
@@ -10,6 +10,8 @@ interface ToolSearchProps {
   resultCount?: number
 }
 
+// The field treatment (`input-field`) with the glass in the margin; the
+// result count is a wall label announced to assistive tech.
 export default function ToolSearch({
   searchQuery,
   onSearchChange,
@@ -21,13 +23,10 @@ export default function ToolSearch({
   }
 
   return (
-    <div className="relative">
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-          <MagnifyingGlassIcon
-            className="h-5 w-5 text-gray-400"
-            aria-hidden="true"
-          />
+    <div>
+      <div className="relative max-w-xl">
+        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+          <MagnifyingGlassIcon className="size-4 text-muted-foreground" aria-hidden="true" />
         </div>
         <input
           name="searchQuery"
@@ -35,49 +34,35 @@ export default function ToolSearch({
           type="text"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="block w-full pl-11 pr-10 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-xs placeholder-gray-400 dark:placeholder-gray-500 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:border-amber-500 text-sm transition"
+          className={`${inputClassName} pl-9 pr-10`}
           placeholder={placeholder}
           aria-label="Search tools"
         />
-        <AnimatePresence>
-          {searchQuery && (
-            <motion.button
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              type="button"
-              onClick={handleClear}
-              className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-              aria-label="Clear search"
-            >
-              <XMarkIcon className="h-5 w-5" aria-hidden="true" />
-            </motion.button>
-          )}
-        </AnimatePresence>
+        {searchQuery && (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground transition-colors hover:text-primary"
+            aria-label="Clear search"
+          >
+            <XMarkIcon className="size-4" aria-hidden="true" />
+          </button>
+        )}
       </div>
 
-      {/* Result count indicator - with aria-live for screen reader announcements */}
-      <AnimatePresence>
-        {searchQuery && resultCount !== undefined && (
-          <motion.p
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="mt-2 text-sm text-gray-500 dark:text-gray-400"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            {resultCount === 0 ? (
-              <span>No tools found matching &ldquo;{searchQuery}&rdquo;</span>
-            ) : (
-              <span>
-                Found {resultCount} {resultCount === 1 ? 'tool' : 'tools'} matching
-                &ldquo;{searchQuery}&rdquo;
-              </span>
-            )}
-          </motion.p>
-        )}
-      </AnimatePresence>
+      {/* Result count, with aria-live for screen reader announcements. */}
+      {searchQuery && resultCount !== undefined && (
+        <p className="label-mono mt-3" aria-live="polite" aria-atomic="true">
+          {resultCount === 0 ? (
+            <span>No tools found matching &ldquo;{searchQuery}&rdquo;</span>
+          ) : (
+            <span>
+              Found {resultCount} {resultCount === 1 ? 'tool' : 'tools'} matching
+              &ldquo;{searchQuery}&rdquo;
+            </span>
+          )}
+        </p>
+      )}
     </div>
   )
 }

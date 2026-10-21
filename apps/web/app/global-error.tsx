@@ -7,13 +7,15 @@ import Link from 'next/link'
 /**
  * Global Error Boundary
  *
- * This component handles errors that occur outside of the normal
- * app layout, including errors in the root layout itself. It
- * renders a completely self-contained error page without relying
- * on any shared layout or styles.
+ * Handles errors that occur outside of the normal app layout, including
+ * errors in the root layout itself. It renders a completely self-contained
+ * document without relying on any shared layout or stylesheet, so the
+ * notebook's stationery is written out here by hand: paper and Iron Gall
+ * (DESIGN.md → Colors), the body sans and a mono label from the system
+ * stacks, flat surfaces, one primary action.
  *
- * Note: This component must define its own <html> and <body> tags
- * as it replaces the entire document when triggered.
+ * Note: This component must define its own <html> and <body> tags as it
+ * replaces the entire document when triggered.
  */
 export default function GlobalError({
   error,
@@ -40,91 +42,91 @@ export default function GlobalError({
       })
   }, [error])
 
-  // Inline styles since Tailwind is not available in global error
+  // Inline styles: Tailwind and globals.css are not available in global error.
+  // Paper #f9f8f5, Ink #1a1f23, Ink Muted #606976, Hairline #e2dbd5, Iron
+  // Gall #2a3f79 — the light tokens from DESIGN.md.
   const styles = {
     body: {
       margin: 0,
       padding: '1rem',
-      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif",
-      background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8ed 100%)',
+      fontFamily: "'Instrument Sans', ui-sans-serif, system-ui, sans-serif",
+      background: '#f9f8f5',
+      color: '#1a1f23',
       minHeight: '100vh',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
+      lineHeight: 1.65,
     } as const,
     container: {
-      background: 'white',
-      borderRadius: '12px',
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
-      padding: '2.5rem',
-      maxWidth: '480px',
+      maxWidth: '42rem',
       width: '100%',
-      textAlign: 'center' as const,
     },
-    icon: {
-      width: '64px',
-      height: '64px',
-      margin: '0 auto 1.5rem',
-      color: '#dc2626',
+    label: {
+      margin: 0,
+      fontFamily: "'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+      fontSize: '0.72rem',
+      fontWeight: 500,
+      letterSpacing: '0.16em',
+      textTransform: 'uppercase' as const,
+      color: '#606976',
     },
     title: {
-      color: '#111827',
-      fontSize: '1.5rem',
+      fontFamily: "Fraunces, ui-serif, Georgia, serif",
+      fontSize: 'clamp(1.9rem, 3.6vw, 3.2rem)',
       fontWeight: 700,
-      marginBottom: '0.75rem',
-      marginTop: 0,
+      lineHeight: 1.12,
+      letterSpacing: '-0.03em',
+      marginTop: '1rem',
+      marginBottom: 0,
     },
     message: {
-      color: '#4b5563',
-      fontSize: '1rem',
-      lineHeight: 1.625,
-      marginBottom: '1.5rem',
+      color: '#606976',
+      fontSize: '1.125rem',
+      lineHeight: 1.65,
+      marginTop: '1rem',
+      marginBottom: 0,
+      maxWidth: '36rem',
     },
     errorId: {
-      background: '#f3f4f6',
-      borderRadius: '6px',
-      padding: '0.75rem 1rem',
-      fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-      fontSize: '0.875rem',
-      color: '#6b7280',
-      marginBottom: '1.5rem',
+      fontFamily: "'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+      fontSize: '0.8rem',
+      color: '#606976',
+      marginTop: '1.5rem',
       wordBreak: 'break-all' as const,
     },
-    buttons: {
+    actions: {
       display: 'flex',
-      flexDirection: 'column' as const,
-      gap: '0.75rem',
-      justifyContent: 'center',
+      flexWrap: 'wrap' as const,
+      alignItems: 'center',
+      gap: '1.25rem',
+      marginTop: '2rem',
     },
     btnPrimary: {
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '0.625rem 1.25rem',
-      borderRadius: '6px',
-      fontSize: '0.875rem',
-      fontWeight: 600,
-      textDecoration: 'none',
+      height: '3rem',
+      padding: '0 2rem',
+      borderRadius: '0.875rem',
+      fontSize: '1rem',
+      fontWeight: 500,
+      fontFamily: 'inherit',
       cursor: 'pointer',
-      transition: 'all 0.15s ease',
-      background: '#2563eb',
-      color: 'white',
-      border: 'none',
+      background: '#2a3f79',
+      color: '#ffffff',
+      border: '1px solid rgba(42, 63, 121, 0.42)',
+      boxShadow: '0 1px 0 rgba(42, 63, 121, 0.25)',
     },
-    btnSecondary: {
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '0.625rem 1.25rem',
-      borderRadius: '6px',
-      fontSize: '0.875rem',
-      fontWeight: 600,
-      textDecoration: 'none',
-      cursor: 'pointer',
-      transition: 'all 0.15s ease',
-      background: 'white',
-      color: '#374151',
-      border: '1px solid #d1d5db',
+    link: {
+      fontFamily: "'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+      fontSize: '0.72rem',
+      fontWeight: 500,
+      letterSpacing: '0.16em',
+      textTransform: 'uppercase' as const,
+      color: '#2a3f79',
+      textDecoration: 'underline',
+      textUnderlineOffset: '4px',
     },
   }
 
@@ -137,56 +139,34 @@ export default function GlobalError({
       </head>
       <body style={styles.body}>
         <main style={styles.container} role="main" aria-labelledby="error-title">
-          {/* Error Icon */}
-          <svg
-            style={styles.icon}
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
-            />
-          </svg>
+          <p style={styles.label}>Error</p>
 
-          {/* Title */}
           <h1 id="error-title" style={styles.title}>
             Something Went Wrong
           </h1>
 
-          {/* Message */}
           <p style={styles.message}>
             We encountered an unexpected error. Our team has been notified and
             is working to fix the issue. Please try again or return to the home
             page.
           </p>
 
-          {/* Error ID for support reference */}
           {error.digest && (
-            <div style={styles.errorId} aria-label="Error reference ID">
+            <p style={styles.errorId} aria-label="Error reference ID">
               Error ID: {error.digest}
-            </div>
+            </p>
           )}
 
-          {/* Action Buttons */}
-	          <div style={styles.buttons}>
-	            <button
-	              onClick={() => reset()}
-	              style={styles.btnPrimary}
-	              type="button"
-	            >
-	              Try Again
-	            </button>
-	            <Link href="/" style={styles.btnSecondary}>
-	              Return Home
-	            </Link>
-	          </div>
-	        </main>
-	      </body>
-	    </html>
-	  )
+          <div style={styles.actions}>
+            <button onClick={() => reset()} style={styles.btnPrimary} type="button">
+              Try Again
+            </button>
+            <Link href="/" style={styles.link}>
+              Return Home
+            </Link>
+          </div>
+        </main>
+      </body>
+    </html>
+  )
 }

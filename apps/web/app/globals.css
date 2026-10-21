@@ -862,60 +862,41 @@ html[data-theme-pref='system'] .theme-pref-icon[data-pref='system'] {
   border: 1px solid hsl(var(--border));
 }
 
-/* ---------------------------------------------------------------------------
-   RETIRED — entrance motion (app/HomePageClient.tsx, app/_home/Reveal.tsx).
-   DESIGN.md → Motion: content does not animate itself in. These keyframes
-   stay only until the pages PR deletes the call sites; `hero-rise*` and
-   `data-reveal` are ratcheted by scripts/check-design-system.mjs.
-   --------------------------------------------------------------------------- */
-@keyframes home-rise {
-  from { opacity: 0; transform: translateY(24px); }
-  to { opacity: 1; transform: none; }
-}
-@keyframes home-rise-painted {
-  from { transform: translateY(24px); }
-  to { transform: none; }
-}
-@keyframes home-fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+/* ============================================================
+ * MARKETING — utilities the public pages need beyond the primitives.
+ * ============================================================ */
 
-@layer components {
-  .hero-rise { animation: home-rise 0.5s ease-out both; }
-  .hero-rise-lcp { animation: home-rise-painted 0.5s ease-out both; }
-  .hero-fade { animation: home-fade 0.6s ease-out both; }
+/* Running text on the notebook: @tailwindcss/typography's `prose` with its
+ * colour slots pointed at the tokens, so a blog post or a legal page reads in
+ * Ink on paper by day and Night Ink at night without a `prose-invert` swap.
+ * Unlayered on purpose: `.prose` sets the same custom properties from the
+ * utilities layer, and an unlayered rule outranks it regardless of order.
+ * Headings are already Fraunces through the base layer (The Serif Speaks
+ * Rule); links take the ink and an underline at 40%. */
+.prose-notebook {
+  --tw-prose-body: hsl(var(--foreground));
+  --tw-prose-headings: hsl(var(--foreground));
+  --tw-prose-lead: hsl(var(--muted-foreground));
+  --tw-prose-links: hsl(var(--primary));
+  --tw-prose-bold: hsl(var(--foreground));
+  --tw-prose-counters: hsl(var(--muted-foreground));
+  --tw-prose-bullets: hsl(var(--muted-foreground));
+  --tw-prose-hr: hsl(var(--border));
+  --tw-prose-quotes: hsl(var(--foreground));
+  --tw-prose-quote-borders: hsl(var(--border));
+  --tw-prose-captions: hsl(var(--muted-foreground));
+  --tw-prose-kbd: hsl(var(--foreground));
+  --tw-prose-code: hsl(var(--foreground));
+  --tw-prose-pre-code: hsl(var(--foreground));
+  --tw-prose-pre-bg: hsl(var(--muted));
+  --tw-prose-th-borders: hsl(var(--border));
+  --tw-prose-td-borders: hsl(var(--border));
 }
-
-[data-reveal],
-[data-reveal-stagger] > * {
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+.prose-notebook :where(a):not(:where([class~='not-prose'] *)) {
+  text-decoration-color: hsl(var(--primary) / 0.4);
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--duration-fast) ease;
 }
-[data-reveal][data-inview],
-[data-reveal-stagger][data-inview] > * {
-  opacity: 1;
-  transform: none;
-}
-[data-reveal-stagger] > :nth-child(2) { transition-delay: 120ms; }
-[data-reveal-stagger] > :nth-child(3) { transition-delay: 240ms; }
-[data-reveal-stagger] > :nth-child(4) { transition-delay: 360ms; }
-[data-reveal-stagger] > :nth-child(5) { transition-delay: 480ms; }
-[data-reveal-stagger] > :nth-child(6) { transition-delay: 600ms; }
-[data-reveal-stagger] > :nth-child(7) { transition-delay: 720ms; }
-[data-reveal-stagger] > :nth-child(n + 8) { transition-delay: 840ms; }
-
-@media (prefers-reduced-motion: reduce) {
-  .hero-rise,
-  .hero-rise-lcp,
-  .hero-fade {
-    animation: none;
-  }
-  [data-reveal],
-  [data-reveal-stagger] > * {
-    opacity: 1;
-    transform: none;
-    transition: none;
-  }
+.prose-notebook :where(a):not(:where([class~='not-prose'] *)):hover {
+  text-decoration-color: hsl(var(--primary));
 }

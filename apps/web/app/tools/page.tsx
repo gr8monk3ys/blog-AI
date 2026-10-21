@@ -14,7 +14,9 @@ export const metadata: Metadata = {
 // required to open an individual tool workspace at /tools/[slug].
 export default function ToolsPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-sm text-gray-500">Loading tools…</div>}>
+    <Suspense
+      fallback={<p className="label-mono p-8 text-center">Loading tools…</p>}
+    >
       <ToolsPageClient />
     </Suspense>
   )

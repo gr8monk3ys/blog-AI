@@ -10,4 +10,4 @@ Disallow: /sign-in
 Disallow: /sign-up
 Disallow: /onboarding
 
-Sitemap: https://blogai.com/sitemap.xml
+Sitemap: https://blog-ai.vivancedata.com/sitemap.xml
