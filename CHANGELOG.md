@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/gr8monk3ys/blog-AI/compare/v0.2.0...v0.2.1) (2026-10-21)
+
+
+### Bug Fixes
+
+* **deps:** bump certifi to 2026.10.19 in apps/api ([#231](https://github.com/gr8monk3ys/blog-AI/issues/231)) ([6fa5963](https://github.com/gr8monk3ys/blog-AI/commit/6fa5963c72da015bad18c6210ba37e7982da0b5b))
+
 ## [0.2.0](https://github.com/gr8monk3ys/blog-AI/compare/v0.1.0...v0.2.0) (2026-10-21)
 
 
