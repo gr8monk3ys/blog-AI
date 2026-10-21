@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.0](https://github.com/gr8monk3ys/blog-AI/compare/v0.1.0...v0.2.0) (2026-10-21)
+
+
+### Features
+
+* **design:** Manuscript notebook tokens, fonts, primitives, brand and enforcement ([#227](https://github.com/gr8monk3ys/blog-AI/issues/227)) ([760fb92](https://github.com/gr8monk3ys/blog-AI/commit/760fb92ff717ba9dae6d31e9b9586c9a69c3fc57))
+* **design:** marketing and public pages on the notebook ([#229](https://github.com/gr8monk3ys/blog-AI/issues/229)) ([9ef27b7](https://github.com/gr8monk3ys/blog-AI/commit/9ef27b788be6d3c1d740a26afb5541b362c82af3))
+
+
+### Bug Fixes
+
+* truthful deployment docs, feature flags, web health endpoint and env audit ([#226](https://github.com/gr8monk3ys/blog-AI/issues/226)) ([f7fdad0](https://github.com/gr8monk3ys/blog-AI/commit/f7fdad0dda55f582e0ed00d9f33100a7f52e7629))
+
 ## 0.1.0 (2026-10-13)
 
 
