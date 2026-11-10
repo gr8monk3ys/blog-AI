@@ -10,6 +10,7 @@ This module provides Postgres-backed quota management with:
 Falls back to file-based storage when DATABASE_URL is not configured.
 """
 
+import json
 import logging
 import os
 from datetime import datetime, timedelta, timezone
@@ -326,13 +327,17 @@ class QuotaService:
                 await db_execute(
                     """
                     INSERT INTO usage_records (user_id, operation_type, tokens_used, timestamp, metadata, created_at)
-                    VALUES ($1, $2, $3, $4, $5, NOW())
+                    VALUES ($1, $2, $3, $4, $5::jsonb, NOW())
                     """,
                     user_id,
                     operation_type,
                     int(tokens_used or 0),
                     self._as_utc(timestamp),
-                    metadata,
+                    # asyncpg has no dict -> jsonb codec here: a dict raises
+                    # DataError and None violates NOT NULL. Either way the
+                    # insert was swallowed below, no usage was ever recorded,
+                    # and every quota stayed at zero.
+                    json.dumps(metadata or {}, default=str),
                 )
                 logger.info(
                     f"Usage recorded for user {user_id[:8]}...: {operation_type}"
