@@ -96,6 +96,21 @@ class TestPaymentCheckoutRoute(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("business tier", detail_text(response))
 
+    @patch("app.routes.payments.stripe_service.get_or_create_customer", new_callable=AsyncMock)
+    @patch("app.routes.payments.stripe_service.get_tier_for_price_id", return_value=SubscriptionTier.BUSINESS)
+    @patch("app.routes.payments.stripe_service.is_configured_price_id", return_value=True)
+    @patch("app.routes.payments.stripe_service._api_key", "sk_test_123")
+    def test_org_checkout_rejects_business_when_flag_disabled(self, _mock_price, _mock_tier, mock_customer):
+        # The org route used to skip the gate the per-user route enforces.
+        with patch.dict(os.environ, {"ENABLE_BUSINESS_TIER": "false"}, clear=False):
+            response = self.client.post(
+                "/api/payments/org/create-checkout-session",
+                json={**CHECKOUT_PAYLOAD, "org_id": "org_1", "seat_count": 3},
+            )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("business tier", detail_text(response))
+        mock_customer.assert_not_awaited()
+
     @patch(
         "app.routes.payments.stripe_service.create_checkout_session",
         new_callable=AsyncMock,
