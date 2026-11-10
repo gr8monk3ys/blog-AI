@@ -170,7 +170,9 @@ jobs:
 
   lighthouse:
     name: Lighthouse (score floors)
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest is now 26.04 and this repo's Playwright has no browser
+    # build for it. Go back to ubuntu-latest after a Playwright upgrade (1.64.1 works).
+    runs-on: ubuntu-24.04
     # Runs after the cheap checks so a lint or type error does not also cost a
     # build plus four Lighthouse runs. Same build recipe as frontend-checks.
     needs: [frontend-checks]
@@ -237,7 +239,9 @@ jobs:
 
   frontend-e2e:
     name: Frontend E2E (Playwright)
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest is now 26.04 and this repo's Playwright has no browser
+    # build for it. Go back to ubuntu-latest after a Playwright upgrade (1.64.1 works).
+    runs-on: ubuntu-24.04
     needs: [frontend-checks]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
