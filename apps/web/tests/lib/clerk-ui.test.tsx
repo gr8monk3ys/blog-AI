@@ -88,11 +88,12 @@ describe('clerk-ui', () => {
     )
     expect(screen.getByTestId('provider-child')).toBeInTheDocument()
 
+    // Auth state still loading: neither gate may render its children.
     rerender(<SignedIn><div data-testid="signed-in" /></SignedIn>)
-    expect(screen.getByTestId('signed-in')).toBeInTheDocument()
+    expect(screen.queryByTestId('signed-in')).not.toBeInTheDocument()
 
     rerender(<SignedOut><div data-testid="signed-out" /></SignedOut>)
-    expect(screen.getByTestId('signed-out')).toBeInTheDocument()
+    expect(screen.queryByTestId('signed-out')).not.toBeInTheDocument()
 
     rerender(<UserButton afterSignOutUrl="/" />)
     expect(screen.getByTestId('clerk-user-button')).toBeInTheDocument()
@@ -110,6 +111,39 @@ describe('clerk-ui', () => {
       userId: 'user_123',
     })
   })
+
+  // Regression: @clerk/nextjs 7 exports <SignedIn>/<SignedOut> as stubs that
+  // throw. The wrappers delegated to them, so with a publishable key set (i.e.
+  // in production, never in CI) every page with the site header rendered the
+  // error boundary. The gates must work from useAuth alone.
+  it.each([
+    { signedIn: true, visible: 'signed-in', hidden: 'signed-out' },
+    { signedIn: false, visible: 'signed-out', hidden: 'signed-in' },
+  ])(
+    'gates on useAuth without rendering the removed Clerk components (signedIn=$signedIn)',
+    ({ signedIn, visible, hidden }) => {
+      process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = 'pk_test_mock'
+      vi.spyOn(clerkNext, 'useAuth').mockReturnValue({
+        isLoaded: true,
+        isSignedIn: signedIn,
+        userId: signedIn ? 'user_123' : null,
+      } as never)
+
+      expect(() => render(<clerkNext.SignedIn>x</clerkNext.SignedIn>)).toThrow(
+        /not available in @clerk\/nextjs Core 3/
+      )
+
+      render(
+        <>
+          <SignedIn><div data-testid="signed-in" /></SignedIn>
+          <SignedOut><div data-testid="signed-out" /></SignedOut>
+        </>
+      )
+
+      expect(screen.getByTestId(visible)).toBeInTheDocument()
+      expect(screen.queryByTestId(hidden)).not.toBeInTheDocument()
+    }
+  )
 
   it('returns a safe fallback when Clerk throws during auth access', () => {
     process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = 'pk_test_mock'
