@@ -1,18 +1,18 @@
 import type { MetadataRoute } from 'next'
 import getBaseUrl from '../lib/site-url'
 import { loadBlogPosts } from '../lib/blog-index'
-import { toolsApi, toFrontendTools } from '../lib/tools-api'
-import { SAMPLE_TOOLS, TOOL_CATEGORIES, type Tool, type ToolCategory } from '../types/tools'
+import { TOOL_CATEGORIES, type ToolCategory } from '../types/tools'
 
+// Only public pages belong here. /templates and /tools/<slug> require sign-in, so a
+// crawler gets no page from them (production answered 404 for all 30 of them).
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getBaseUrl()
-  const [blogPosts, tools] = await Promise.all([loadBlogPosts(), loadTools()])
+  const blogPosts = await loadBlogPosts()
 
   const corePages: MetadataRoute.Sitemap = [
     { url: `${baseUrl}/`, lastModified: new Date() },
     { url: `${baseUrl}/tools`, lastModified: new Date() },
     { url: `${baseUrl}/tool-directory`, lastModified: new Date() },
-    { url: `${baseUrl}/templates`, lastModified: new Date() },
     { url: `${baseUrl}/pricing`, lastModified: new Date() },
     { url: `${baseUrl}/blog`, lastModified: new Date() },
   ]
@@ -22,11 +22,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: new Date(post.date),
   }))
 
-  const toolPages: MetadataRoute.Sitemap = tools.map((tool) => ({
-    url: `${baseUrl}/tools/${tool.slug}`,
-    lastModified: new Date(),
-  }))
-
   const categoryPages: MetadataRoute.Sitemap = (Object.keys(TOOL_CATEGORIES) as ToolCategory[]).map(
     (category) => ({
       url: `${baseUrl}/tools/category/${category}`,
@@ -34,19 +29,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
   )
 
-  return [...corePages, ...blogPages, ...toolPages, ...categoryPages]
-}
-
-async function loadTools(): Promise<Tool[]> {
-  try {
-    const response = await toolsApi.listTools({
-      limit: 1000,
-      include_premium: true,
-      include_beta: true,
-    })
-    const tools = toFrontendTools(response.tools || [])
-    return tools.length > 0 ? tools : SAMPLE_TOOLS
-  } catch {
-    return SAMPLE_TOOLS
-  }
+  return [...corePages, ...blogPages, ...categoryPages]
 }
