@@ -12,7 +12,7 @@ import asyncio
 import logging
 import os
 from functools import partial
-from typing import Optional
+from typing import Any, Optional
 
 import stripe
 
@@ -59,6 +59,53 @@ def card_only_checkout_params() -> dict:
     if _stripe_sdk_major() >= 16:
         return {"allowed_payment_method_types": ["card"]}
     return {"payment_method_types": ["card"]}
+
+
+def stripe_object_to_dict(obj: Any) -> Any:
+    """
+    Plain-dict view of a Stripe API object.
+
+    Up to stripe 12 a StripeObject was a dict subclass, so `obj.get(...)` worked.
+    From stripe 13 it is not: `.get()` raises AttributeError ("'get' is a dict
+    method") and `to_dict()` is the supported conversion. The locked SDK is 15.x,
+    so every handler that called `.get()` on a webhook payload failed before it
+    could record the subscription. Dicts (old SDKs, tests) pass through.
+    """
+    if isinstance(obj, dict) or not hasattr(obj, "to_dict"):
+        return obj
+    return obj.to_dict()
+
+
+def _invoice_subscription_id(invoice: dict) -> Optional[str]:
+    """
+    Subscription ID of an invoice payload.
+
+    API versions from 2025-03-31 (basil) moved `invoice.subscription` to
+    `invoice.parent.subscription_details.subscription`; read both.
+    """
+    subscription_id = invoice.get("subscription")
+    if subscription_id:
+        return subscription_id
+    parent = invoice.get("parent") or {}
+    details = parent.get("subscription_details") or {}
+    return details.get("subscription")
+
+
+def _subscription_period_end(subscription: Any) -> Optional[int]:
+    """
+    Current period end of a subscription object.
+
+    API versions from 2025-03-31 (basil) moved `current_period_end` from the
+    subscription onto its items, where the attribute no longer exists on the
+    SDK object and reading it raises AttributeError; read both.
+    """
+    period_end = getattr(subscription, "current_period_end", None)
+    if period_end:
+        return period_end
+    try:
+        return subscription["items"]["data"][0]["current_period_end"]
+    except (KeyError, IndexError, TypeError):
+        return None
 
 
 class StripeService:
@@ -357,7 +404,7 @@ class StripeService:
                 has_subscription=is_active,
                 tier=tier if is_active else SubscriptionTier.FREE,
                 status=subscription.status,
-                current_period_end=subscription.current_period_end,
+                current_period_end=_subscription_period_end(subscription),
                 cancel_at_period_end=subscription.cancel_at_period_end,
                 customer_id=customer_id,
                 generations_limit=get_tier_generation_limit(
@@ -427,7 +474,7 @@ class StripeService:
             raise ValueError("Invalid webhook signature")
 
         event_type = event["type"]
-        data = event["data"]["object"]
+        data = stripe_object_to_dict(event["data"]["object"])
 
         logger.info(f"Processing webhook event: {event_type}")
 
@@ -478,7 +525,7 @@ class StripeService:
 
         elif event_type == WebhookEventType.INVOICE_PAID.value:
             result["customer_id"] = data.get("customer")
-            result["subscription_id"] = data.get("subscription")
+            result["subscription_id"] = _invoice_subscription_id(data)
             result["amount_paid"] = data.get("amount_paid")
             logger.info(
                 f"Invoice paid for customer {result.get('customer_id')}"
@@ -486,7 +533,7 @@ class StripeService:
 
         elif event_type == WebhookEventType.INVOICE_PAYMENT_FAILED.value:
             result["customer_id"] = data.get("customer")
-            result["subscription_id"] = data.get("subscription")
+            result["subscription_id"] = _invoice_subscription_id(data)
             result["attempt_count"] = data.get("attempt_count")
             logger.warning(
                 f"Invoice payment failed for customer {result.get('customer_id')}"

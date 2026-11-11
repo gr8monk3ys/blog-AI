@@ -186,6 +186,15 @@ async def create_org_checkout_session(
             detail={"error": "Invalid price_id", "success": False},
         )
 
+    # Same gate as the per-user checkout: this route took any configured
+    # price, so it sold the Business tier while it was switched off.
+    tier = stripe_service.get_tier_for_price_id(request.price_id)
+    if tier == SubscriptionTier.BUSINESS and not _business_tier_enabled():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"error": "Business tier is not available", "success": False},
+        )
+
     try:
         customer_id = await stripe_service.get_or_create_customer(user_id)
 

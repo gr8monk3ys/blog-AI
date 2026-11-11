@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest'
 import { render, screen, within, RenderOptions } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ThemeProvider } from '../../hooks/useTheme'
+import * as clerkNext from '@clerk/nextjs'
 import SiteHeader from '../../components/SiteHeader'
 
 function renderWithProviders(ui: React.ReactElement, options?: RenderOptions) {
@@ -212,14 +213,32 @@ describe('SiteHeader', () => {
   })
 
   describe('Clerk-configured branch', () => {
-    it('should render Clerk auth controls when Clerk is configured', () => {
+    // The global Clerk mock is signed in. These two used to be one test that
+    // expected the account button and the sign-in link together, a state the
+    // pass-through <SignedIn>/<SignedOut> mocks made possible and Clerk never does.
+    it('should render the account button, not the sign-in link, when signed in', () => {
       process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = 'pk_test_mock'
 
       renderWithProviders(<SiteHeader />)
 
       expect(screen.getByTestId('clerk-user-button')).toBeInTheDocument()
+      expect(screen.queryByRole('link', { name: /^sign in$/i })).not.toBeInTheDocument()
+    })
+
+    it('should render the sign-in link, not the account button, when signed out', () => {
+      process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = 'pk_test_mock'
+      const useAuth = vi
+        .spyOn(clerkNext, 'useAuth')
+        .mockReturnValue({ isLoaded: true, isSignedIn: false, userId: null } as never)
+
+      renderWithProviders(<SiteHeader />)
+
       const signInLink = screen.getByRole('link', { name: /^sign in$/i })
       expect(signInLink).toHaveAttribute('href', '/sign-in')
+      expect(screen.queryByTestId('clerk-user-button')).not.toBeInTheDocument()
+      expect(screen.queryByRole('link', { name: 'Generate' })).not.toBeInTheDocument()
+
+      useAuth.mockRestore()
     })
 
     it('should render auth links in mobile navigation when Clerk is configured', async () => {

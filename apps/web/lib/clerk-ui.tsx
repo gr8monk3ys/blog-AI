@@ -3,8 +3,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import {
   ClerkProvider as ClerkProviderImpl,
-  SignedIn as SignedInImpl,
-  SignedOut as SignedOutImpl,
   UserButton as UserButtonImpl,
   SignIn as SignInImpl,
   SignUp as SignUpImpl,
@@ -107,8 +105,16 @@ export function ClerkProvider({
   return <ClerkProviderImpl publishableKey={publishableKey}>{children}</ClerkProviderImpl>
 }
 
+/**
+ * @clerk/nextjs 7 (Core 3) still exports <SignedIn> and <SignedOut>, but as
+ * stubs that throw on render. Delegating to them took down every page that
+ * renders the site header in production (the build has a publishable key; the
+ * tests and CI do not, so nothing caught it). Both gates are therefore built
+ * on `useAuth`, which is the supported primitive in every Clerk major.
+ */
 export function SignedIn({ children }: { children: ReactNode }): ReactNode {
   const clerkUnavailable = useClerkUnavailable()
+  const { isLoaded, isSignedIn } = useAuth()
 
   // With Clerk down we cannot prove anyone is signed in, so render nothing.
   // SignedOut is what fills the gap.
@@ -116,18 +122,19 @@ export function SignedIn({ children }: { children: ReactNode }): ReactNode {
     return null
   }
 
-  return <SignedInImpl>{children}</SignedInImpl>
+  return isLoaded && isSignedIn ? children : null
 }
 
 export function SignedOut({ children }: { children: ReactNode }): ReactNode {
   const clerkUnavailable = useClerkUnavailable()
+  const { isLoaded, isSignedIn } = useAuth()
 
   // Not configured, or configured and never loaded: show the signed-out view.
   if (!isClerkConfigured() || clerkUnavailable) {
     return children
   }
 
-  return <SignedOutImpl>{children}</SignedOutImpl>
+  return isLoaded && !isSignedIn ? children : null
 }
 
 export function UserButton(props: Record<string, unknown>): ReactNode {

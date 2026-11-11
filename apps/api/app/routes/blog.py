@@ -140,7 +140,10 @@ async def generate_blog(
         # Paid-tier features, checked BEFORE quota so we never decrement quota
         # for gated features. Research mode is sold from the Starter plan up;
         # brand voice is a Pro feature (see PRICING_TIERS / the pricing page).
-        if request.brand_profile_id:
+        # The SEO loop and fact-check are Pro too; gate them here, not after
+        # the post has been written, or a lower tier pays for a full
+        # generation with our tokens and gets a 403 instead of the draft.
+        if request.brand_profile_id or request.seo_optimize or request.fact_check:
             await require_pro_tier(user_id)
         elif request.research:
             await require_starter_tier(user_id)
