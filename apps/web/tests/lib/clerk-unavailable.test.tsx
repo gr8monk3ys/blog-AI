@@ -1,12 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, afterAll, vi } from 'vitest'
 import { render, screen, act } from '@testing-library/react'
 
-// The real <SignedIn>/<SignedOut> render NOTHING until clerk.browser.js resolves.
+// The real <Show when="signed-in"> / <Show when="signed-out"> render NOTHING until clerk.browser.js resolves.
 // The global test setup mocks them as pass-throughs, which hides that behaviour,
 // so this suite restores it: both render null, exactly as an unloaded Clerk does.
 vi.mock('@clerk/nextjs', () => ({
-  SignedIn: () => null,
-  SignedOut: () => null,
+  Show: () => null,
   UserButton: () => null,
   SignIn: () => null,
   SignUp: () => null,

@@ -3,8 +3,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import {
   ClerkProvider as ClerkProviderImpl,
-  SignedIn as SignedInImpl,
-  SignedOut as SignedOutImpl,
+  Show as ShowImpl,
   UserButton as UserButtonImpl,
   SignIn as SignInImpl,
   SignUp as SignUpImpl,
@@ -48,7 +47,7 @@ const clerkHasFailed = (): boolean => readClerk()?.status === 'error'
 /**
  * True when Clerk is configured but has not become ready in time.
  *
- * Clerk's <SignedIn> and <SignedOut> BOTH render nothing until the script
+ * Clerk's <Show when="signed-in"> and <Show when="signed-out"> (Core 3 replacements for the removed <SignedIn>/<SignedOut>) BOTH render nothing until the script
  * resolves. So when the frontend-api host is unreachable, every auth-gated
  * control disappears at once -- including the marketing CTAs, which are not
  * really auth UI at all. On 2026-09-08 the production site shipped a hero with
@@ -116,7 +115,7 @@ export function SignedIn({ children }: { children: ReactNode }): ReactNode {
     return null
   }
 
-  return <SignedInImpl>{children}</SignedInImpl>
+  return <ShowImpl when="signed-in">{children}</ShowImpl>
 }
 
 export function SignedOut({ children }: { children: ReactNode }): ReactNode {
@@ -127,7 +126,7 @@ export function SignedOut({ children }: { children: ReactNode }): ReactNode {
     return children
   }
 
-  return <SignedOutImpl>{children}</SignedOutImpl>
+  return <ShowImpl when="signed-out">{children}</ShowImpl>
 }
 
 export function UserButton(props: Record<string, unknown>): ReactNode {

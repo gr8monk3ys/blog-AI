@@ -80,8 +80,7 @@ vi.mock('next/link', () => ({
 // Mock @clerk/nextjs
 // ---------------------------------------------------------------------------
 vi.mock('@clerk/nextjs', () => ({
-  SignedIn: ({ children }: { children: ReactNode }) => <>{children}</>,
-  SignedOut: ({ children }: { children: ReactNode }) => <>{children}</>,
+  Show: ({ children }: { children: ReactNode }) => <>{children}</>,
   UserButton: () => <div data-testid="clerk-user-button" />,
   SignIn: () => <div data-testid="clerk-sign-in" />,
   SignUp: () => <div data-testid="clerk-sign-up" />,
