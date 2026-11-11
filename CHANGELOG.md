@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/gr8monk3ys/blog-AI/compare/v0.2.1...v0.2.2) (2026-11-11)
+
+
+### Bug Fixes
+
+* site-wide crash with Clerk 7, Stripe webhooks failing, usage never recorded ([#247](https://github.com/gr8monk3ys/blog-AI/issues/247)) ([b77626d](https://github.com/gr8monk3ys/blog-AI/commit/b77626deadf6eebdcc67af7d1db1afde19274137))
+
 ## [0.2.1](https://github.com/gr8monk3ys/blog-AI/compare/v0.2.0...v0.2.1) (2026-11-10)
 
 
