@@ -63,7 +63,7 @@ per-operation rate limits. Brand voice is trained from the user's own samples an
   (accounts, campaigns, schedule), team, knowledge base (behind `ENABLE_KNOWLEDGE_BASE`,
   default off), settings/webhooks, admin/blog, privacy, terms.
 - Long-running generation is streamed; the UI carries loading, empty, error and
-  "still loading?" states (`app/loading.tsx`, `components/ErrorBoundary.tsx`).
+  "still loading?" states (`components/RouteLoading.tsx`, `components/ErrorBoundary.tsx`).
 - Browser extension sends selected page text into the API with a user API key.
 - Development: Clerk optional (every route public without a publishable key); without
   `DATABASE_URL`, history, brand profiles and analytics fall back to in-memory storage.

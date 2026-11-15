@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import { Suspense } from 'react'
 import SiteHeader from '../../components/SiteHeader'
 import SiteFooter from '../../components/SiteFooter'
 import ToolGrid from '../../components/tools/ToolGrid'
@@ -20,7 +19,7 @@ const QUICK_STATS = [
 // catalogue as hairline rows, and a closing CTA with the view's one primary
 // button. Nothing animates in: the h1 is the LCP element and paints in the
 // server HTML.
-function ToolsPageContent() {
+export default function ToolsPageClient() {
   return (
     <>
       <SiteHeader />
@@ -75,19 +74,5 @@ function ToolsPageContent() {
       </main>
       <SiteFooter />
     </>
-  )
-}
-
-export default function ToolsPageClient() {
-  return (
-    <Suspense
-      fallback={
-        <main className="label-mono flex min-h-screen items-center justify-center">
-          Loading tools…
-        </main>
-      }
-    >
-      <ToolsPageContent />
-    </Suspense>
   )
 }
