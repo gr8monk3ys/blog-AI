@@ -35,7 +35,12 @@
     "test:e2e:headed": "bun run --cwd apps/web test:e2e:headed",
     "test:api:smoke": "pytest apps/api/tests/test_ci_smoke.py apps/api/tests/test_feature_smoke.py -q",
     "test:api:blocking": "pytest apps/api/tests/test_feature_smoke.py apps/api/tests/test_routes_health.py -q",
-    "test:api:full": "pytest apps/api/tests -q"
+    "test:api:full": "pytest apps/api/tests -q",
+    "verify": "bun run verify:web && bun run verify:api",
+    "verify:web": "bun run lint && bun run design:check && bun run type-check && bun run test:coverage && node scripts/verify-summary.mjs web-unit apps/web/reports/unit.json && bun run build",
+    "verify:api": "cd apps/api && uv run --frozen bash ../../scripts/verify-api.sh smoke routes full",
+    "verify:api:db": "cd apps/api && uv run --frozen bash ../../scripts/verify-api.sh db",
+    "verify:e2e": "bun run test:e2e:coverage && node scripts/verify-summary.mjs e2e apps/web/reports/e2e.json"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

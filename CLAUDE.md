@@ -45,10 +45,21 @@ Without `DATABASE_URL`, history, brand profiles and analytics fall back to in-me
 ## Test
 ```bash
 bun install --frozen-lockfile                       # what CI runs; fails if bun.lock drifted
-bun run lint && bun run design:check && bun run type-check && bun run test:run && bun run build
-bun run test:e2e                                    # Playwright, starts its own dev server
-cd apps/api && DEV_MODE=true OPENAI_API_KEY=test pytest -q
+bun run verify            # verify:web (lint, design check, type-check, unit+coverage, build)
+                          # + verify:api (pytest smoke, route coverage floors, full suite; uv)
+bun run verify:e2e        # Playwright journeys + coverage gate, starts its own dev server
+bun run verify:api:db     # DB-backed pytest; needs DATABASE_URL to a migrated Postgres
 ```
+The CI jobs call these same scripts (`scripts/verify-api.sh` holds the pytest stages), so a
+green `verify` locally means the same commands pass in CI. Each test stage prints one
+`VERIFY stage=… tests=… passed=… failed=… skipped=…` line, parsed from the runner's
+JSON/JUnit report by `scripts/verify-summary.mjs` (which fails if it cannot parse one) and
+appended to the CI job summary. The e2e job uploads a screenshot + trace of every test as the
+`ui-evidence` artifact on every run and lists the screenshots in its job summary.
+
+## Checks
+Run `bun run verify` (and `bun run verify:e2e` for UI changes) before opening a PR, and paste
+the `VERIFY …` lines it prints into the PR body under an "Evidence" heading.
 
 CI (`.github/workflows/ci.yml`) runs seven jobs on every PR and on every push to main:
 `Backend Tests (FastAPI)` (smoke suite + per-route coverage floors), `Backend Regression
