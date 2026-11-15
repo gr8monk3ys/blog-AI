@@ -32,8 +32,11 @@ export default function ToolCard({ tool, headingLevel = 3 }: ToolCardProps) {
 
   return (
     <li className="border-b border-border">
+      {/* A tool workspace is behind sign-in: prefetching it for a signed-out
+          visitor only follows a redirect to the sign-in host. */}
       <Link
         href={`/tools/${tool.slug}`}
+        prefetch={false}
         className="group flex items-start justify-between gap-6 py-5"
       >
         <div className="min-w-0">
