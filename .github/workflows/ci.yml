@@ -16,6 +16,9 @@ env:
   PYTHON_VERSION: "3.12"
   BUN_VERSION: "1.4.3"
   NEXT_TELEMETRY_DISABLED: "1"
+  # verify-summary.mjs writes <stage>.json here (absolute: backend jobs run in apps/api);
+  # merged by the verify-report job.
+  VERIFY_STAGE_DIR: ${{ github.workspace }}/verify-stages
 
 jobs:
   backend-tests:
@@ -43,6 +46,14 @@ jobs:
       # ratchet). Same stages as `bun run verify:api`; see scripts/verify-api.sh.
       - name: Smoke suite and critical-route coverage floors
         run: bash ../../scripts/verify-api.sh smoke routes
+
+      - name: Upload VERIFY stage counts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: verify-stage-backend-tests
+          path: verify-stages/
+          retention-days: 1
 
       - name: Upload coverage report
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
@@ -76,6 +87,14 @@ jobs:
       - name: Run full backend tests
         run: bash ../../scripts/verify-api.sh full
 
+      - name: Upload VERIFY stage counts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: verify-stage-backend-regression
+          path: verify-stages/
+          retention-days: 1
+
   frontend-checks:
     name: Frontend Checks (Next.js)
     runs-on: ubuntu-latest
@@ -94,6 +113,14 @@ jobs:
       # exactly `bun run verify:web`, which also prints the VERIFY line.
       - name: Verify (web)
         run: bun run verify:web
+
+      - name: Upload VERIFY stage counts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: verify-stage-frontend-checks
+          path: verify-stages/
+          retention-days: 1
 
       - name: Upload coverage report
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
@@ -194,6 +221,14 @@ jobs:
 
       - name: Run E2E tests with coverage gate
         run: bun run verify:e2e
+
+      - name: Upload VERIFY stage counts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: verify-stage-frontend-e2e
+          path: verify-stages/
+          retention-days: 1
 
       - name: Upload E2E coverage report
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
@@ -329,3 +364,52 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/blogai
         run: bash ../../scripts/verify-api.sh db
+
+      - name: Upload VERIFY stage counts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: verify-stage-backend-db-tests
+          path: verify-stages/
+          retention-days: 1
+
+  verify-report:
+    # Merges every job's VERIFY stage counts into one machine-readable artifact for the merge gate
+    # (job summaries aren't readable via the REST API). Fails if any expected stage is missing.
+    name: Verify Report
+    runs-on: ubuntu-latest
+    needs: [backend-tests, backend-regression, frontend-checks, frontend-e2e, backend-db-tests]
+    if: always()
+
+    steps:
+      - name: Download stage counts
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          pattern: verify-stage-*
+          path: verify-stages
+          merge-multiple: true
+
+      - name: Merge into verify-report.json
+        env:
+          EXPECTED_STAGES: api-smoke api-routes api-routes-ratchet api-full web-unit e2e api-db
+          REPO: ${{ github.repository }}
+          COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          for s in $EXPECTED_STAGES; do
+            f="verify-stages/$s.json"
+            [ -f "$f" ] || { echo "::error::missing VERIFY stage '$s'"; exit 1; }
+            jq -e --arg s "$s" '.stage == $s and ([.tests, .passed, .failed, .skipped] | all(type == "number" and . == floor and . >= 0))
+              and (.passed_ids | type == "array" and all(type == "string"))' "$f" > /dev/null \
+              || { echo "::error::unparseable VERIFY stage '$s'"; cat "$f"; exit 1; }
+          done
+          jq -n --arg repo "$REPO" --arg commit "$COMMIT" '{schema: 1, repo: $repo, commit: $commit, stages: [inputs | .passed_ids |= (unique | sort)]}' \
+            $(for s in $EXPECTED_STAGES; do echo "verify-stages/$s.json"; done) > verify-report.json
+          cat verify-report.json
+
+      - name: Upload verify-report
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: verify-report
+          path: verify-report.json
+          retention-days: 30
