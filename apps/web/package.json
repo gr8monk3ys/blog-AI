@@ -13,7 +13,7 @@
     "analyze": "ANALYZE=true next build",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --coverage --reporter=default --reporter=json --outputFile.json=reports/unit.json",
     "test:e2e": "playwright test",
     "test:e2e:coverage": "bun ../../scripts/run_e2e_coverage.mjs",
     "test:e2e:ui": "playwright test --ui",

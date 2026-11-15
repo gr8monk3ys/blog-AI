@@ -21,21 +21,22 @@ export default defineConfig({
   // 2 parallel workers in CI to balance speed vs dev-server load; auto-detect locally.
   workers: process.env.CI ? 2 : undefined,
 
-  // Reporter to use
-  reporter: process.env.CI
-    ? [['html', { open: 'never' }], ['github']]
-    : [['html', { open: 'on-failure' }]],
+  // Reporter to use. The JSON report feeds the VERIFY line (scripts/verify-summary.mjs).
+  reporter: [
+    ...(process.env.CI
+      ? ([['html', { open: 'never' }], ['github']] as const)
+      : ([['html', { open: 'on-failure' }]] as const)),
+    ['json', { outputFile: 'reports/e2e.json' }],
+  ],
 
   // Shared settings for all projects
   use: {
     // Base URL to use in tests
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
 
-    // Collect trace when retrying the failed test
-    trace: 'on-first-retry',
-
-    // Screenshot on failure
-    screenshot: 'only-on-failure',
+    // Trace + screenshot for every test: CI uploads them as the ui-evidence artifact.
+    trace: 'on',
+    screenshot: 'on',
 
     // Video on failure
     video: 'on-first-retry',

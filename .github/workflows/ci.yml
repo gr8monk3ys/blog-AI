@@ -39,60 +39,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt pytest pytest-asyncio pytest-cov
 
-      - name: Run smoke suite (blocking)
-        run: |
-          pytest tests/test_feature_smoke.py tests/test_routes_health.py -q
-        env:
-          DEV_MODE: "true"
-          OPENAI_API_KEY: "test"
-
-      - name: Enforce critical-route integration coverage >= 85%
-        run: |
-          pytest \
-            tests/test_routes_blog.py \
-            tests/test_routes_book.py \
-            tests/test_routes_webhooks.py \
-            tests/test_routes_payments.py \
-            tests/test_routes_usage.py \
-            --cov=app.routes.blog \
-            --cov=app.routes.book \
-            --cov=app.routes.webhooks \
-            --cov=app.routes.payments \
-            --cov=app.routes.usage \
-            --cov-fail-under=85 \
-            --cov-report=xml \
-            --cov-report=term-missing \
-            -q
-        env:
-          DEV_MODE: "true"
-          DEV_API_KEY: "test-key"
-          ENVIRONMENT: "development"
-          SENTRY_ENVIRONMENT: "development"
-          RATE_LIMIT_ENABLED: "false"
-          OPENAI_API_KEY: "test"
-
-      # Ratchet floor for routes not yet at 85%. Only ever raise it.
-      - name: Enforce broader critical-route coverage floor (ratchet)
-        run: |
-          pytest \
-            tests/test_routes_organizations.py \
-            tests/test_routes_sso.py \
-            tests/test_routes_export.py \
-            tests/test_routes_research.py \
-            --cov=app.routes.organizations \
-            --cov=app.routes.sso \
-            --cov=app.routes.export \
-            --cov=app.routes.research \
-            --cov-fail-under=50 \
-            --cov-report=term-missing \
-            -q
-        env:
-          DEV_MODE: "true"
-          DEV_API_KEY: "test-key"
-          ENVIRONMENT: "development"
-          SENTRY_ENVIRONMENT: "development"
-          RATE_LIMIT_ENABLED: "false"
-          OPENAI_API_KEY: "test"
+      # Smoke suite plus the critical-route coverage floors (85% and the
+      # ratchet). Same stages as `bun run verify:api`; see scripts/verify-api.sh.
+      - name: Smoke suite and critical-route coverage floors
+        run: bash ../../scripts/verify-api.sh smoke routes
 
       - name: Upload coverage report
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
@@ -124,10 +74,7 @@ jobs:
           pip install -r requirements.txt pytest pytest-asyncio
 
       - name: Run full backend tests
-        run: pytest -q
-        env:
-          DEV_MODE: "true"
-          OPENAI_API_KEY: "test"
+        run: bash ../../scripts/verify-api.sh full
 
   frontend-checks:
     name: Frontend Checks (Next.js)
@@ -143,19 +90,10 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Lint
-        run: bun run lint
-
-      # DESIGN.md's mechanically checkable rules plus the legacy ratchet
-      # (scripts/check-design-system.mjs). Zero dependencies, sub-second.
-      - name: Design check
-        run: bun run design:check
-
-      - name: Type check
-        run: bun run type-check
-
-      - name: Unit tests
-        run: bun run test:coverage
+      # lint, design check, type-check, unit tests with coverage, build:
+      # exactly `bun run verify:web`, which also prints the VERIFY line.
+      - name: Verify (web)
+        run: bun run verify:web
 
       - name: Upload coverage report
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
@@ -164,9 +102,6 @@ jobs:
           name: frontend-coverage
           path: apps/web/coverage/
           retention-days: 14
-
-      - name: Build
-        run: bun run build
 
   lighthouse:
     name: Lighthouse (score floors)
@@ -258,7 +193,7 @@ jobs:
         run: bunx playwright install --with-deps chromium
 
       - name: Run E2E tests with coverage gate
-        run: bun run test:e2e:coverage
+        run: bun run verify:e2e
 
       - name: Upload E2E coverage report
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
@@ -275,6 +210,29 @@ jobs:
           name: playwright-report
           path: apps/web/playwright-report/
           retention-days: 7
+
+      # Screenshot + trace of every test, on every run (playwright.config.ts).
+      - name: Upload UI evidence
+        id: ui-evidence
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: ui-evidence
+          path: apps/web/test-results/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: List UI evidence in job summary
+        if: always()
+        env:
+          ARTIFACT_URL: ${{ steps.ui-evidence.outputs.artifact-url }}
+        run: |
+          {
+            echo "### UI evidence"
+            echo "Artifact: [ui-evidence](${ARTIFACT_URL}) (screenshots + Playwright traces)"
+            echo
+            find apps/web/test-results -name '*.png' | sort | sed 's|^apps/web/test-results/|- |'
+          } >> "$GITHUB_STEP_SUMMARY"
 
   schema-smoke:
     name: Schema Smoke (fresh-install migration)
@@ -370,7 +328,4 @@ jobs:
       - name: Run DB-backed tests
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/blogai
-          DEV_MODE: "true"
-          OPENAI_API_KEY: "test"
-        run: |
-          pytest tests/test_version_service.py tests/test_knowledge_metadata.py tests/test_analytics_neon.py tests/test_quota_usage_db.py -q
+        run: bash ../../scripts/verify-api.sh db
