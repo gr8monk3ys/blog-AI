@@ -122,6 +122,10 @@ async def websocket_endpoint(
         await websocket.close(code=4000, reason="Invalid conversation ID format")
         return
 
+    if not await conversations.verify_ownership(conversation_id, user_id):
+        await websocket.close(code=4003, reason="Not authorized for this conversation")
+        return
+
     # WebSocket was already accepted during authentication.
     # Register with the connection manager without re-accepting.
     if conversation_id in manager.active_connections:
@@ -164,7 +168,12 @@ async def websocket_endpoint(
                 message["timestamp"] = datetime.now().isoformat()
 
             # Add message to conversation (with persistence and ownership)
-            await conversations.append(conversation_id, message, user_id=user_id)
+            try:
+                await conversations.append(conversation_id, message, user_id=user_id)
+            except PermissionError:
+                manager.disconnect(websocket, conversation_id)
+                await websocket.close(code=4003, reason="Not authorized for this conversation")
+                return
 
             # Broadcast message to all connected clients
             await manager.send_message({"type": "message", **message}, conversation_id)

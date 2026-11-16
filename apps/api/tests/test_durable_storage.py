@@ -93,6 +93,16 @@ class FileConversationStore(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(await store.delete("c1"))
             self.assertEqual(await ConversationStore(tmp).get("c1"), [])
 
+    async def test_append_by_another_user_is_rejected(self):
+        from app.storage.conversations import ConversationStore
+
+        with tempfile.TemporaryDirectory() as tmp:
+            await ConversationStore(tmp).append("c1", {"content": "alice"}, user_id="alice")
+            store = ConversationStore(tmp)
+            with self.assertRaises(PermissionError):
+                await store.append("c1", {"content": "injected by bob"}, user_id="bob")
+            self.assertEqual(await ConversationStore(tmp).get("c1"), [{"content": "alice"}])
+
     async def test_postgres_store_rejects_bad_ids_before_querying(self):
         from app.storage.conversations import PostgresConversationStore
 
@@ -198,7 +208,7 @@ class PostgresStores(unittest.IsolatedAsyncioTestCase):
         store = PostgresConversationStore()
         self.assertTrue(await store.verify_ownership(cid, "anyone"))
         await store.append(cid, first, user_id="u1")
-        await store.append(cid, second, user_id="u2")
+        await store.append(cid, second, user_id="u1")
 
         store = PostgresConversationStore()
         self.assertEqual(await store.get(cid), [first, second])
@@ -207,6 +217,19 @@ class PostgresStores(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(await store.delete(cid))
         self.assertFalse(await store.delete(cid))
         self.assertEqual(await store.get(cid), [])
+
+    async def test_append_by_another_user_is_rejected(self):
+        from app.storage.conversations import PostgresConversationStore
+
+        cid = self.tag + "-idor"
+        await PostgresConversationStore().append(cid, {"content": "alice"}, user_id="alice")
+        with self.assertRaises(PermissionError):
+            await PostgresConversationStore().append(
+                cid, {"content": "injected by bob"}, user_id="bob"
+            )
+        self.assertEqual(
+            await PostgresConversationStore().get(cid), [{"content": "alice"}]
+        )
 
     async def test_conversation_without_owner_is_denied(self):
         from app.storage.conversations import PostgresConversationStore

@@ -66,6 +66,26 @@ class TestMainHealthEndpoint(unittest.TestCase):
             self.assertIn(data["services"][service]["status"], valid_statuses)
 
 
+class TestDatabaseSchemaProbe(unittest.IsolatedAsyncioTestCase):
+    """A reachable database without migration 010 must not report healthy."""
+
+    async def test_missing_api_keys_table_is_not_connected(self):
+        from app.routes import health
+
+        with patch.object(health, "is_database_configured", return_value=True), \
+             patch.object(health, "db_fetchrow", AsyncMock(return_value={"ok": False})):
+            status = await health._check_database()
+        self.assertEqual(status["status"], "schema_missing")
+
+    async def test_migrated_database_is_connected(self):
+        from app.routes import health
+
+        with patch.object(health, "is_database_configured", return_value=True), \
+             patch.object(health, "db_fetchrow", AsyncMock(return_value={"ok": True})):
+            status = await health._check_database()
+        self.assertEqual(status["status"], "connected")
+
+
 class TestDatabaseHealthEndpoint(unittest.TestCase):
     """Tests for /health/db endpoint."""
 

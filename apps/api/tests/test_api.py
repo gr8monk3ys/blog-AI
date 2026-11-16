@@ -286,6 +286,39 @@ class TestWebSocket(unittest.TestCase):
             self.assertEqual(data["type"], "message")
             self.assertEqual(data["content"], "Hello")
 
+    def test_websocket_another_users_conversation_closed_4003(self):
+        """Joining someone else's conversation is closed with 4003."""
+        from unittest.mock import AsyncMock
+
+        from starlette.websockets import WebSocketDisconnect
+
+        with patch(
+            "app.routes.websocket.conversations.verify_ownership",
+            new=AsyncMock(return_value=False),
+        ), self.client.websocket_connect("/ws/conversation/not-mine") as websocket:
+            websocket.send_json({"type": "auth", "api_key": "test-key"})
+            self.assertTrue(websocket.receive_json()["success"])
+            with self.assertRaises(WebSocketDisconnect) as closed:
+                websocket.receive_json()
+        self.assertEqual(closed.exception.code, 4003)
+
+    def test_websocket_store_rejection_closed_4003(self):
+        """An append the store rejects (ownership race) closes with 4003."""
+        from unittest.mock import AsyncMock
+
+        from starlette.websockets import WebSocketDisconnect
+
+        with patch(
+            "app.routes.websocket.conversations.append",
+            new=AsyncMock(side_effect=PermissionError("nope")),
+        ), self.client.websocket_connect("/ws/conversation/race-123") as websocket:
+            websocket.send_json({"type": "auth", "api_key": "test-key"})
+            self.assertTrue(websocket.receive_json()["success"])
+            websocket.send_json({"role": "user", "content": "Hello"})
+            with self.assertRaises(WebSocketDisconnect) as closed:
+                websocket.receive_json()
+        self.assertEqual(closed.exception.code, 4003)
+
     def test_websocket_invalid_message_format(self):
         """WebSocket should handle invalid message format gracefully."""
         with self.client.websocket_connect("/ws/conversation/test-123") as websocket:

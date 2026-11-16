@@ -9,7 +9,6 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from src.db import execute as db_execute
 from src.db import fetchrow as db_fetchrow
 from src.db import is_database_configured
 
@@ -188,7 +187,13 @@ class ConversationStore:
             conversation_id: The conversation identifier.
             message: The message to append.
             user_id: The user ID creating/appending to the conversation.
+
+        Raises:
+            PermissionError: The conversation exists and belongs to someone else.
         """
+        if not await self.verify_ownership(conversation_id, user_id):
+            raise PermissionError("Not authorized for this conversation")
+
         is_new = conversation_id not in self._cache and not self._get_file_path(conversation_id).exists()
 
         if conversation_id not in self._cache:
@@ -261,20 +266,29 @@ class PostgresConversationStore:
         message: dict[str, Any],
         user_id: str | None = None,
     ) -> None:
-        """Append a message; the first message creates the row and its owner."""
+        """
+        Append a message; the first message creates the row and its owner.
+
+        Raises:
+            PermissionError: The conversation exists and belongs to someone else.
+        """
         _validate_id(conversation_id)
-        await db_execute(
+        row = await db_fetchrow(
             """
             INSERT INTO conversations (id, owner_id, messages)
             VALUES ($1, $3, jsonb_build_array($2::jsonb))
             ON CONFLICT (id) DO UPDATE
             SET messages = conversations.messages || jsonb_build_array($2::jsonb),
                 updated_at = NOW()
+            WHERE conversations.owner_id IS NOT DISTINCT FROM EXCLUDED.owner_id
+            RETURNING id
             """,
             conversation_id,
             json.dumps(message),
             user_id,
         )
+        if row is None:
+            raise PermissionError("Not authorized for this conversation")
 
     async def verify_ownership(self, conversation_id: str, user_id: str) -> bool:
         """True for the owner, or for an id that has no conversation yet."""

@@ -129,6 +129,7 @@ def mock_dependencies():
         mock_quota.return_value = "test-user-id"
         mock_usage.return_value = AsyncMock()
         mock_conv.append = AsyncMock()
+        mock_conv.verify_ownership = AsyncMock(return_value=True)
         mock_ws.send_message = AsyncMock()
         mock_webhook.emit_content_generated = AsyncMock()
 
@@ -298,6 +299,32 @@ class TestBlogGenerationSuccess:
                 )
 
                 assert response.status_code == 201, f"Failed for tone: {tone}"
+
+    def test_generate_blog_rejects_another_users_conversation(self, client, mock_dependencies):
+        """Another user's conversation_id is refused before any generation runs."""
+        mock_dependencies["conversations"].verify_ownership.return_value = False
+        with patch("app.routes.blog.generate_blog_post") as mock_gen:
+            response = client.post(
+                "/generate-blog",
+                json={"topic": "Test Topic", "conversation_id": "someone-elses-conv"},
+                headers={"X-API-Key": "test-key"},
+            )
+
+        assert response.status_code == 403
+        mock_gen.assert_not_called()
+        mock_dependencies["conversations"].append.assert_not_called()
+
+    def test_generate_blog_maps_store_rejection_to_403(self, client, mock_dependencies):
+        """An append the store rejects (ownership race) is a 403, not a 500."""
+        mock_dependencies["conversations"].append.side_effect = PermissionError("nope")
+        with patch("app.routes.blog.generate_blog_post"):
+            response = client.post(
+                "/generate-blog",
+                json={"topic": "Test Topic", "conversation_id": "someone-elses-conv"},
+                headers={"X-API-Key": "test-key"},
+            )
+
+        assert response.status_code == 403
 
     def test_generate_blog_stores_conversation(self, client, sample_blog_post, mock_dependencies):
         """Test that blog generation stores messages in conversation history."""
@@ -1080,6 +1107,7 @@ class TestBlogSEOAndFactCheck:
 
                 mock_auth.return_value = "test-user-id"
                 mock_conv.append = AsyncMock()
+                mock_conv.verify_ownership = AsyncMock(return_value=True)
                 mock_ws.send_message = AsyncMock()
                 mock_webhook.emit_content_generated = AsyncMock()
                 mock_gen.return_value = sample_blog_post

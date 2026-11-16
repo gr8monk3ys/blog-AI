@@ -43,9 +43,12 @@ may advertise given this.
    persist between invocations. With `DATABASE_URL` set, API keys and conversations now
    live in Postgres (`api_keys`, `conversations`; migration
    `db/migrations/010_api_keys_conversations.sql`) and usage already did, so only local
-   dev uses those files. **Apply migration 010 to production before, or together with,
-   the API deploy that ships it** — without the tables, API-key auth and conversation
-   history fail on the deployed API. From the repo root, with the Neon direct
+   dev uses those files. **Apply migration 010 to production before merging the change
+   that ships it.** The API deploys on merge and no deploy runs migrations, so merging
+   first breaks API-key auth and conversation history (500s) until it is applied. The
+   migration only adds tables and is idempotent, and the code already in production
+   ignores them, so applying it early is safe. Until it is applied, `/health` reports
+   `services.database.status: "schema_missing"` and `degraded`. From the repo root, with the Neon direct
    (non-pooled) string of the production database:
    ```bash
    DATABASE_URL_DIRECT='postgresql://<user>:<password>@<host>/<db>?sslmode=require' bun run db:migrate
@@ -54,7 +57,9 @@ may advertise given this.
    `SELECT filename FROM schema_migrations ORDER BY 1;` first if you are unsure the
    earlier ones were recorded there. Keys issued into the old JSON file are gone (the
    file never survived a cold start); reissue them with `scripts/create_api_key.py` run
-   with `DATABASE_URL` pointing at production.
+   with `DATABASE_URL` pointing at production. It puts the key in the macOS Keychain or
+   the clipboard (`pbcopy`, `wl-copy` or `xclip`) and refuses to create one when none of
+   those is available.
 
 ## How a deploy happens
 

@@ -5,7 +5,7 @@
 htmlcov/
 .nyc_output/
 coverage/
-backend/coverage.xml
+coverage.xml
 
 # Test artifacts
 playwright-report/
