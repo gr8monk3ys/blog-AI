@@ -122,7 +122,10 @@ async def websocket_endpoint(
         await websocket.close(code=4000, reason="Invalid conversation ID format")
         return
 
-    if not await conversations.verify_ownership(conversation_id, user_id):
+    # Bind the owner now, so nobody else can later adopt an id this socket listens on.
+    try:
+        await conversations.claim(conversation_id, user_id)
+    except PermissionError:
         await websocket.close(code=4003, reason="Not authorized for this conversation")
         return
 

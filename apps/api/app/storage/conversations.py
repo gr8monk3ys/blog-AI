@@ -127,6 +127,18 @@ class ConversationStore:
             return not conversation_exists
         return owner == user_id
 
+    async def claim(self, conversation_id: str, user_id: str) -> None:
+        """
+        Make user_id the owner of a conversation nobody owns yet.
+
+        Raises:
+            PermissionError: The conversation belongs to someone else.
+        """
+        if not await self.verify_ownership(conversation_id, user_id):
+            raise PermissionError("Not authorized for this conversation")
+        if self.get_owner(conversation_id) is None:
+            self.set_owner(conversation_id, user_id)
+
     def _get_file_path(self, conversation_id: str) -> Path:
         """
         Get the file path for a conversation.
@@ -285,6 +297,28 @@ class PostgresConversationStore:
             """,
             conversation_id,
             json.dumps(message),
+            user_id,
+        )
+        if row is None:
+            raise PermissionError("Not authorized for this conversation")
+
+    async def claim(self, conversation_id: str, user_id: str) -> None:
+        """
+        Create an empty conversation owned by user_id, or confirm they own it.
+
+        Raises:
+            PermissionError: The conversation belongs to someone else.
+        """
+        _validate_id(conversation_id)
+        row = await db_fetchrow(
+            """
+            INSERT INTO conversations (id, owner_id, messages)
+            VALUES ($1, $2, '[]'::jsonb)
+            ON CONFLICT (id) DO UPDATE SET id = conversations.id
+            WHERE conversations.owner_id IS NOT DISTINCT FROM EXCLUDED.owner_id
+            RETURNING id
+            """,
+            conversation_id,
             user_id,
         )
         if row is None:

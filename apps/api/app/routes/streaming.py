@@ -26,6 +26,7 @@ from ..models import (
     StreamStatsResponse,
 )
 from ..services import get_streaming_service
+from ..storage import conversations
 from ..websocket import manager
 
 logger = logging.getLogger(__name__)
@@ -57,6 +58,7 @@ Connect to the WebSocket endpoint before calling this to receive tokens.
         202: {"description": "Streaming started successfully"},
         400: {"description": "Invalid request parameters"},
         401: {"description": "Missing or invalid API key"},
+        403: {"description": "The conversation belongs to another user"},
         429: {"description": "Rate limit or quota exceeded"},
     },
 )
@@ -78,6 +80,12 @@ async def start_streaming_generation(
         f"Streaming generation requested by user: {user_id}, "
         f"conversation: {request.conversation_id}"
     )
+
+    if not await conversations.verify_ownership(request.conversation_id, user_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have access to this conversation",
+        )
 
     try:
         streaming_service = get_streaming_service()

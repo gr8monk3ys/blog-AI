@@ -231,6 +231,21 @@ class PostgresStores(unittest.IsolatedAsyncioTestCase):
             await PostgresConversationStore().get(cid), [{"content": "alice"}]
         )
 
+    async def test_claim_binds_the_owner_before_any_message(self):
+        from app.storage.conversations import PostgresConversationStore
+
+        cid = self.tag + "-squat"
+        await PostgresConversationStore().claim(cid, "bob")
+        await PostgresConversationStore().claim(cid, "bob")
+        store = PostgresConversationStore()
+        self.assertFalse(await store.verify_ownership(cid, "alice"))
+        with self.assertRaises(PermissionError):
+            await store.claim(cid, "alice")
+        with self.assertRaises(PermissionError):
+            await store.append(cid, {"content": "alice"}, user_id="alice")
+        await store.append(cid, {"content": "bob"}, user_id="bob")
+        self.assertEqual(await store.get(cid), [{"content": "bob"}])
+
     async def test_conversation_without_owner_is_denied(self):
         from app.storage.conversations import PostgresConversationStore
 
