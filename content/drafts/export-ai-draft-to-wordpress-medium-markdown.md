@@ -40,11 +40,11 @@ The Markdown download adds a header on top of the body: the title as a `#` headi
 
 ### HTML (.html)
 
-The HTML download is a complete, styled page you can open in any browser: headings, bold and italic, bullet lists, code blocks, blockquotes and links are all converted. Links and images are only kept if they point to `http`, `https`, `mailto` or a relative path; anything else becomes `#`. The date, description and tags appear in a metadata block under the title (so the description shows twice here too, since the body already opens with it), and the same "Generated with Blog AI" line sits in the footer. This is the best option for sending a draft to a reviewer who does not want to open a Markdown file.
+The HTML download is a complete, styled page you can open in any browser: headings, bold and italic, bullet lists, code blocks, blockquotes and links are all converted. Two things do not survive cleanly. Numbered lists are not converted, so their items run together into one paragraph. And the italic conversion runs before links and code are handled, so any word joined by underscores gets italic tags pushed into the middle of it: a link to a URL with two or more underscores in it (`.../Search_engine_optimization`, say) ends up pointing at a broken address, and `snake_case` names in code blocks pick up stray italics. Links and images are only kept if they point to `http`, `https`, `mailto` or a relative path; anything else becomes `#`. The date, description and tags appear in a metadata block under the title (so the description shows twice here too, since the body already opens with it), and the same "Generated with Blog AI" line sits in the footer. This is the best option for sending a draft to a reviewer who does not want to open a Markdown file.
 
 ### Plain Text (.txt)
 
-The plain-text download has the title underlined with `=` signs, then *Date:*, *Description:* and *Tags:* lines, then the body with all Markdown removed. Headings become ordinary lines. Links keep their visible text but lose the URL, so a plain-text export of a post with links is not something to publish from.
+The plain-text download has the title underlined with `=` signs, then *Date:*, *Description:* and *Tags:* lines, then the body with all Markdown removed. Headings become ordinary lines, and numbered list items lose their numbers. Links keep their visible text but lose the URL, and code blocks are deleted along with everything inside them, so a plain-text export of a post with links or code is not something to publish from.
 
 ### PDF
 
@@ -72,7 +72,7 @@ Things to fix once it is in:
 
 The Medium option produces simple HTML: headings (capped at level four), paragraphs, bullet lists, blockquotes, bold and italic. As with WordPress, the title is added as a top-level heading and the body's own title line follows as a paragraph, so expect it twice. Markdown links are not converted here either, and numbered lists and code blocks collapse into one paragraph the same way they do for WordPress. Blockquotes, unlike in the WordPress output, do come through as quotes.
 
-The option copies the HTML source as plain text, and Medium's editor has no way to paste HTML source, so pasting it gives you the tags as literal text. Use the HTML download instead: open the file in a browser, select the article and copy it from there, then paste into a Medium draft. Copying from a rendered page keeps headings, emphasis and links, which also gets around the link problem.
+The option copies the HTML source as plain text, and Medium's editor has no way to paste HTML source, so pasting it gives you the tags as literal text. Use the HTML download instead: open the file in a browser, select the article and copy it from there, then paste into a Medium draft. Copying from a rendered page keeps headings, emphasis and most links, which also gets around the link problem, but it carries over the HTML export's own gaps: check any link whose URL contains underscores, and rebuild numbered lists by hand.
 
 ## A cleanup checklist for any destination
 
@@ -81,8 +81,9 @@ Whichever format you used, run through this before the post goes live:
 - Delete the duplicate title line, and in the Markdown, HTML and plain-text exports the duplicate description as well.
 - Remove the "Generated with Blog AI on..." line from Markdown, HTML and plain-text exports, unless you want it there.
 - In WordPress and Medium pastes, search for leftover `**`, `*` and `[text](url)` patterns, rebuild any code blocks, and in WordPress turn lines starting with `>` back into quotes.
+- In the HTML export, and anything copied from it, rebuild numbered lists and click every link whose URL has underscores in it; check code blocks for stray italics.
 - For a static site, write the frontmatter (title, date, description, tags, slug) and drop the generated Markdown header.
-- Add the internal links the draft does not have yet, and never publish from the plain-text export if the post links out.
+- Add the internal links the draft does not have yet, and never publish from the plain-text export if the post links out or contains code.
 - If you made more than light edits after exporting, run the post through the SEO score again; /blog/how-seo-score-works explains which fixes move it most.
 
 ## Where export fits in the workflow
