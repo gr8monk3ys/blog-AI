@@ -37,6 +37,8 @@ class StreamingGenerationRequest(BaseModel):
         """Validate conversation ID format."""
         if not re.match(r"^[a-zA-Z0-9_-]+$", v):
             raise ValueError("Conversation ID contains invalid characters")
+        if v.startswith("retry-"):
+            raise ValueError("conversation ids starting with 'retry-' are reserved for batch retries; use another id")
         return v
 
     @field_validator("session_id")
@@ -73,6 +75,8 @@ class StreamingBlogRequest(BaseModel):
         """Validate conversation ID format."""
         if not re.match(r"^[a-zA-Z0-9_-]+$", v):
             raise ValueError("Conversation ID contains invalid characters")
+        if v.startswith("retry-"):
+            raise ValueError("conversation ids starting with 'retry-' are reserved for batch retries; use another id")
         return v
 
 

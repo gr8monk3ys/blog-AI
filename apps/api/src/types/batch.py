@@ -347,6 +347,8 @@ class EnhancedBatchRequest(BaseModel):
         import re
         if not re.match(r"^[a-zA-Z0-9_-]{1,100}$", v):
             raise ValueError("Invalid conversation ID format")
+        if v.startswith("retry-"):
+            raise ValueError("conversation ids starting with 'retry-' are reserved for batch retries; use another id")
         return v
 
     @field_validator("tags")

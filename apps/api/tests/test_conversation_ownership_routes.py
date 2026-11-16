@@ -79,6 +79,11 @@ class TestStreamOwnership(OwnershipTestCase):
         self.assertEqual(resp.status_code, 403)
         service.start_stream.assert_not_called()
 
+    def test_retry_channel_ids_are_rejected(self):
+        resp, service = self._start("retry-abc")
+        self.assertEqual(resp.status_code, 422)
+        service.start_stream.assert_not_called()
+
     def test_streaming_into_a_fresh_id_binds_it(self):
         self.user = "alice"
         service = MagicMock()
@@ -117,6 +122,23 @@ class TestBatchOwnership(OwnershipTestCase):
                 files={"file": ("t.csv", csv, "text/csv")},
             )
         self.assertEqual(resp.status_code, 403)
+        run.assert_not_called()
+
+    def test_retry_channel_ids_are_rejected(self):
+        csv = b"topic,keywords,tone,content_type\nAI in Healthcare,ai,professional,blog\n"
+        with (
+            patch("app.routes.batch._process_enhanced_batch", new=AsyncMock()) as run,
+            patch("app.routes.batch._validate_configured_providers"),
+        ):
+            body = self.client.post(
+                "/batch", json={"items": [ITEM], "conversation_id": "retry-abc"}
+            )
+            upload = self.client.post(
+                "/batch/import/csv",
+                params={"conversation_id": "retry-abc"},
+                files={"file": ("t.csv", csv, "text/csv")},
+            )
+        self.assertEqual((body.status_code, upload.status_code), (422, 422))
         run.assert_not_called()
 
     def test_batch_on_a_fresh_id_binds_it(self):
@@ -169,18 +191,19 @@ class TestBatchRetryOwnership(OwnershipTestCase):
         self.assertEqual(resp.status_code, 404)
         run.assert_not_called()
 
-    def test_retry_binds_its_channel_to_the_retrying_user(self):
+    def test_retry_gets_a_fresh_channel_bound_to_the_retrying_user(self):
         resp, run = self._retry("alice")
         self.assertEqual(resp.status_code, 202, resp.text)
-        run.assert_called_once()
+        channel = f"retry-{resp.json()['retry_job_id']}"
+        self.assertEqual(run.call_args.args[1].conversation_id, channel)
         with self.assertRaises(PermissionError):
-            asyncio.run(self.store.claim(f"retry-{self.JOB}", "bob"))
+            asyncio.run(self.store.claim(channel, "bob"))
 
-    def test_retry_refuses_a_channel_bob_squatted(self):
+    def test_squatting_the_old_job_scoped_channel_does_nothing(self):
         asyncio.run(self.store.claim(f"retry-{self.JOB}", "bob"))
         resp, run = self._retry("alice")
-        self.assertEqual(resp.status_code, 403)
-        run.assert_not_called()
+        self.assertEqual(resp.status_code, 202, resp.text)
+        self.assertNotEqual(run.call_args.args[1].conversation_id, f"retry-{self.JOB}")
 
 
 class TestRemixOwnership(OwnershipTestCase):
@@ -209,6 +232,11 @@ class TestRemixOwnership(OwnershipTestCase):
         self.user = "bob"
         resp, service = self._post("/remix/transform", {**self.BODY, "conversation_id": "r1"})
         self.assertEqual(resp.status_code, 403)
+        service.remix.assert_not_called()
+
+    def test_retry_channel_ids_are_rejected(self):
+        resp, service = self._post("/remix/transform", {**self.BODY, "conversation_id": "retry-abc"})
+        self.assertEqual(resp.status_code, 422)
         service.remix.assert_not_called()
 
     def test_bob_cannot_remix_single_format_into_alices_conversation(self):

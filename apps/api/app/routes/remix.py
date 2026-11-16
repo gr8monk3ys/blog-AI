@@ -12,7 +12,7 @@ Authorization:
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from src.config import get_settings
 from src.organizations import AuthorizationContext
@@ -90,6 +90,13 @@ class RemixRequestAPI(BaseModel):
         default="openai",
         description="LLM provider to use"
     )
+
+    @field_validator("conversation_id")
+    @classmethod
+    def reject_retry_channel(cls, v: str) -> str:
+        if v.startswith("retry-"):
+            raise ValueError("conversation ids starting with 'retry-' are reserved for batch retries; use another id")
+        return v
 
 
 class PreviewRequestAPI(BaseModel):

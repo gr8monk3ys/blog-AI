@@ -408,6 +408,11 @@ async def import_csv_batch(
     "AI in Healthcare","AI,healthcare,diagnosis",professional,blog
     "Sustainable Tech","green,sustainability",informative,blog
     """
+    if conversation_id.startswith("retry-"):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="conversation ids starting with 'retry-' are reserved for batch retries; use another id",
+        )
     try:
         await conversations.claim(conversation_id, auth_ctx.user_id)
     except PermissionError:
@@ -649,7 +654,9 @@ async def retry_failed_items(
     )
     _validate_configured_providers(preferred_provider, fallback_providers)
 
-    retry_conversation_id = f"retry-{job_id}"
+    # A fresh, unguessable channel per retry, so nobody can be listening on it in advance.
+    retry_job_id = str(uuid.uuid4())
+    retry_conversation_id = f"retry-{retry_job_id}"
     try:
         await conversations.claim(retry_conversation_id, user_id)
     except PermissionError:
@@ -657,9 +664,6 @@ async def retry_failed_items(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You don't have access to this conversation",
         )
-
-    # Create retry job
-    retry_job_id = str(uuid.uuid4())
 
     # Build items for retry
     retry_items = [
@@ -677,9 +681,9 @@ async def retry_failed_items(
         research_enabled=False,
         proofread_enabled=True,
         humanize_enabled=False,
-        conversation_id=retry_conversation_id,
+        conversation_id="retry",
         name=f"Retry of {job.name or job_id}",
-    )
+    ).model_copy(update={"conversation_id": retry_conversation_id})
 
     retry_job_status = EnhancedBatchStatus(
         job_id=retry_job_id,
