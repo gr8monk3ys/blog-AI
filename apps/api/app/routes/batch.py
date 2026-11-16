@@ -296,7 +296,9 @@ async def create_batch_job(
 
     **Authorization:** Requires Pro tier (or higher) and content.create permission.
     """
-    if not await conversations.verify_ownership(request.conversation_id, auth_ctx.user_id):
+    try:
+        await conversations.claim(request.conversation_id, auth_ctx.user_id)
+    except PermissionError:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You don't have access to this conversation",
@@ -406,7 +408,9 @@ async def import_csv_batch(
     "AI in Healthcare","AI,healthcare,diagnosis",professional,blog
     "Sustainable Tech","green,sustainability",informative,blog
     """
-    if not await conversations.verify_ownership(conversation_id, auth_ctx.user_id):
+    try:
+        await conversations.claim(conversation_id, auth_ctx.user_id)
+    except PermissionError:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You don't have access to this conversation",
@@ -645,6 +649,15 @@ async def retry_failed_items(
     )
     _validate_configured_providers(preferred_provider, fallback_providers)
 
+    retry_conversation_id = f"retry-{job_id}"
+    try:
+        await conversations.claim(retry_conversation_id, user_id)
+    except PermissionError:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have access to this conversation",
+        )
+
     # Create retry job
     retry_job_id = str(uuid.uuid4())
 
@@ -664,7 +677,7 @@ async def retry_failed_items(
         research_enabled=False,
         proofread_enabled=True,
         humanize_enabled=False,
-        conversation_id=f"retry-{job_id}",
+        conversation_id=retry_conversation_id,
         name=f"Retry of {job.name or job_id}",
     )
 

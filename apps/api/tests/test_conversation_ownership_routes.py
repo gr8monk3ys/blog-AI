@@ -19,6 +19,7 @@ os.environ.setdefault("OPENAI_API_KEY", "sk-test-mock-key-for-unit-tests-only")
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
@@ -78,6 +79,25 @@ class TestStreamOwnership(OwnershipTestCase):
         self.assertEqual(resp.status_code, 403)
         service.start_stream.assert_not_called()
 
+    def test_streaming_into_a_fresh_id_binds_it(self):
+        self.user = "alice"
+        service = MagicMock()
+        service.start_stream = AsyncMock(
+            return_value=SimpleNamespace(session_id="s1", conversation_id="fresh-conv")
+        )
+        with patch("app.routes.streaming.get_streaming_service", return_value=service), patch(
+            "app.routes.streaming.increment_usage_for_operation", new=AsyncMock()
+        ):
+            resp = self.client.post(
+                "/stream/generate", json={"prompt": "hi", "conversation_id": "fresh-conv"}
+            )
+        self.assertEqual(resp.status_code, 202)
+
+        self.user = "bob"
+        resp, service = self._start("fresh-conv")
+        self.assertEqual(resp.status_code, 403)
+        service.start_stream.assert_not_called()
+
 
 class TestBatchOwnership(OwnershipTestCase):
     def test_bob_cannot_create_a_batch_on_alices_conversation(self):
@@ -99,6 +119,69 @@ class TestBatchOwnership(OwnershipTestCase):
         self.assertEqual(resp.status_code, 403)
         run.assert_not_called()
 
+    def test_batch_on_a_fresh_id_binds_it(self):
+        csv = b"topic,keywords,tone,content_type\nAI in Healthcare,ai,professional,blog\n"
+        with patch("app.routes.batch._process_enhanced_batch", new=AsyncMock()):
+            self.user = "alice"
+            first = self.client.post("/batch", json={"items": [ITEM], "conversation_id": "b1"})
+            self.user = "bob"
+            second = self.client.post("/batch", json={"items": [ITEM], "conversation_id": "b1"})
+            third = self.client.post(
+                "/batch/import/csv",
+                params={"conversation_id": "b1"},
+                files={"file": ("t.csv", csv, "text/csv")},
+            )
+        self.assertNotEqual(first.status_code, 403)
+        self.assertEqual((second.status_code, third.status_code), (403, 403))
+
+
+class TestBatchRetryOwnership(OwnershipTestCase):
+    JOB = "job-1"
+
+    def setUp(self):
+        super().setUp()
+        from src.types.batch import JobStatus
+
+        job = SimpleNamespace(can_retry_failed=True, name="j")
+        failed = SimpleNamespace(status=JobStatus.FAILED, index=0, topic="AI in Healthcare")
+        store = MagicMock()
+        store.get_job_if_owned = AsyncMock(
+            side_effect=lambda job_id, scope: job if scope == "alice" else None
+        )
+        store.get_results = AsyncMock(return_value=[failed])
+        store.save_job = AsyncMock()
+        store.set_cancel_flag = AsyncMock()
+        for p in (
+            patch("app.routes.batch._job_store", store),
+            patch("app.routes.batch._validate_configured_providers"),
+        ):
+            p.start()
+            self.patches.append(p)
+
+    def _retry(self, user):
+        self.user = user
+        with patch("app.routes.batch._process_enhanced_batch", new=AsyncMock()) as run:
+            resp = self.client.post(f"/batch/{self.JOB}/retry", json={})
+        return resp, run
+
+    def test_bob_cannot_retry_alices_job(self):
+        resp, run = self._retry("bob")
+        self.assertEqual(resp.status_code, 404)
+        run.assert_not_called()
+
+    def test_retry_binds_its_channel_to_the_retrying_user(self):
+        resp, run = self._retry("alice")
+        self.assertEqual(resp.status_code, 202, resp.text)
+        run.assert_called_once()
+        with self.assertRaises(PermissionError):
+            asyncio.run(self.store.claim(f"retry-{self.JOB}", "bob"))
+
+    def test_retry_refuses_a_channel_bob_squatted(self):
+        asyncio.run(self.store.claim(f"retry-{self.JOB}", "bob"))
+        resp, run = self._retry("alice")
+        self.assertEqual(resp.status_code, 403)
+        run.assert_not_called()
+
 
 class TestRemixOwnership(OwnershipTestCase):
     BODY = {
@@ -109,13 +192,22 @@ class TestRemixOwnership(OwnershipTestCase):
 
     def _post(self, path, json):
         service = MagicMock()
-        service.remix = AsyncMock()
+        service.remix = AsyncMock(side_effect=HTTPException(status_code=502))
         with patch("app.routes.remix.get_remix_service", return_value=service):
             resp = self.client.post(path, json=json)
         return resp, service
 
     def test_bob_cannot_remix_into_alices_conversation(self):
         resp, service = self._post("/remix/transform", self.BODY)
+        self.assertEqual(resp.status_code, 403)
+        service.remix.assert_not_called()
+
+    def test_remix_on_a_fresh_id_binds_it(self):
+        self.user = "alice"
+        first, _ = self._post("/remix/transform", {**self.BODY, "conversation_id": "r1"})
+        self.assertNotEqual(first.status_code, 403)
+        self.user = "bob"
+        resp, service = self._post("/remix/transform", {**self.BODY, "conversation_id": "r1"})
         self.assertEqual(resp.status_code, 403)
         service.remix.assert_not_called()
 

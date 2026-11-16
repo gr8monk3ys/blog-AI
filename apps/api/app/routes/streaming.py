@@ -81,7 +81,9 @@ async def start_streaming_generation(
         f"conversation: {request.conversation_id}"
     )
 
-    if not await conversations.verify_ownership(request.conversation_id, user_id):
+    try:
+        await conversations.claim(request.conversation_id, user_id)
+    except PermissionError:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You don't have access to this conversation",

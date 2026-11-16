@@ -244,7 +244,9 @@ async def transform_content(
 
     **Authorization:** Requires content.create permission in the organization.
     """
-    if not await conversations.verify_ownership(request.conversation_id, auth_ctx.user_id):
+    try:
+        await conversations.claim(request.conversation_id, auth_ctx.user_id)
+    except PermissionError:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You don't have access to this conversation",
