@@ -28,33 +28,43 @@ Alongside that body, the export also receives the post's date, description and t
 
 ## The download options
 
-The **Download** group has five entries.
+The Download group has five entries.
 
-**Copy to Clipboard.** Copies the body above as plain text, Markdown headings included. Nothing is added or removed. This is the quickest way to get a draft into a doc for editing.
+### Copy to Clipboard
 
-**Markdown (.md).** Adds a header on top of the body: the title as a `#` heading, the date in italics, the description as a blockquote, a **Tags:** line and a horizontal rule. At the bottom it adds another rule and a line reading *Generated with Blog AI on* followed by the export date. There is no YAML frontmatter, so if the file is going into a static site generator (Next.js, Hugo, Astro, Jekyll), you will need to write the frontmatter block yourself and delete the Markdown header it replaces.
+This copies the body above as plain text, Markdown headings included. Nothing is added or removed. This is the quickest way to get a draft into a doc for editing.
 
-**HTML (.html).** A complete, styled page you can open in any browser: headings, bold and italic, bullet lists, code blocks, blockquotes and links are all converted. Links and images are only kept if they point to `http`, `https`, `mailto` or a relative path; anything else becomes `#`. The date, description and tags appear in a metadata block under the title, and the same "Generated with Blog AI" line sits in the footer. This is the best option for sending a draft to a reviewer who does not want to open a Markdown file.
+### Markdown (.md)
 
-**Plain Text (.txt).** The title underlined with `=` signs, then *Date:*, *Description:* and *Tags:* lines, then the body with all Markdown removed. Headings become ordinary lines. Links keep their visible text but **lose the URL**, so a plain-text export of a post with links is not something to publish from.
+The Markdown download adds a header on top of the body: the title as a `#` heading, the date in italics, the description as a blockquote, a Tags line and a horizontal rule. At the bottom it adds another rule and a line reading *Generated with Blog AI on* followed by the export date. There is no YAML frontmatter, so if the file is going into a static site generator (Next.js, Hugo, Astro, Jekyll), you will need to write the frontmatter block yourself and delete the Markdown header it replaces.
 
-**PDF.** Uses the same styled HTML as the HTML export. If the downloaded file will not open in your PDF reader, download the HTML version instead, open it in a browser and use *Print* then *Save as PDF*. The result is the same layout.
+### HTML (.html)
+
+The HTML download is a complete, styled page you can open in any browser: headings, bold and italic, bullet lists, code blocks, blockquotes and links are all converted. Links and images are only kept if they point to `http`, `https`, `mailto` or a relative path; anything else becomes `#`. The date, description and tags appear in a metadata block under the title (so the description shows twice here too, since the body already opens with it), and the same "Generated with Blog AI" line sits in the footer. This is the best option for sending a draft to a reviewer who does not want to open a Markdown file.
+
+### Plain Text (.txt)
+
+The plain-text download has the title underlined with `=` signs, then *Date:*, *Description:* and *Tags:* lines, then the body with all Markdown removed. Headings become ordinary lines. Links keep their visible text but lose the URL, so a plain-text export of a post with links is not something to publish from.
+
+### PDF
+
+Right now the PDF option does not produce a PDF. The server has no PDF renderer installed, so it falls back to the same styled HTML as the HTML export, and the menu saves that file with a `.pdf` name. To get a real PDF, download the HTML version, open it in a browser and use *Print* then *Save as PDF*. The layout is the same.
 
 File names come from the title: lowercased, with anything that is not a letter or number replaced by a hyphen, and cut at 50 characters.
 
 ## The two publishing options
 
-The **Copy for Publishing** group does not publish anything and does not connect to your WordPress or Medium account. Both entries convert the post on the server and copy the result to your clipboard. What you paste is the markup, not a formatted preview.
+The Copy for Publishing group does not publish anything and does not connect to your WordPress or Medium account. Both entries convert the post on the server and copy the result to your clipboard. What you paste is the markup, not a formatted preview.
 
 ### WordPress
 
-The WordPress option produces Gutenberg block markup: every heading, paragraph and bullet list is wrapped in the `<!-- wp:... -->` comments the block editor uses. The most reliable place to paste it is the block editor's **Code editor** view (from the editor's options menu); switch back to the visual editor afterwards and each piece shows up as its own block.
+The WordPress option produces Gutenberg block markup: every heading, paragraph and bullet list is wrapped in the `<!-- wp:... -->` comments the block editor uses. The most reliable place to paste it is the block editor's Code editor view (from the editor's options menu); switch back to the visual editor afterwards and each piece shows up as its own block.
 
 Three things to fix once it is in:
 
-- **The title is in the body.** The post title becomes a level-one heading block at the top, and the body's own title line follows it as a paragraph. WordPress already has a title field, so delete both and put the title there.
-- **Bold, italic and links are not converted.** Paragraph text is passed through as written, so `**bold**` arrives with its asterisks and a Markdown link arrives as `[text](url)`. Search the post for `**`, `*` and `](` and redo those as real formatting and links.
-- **Numbered lists are not recognized.** Bullet lists become list blocks, but the items of a numbered list are run together into a single paragraph ("1. First step 2. Second step"). Rebuild them as a numbered list block.
+- The post title becomes a level-one heading block at the top, and the body's own title line follows it as a paragraph. WordPress already has a title field, so delete both and put the title there.
+- Bold, italic and links are not converted. Paragraph text is passed through as written, so `**bold**` arrives with its asterisks and a Markdown link arrives as `[text](url)`. Search the post for `**`, `*` and `](` and redo those as real formatting and links.
+- Bullet lists become list blocks, but the items of a numbered list are run together into a single paragraph ("1. First step 2. Second step"). Rebuild them as a numbered list block.
 
 ### Medium
 
@@ -66,15 +76,13 @@ Because it is copied as HTML source, what you see after pasting depends on the e
 
 Whichever format you used, run through this before the post goes live:
 
-- **One title.** Delete the duplicate title line, and in Markdown and plain text the duplicate description.
-- **No footer.** Remove the "Generated with Blog AI on..." line from Markdown, HTML and plain-text exports, unless you want it there.
-- **Real formatting.** In WordPress and Medium pastes, search for leftover `**`, `*` and `[text](url)` patterns.
-- **Frontmatter.** For a static site, write the frontmatter (title, date, description, tags, slug) and drop the generated Markdown header.
-- **Links.** Add the internal links the draft does not have yet, and never publish from the plain-text export if the post links out.
-- **One last score.** If you made more than light edits after exporting, run the post through the SEO score again; /blog/how-seo-score-works explains which fixes move it most.
+- Delete the duplicate title line, and in the Markdown, HTML and plain-text exports the duplicate description as well.
+- Remove the "Generated with Blog AI on..." line from Markdown, HTML and plain-text exports, unless you want it there.
+- In WordPress and Medium pastes, search for leftover `**`, `*` and `[text](url)` patterns.
+- For a static site, write the frontmatter (title, date, description, tags, slug) and drop the generated Markdown header.
+- Add the internal links the draft does not have yet, and never publish from the plain-text export if the post links out.
+- If you made more than light edits after exporting, run the post through the SEO score again; /blog/how-seo-score-works explains which fixes move it most.
 
 ## Where export fits in the workflow
 
-Export is the end of the pipeline, so it is worth doing everything that changes the text first. The proofread and humanize passes have already run by the time the post appears (/blog/proofread-and-humanize-passes-explained covers what they change), and if the post has numbers in it, the fact-check results should be cleared before it leaves the app (/blog/ai-fact-checking-confidence-scores). If the same post is also going out as a thread or a newsletter, repurpose it from the finished version, not the raw draft; /blog/repurpose-blog-post-into-other-formats walks through that.
-
-The Export menu gets a draft out of the app in the shape your next tool expects. The last five minutes of cleanup, a single title, no footer, real links, are what make it look like you wrote it there.
+Export is the end of the pipeline, so it is worth doing everything that changes the text first. If you left Proofread and Humanize on, those passes have already run by the time the post appears (/blog/proofread-and-humanize-passes-explained covers what they change), and if the post has numbers in it, the fact-check results should be cleared before it leaves the app (/blog/ai-fact-checking-confidence-scores). If the same post is also going out as a thread or a newsletter, repurpose it from the finished version, not the raw draft; /blog/repurpose-blog-post-into-other-formats walks through that.
