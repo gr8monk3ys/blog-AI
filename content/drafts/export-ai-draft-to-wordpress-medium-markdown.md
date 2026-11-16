@@ -1,7 +1,7 @@
 ---
 title: How to Export an AI Draft to WordPress, Medium, or Markdown (and What to Clean Up First)
 date: 2026-11-05
-excerpt: What each option in the Export menu actually produces, what lands on your clipboard for WordPress and Medium, and the short cleanup list to run before an exported draft goes live.
+excerpt: What each option in the Export menu actually produces, and the cleanup to do before an exported draft goes live on WordPress, Medium or a static site.
 slug: export-ai-draft-to-wordpress-medium-markdown
 tags: [publishing, ai-writing, content-ops, workflow]
 draft: true
@@ -9,9 +9,9 @@ draft: true
 
 ## The last step nobody plans for
 
-A draft can pass the SEO score, the fact-check and an editor's read, and still go wrong on the way into your CMS. Formatting that looked fine on screen turns into stray asterisks, the title shows up twice, and a footer line you never wrote ends up on the live page. None of it is hard to fix. It is just easy to miss, because by the time a post is being exported everyone thinks the work is done.
+A draft can pass the SEO score and an editor's read and still go wrong on the way into your CMS. Formatting that looked fine on screen turns into stray asterisks, the title shows up twice, and a footer line you never wrote ends up on the live page. None of it is hard to fix. It is just easy to miss, because by the time a post is being exported everyone thinks the work is done.
 
-This post walks through the Export menu on /generate: what each option produces, which ones download a file and which ones copy to your clipboard, and what to tidy up for each destination before you hit publish.
+This post walks through the Export menu on /generate, option by option, and ends with what to tidy up before you hit publish.
 
 ## What gets exported
 
@@ -58,19 +58,21 @@ The Copy for Publishing group does not publish anything and does not connect to 
 
 ### WordPress
 
-The WordPress option produces Gutenberg block markup: every heading, paragraph and bullet list is wrapped in the `<!-- wp:... -->` comments the block editor uses. The most reliable place to paste it is the block editor's Code editor view (from the editor's options menu); switch back to the visual editor afterwards and each piece shows up as its own block.
+The WordPress option produces Gutenberg block markup: every heading, paragraph and bullet list is wrapped in the `<!-- wp:... -->` comments the block editor uses. Paste it into the block editor's Code editor view (from the editor's options menu), then switch back to the visual editor and check the result. The list markup is written as plain `<li>` items rather than WordPress's own list-item blocks, so if the editor flags a block as invalid, use its block recovery option or rebuild the list by hand.
 
-Three things to fix once it is in:
+Things to fix once it is in:
 
 - The post title becomes a level-one heading block at the top, and the body's own title line follows it as a paragraph. WordPress already has a title field, so delete both and put the title there.
 - Bold, italic and links are not converted. Paragraph text is passed through as written, so `**bold**` arrives with its asterisks and a Markdown link arrives as `[text](url)`. Search the post for `**`, `*` and `](` and redo those as real formatting and links.
 - Bullet lists become list blocks, but the items of a numbered list are run together into a single paragraph ("1. First step 2. Second step"). Rebuild them as a numbered list block.
+- A blockquote is not converted: it arrives as a paragraph that starts with a literal `>`. Turn it into a Quote block.
+- A code block collapses into one paragraph with the triple backticks still in it and the line breaks gone. Rebuild it as a Code block from your original draft, since the line breaks cannot be recovered from the paste.
 
 ### Medium
 
-The Medium option produces simple HTML: headings (capped at level four), paragraphs, bullet lists, blockquotes, bold and italic. As with WordPress, the title is added as a top-level heading and the body's own title line follows as a paragraph, so expect it twice. Markdown links are not converted here either, and numbered lists collapse into one paragraph the same way they do for WordPress.
+The Medium option produces simple HTML: headings (capped at level four), paragraphs, bullet lists, blockquotes, bold and italic. As with WordPress, the title is added as a top-level heading and the body's own title line follows as a paragraph, so expect it twice. Markdown links are not converted here either, and numbered lists and code blocks collapse into one paragraph the same way they do for WordPress. Blockquotes, unlike in the WordPress output, do come through as quotes.
 
-Because it is copied as HTML source, what you see after pasting depends on the editor. If the tags show up as literal text, use the HTML download instead: open the file in a browser, select the article and copy it from there. Pasting formatted text from a rendered page generally keeps headings, emphasis and links, which also gets around the link problem.
+The option copies the HTML source as plain text, and Medium's editor has no way to paste HTML source, so pasting it gives you the tags as literal text. Use the HTML download instead: open the file in a browser, select the article and copy it from there, then paste into a Medium draft. Copying from a rendered page keeps headings, emphasis and links, which also gets around the link problem.
 
 ## A cleanup checklist for any destination
 
@@ -78,7 +80,7 @@ Whichever format you used, run through this before the post goes live:
 
 - Delete the duplicate title line, and in the Markdown, HTML and plain-text exports the duplicate description as well.
 - Remove the "Generated with Blog AI on..." line from Markdown, HTML and plain-text exports, unless you want it there.
-- In WordPress and Medium pastes, search for leftover `**`, `*` and `[text](url)` patterns.
+- In WordPress and Medium pastes, search for leftover `**`, `*` and `[text](url)` patterns, rebuild any code blocks, and in WordPress turn lines starting with `>` back into quotes.
 - For a static site, write the frontmatter (title, date, description, tags, slug) and drop the generated Markdown header.
 - Add the internal links the draft does not have yet, and never publish from the plain-text export if the post links out.
 - If you made more than light edits after exporting, run the post through the SEO score again; /blog/how-seo-score-works explains which fixes move it most.
