@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { Suspense } from 'react'
 import ToolsPageClient from './ToolsPageClient'
 
 export const metadata: Metadata = {
@@ -13,11 +12,5 @@ export const metadata: Metadata = {
 // SAMPLE_TOOLS catalogue with no authenticated request. Signing in is only
 // required to open an individual tool workspace at /tools/[slug].
 export default function ToolsPage() {
-  return (
-    <Suspense
-      fallback={<p className="label-mono p-8 text-center">Loading tools…</p>}
-    >
-      <ToolsPageClient />
-    </Suspense>
-  )
+  return <ToolsPageClient />
 }

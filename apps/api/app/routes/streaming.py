@@ -352,6 +352,12 @@ async def stream_via_sse(
             detail="Invalid API key",
         )
 
+    # This route authenticates by hand, so the `require_quota` dependency the
+    # other generation routes use never ran: any valid key could stream up to
+    # 32k tokens per request, unmetered. Check the quota before generating
+    # and record the generation once it completes.
+    await require_quota(user_id)
+
     async def generate_events():
         """Generate SSE events from the stream."""
         try:
@@ -365,6 +371,12 @@ async def stream_via_sse(
                 if event.type == StreamEventType.TOKEN:
                     yield f"event: token\ndata: {event.content}\n\n"
                 elif event.type == StreamEventType.END:
+                    await increment_usage_for_operation(
+                        user_id=user_id,
+                        operation_type="streaming",
+                        tokens_used=max_tokens,
+                        metadata={"conversation_id": conversation_id, "provider": provider},
+                    )
                     yield f"event: complete\ndata: done\n\n"
                 elif event.type == StreamEventType.ERROR:
                     yield f"event: error\ndata: {event.error}\n\n"

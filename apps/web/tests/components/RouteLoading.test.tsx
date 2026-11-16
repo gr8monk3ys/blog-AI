@@ -1,25 +1,25 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { act, render, screen } from '@testing-library/react'
-import Loading from '../../app/loading'
+import RouteLoading from '../../components/RouteLoading'
 
 afterEach(() => {
   vi.useRealTimers()
 })
 
-describe('Loading', () => {
+describe('RouteLoading', () => {
   it('renders the loading message', () => {
-    render(<Loading />)
+    render(<RouteLoading />)
     expect(screen.getByText('Loading your workspace…')).toBeInTheDocument()
   })
 
   it('renders a spinner animation element', () => {
-    const { container } = render(<Loading />)
+    const { container } = render(<RouteLoading />)
     const spinner = container.querySelector('.animate-spin')
     expect(spinner).toBeInTheDocument()
   })
 
   it('is wrapped in a centered container', () => {
-    const { container } = render(<Loading />)
+    const { container } = render(<RouteLoading />)
     const wrapper = container.firstElementChild
     expect(wrapper).toHaveClass('min-h-screen')
     expect(wrapper).toHaveClass('flex')
@@ -29,7 +29,7 @@ describe('Loading', () => {
 
   it('shows a timeout help panel after 8 seconds', () => {
     vi.useFakeTimers()
-    render(<Loading />)
+    render(<RouteLoading />)
 
     expect(screen.queryByText('Still loading?')).not.toBeInTheDocument()
     act(() => {

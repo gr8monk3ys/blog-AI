@@ -2,15 +2,16 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { buttonVariants } from '../components/ui/Button'
+import { buttonVariants } from './ui/Button'
 
 const HELP_TIMEOUT_MS = 8000
 
-// The route loading state: a spinner in the ink, one line of body copy, and
-// after eight seconds an honest "still loading" note with one primary action.
+// The loading state of the signed-in routes (each one's loading.tsx): a
+// spinner in the ink, one line of body copy, and after eight seconds an honest
+// "still loading" note with one primary action.
 // `animate-spin` is one of the two loading indicators that slow rather than
 // stop under prefers-reduced-motion (DESIGN.md → Motion).
-export default function Loading() {
+export default function RouteLoading() {
   const [showHelp, setShowHelp] = useState(false)
 
   useEffect(() => {
