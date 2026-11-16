@@ -1,4 +1,5 @@
 import { API_ENDPOINTS } from '../../lib/api'
+import { features } from '../../lib/features'
 import type { UsageTier } from '../../types/usage'
 
 export interface PublicPricingTier {
@@ -13,6 +14,21 @@ export interface PublicPricingTier {
   features: string[]
   stripe_price_id_monthly?: string
   stripe_price_id_yearly?: string
+}
+
+/** Mirrors RESEARCH_MODE_FEATURE in apps/api/src/types/payments.py. */
+export const RESEARCH_MODE_FEATURE = 'Research mode'
+
+/** Plan bullets that need the API's SERP/Tavily keys (`/health` → `web_research`). */
+const WEB_RESEARCH_FEATURES = new Set([RESEARCH_MODE_FEATURE, 'Fact-checking'])
+
+/**
+ * Plan bullets this deployment may advertise. The API already drops research
+ * mode when it has no research key; the flag also covers the fallback copy and
+ * an API deploy that predates that check.
+ */
+export function withoutUnavailableFeatures(list: string[]): string[] {
+  return features.webResearch ? list : list.filter((feature) => !WEB_RESEARCH_FEATURES.has(feature))
 }
 
 export const TIER_ORDER: UsageTier[] = ['free', 'starter', 'pro', 'business']
@@ -69,7 +85,7 @@ export const FALLBACK_PRICING_TIERS: PublicPricingTier[] = [
     features: [
       '50 generations per month',
       'Blog and book generation',
-      'Research mode',
+      RESEARCH_MODE_FEATURE,
       'Priority support',
     ],
   },
@@ -100,7 +116,10 @@ export function normalizePricingTiers(tiers: PublicPricingTier[]): PublicPricing
   return tiers
     .filter((tier) => tier.id !== 'business')
     .sort((a, b) => TIER_ORDER.indexOf(a.id) - TIER_ORDER.indexOf(b.id))
+    .map((tier) => ({ ...tier, features: withoutUnavailableFeatures(tier.features) }))
 }
+
+const fallbackTiers = () => normalizePricingTiers(FALLBACK_PRICING_TIERS)
 
 /**
  * Server-side read of the live plans, used to render the cards in the document.
@@ -118,15 +137,15 @@ export async function loadPricingTiers(): Promise<PublicPricingTier[]> {
       signal: AbortSignal.timeout(2500),
     })
 
-    if (!response.ok) return FALLBACK_PRICING_TIERS
+    if (!response.ok) return fallbackTiers()
 
     const data = await response.json()
-    if (!data?.success || !Array.isArray(data?.tiers)) return FALLBACK_PRICING_TIERS
+    if (!data?.success || !Array.isArray(data?.tiers)) return fallbackTiers()
 
     const tiers = normalizePricingTiers(data.tiers as PublicPricingTier[])
-    return tiers.length > 0 ? tiers : FALLBACK_PRICING_TIERS
+    return tiers.length > 0 ? tiers : fallbackTiers()
   } catch {
     // Unreachable API, DNS failure, timeout — the page still has plans to show.
-    return FALLBACK_PRICING_TIERS
+    return fallbackTiers()
   }
 }

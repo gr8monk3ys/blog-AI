@@ -18,6 +18,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from pydantic import BaseModel, Field
 import stripe
 
+from src.config import get_settings
 from src.payments import stripe_service
 from src.payments.stripe_service import card_only_checkout_params
 from src.payments.subscription_sync import sync_webhook_event
@@ -25,6 +26,7 @@ from src.types.payments import (
     CheckoutSessionRequest,
     CheckoutSessionResponse,
     PRICING_TIERS,
+    RESEARCH_MODE_FEATURE,
     PortalSessionRequest,
     PortalSessionResponse,
     SubscriptionStatus,
@@ -474,6 +476,7 @@ async def get_pricing_tiers() -> Dict:
     Returns:
         Dictionary containing all pricing tiers with features and prices
     """
+    has_research_api = get_settings().has_research_api
     tiers = []
     for tier_key, tier_config in PRICING_TIERS.items():
         # Map to usage tier config so limits/descriptions stay consistent with quota enforcement.
@@ -489,7 +492,11 @@ async def get_pricing_tiers() -> Dict:
             "price_monthly": tier_config.price_monthly / 100,  # Convert cents to dollars
             "price_yearly": tier_config.price_yearly / 100,
             "generations_per_month": tier_config.generations_per_month,
-            "features": tier_config.features,
+            "features": [
+                feature
+                for feature in tier_config.features
+                if has_research_api or feature != RESEARCH_MODE_FEATURE
+            ],
         }
 
         if usage_config:
