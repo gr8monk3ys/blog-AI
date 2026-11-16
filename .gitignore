@@ -11,6 +11,7 @@ backend/coverage.xml
 playwright-report/
 artifacts/lighthouse/
 test-results/
+reports/
 .playwright-cli/
 output/
 

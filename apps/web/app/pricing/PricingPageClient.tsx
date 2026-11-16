@@ -8,7 +8,7 @@ import SiteHeader from '../../components/SiteHeader'
 import SiteFooter from '../../components/SiteFooter'
 import { Badge } from '../../components/ui/Badge'
 import { buttonVariants } from '../../components/ui/Button'
-import { useAuth } from '../../lib/clerk-ui'
+import { isClerkConfigured, useAuth, useClerkUnavailable } from '../../lib/clerk-ui'
 import { UsageTier } from '../../types/usage'
 import { API_ENDPOINTS, getDefaultHeaders } from '../../lib/api'
 import { normalizePricingTiers, type PublicPricingTier } from './tiers'
@@ -98,7 +98,9 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
   const [success, setSuccess] = useState<string | null>(null)
 
   const router = useRouter()
-  const { isSignedIn } = useAuth()
+  const { isLoaded, isSignedIn } = useAuth()
+  const clerkUnavailable = useClerkUnavailable()
+  const authSettled = isLoaded || clerkUnavailable
 
   const fetchPricing = async () => {
     try {
@@ -139,9 +141,16 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
     }
   }
 
+  // The tier needs a session token, which exists only once Clerk has loaded a
+  // signed-in session; asking earlier, or signed out, is a guaranteed 401.
+  useEffect(() => {
+    if (!authSettled) return
+    if (isSignedIn || !isClerkConfigured()) fetchCurrentTier()
+    else setLoading(false)
+  }, [authSettled, isSignedIn])
+
   useEffect(() => {
     fetchPricing()
-    fetchCurrentTier()
 
     // Handle Stripe redirect states
     if (typeof window !== 'undefined') {

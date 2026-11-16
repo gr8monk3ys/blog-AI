@@ -232,7 +232,7 @@ export default function Home(): React.ReactElement {
               <Link href={primaryCta.href} className={buttonVariants({ size: 'lg' })}>
                 {primaryCta.label}
               </Link>
-              <Link href="/brand" className={labelLink}>
+              <Link href="/brand" prefetch={false} className={labelLink}>
                 See Brand Voice
               </Link>
             </div>

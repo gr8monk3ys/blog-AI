@@ -145,6 +145,7 @@ export default async function ToolDirectoryPage() {
                       <li key={tool.id}>
                         <Link
                           href={`/tools/${tool.slug}`}
+                          prefetch={false}
                           className="group flex items-start justify-between gap-6 py-4"
                         >
                           <div className="min-w-0">
