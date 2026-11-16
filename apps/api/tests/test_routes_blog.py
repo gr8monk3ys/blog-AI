@@ -887,6 +887,30 @@ class TestBlogSEOAndFactCheck:
             data = response.json()
             assert "seo_score" not in data["content"]
 
+    @pytest.mark.parametrize("gated_option", ["fact_check", "seo_optimize"])
+    def test_pro_options_are_refused_before_any_generation(
+        self, client, mock_dependencies, gated_option
+    ):
+        """A lower tier asking for a Pro stage must not get a post generated first."""
+        from fastapi import HTTPException
+
+        denied = AsyncMock(side_effect=HTTPException(status_code=403, detail="Pro plan required"))
+        with patch("app.routes.blog.require_pro_tier", denied), \
+             patch("app.routes.blog.generate_blog_post") as mock_gen:
+
+            response = client.post(
+                "/generate-blog",
+                json={
+                    "topic": "Test Topic",
+                    gated_option: True,
+                    "conversation_id": "test-conv-gated",
+                },
+                headers={"X-API-Key": "test-key"},
+            )
+
+            assert response.status_code == 403
+            mock_gen.assert_not_called()
+
     def test_generate_blog_with_fact_check(self, client, sample_blog_post, mock_dependencies):
         """Test blog generation with fact-checking enabled."""
         from src.types.fact_check import (

@@ -16,6 +16,9 @@ env:
   PYTHON_VERSION: "3.12"
   BUN_VERSION: "1.4.3"
   NEXT_TELEMETRY_DISABLED: "1"
+  # verify-summary.mjs writes <stage>.json here (absolute: backend jobs run in apps/api);
+  # merged by the verify-report job.
+  VERIFY_STAGE_DIR: ${{ github.workspace }}/verify-stages
 
 jobs:
   backend-tests:
@@ -28,7 +31,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
@@ -39,60 +42,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt pytest pytest-asyncio pytest-cov
 
-      - name: Run smoke suite (blocking)
-        run: |
-          pytest tests/test_feature_smoke.py tests/test_routes_health.py -q
-        env:
-          DEV_MODE: "true"
-          OPENAI_API_KEY: "test"
+      # Smoke suite plus the critical-route coverage floors (85% and the
+      # ratchet). Same stages as `bun run verify:api`; see scripts/verify-api.sh.
+      - name: Smoke suite and critical-route coverage floors
+        run: bash ../../scripts/verify-api.sh smoke routes
 
-      - name: Enforce critical-route integration coverage >= 85%
-        run: |
-          pytest \
-            tests/test_routes_blog.py \
-            tests/test_routes_book.py \
-            tests/test_routes_webhooks.py \
-            tests/test_routes_payments.py \
-            tests/test_routes_usage.py \
-            --cov=app.routes.blog \
-            --cov=app.routes.book \
-            --cov=app.routes.webhooks \
-            --cov=app.routes.payments \
-            --cov=app.routes.usage \
-            --cov-fail-under=85 \
-            --cov-report=xml \
-            --cov-report=term-missing \
-            -q
-        env:
-          DEV_MODE: "true"
-          DEV_API_KEY: "test-key"
-          ENVIRONMENT: "development"
-          SENTRY_ENVIRONMENT: "development"
-          RATE_LIMIT_ENABLED: "false"
-          OPENAI_API_KEY: "test"
-
-      # Ratchet floor for routes not yet at 85%. Only ever raise it.
-      - name: Enforce broader critical-route coverage floor (ratchet)
-        run: |
-          pytest \
-            tests/test_routes_organizations.py \
-            tests/test_routes_sso.py \
-            tests/test_routes_export.py \
-            tests/test_routes_research.py \
-            --cov=app.routes.organizations \
-            --cov=app.routes.sso \
-            --cov=app.routes.export \
-            --cov=app.routes.research \
-            --cov-fail-under=50 \
-            --cov-report=term-missing \
-            -q
-        env:
-          DEV_MODE: "true"
-          DEV_API_KEY: "test-key"
-          ENVIRONMENT: "development"
-          SENTRY_ENVIRONMENT: "development"
-          RATE_LIMIT_ENABLED: "false"
-          OPENAI_API_KEY: "test"
+      - name: Upload VERIFY stage counts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: verify-stage-backend-tests
+          path: verify-stages/
+          retention-days: 1
 
       - name: Upload coverage report
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
@@ -112,7 +73,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
@@ -124,10 +85,15 @@ jobs:
           pip install -r requirements.txt pytest pytest-asyncio
 
       - name: Run full backend tests
-        run: pytest -q
-        env:
-          DEV_MODE: "true"
-          OPENAI_API_KEY: "test"
+        run: bash ../../scripts/verify-api.sh full
+
+      - name: Upload VERIFY stage counts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: verify-stage-backend-regression
+          path: verify-stages/
+          retention-days: 1
 
   frontend-checks:
     name: Frontend Checks (Next.js)
@@ -143,19 +109,18 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Lint
-        run: bun run lint
+      # lint, design check, type-check, unit tests with coverage, build:
+      # exactly `bun run verify:web`, which also prints the VERIFY line.
+      - name: Verify (web)
+        run: bun run verify:web
 
-      # DESIGN.md's mechanically checkable rules plus the legacy ratchet
-      # (scripts/check-design-system.mjs). Zero dependencies, sub-second.
-      - name: Design check
-        run: bun run design:check
-
-      - name: Type check
-        run: bun run type-check
-
-      - name: Unit tests
-        run: bun run test:coverage
+      - name: Upload VERIFY stage counts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: verify-stage-frontend-checks
+          path: verify-stages/
+          retention-days: 1
 
       - name: Upload coverage report
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
@@ -165,12 +130,11 @@ jobs:
           path: apps/web/coverage/
           retention-days: 14
 
-      - name: Build
-        run: bun run build
-
   lighthouse:
     name: Lighthouse (score floors)
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest is now 26.04 and this repo's Playwright has no browser
+    # build for it. Go back to ubuntu-latest after a Playwright upgrade (1.64.1 works).
+    runs-on: ubuntu-24.04
     # Runs after the cheap checks so a lint or type error does not also cost a
     # build plus four Lighthouse runs. Same build recipe as frontend-checks.
     needs: [frontend-checks]
@@ -237,7 +201,9 @@ jobs:
 
   frontend-e2e:
     name: Frontend E2E (Playwright)
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest is now 26.04 and this repo's Playwright has no browser
+    # build for it. Go back to ubuntu-latest after a Playwright upgrade (1.64.1 works).
+    runs-on: ubuntu-24.04
     needs: [frontend-checks]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -254,7 +220,15 @@ jobs:
         run: bunx playwright install --with-deps chromium
 
       - name: Run E2E tests with coverage gate
-        run: bun run test:e2e:coverage
+        run: bun run verify:e2e
+
+      - name: Upload VERIFY stage counts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: verify-stage-frontend-e2e
+          path: verify-stages/
+          retention-days: 1
 
       - name: Upload E2E coverage report
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
@@ -271,6 +245,29 @@ jobs:
           name: playwright-report
           path: apps/web/playwright-report/
           retention-days: 7
+
+      # Screenshot + trace of every test, on every run (playwright.config.ts).
+      - name: Upload UI evidence
+        id: ui-evidence
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: ui-evidence
+          path: apps/web/test-results/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: List UI evidence in job summary
+        if: always()
+        env:
+          ARTIFACT_URL: ${{ steps.ui-evidence.outputs.artifact-url }}
+        run: |
+          {
+            echo "### UI evidence"
+            echo "Artifact: [ui-evidence](${ARTIFACT_URL}) (screenshots + Playwright traces)"
+            echo
+            find apps/web/test-results -name '*.png' | sort | sed 's|^apps/web/test-results/|- |'
+          } >> "$GITHUB_STEP_SUMMARY"
 
   schema-smoke:
     name: Schema Smoke (fresh-install migration)
@@ -338,7 +335,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
@@ -366,7 +363,53 @@ jobs:
       - name: Run DB-backed tests
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/blogai
-          DEV_MODE: "true"
-          OPENAI_API_KEY: "test"
+        run: bash ../../scripts/verify-api.sh db
+
+      - name: Upload VERIFY stage counts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: verify-stage-backend-db-tests
+          path: verify-stages/
+          retention-days: 1
+
+  verify-report:
+    # Merges every job's VERIFY stage counts into one machine-readable artifact for the merge gate
+    # (job summaries aren't readable via the REST API). Fails if any expected stage is missing.
+    name: Verify Report
+    runs-on: ubuntu-latest
+    needs: [backend-tests, backend-regression, frontend-checks, frontend-e2e, backend-db-tests]
+    if: always()
+
+    steps:
+      - name: Download stage counts
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          pattern: verify-stage-*
+          path: verify-stages
+          merge-multiple: true
+
+      - name: Merge into verify-report.json
+        env:
+          EXPECTED_STAGES: api-smoke api-routes api-routes-ratchet api-full web-unit e2e api-db
+          REPO: ${{ github.repository }}
+          COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          pytest tests/test_version_service.py tests/test_knowledge_metadata.py tests/test_analytics_neon.py -q
+          set -euo pipefail
+          for s in $EXPECTED_STAGES; do
+            f="verify-stages/$s.json"
+            [ -f "$f" ] || { echo "::error::missing VERIFY stage '$s'"; exit 1; }
+            jq -e --arg s "$s" '.stage == $s and ([.tests, .passed, .failed, .skipped] | all(type == "number" and . == floor and . >= 0))
+              and (.passed_ids | type == "array" and all(type == "string"))' "$f" > /dev/null \
+              || { echo "::error::unparseable VERIFY stage '$s'"; cat "$f"; exit 1; }
+          done
+          jq -n --arg repo "$REPO" --arg commit "$COMMIT" '{schema: 1, repo: $repo, commit: $commit, stages: [inputs | .passed_ids |= (unique | sort)]}' \
+            $(for s in $EXPECTED_STAGES; do echo "verify-stages/$s.json"; done) > verify-report.json
+          cat verify-report.json
+
+      - name: Upload verify-report
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: verify-report
+          path: verify-report.json
+          retention-days: 30

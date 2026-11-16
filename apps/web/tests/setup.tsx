@@ -79,9 +79,16 @@ vi.mock('next/link', () => ({
 // ---------------------------------------------------------------------------
 // Mock @clerk/nextjs
 // ---------------------------------------------------------------------------
+// <SignedIn>/<SignedOut> throw on render in @clerk/nextjs 7 (Core 3). The mock
+// throws too, so a component that reaches for them fails here and not only in
+// a production build that has a publishable key.
+const removedClerkComponent = (name: string) => (): never => {
+  throw new Error(`Clerk: <${name}> is not available in @clerk/nextjs Core 3.`)
+}
+
 vi.mock('@clerk/nextjs', () => ({
-  SignedIn: ({ children }: { children: ReactNode }) => <>{children}</>,
-  SignedOut: ({ children }: { children: ReactNode }) => <>{children}</>,
+  SignedIn: removedClerkComponent('SignedIn'),
+  SignedOut: removedClerkComponent('SignedOut'),
   UserButton: () => <div data-testid="clerk-user-button" />,
   SignIn: () => <div data-testid="clerk-sign-in" />,
   SignUp: () => <div data-testid="clerk-sign-up" />,

@@ -461,8 +461,10 @@ class SubscriptionSyncService:
         try:
             import stripe
             if stripe.api_key:
-                customer = stripe.Customer.retrieve(customer_id)
-                return customer.get("metadata", {}).get("user_id")
+                from src.payments.stripe_service import stripe_object_to_dict
+
+                customer = stripe_object_to_dict(stripe.Customer.retrieve(customer_id))
+                return (customer.get("metadata") or {}).get("user_id")
         except Exception as e:
             logger.debug(f"Could not retrieve customer from Stripe: {e}")
 
@@ -477,16 +479,16 @@ class SubscriptionSyncService:
         """
         try:
             import stripe
-            from src.payments.stripe_service import stripe_service
+            from src.payments.stripe_service import stripe_object_to_dict, stripe_service
 
             if not stripe.api_key:
                 return None
 
             import asyncio
-            subscription = await asyncio.to_thread(
-                stripe.Subscription.retrieve, subscription_id
+            subscription = stripe_object_to_dict(
+                await asyncio.to_thread(stripe.Subscription.retrieve, subscription_id)
             )
-            if subscription and subscription.get("items", {}).get("data"):
+            if subscription and (subscription.get("items") or {}).get("data"):
                 price_id = subscription["items"]["data"][0]["price"]["id"]
                 tier = stripe_service.get_tier_for_price_id(price_id)
                 return tier.value
