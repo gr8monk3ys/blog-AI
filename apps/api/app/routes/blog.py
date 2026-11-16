@@ -390,7 +390,7 @@ async def generate_blog(
             "content": "Generate a blog post",  # Sanitized - don't log actual topic
             "timestamp": datetime.now().isoformat(),
         }
-        conversations.append(request.conversation_id, user_message, user_id=user_id)
+        await conversations.append(request.conversation_id, user_message, user_id=user_id)
 
         # Add assistant message to conversation (with persistence)
         assistant_message = {
@@ -398,7 +398,7 @@ async def generate_blog(
             "content": f"Generated blog post: {blog_post.title[:50]}",  # Truncated
             "timestamp": datetime.now().isoformat(),
         }
-        conversations.append(request.conversation_id, assistant_message, user_id=user_id)
+        await conversations.append(request.conversation_id, assistant_message, user_id=user_id)
 
         # Send messages via WebSocket
         await manager.send_message(

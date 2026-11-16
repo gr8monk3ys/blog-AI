@@ -47,7 +47,8 @@ for stage in "$@"; do
       : "${DATABASE_URL:?verify-api.sh db needs DATABASE_URL pointing at a migrated Postgres}"
       DEV_MODE=true OPENAI_API_KEY=test run api-db \
         tests/test_version_service.py tests/test_knowledge_metadata.py \
-        tests/test_analytics_neon.py tests/test_quota_usage_db.py
+        tests/test_analytics_neon.py tests/test_quota_usage_db.py \
+        tests/test_durable_storage.py
       ;;
     *)
       echo "verify-api.sh: unknown stage '$stage' (smoke|routes|full|db)" >&2

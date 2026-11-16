@@ -78,7 +78,7 @@ async def authenticate_websocket(
             await websocket.send_json({"type": "auth_result", "success": True})
             return "dev_user"
 
-        user_id = api_key_store.verify_key(api_key)
+        user_id = await api_key_store.verify_key(api_key)
 
         if not user_id:
             await websocket.send_json(
@@ -164,7 +164,7 @@ async def websocket_endpoint(
                 message["timestamp"] = datetime.now().isoformat()
 
             # Add message to conversation (with persistence and ownership)
-            conversations.append(conversation_id, message, user_id=user_id)
+            await conversations.append(conversation_id, message, user_id=user_id)
 
             # Broadcast message to all connected clients
             await manager.send_message({"type": "message", **message}, conversation_id)

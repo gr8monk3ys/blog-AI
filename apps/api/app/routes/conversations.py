@@ -52,10 +52,10 @@ async def get_conversation(
     )
 
     # Verify ownership (multi-tenant isolation)
-    if not conversations.verify_ownership(conversation_id, scope_id):
+    if not await conversations.verify_ownership(conversation_id, scope_id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You don't have access to this conversation",
         )
 
-    return {"conversation": conversations.get(conversation_id)}
+    return {"conversation": await conversations.get(conversation_id)}

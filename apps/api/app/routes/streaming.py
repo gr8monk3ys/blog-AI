@@ -345,7 +345,7 @@ async def stream_via_sse(
     # Verify API key (simplified check for SSE)
     from ..auth.api_key import api_key_store
 
-    user_id = api_key_store.verify_key(x_api_key)
+    user_id = await api_key_store.verify_key(x_api_key)
     if not user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

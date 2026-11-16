@@ -106,7 +106,7 @@ def mock_dependencies():
         mock_pro_tier.return_value = None
         mock_quota.return_value = "test-user-id"
         mock_usage.return_value = AsyncMock()
-        mock_conv.append = MagicMock()
+        mock_conv.append = AsyncMock()
         mock_ws.send_message = AsyncMock()
 
         yield {

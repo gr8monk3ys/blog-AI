@@ -9,6 +9,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import asyncio
 import shutil
 import subprocess
 
@@ -53,7 +54,7 @@ def _store_key_securely(user_id: str, key: str) -> str:
     raise RuntimeError("No secure output mechanism is available on this machine.")
 
 
-def main() -> int:
+async def _main() -> int:
     parser = argparse.ArgumentParser(description="Create or reset a local API key")
     parser.add_argument("--user-id", default="local_dev", help="User ID for the key")
     parser.add_argument(
@@ -64,9 +65,9 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.reset:
-        api_key_store.revoke_key(args.user_id)
+        await api_key_store.revoke_key(args.user_id)
 
-    key = get_or_create_api_key(args.user_id)
+    key = await get_or_create_api_key(args.user_id)
     if key:
         print(_store_key_securely(args.user_id, key))
         return 0
@@ -79,4 +80,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(asyncio.run(_main()))

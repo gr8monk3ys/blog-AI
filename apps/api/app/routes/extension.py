@@ -138,7 +138,7 @@ async def extension_auth(request: ExtensionAuthRequest):
     """
     try:
         # Verify the API key
-        user_id = api_key_store.verify_key(request.api_key)
+        user_id = await api_key_store.verify_key(request.api_key)
 
         if user_id:
             usage = await get_usage_stats(user_id)

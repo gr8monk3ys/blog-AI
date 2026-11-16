@@ -104,6 +104,7 @@ class TestExtensionAuthRoute(unittest.TestCase):
     )
     @patch(
         "app.routes.extension.api_key_store.verify_key",
+        new_callable=AsyncMock,
         return_value="user_ext_test",
     )
     def test_auth_valid_key_returns_200(self, _mock_verify, _mock_usage):
@@ -121,6 +122,7 @@ class TestExtensionAuthRoute(unittest.TestCase):
 
     @patch(
         "app.routes.extension.api_key_store.verify_key",
+        new_callable=AsyncMock,
         return_value=None,
     )
     def test_auth_invalid_key_returns_401(self, _mock_verify):

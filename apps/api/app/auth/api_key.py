@@ -19,6 +19,10 @@ import bcrypt
 from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import APIKeyHeader
 
+from src.db import execute as db_execute
+from src.db import fetchrow as db_fetchrow
+from src.db import is_database_configured
+
 logger = logging.getLogger(__name__)
 
 # Bcrypt hash prefix for identifying hash type
@@ -29,24 +33,39 @@ SHA256_HASH_LENGTH = 64
 # API Key header configuration
 API_KEY_HEADER = APIKeyHeader(name="X-API-Key", auto_error=False)
 
+# Bcrypt cost factor (work factor) - 12 is a good balance of security and performance
+BCRYPT_ROUNDS = 12
+
+
+def _hash_key(api_key: str) -> str:
+    """Bcrypt-hash an API key (the salt is generated and embedded in the hash)."""
+    salt = bcrypt.gensalt(rounds=BCRYPT_ROUNDS)
+    return bcrypt.hashpw(api_key.encode("utf-8"), salt).decode("utf-8")
+
+
+def _verify_bcrypt(api_key: str, stored_hash: str) -> bool:
+    """Check an API key against a bcrypt hash (constant-time inside bcrypt)."""
+    try:
+        return bcrypt.checkpw(api_key.encode("utf-8"), stored_hash.encode("utf-8"))
+    except (ValueError, TypeError) as e:
+        logger.warning(f"Bcrypt verification error: {e}")
+        return False
+
 
 class APIKeyStore:
     """
-    File-based API key storage with secure hashing.
+    File-based API key storage with secure hashing (the local-dev fallback
+    for PostgresAPIKeyStore when DATABASE_URL is not set).
 
     API keys are stored as bcrypt hashes with automatic salting for security.
     The plain-text key is only returned once when created and cannot be
-    retrieved later. This is a stepping stone to Redis/database storage
-    in production.
+    retrieved later.
 
     Security features:
     - Bcrypt hashing with automatic salt generation (cost factor 12)
     - Legacy SHA-256 hash detection so insecure keys can be rotated
     - Constant-time verification via bcrypt.checkpw
     """
-
-    # Bcrypt cost factor (work factor) - 12 is a good balance of security and performance
-    BCRYPT_ROUNDS = 12
 
     def __init__(self, storage_path: Optional[str] = None):
         """
@@ -74,19 +93,6 @@ class APIKeyStore:
         self._load()
         logger.info(f"API key storage initialized at: {self.storage_path}")
 
-    def _hash_key(self, api_key: str) -> str:
-        """
-        Hash an API key using bcrypt with automatic salt generation.
-
-        Args:
-            api_key: The plain-text API key to hash.
-
-        Returns:
-            The bcrypt hash as a string (includes salt automatically).
-        """
-        salt = bcrypt.gensalt(rounds=self.BCRYPT_ROUNDS)
-        return bcrypt.hashpw(api_key.encode("utf-8"), salt).decode("utf-8")
-
     def _is_legacy_hash(self, stored_hash: str) -> bool:
         """
         Determine if a stored hash is a legacy SHA-256 hash.
@@ -111,23 +117,6 @@ class APIKeyStore:
             except ValueError:
                 pass
         return False
-
-    def _verify_bcrypt(self, api_key: str, stored_hash: str) -> bool:
-        """
-        Verify an API key against a bcrypt hash using constant-time comparison.
-
-        Args:
-            api_key: The plain-text API key to verify.
-            stored_hash: The bcrypt hash to verify against.
-
-        Returns:
-            True if the key matches, False otherwise.
-        """
-        try:
-            return bcrypt.checkpw(api_key.encode("utf-8"), stored_hash.encode("utf-8"))
-        except (ValueError, TypeError) as e:
-            logger.warning(f"Bcrypt verification error: {e}")
-            return False
 
     def _load(self) -> None:
         """Load API keys from disk and identify legacy hashes."""
@@ -163,7 +152,7 @@ class APIKeyStore:
         except IOError as e:
             logger.error(f"Error saving API keys: {e}")
 
-    def create_key(self, user_id: str) -> str:
+    async def create_key(self, user_id: str) -> str:
         """
         Create a new API key for a user.
 
@@ -174,13 +163,13 @@ class APIKeyStore:
             The plain-text key (only returned once - cannot be retrieved later).
         """
         plain_key = secrets.token_urlsafe(32)
-        hashed_key = self._hash_key(plain_key)
+        hashed_key = _hash_key(plain_key)
         self._cache[user_id] = hashed_key
         self._save()
         logger.info(f"Created new API key for user: {user_id}")
         return plain_key
 
-    def get_or_create_key(self, user_id: str) -> Optional[str]:
+    async def get_or_create_key(self, user_id: str) -> Optional[str]:
         """
         Get existing key status or create a new key.
 
@@ -192,9 +181,9 @@ class APIKeyStore:
         """
         if user_id in self._cache:
             return None  # Key exists but cannot be retrieved
-        return self.create_key(user_id)
+        return await self.create_key(user_id)
 
-    def verify_key(self, api_key: str) -> Optional[str]:
+    async def verify_key(self, api_key: str) -> Optional[str]:
         """
         Verify an API key and return the associated user_id.
 
@@ -219,7 +208,7 @@ class APIKeyStore:
             # Re-check against the stored hash so revoked/rotated keys can
             # never be replayed from the index.
             stored_hash = self._cache.get(cached_user)
-            if stored_hash and not self._is_legacy_hash(stored_hash) and self._verify_bcrypt(
+            if stored_hash and not self._is_legacy_hash(stored_hash) and _verify_bcrypt(
                 api_key, stored_hash
             ):
                 return cached_user
@@ -231,7 +220,7 @@ class APIKeyStore:
                 continue
 
             # Bcrypt hash - bcrypt.checkpw uses constant-time comparison
-            if self._verify_bcrypt(api_key, stored_hash):
+            if _verify_bcrypt(api_key, stored_hash):
                 if result is None:
                     result = user_id
         if result is not None:
@@ -277,7 +266,7 @@ class APIKeyStore:
         """
         return list(self._legacy_hash_users)
 
-    def revoke_key(self, user_id: str) -> bool:
+    async def revoke_key(self, user_id: str) -> bool:
         """
         Revoke a user's API key.
 
@@ -294,7 +283,7 @@ class APIKeyStore:
             return True
         return False
 
-    def user_has_key(self, user_id: str) -> bool:
+    async def user_has_key(self, user_id: str) -> bool:
         """
         Check if a user has an API key.
 
@@ -307,11 +296,85 @@ class APIKeyStore:
         return user_id in self._cache
 
 
-# Initialize API key storage singleton
-api_key_store = APIKeyStore()
+class PostgresAPIKeyStore:
+    """
+    API keys in the Postgres `api_keys` table, used when DATABASE_URL is set.
+
+    Same interface as APIKeyStore. Each row holds a bcrypt hash (the verifier)
+    and a SHA-256 digest of the key (an indexed lookup), so verifying a key
+    costs one bcrypt check instead of one per stored user. The keys are 256-bit
+    random tokens, so an unsalted digest of one cannot be guessed back.
+    """
+
+    @staticmethod
+    def _lookup(api_key: str) -> str:
+        return hashlib.sha256(api_key.encode("utf-8")).hexdigest()
+
+    async def create_key(self, user_id: str) -> str:
+        """Create (or replace) the user's key; the plaintext is returned once."""
+        plain_key = secrets.token_urlsafe(32)
+        await db_execute(
+            """
+            INSERT INTO api_keys (user_id, key_hash, key_lookup)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (user_id) DO UPDATE
+            SET key_hash = EXCLUDED.key_hash,
+                key_lookup = EXCLUDED.key_lookup,
+                created_at = NOW()
+            """,
+            user_id,
+            _hash_key(plain_key),
+            self._lookup(plain_key),
+        )
+        logger.info(f"Created new API key for user: {user_id}")
+        return plain_key
+
+    async def get_or_create_key(self, user_id: str) -> str | None:
+        """Create a key unless the user has one; None if they already do."""
+        plain_key = secrets.token_urlsafe(32)
+        row = await db_fetchrow(
+            """
+            INSERT INTO api_keys (user_id, key_hash, key_lookup)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (user_id) DO NOTHING
+            RETURNING user_id
+            """,
+            user_id,
+            _hash_key(plain_key),
+            self._lookup(plain_key),
+        )
+        return plain_key if row else None
+
+    async def verify_key(self, api_key: str) -> str | None:
+        """Return the user_id the key belongs to, or None."""
+        row = await db_fetchrow(
+            "SELECT user_id, key_hash FROM api_keys WHERE key_lookup = $1",
+            self._lookup(api_key),
+        )
+        if row and _verify_bcrypt(api_key, row["key_hash"]):
+            return row["user_id"]
+        return None
+
+    async def revoke_key(self, user_id: str) -> bool:
+        """Delete the user's key; False if they had none."""
+        row = await db_fetchrow(
+            "DELETE FROM api_keys WHERE user_id = $1 RETURNING user_id", user_id
+        )
+        if row:
+            logger.info(f"Revoked API key for user: {user_id}")
+        return row is not None
+
+    async def user_has_key(self, user_id: str) -> bool:
+        row = await db_fetchrow("SELECT 1 FROM api_keys WHERE user_id = $1", user_id)
+        return row is not None
 
 
-def get_or_create_api_key(user_id: str) -> Optional[str]:
+# Postgres when DATABASE_URL is set (Vercel's disk does not survive a cold
+# start); the JSON file is the local-dev fallback.
+api_key_store = PostgresAPIKeyStore() if is_database_configured() else APIKeyStore()
+
+
+async def get_or_create_api_key(user_id: str) -> Optional[str]:
     """
     Generate or retrieve API key for a user.
 
@@ -321,7 +384,7 @@ def get_or_create_api_key(user_id: str) -> Optional[str]:
     Returns:
         The plain-text key if newly created, None if user already has a key.
     """
-    return api_key_store.get_or_create_key(user_id)
+    return await api_key_store.get_or_create_key(user_id)
 
 
 def _is_production() -> bool:
@@ -425,7 +488,7 @@ async def verify_api_key(
         )
 
     # Verify API key using secure storage
-    user_id = api_key_store.verify_key(api_key)
+    user_id = await api_key_store.verify_key(api_key)
     if user_id:
         return user_id
 

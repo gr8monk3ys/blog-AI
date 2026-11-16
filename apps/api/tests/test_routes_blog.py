@@ -128,7 +128,7 @@ def mock_dependencies():
         mock_pro_tier.return_value = None
         mock_quota.return_value = "test-user-id"
         mock_usage.return_value = AsyncMock()
-        mock_conv.append = MagicMock()
+        mock_conv.append = AsyncMock()
         mock_ws.send_message = AsyncMock()
         mock_webhook.emit_content_generated = AsyncMock()
 
@@ -1079,7 +1079,7 @@ class TestBlogSEOAndFactCheck:
                  patch("app.routes.blog.generate_blog_post") as mock_gen:
 
                 mock_auth.return_value = "test-user-id"
-                mock_conv.append = MagicMock()
+                mock_conv.append = AsyncMock()
                 mock_ws.send_message = AsyncMock()
                 mock_webhook.emit_content_generated = AsyncMock()
                 mock_gen.return_value = sample_blog_post
