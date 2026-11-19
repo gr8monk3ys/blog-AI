@@ -27,7 +27,7 @@ Not mapped yet: the browser extension (`apps/extension`) and the public REST API
 
 | Feature | Where | How to reach it | How to check it works |
 |---|---|---|---|
-| Browse and search AI tools | `/tools` | Header → Tools | 29 tools with category chips (Blog, Email, Social Media, …) and a "Free only" chip; typing "email" in Search tools leaves only email tools |
+| Browse and search AI tools | `/tools` | Header → Tools | 29 tools with category chips (Blog, Email, Social Media, …) and a "Free Only" chip; typing "email" in Search tools leaves only email tools |
 | Tools by category | `/tools/category/<category>` | Open a category, e.g. `/tools/category/email` | "Email Tools" heading listing only that category's tools |
 | Run a single tool | `/tools/<slug>`; API `/api/v1/tools/*` | Click a tool card on `/tools` | The tool workspace opens with its input form; submitting returns the generated text (needs sign-in, API key and LLM key) |
 | Generate a blog post | `/generate`; API `POST /api/v1/generate-blog` | Header → Generate | Topic, keywords, tone and provider fields plus research / proofread / humanize / SEO / fact-check toggles; "Generate Blog Post" returns a post (needs API key and LLM key; otherwise an error alert) |
