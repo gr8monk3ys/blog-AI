@@ -1,7 +1,7 @@
 import SiteHeader from '../../components/SiteHeader'
 import SiteFooter from '../../components/SiteFooter'
 
-const LAST_UPDATED = 'February 22, 2026'
+const LAST_UPDATED = 'November 1, 2026'
 const PRIVACY_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? 'support@lscaturchio.xyz'
 
 // A legal page on the notebook: the reading column (42rem), a wall label with
@@ -105,6 +105,10 @@ export default function PrivacyPageClient(): React.ReactElement {
                 <strong>Error tracking (Sentry)</strong> — for monitoring and
                 debugging
               </li>
+              <li>
+                <strong>Hosting and analytics (Vercel)</strong> — for hosting the
+                site and for Vercel Web Analytics and Speed Insights
+              </li>
             </ul>
             <p>
               We do not sell your personal information to third parties.
@@ -116,6 +120,14 @@ export default function PrivacyPageClient(): React.ReactElement {
               management. We do not use third-party advertising cookies. Our
               authentication provider may set additional cookies as part of the
               sign-in process.
+            </p>
+            <p>
+              We use Vercel Web Analytics and Speed Insights to count page views
+              and measure page performance. They receive the page address
+              (without its query string), the referring page, your approximate
+              location, browser, operating system and device type. Vercel states
+              that Web Analytics uses no third-party cookies and identifies a
+              visit by a hash of the request that is discarded after 24 hours.
             </p>
 
             <h2>6. Data Security</h2>

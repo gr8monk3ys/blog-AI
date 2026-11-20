@@ -1,6 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import { withoutQueryString } from '../lib/analytics-url'
 
 // Analytics and Speed Insights never affect what the user sees, so they load
 // after hydration instead of riding in the initial bundle.
@@ -15,8 +16,8 @@ const SpeedInsights = dynamic(
 export default function DeferredAnalytics() {
   return (
     <>
-      <Analytics />
-      <SpeedInsights />
+      <Analytics beforeSend={withoutQueryString} />
+      <SpeedInsights beforeSend={withoutQueryString} />
     </>
   )
 }
