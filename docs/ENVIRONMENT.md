@@ -131,7 +131,7 @@ dropped: the web app has no Stripe.js and never read it.
 | `ANTHROPIC_API_KEY` | optional | API | Claude provider. Configured in production. |
 | `ANTHROPIC_MODEL` | optional | API | Default Anthropic model. |
 | `API_BASE_URL` | optional | API | Legacy alias of PUBLIC_API_URL read by the extension route. |
-| `API_KEY_STORAGE_PATH` | optional | API | JSON file of issued API keys (scripts/create_api_key.py). Ephemeral on Vercel. |
+| `API_KEY_STORAGE_PATH` | optional | API | JSON file of issued API keys (scripts/create_api_key.py); used only without `DATABASE_URL` (else the `api_keys` table). Ephemeral on Vercel. |
 | `APP_BASE_URL` | optional | API | Public web origin used for SSO redirects and emails. |
 | `APP_ENV` | optional | API | Legacy alias consulted by src/utils/logging; prefer ENVIRONMENT. |
 | `BACKEND_PORT` | dev only | API | Local listen port when PORT is unset (default 8000). |
@@ -146,7 +146,7 @@ dropped: the web app has no Stripe.js and never read it.
 | `CLERK_JWT_AUDIENCE` | optional | API | Expected `aud`, when the Clerk template sets one. |
 | `CLERK_JWT_ISSUER` | required | API | Expected `iss` of Clerk session tokens. |
 | `COHERE_API_KEY` | optional | API | Cohere embeddings. |
-| `CONVERSATION_STORAGE_DIR` | optional | API | File fallback for conversations. Ephemeral on Vercel. |
+| `CONVERSATION_STORAGE_DIR` | optional | API | File fallback for conversations, used only without `DATABASE_URL` (else the `conversations` table). Ephemeral on Vercel. |
 | `COPYSCAPE_API_KEY` | optional | API | Plagiarism check. |
 | `COPYSCAPE_USERNAME` | optional | API | Plagiarism check (with COPYSCAPE_API_KEY). |
 | `DATABASE_POOL_MAX_SIZE` | optional | API | asyncpg pool maximum. |

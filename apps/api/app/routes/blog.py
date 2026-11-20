@@ -152,6 +152,10 @@ async def generate_blog(
         # We call the dependency directly so we reuse the already-authenticated user_id.
         await require_quota(user_id)
 
+        # Refuse someone else's conversation before spending on generation.
+        if not await conversations.verify_ownership(request.conversation_id, user_id):
+            raise PermissionError("Not authorized for this conversation")
+
         settings = get_settings()
         provider_type = request.provider_type or settings.llm.default_provider or "openai"
         if provider_type not in settings.llm.available_providers:
@@ -390,7 +394,7 @@ async def generate_blog(
             "content": "Generate a blog post",  # Sanitized - don't log actual topic
             "timestamp": datetime.now().isoformat(),
         }
-        conversations.append(request.conversation_id, user_message, user_id=user_id)
+        await conversations.append(request.conversation_id, user_message, user_id=user_id)
 
         # Add assistant message to conversation (with persistence)
         assistant_message = {
@@ -398,7 +402,7 @@ async def generate_blog(
             "content": f"Generated blog post: {blog_post.title[:50]}",  # Truncated
             "timestamp": datetime.now().isoformat(),
         }
-        conversations.append(request.conversation_id, assistant_message, user_id=user_id)
+        await conversations.append(request.conversation_id, assistant_message, user_id=user_id)
 
         # Send messages via WebSocket
         await manager.send_message(
@@ -481,6 +485,11 @@ async def generate_blog(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate blog post. Please try again later.",
+        )
+    except PermissionError:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have access to this conversation",
         )
     except HTTPException:
         # Preserve explicit HTTP errors (e.g., quota/auth failures).

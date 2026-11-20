@@ -50,8 +50,15 @@ async def _check_database() -> Dict[str, Any]:
 
     try:
         start = time.monotonic()
-        row = await db_fetchrow("SELECT 1 AS ok")
+        # API-key auth and conversations need these tables (db/migrations/010).
+        row = await db_fetchrow(
+            "SELECT to_regclass('public.api_keys') IS NOT NULL"
+            " AND to_regclass('public.conversations') IS NOT NULL AS ok"
+        )
         latency_ms = round((time.monotonic() - start) * 1000, 2)
+        if row and not row["ok"]:
+            logger.error("Database is missing api_keys/conversations; apply db/migrations/010")
+            return {"status": "schema_missing", "latency_ms": latency_ms}
         if row:
             return {"status": "connected", "latency_ms": latency_ms}
         return {"status": "disconnected", "latency_ms": None}

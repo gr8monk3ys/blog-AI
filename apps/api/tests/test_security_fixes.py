@@ -237,7 +237,7 @@ class TestWebSocketAuthentication:
         auth_msg = json.dumps({'type': 'auth', 'api_key': 'valid-key-123'})
         ws = self._make_mock_ws(receive_text_side_effect=[auth_msg])
 
-        with patch('app.routes.websocket.api_key_store') as mock_store:
+        with patch('app.routes.websocket.api_key_store', new_callable=AsyncMock) as mock_store:
             mock_store.verify_key.return_value = 'user-abc'
             result = await authenticate(ws)
 
@@ -266,7 +266,7 @@ class TestWebSocketAuthentication:
 
         ws.receive_text = _timeout_receive
 
-        with patch('app.routes.websocket.api_key_store'):
+        with patch('app.routes.websocket.api_key_store', new_callable=AsyncMock):
             result = await authenticate(ws)
 
         assert result is None
@@ -283,7 +283,7 @@ class TestWebSocketAuthentication:
         bad_msg = json.dumps({'type': 'subscribe', 'api_key': 'some-key'})
         ws = self._make_mock_ws(receive_text_side_effect=[bad_msg])
 
-        with patch('app.routes.websocket.api_key_store'):
+        with patch('app.routes.websocket.api_key_store', new_callable=AsyncMock):
             result = await authenticate(ws)
 
         assert result is None
@@ -301,7 +301,7 @@ class TestWebSocketAuthentication:
         bad_msg = json.dumps({'type': 'auth'})
         ws = self._make_mock_ws(receive_text_side_effect=[bad_msg])
 
-        with patch('app.routes.websocket.api_key_store'):
+        with patch('app.routes.websocket.api_key_store', new_callable=AsyncMock):
             result = await authenticate(ws)
 
         assert result is None
@@ -314,7 +314,7 @@ class TestWebSocketAuthentication:
         bad_msg = json.dumps({'type': 'auth', 'api_key': ''})
         ws = self._make_mock_ws(receive_text_side_effect=[bad_msg])
 
-        with patch('app.routes.websocket.api_key_store'):
+        with patch('app.routes.websocket.api_key_store', new_callable=AsyncMock):
             result = await authenticate(ws)
 
         assert result is None
@@ -329,7 +329,7 @@ class TestWebSocketAuthentication:
         auth_msg = json.dumps({'type': 'auth', 'api_key': 'bad-key-999'})
         ws = self._make_mock_ws(receive_text_side_effect=[auth_msg])
 
-        with patch('app.routes.websocket.api_key_store') as mock_store:
+        with patch('app.routes.websocket.api_key_store', new_callable=AsyncMock) as mock_store:
             mock_store.verify_key.return_value = None
             result = await authenticate(ws)
 
@@ -347,7 +347,7 @@ class TestWebSocketAuthentication:
         authenticate = self._get_authenticate()
         ws = self._make_mock_ws(receive_text_side_effect=['not valid json {{{'])
 
-        with patch('app.routes.websocket.api_key_store'):
+        with patch('app.routes.websocket.api_key_store', new_callable=AsyncMock):
             result = await authenticate(ws)
 
         assert result is None

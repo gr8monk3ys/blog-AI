@@ -12,7 +12,7 @@ Authorization:
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from src.config import get_settings
 from src.organizations import AuthorizationContext
@@ -30,6 +30,7 @@ from src.types.remix import (
 from ..auth import verify_api_key
 from ..dependencies import require_content_access, require_content_creation
 from ..error_handlers import sanitize_error_message
+from ..storage import conversations
 from ..middleware import increment_usage_for_operation, require_pro_tier, require_quota
 
 
@@ -89,6 +90,13 @@ class RemixRequestAPI(BaseModel):
         default="openai",
         description="LLM provider to use"
     )
+
+    @field_validator("conversation_id")
+    @classmethod
+    def reject_retry_channel(cls, v: str) -> str:
+        if v.startswith("retry-"):
+            raise ValueError("conversation ids starting with 'retry-' are reserved for batch retries; use another id")
+        return v
 
 
 class PreviewRequestAPI(BaseModel):
@@ -243,8 +251,14 @@ async def transform_content(
 
     **Authorization:** Requires content.create permission in the organization.
     """
-    # Use organization_id for scoping if available, fallback to user_id
-    scope_id = auth_ctx.organization_id or auth_ctx.user_id
+    try:
+        await conversations.claim(request.conversation_id, auth_ctx.user_id)
+    except PermissionError:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have access to this conversation",
+        )
+
     user_id = auth_ctx.user_id
     # Validate formats
     target_formats = []
@@ -324,7 +338,7 @@ async def transform_single_format(
     # Override target formats
     request.target_formats = [format_id]
 
-    return await transform_content(request, auth_ctx)
+    return await transform_content(request, auth_ctx=auth_ctx)
 
 
 @router.post("/batch")
@@ -350,7 +364,7 @@ async def batch_transform(
     results = []
     for req in requests:
         try:
-            result = await transform_content(req, auth_ctx)
+            result = await transform_content(req, auth_ctx=auth_ctx)
             results.append({
                 "success": True,
                 "conversation_id": req.conversation_id,

@@ -78,7 +78,7 @@ async def authenticate_websocket(
             await websocket.send_json({"type": "auth_result", "success": True})
             return "dev_user"
 
-        user_id = api_key_store.verify_key(api_key)
+        user_id = await api_key_store.verify_key(api_key)
 
         if not user_id:
             await websocket.send_json(
@@ -120,6 +120,13 @@ async def websocket_endpoint(
     # Validate conversation_id format
     if not re.match(r"^[a-zA-Z0-9_-]+$", conversation_id):
         await websocket.close(code=4000, reason="Invalid conversation ID format")
+        return
+
+    # Bind the owner now, so nobody else can later adopt an id this socket listens on.
+    try:
+        await conversations.claim(conversation_id, user_id)
+    except PermissionError:
+        await websocket.close(code=4003, reason="Not authorized for this conversation")
         return
 
     # WebSocket was already accepted during authentication.
@@ -164,7 +171,12 @@ async def websocket_endpoint(
                 message["timestamp"] = datetime.now().isoformat()
 
             # Add message to conversation (with persistence and ownership)
-            conversations.append(conversation_id, message, user_id=user_id)
+            try:
+                await conversations.append(conversation_id, message, user_id=user_id)
+            except PermissionError:
+                manager.disconnect(websocket, conversation_id)
+                await websocket.close(code=4003, reason="Not authorized for this conversation")
+                return
 
             # Broadcast message to all connected clients
             await manager.send_message({"type": "message", **message}, conversation_id)

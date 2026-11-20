@@ -31,7 +31,11 @@ HEADERS = {"X-API-Key": "valid-key"}
 def client():
     from server import app
 
-    with patch("app.auth.api_key.api_key_store.verify_key", return_value="user_1"):
+    with patch(
+        "app.auth.api_key.api_key_store.verify_key",
+        new_callable=AsyncMock,
+        return_value="user_1",
+    ):
         yield TestClient(app)
 
 

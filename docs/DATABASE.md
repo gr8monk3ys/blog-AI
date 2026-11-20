@@ -18,7 +18,8 @@ recorded in a tracking table so re-runs are no-ops.
 | `apps/api/migrations/` | `cd apps/api && python server.py --migrate` | `_migrations` |
 
 `db/migrations/` is the schema: core tables, brand voice, workflows/SSO, research,
-organizations, Stripe webhook events, content versions, knowledge base, analytics.
+organizations, Stripe webhook events, content versions, knowledge base, analytics, API
+keys and conversations.
 `apps/api/migrations/` adds the webhook delivery tables and knowledge-base columns
 the API creates on its own. `rollback/` subdirectories hold the matching down scripts
 and are skipped by both runners.

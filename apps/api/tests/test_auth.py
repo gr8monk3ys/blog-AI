@@ -40,7 +40,7 @@ def get_auth_module():
     return auth_module
 
 
-class TestAPIKeyCreation(unittest.TestCase):
+class TestAPIKeyCreation(unittest.IsolatedAsyncioTestCase):
     """Tests for API key creation functionality."""
 
     def setUp(self):
@@ -57,11 +57,11 @@ class TestAPIKeyCreation(unittest.TestCase):
         if os.path.exists(self.temp_dir):
             os.rmdir(self.temp_dir)
 
-    def test_create_key_returns_unique_keys(self):
+    async def test_create_key_returns_unique_keys(self):
         """API key creation should return unique keys for different users."""
-        key1 = self.store.create_key("user-1")
-        key2 = self.store.create_key("user-2")
-        key3 = self.store.create_key("user-3")
+        key1 = await self.store.create_key("user-1")
+        key2 = await self.store.create_key("user-2")
+        key3 = await self.store.create_key("user-3")
 
         # All keys should be unique
         self.assertNotEqual(key1, key2)
@@ -73,22 +73,22 @@ class TestAPIKeyCreation(unittest.TestCase):
         self.assertGreater(len(key2), 30)
         self.assertGreater(len(key3), 30)
 
-    def test_create_key_for_same_user_returns_new_key(self):
+    async def test_create_key_for_same_user_returns_new_key(self):
         """Creating a key for the same user should replace the old key."""
-        key1 = self.store.create_key("user-1")
-        key2 = self.store.create_key("user-1")
+        key1 = await self.store.create_key("user-1")
+        key2 = await self.store.create_key("user-1")
 
         # Keys should be different
         self.assertNotEqual(key1, key2)
 
         # Old key should no longer work
-        self.assertIsNone(self.store.verify_key(key1))
+        self.assertIsNone(await self.store.verify_key(key1))
 
         # New key should work
-        self.assertEqual(self.store.verify_key(key2), "user-1")
+        self.assertEqual(await self.store.verify_key(key2), "user-1")
 
 
-class TestAPIKeyVerification(unittest.TestCase):
+class TestAPIKeyVerification(unittest.IsolatedAsyncioTestCase):
     """Tests for API key verification functionality."""
 
     def setUp(self):
@@ -105,56 +105,56 @@ class TestAPIKeyVerification(unittest.TestCase):
         if os.path.exists(self.temp_dir):
             os.rmdir(self.temp_dir)
 
-    def test_verify_key_returns_user_id_for_valid_key(self):
+    async def test_verify_key_returns_user_id_for_valid_key(self):
         """Verifying a valid API key should return the associated user_id."""
         user_id = "test-user-123"
-        api_key = self.store.create_key(user_id)
+        api_key = await self.store.create_key(user_id)
 
-        result = self.store.verify_key(api_key)
+        result = await self.store.verify_key(api_key)
 
         self.assertEqual(result, user_id)
 
-    def test_verify_key_returns_none_for_invalid_key(self):
+    async def test_verify_key_returns_none_for_invalid_key(self):
         """Verifying an invalid API key should return None."""
         # Create a key for another user
-        self.store.create_key("some-user")
+        await self.store.create_key("some-user")
 
         # Try to verify a completely invalid key
-        result = self.store.verify_key("invalid-api-key-12345")
+        result = await self.store.verify_key("invalid-api-key-12345")
 
         self.assertIsNone(result)
 
-    def test_verify_key_returns_none_for_empty_key(self):
+    async def test_verify_key_returns_none_for_empty_key(self):
         """Verifying an empty key should return None."""
-        result = self.store.verify_key("")
+        result = await self.store.verify_key("")
         self.assertIsNone(result)
 
-    def test_verify_key_returns_none_for_similar_key(self):
+    async def test_verify_key_returns_none_for_similar_key(self):
         """Verifying a key that is similar but not exact should return None."""
         user_id = "test-user"
-        api_key = self.store.create_key(user_id)
+        api_key = await self.store.create_key(user_id)
 
         # Try with slightly modified key
         modified_key = api_key[:-1] + "X"
-        result = self.store.verify_key(modified_key)
+        result = await self.store.verify_key(modified_key)
 
         self.assertIsNone(result)
 
-    def test_verify_key_uses_bcrypt_constant_time_comparison(self):
+    async def test_verify_key_uses_bcrypt_constant_time_comparison(self):
         """Verify that key comparison uses bcrypt (which has constant-time comparison)."""
         user_id = "test-user"
-        api_key = self.store.create_key(user_id)
+        api_key = await self.store.create_key(user_id)
 
         # Patch bcrypt.checkpw to verify it's being used for constant-time comparison
         with patch.object(
             self.auth_module.bcrypt, "checkpw", return_value=True
         ) as mock_checkpw:
-            self.store.verify_key(api_key)
+            await self.store.verify_key(api_key)
             # bcrypt.checkpw should be called (bcrypt uses constant-time comparison)
             self.assertTrue(mock_checkpw.called)
 
 
-class TestAPIKeyRevocation(unittest.TestCase):
+class TestAPIKeyRevocation(unittest.IsolatedAsyncioTestCase):
     """Tests for API key revocation functionality."""
 
     def setUp(self):
@@ -171,44 +171,44 @@ class TestAPIKeyRevocation(unittest.TestCase):
         if os.path.exists(self.temp_dir):
             os.rmdir(self.temp_dir)
 
-    def test_revoke_key_removes_access(self):
+    async def test_revoke_key_removes_access(self):
         """Revoking a key should prevent future verification."""
         user_id = "test-user"
-        api_key = self.store.create_key(user_id)
+        api_key = await self.store.create_key(user_id)
 
         # Verify key works before revocation
-        self.assertEqual(self.store.verify_key(api_key), user_id)
+        self.assertEqual(await self.store.verify_key(api_key), user_id)
 
         # Revoke the key
-        result = self.store.revoke_key(user_id)
+        result = await self.store.revoke_key(user_id)
         self.assertTrue(result)
 
         # Verify key no longer works
-        self.assertIsNone(self.store.verify_key(api_key))
+        self.assertIsNone(await self.store.verify_key(api_key))
 
-    def test_revoke_key_returns_false_for_nonexistent_user(self):
+    async def test_revoke_key_returns_false_for_nonexistent_user(self):
         """Revoking a key for a user without a key should return False."""
-        result = self.store.revoke_key("nonexistent-user")
+        result = await self.store.revoke_key("nonexistent-user")
         self.assertFalse(result)
 
-    def test_revoke_key_does_not_affect_other_users(self):
+    async def test_revoke_key_does_not_affect_other_users(self):
         """Revoking one user's key should not affect other users."""
         user1_id = "user-1"
         user2_id = "user-2"
-        key1 = self.store.create_key(user1_id)
-        key2 = self.store.create_key(user2_id)
+        key1 = await self.store.create_key(user1_id)
+        key2 = await self.store.create_key(user2_id)
 
         # Revoke user1's key
-        self.store.revoke_key(user1_id)
+        await self.store.revoke_key(user1_id)
 
         # User1's key should not work
-        self.assertIsNone(self.store.verify_key(key1))
+        self.assertIsNone(await self.store.verify_key(key1))
 
         # User2's key should still work
-        self.assertEqual(self.store.verify_key(key2), user2_id)
+        self.assertEqual(await self.store.verify_key(key2), user2_id)
 
 
-class TestIsProduction(unittest.TestCase):
+class TestIsProduction(unittest.IsolatedAsyncioTestCase):
     """Tests for _is_production() to detect production environments."""
 
     def setUp(self):
@@ -256,7 +256,7 @@ class TestIsProduction(unittest.TestCase):
             result = auth_module._is_production()
             self.assertTrue(result)
 
-    def test_is_production_false_for_development(self):
+    async def test_is_production_false_for_development(self):
         """_is_production() should return False for development environments."""
         with patch.dict(os.environ, {
             "SENTRY_ENVIRONMENT": "development",
@@ -325,7 +325,7 @@ class TestVerifyAPIKeyDependency(unittest.IsolatedAsyncioTestCase):
             store = auth_module.APIKeyStore(storage_path=self.temp_storage)
             auth_module.api_key_store = store
             user_id = "test-user-123"
-            api_key = store.create_key(user_id)
+            api_key = await store.create_key(user_id)
 
             result = await auth_module.verify_api_key(api_key=api_key)
 
@@ -358,7 +358,7 @@ class TestVerifyAPIKeyDependency(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(context.exception.status_code, 401)
 
 
-class TestAPIKeyPersistence(unittest.TestCase):
+class TestAPIKeyPersistence(unittest.IsolatedAsyncioTestCase):
     """Tests for API key storage persistence."""
 
     def setUp(self):
@@ -374,38 +374,38 @@ class TestAPIKeyPersistence(unittest.TestCase):
         if os.path.exists(self.temp_dir):
             os.rmdir(self.temp_dir)
 
-    def test_keys_persist_across_store_instances(self):
+    async def test_keys_persist_across_store_instances(self):
         """API keys should persist when creating new store instances."""
         user_id = "persistent-user"
 
         # Create key with first store instance
         store1 = self.auth_module.APIKeyStore(storage_path=self.temp_storage)
-        api_key = store1.create_key(user_id)
+        api_key = await store1.create_key(user_id)
 
         # Create new store instance (simulating app restart)
         store2 = self.auth_module.APIKeyStore(storage_path=self.temp_storage)
 
         # Key should still be verifiable
-        result = store2.verify_key(api_key)
+        result = await store2.verify_key(api_key)
         self.assertEqual(result, user_id)
 
-    def test_user_has_key_method(self):
+    async def test_user_has_key_method(self):
         """user_has_key should correctly report key existence."""
         store = self.auth_module.APIKeyStore(storage_path=self.temp_storage)
 
         # Initially no key
-        self.assertFalse(store.user_has_key("test-user"))
+        self.assertFalse(await store.user_has_key("test-user"))
 
         # After creation
-        store.create_key("test-user")
-        self.assertTrue(store.user_has_key("test-user"))
+        await store.create_key("test-user")
+        self.assertTrue(await store.user_has_key("test-user"))
 
         # After revocation
-        store.revoke_key("test-user")
-        self.assertFalse(store.user_has_key("test-user"))
+        await store.revoke_key("test-user")
+        self.assertFalse(await store.user_has_key("test-user"))
 
 
-class TestGetOrCreateAPIKey(unittest.TestCase):
+class TestGetOrCreateAPIKey(unittest.IsolatedAsyncioTestCase):
     """Tests for the get_or_create_key convenience function."""
 
     def setUp(self):
@@ -421,24 +421,24 @@ class TestGetOrCreateAPIKey(unittest.TestCase):
         if os.path.exists(self.temp_dir):
             os.rmdir(self.temp_dir)
 
-    def test_get_or_create_returns_key_for_new_user(self):
+    async def test_get_or_create_returns_key_for_new_user(self):
         """get_or_create_key should return a key for new users."""
         store = self.auth_module.APIKeyStore(storage_path=self.temp_storage)
 
-        result = store.get_or_create_key("new-user")
+        result = await store.get_or_create_key("new-user")
 
         self.assertIsNotNone(result)
         self.assertGreater(len(result), 30)
 
-    def test_get_or_create_returns_none_for_existing_user(self):
+    async def test_get_or_create_returns_none_for_existing_user(self):
         """get_or_create_key should return None for existing users."""
         store = self.auth_module.APIKeyStore(storage_path=self.temp_storage)
 
         # Create initial key
-        store.create_key("existing-user")
+        await store.create_key("existing-user")
 
         # Second call should return None
-        result = store.get_or_create_key("existing-user")
+        result = await store.get_or_create_key("existing-user")
 
         self.assertIsNone(result)
 

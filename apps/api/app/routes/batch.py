@@ -63,6 +63,7 @@ from ..dependencies import (
 )
 from ..error_handlers import sanitize_error_message
 from ..middleware import require_pro_tier
+from ..storage import conversations
 from ..websocket import manager
 
 logger = logging.getLogger(__name__)
@@ -295,6 +296,14 @@ async def create_batch_job(
 
     **Authorization:** Requires Pro tier (or higher) and content.create permission.
     """
+    try:
+        await conversations.claim(request.conversation_id, auth_ctx.user_id)
+    except PermissionError:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have access to this conversation",
+        )
+
     if len(request.items) > 100:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -399,6 +408,19 @@ async def import_csv_batch(
     "AI in Healthcare","AI,healthcare,diagnosis",professional,blog
     "Sustainable Tech","green,sustainability",informative,blog
     """
+    if conversation_id.startswith("retry-"):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="conversation ids starting with 'retry-' are reserved for batch retries; use another id",
+        )
+    try:
+        await conversations.claim(conversation_id, auth_ctx.user_id)
+    except PermissionError:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have access to this conversation",
+        )
+
     if not file.filename.endswith(".csv"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="File must be a CSV file"
@@ -632,8 +654,16 @@ async def retry_failed_items(
     )
     _validate_configured_providers(preferred_provider, fallback_providers)
 
-    # Create retry job
+    # A fresh, unguessable channel per retry, so nobody can be listening on it in advance.
     retry_job_id = str(uuid.uuid4())
+    retry_conversation_id = f"retry-{retry_job_id}"
+    try:
+        await conversations.claim(retry_conversation_id, user_id)
+    except PermissionError:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have access to this conversation",
+        )
 
     # Build items for retry
     retry_items = [
@@ -651,9 +681,9 @@ async def retry_failed_items(
         research_enabled=False,
         proofread_enabled=True,
         humanize_enabled=False,
-        conversation_id=f"retry-{job_id}",
+        conversation_id="retry",
         name=f"Retry of {job.name or job_id}",
-    )
+    ).model_copy(update={"conversation_id": retry_conversation_id})
 
     retry_job_status = EnhancedBatchStatus(
         job_id=retry_job_id,

@@ -9,15 +9,23 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from src.db import fetchrow as db_fetchrow
+from src.db import is_database_configured
+
 logger = logging.getLogger(__name__)
+
+
+def _validate_id(conversation_id: str) -> None:
+    if not re.fullmatch(r"[a-zA-Z0-9_-]+", conversation_id):
+        raise ValueError("Invalid conversation id")
 
 
 class ConversationStore:
     """
-    File-based conversation storage for persistence across restarts.
+    File-based conversation storage for persistence across restarts (the
+    local-dev fallback for PostgresConversationStore when DATABASE_URL is not set).
 
     Conversations are stored as JSON files in a configurable directory.
-    This is a stepping stone to Redis/database storage in production.
 
     Ownership tracking: Each conversation has an associated owner_id that must
     match the requesting user for access to be granted.
@@ -91,7 +99,7 @@ class ConversationStore:
         """
         return self._ownership.get(conversation_id)
 
-    def verify_ownership(self, conversation_id: str, user_id: str) -> bool:
+    async def verify_ownership(self, conversation_id: str, user_id: str) -> bool:
         """
         Verify that a user owns a conversation.
 
@@ -119,6 +127,18 @@ class ConversationStore:
             return not conversation_exists
         return owner == user_id
 
+    async def claim(self, conversation_id: str, user_id: str) -> None:
+        """
+        Make user_id the owner of a conversation nobody owns yet.
+
+        Raises:
+            PermissionError: The conversation belongs to someone else.
+        """
+        if not await self.verify_ownership(conversation_id, user_id):
+            raise PermissionError("Not authorized for this conversation")
+        if self.get_owner(conversation_id) is None:
+            self.set_owner(conversation_id, user_id)
+
     def _get_file_path(self, conversation_id: str) -> Path:
         """
         Get the file path for a conversation.
@@ -131,15 +151,14 @@ class ConversationStore:
         """
         # Sanitize conversation_id to prevent path traversal, then verify the
         # resolved path stays inside the storage directory.
-        if not re.fullmatch(r"[a-zA-Z0-9_-]+", conversation_id):
-            raise ValueError("Invalid conversation id")
+        _validate_id(conversation_id)
         base = os.path.realpath(self.storage_dir)
         path = os.path.realpath(os.path.join(base, f"{conversation_id}.json"))
         if not path.startswith(base + os.sep):
             raise ValueError("Invalid conversation id")
         return Path(path)
 
-    def get(self, conversation_id: str) -> List[Dict[str, Any]]:
+    async def get(self, conversation_id: str) -> List[Dict[str, Any]]:
         """
         Get a conversation by ID, loading from disk if not cached.
 
@@ -165,7 +184,7 @@ class ConversationStore:
 
         return self._cache[conversation_id]
 
-    def append(
+    async def append(
         self,
         conversation_id: str,
         message: Dict[str, Any],
@@ -180,11 +199,17 @@ class ConversationStore:
             conversation_id: The conversation identifier.
             message: The message to append.
             user_id: The user ID creating/appending to the conversation.
+
+        Raises:
+            PermissionError: The conversation exists and belongs to someone else.
         """
+        if not await self.verify_ownership(conversation_id, user_id):
+            raise PermissionError("Not authorized for this conversation")
+
         is_new = conversation_id not in self._cache and not self._get_file_path(conversation_id).exists()
 
         if conversation_id not in self._cache:
-            self.get(conversation_id)  # Load from disk if exists
+            await self.get(conversation_id)  # Load from disk if exists
 
         self._cache[conversation_id].append(message)
         self._save(conversation_id)
@@ -207,7 +232,7 @@ class ConversationStore:
         except IOError as e:
             logger.error(f"Error saving conversation {conversation_id}: {e}")
 
-    def delete(self, conversation_id: str) -> bool:
+    async def delete(self, conversation_id: str) -> bool:
         """
         Delete a conversation.
 
@@ -233,21 +258,92 @@ class ConversationStore:
 
         return deleted
 
-    def __contains__(self, conversation_id: str) -> bool:
-        """Check if a conversation exists."""
-        if conversation_id in self._cache:
+
+class PostgresConversationStore:
+    """
+    Conversations in the Postgres `conversations` table, used when DATABASE_URL
+    is set. Same interface and ownership rules as ConversationStore.
+    """
+
+    async def get(self, conversation_id: str) -> list[dict[str, Any]]:
+        _validate_id(conversation_id)
+        row = await db_fetchrow(
+            "SELECT messages FROM conversations WHERE id = $1", conversation_id
+        )
+        return json.loads(row["messages"]) if row else []
+
+    async def append(
+        self,
+        conversation_id: str,
+        message: dict[str, Any],
+        user_id: str | None = None,
+    ) -> None:
+        """
+        Append a message; the first message creates the row and its owner.
+
+        Raises:
+            PermissionError: The conversation exists and belongs to someone else.
+        """
+        _validate_id(conversation_id)
+        row = await db_fetchrow(
+            """
+            INSERT INTO conversations (id, owner_id, messages)
+            VALUES ($1, $3, jsonb_build_array($2::jsonb))
+            ON CONFLICT (id) DO UPDATE
+            SET messages = conversations.messages || jsonb_build_array($2::jsonb),
+                updated_at = NOW()
+            WHERE conversations.owner_id IS NOT DISTINCT FROM EXCLUDED.owner_id
+            RETURNING id
+            """,
+            conversation_id,
+            json.dumps(message),
+            user_id,
+        )
+        if row is None:
+            raise PermissionError("Not authorized for this conversation")
+
+    async def claim(self, conversation_id: str, user_id: str) -> None:
+        """
+        Create an empty conversation owned by user_id, or confirm they own it.
+
+        Raises:
+            PermissionError: The conversation belongs to someone else.
+        """
+        _validate_id(conversation_id)
+        row = await db_fetchrow(
+            """
+            INSERT INTO conversations (id, owner_id, messages)
+            VALUES ($1, $2, '[]'::jsonb)
+            ON CONFLICT (id) DO UPDATE SET id = conversations.id
+            WHERE conversations.owner_id IS NOT DISTINCT FROM EXCLUDED.owner_id
+            RETURNING id
+            """,
+            conversation_id,
+            user_id,
+        )
+        if row is None:
+            raise PermissionError("Not authorized for this conversation")
+
+    async def verify_ownership(self, conversation_id: str, user_id: str) -> bool:
+        """True for the owner, or for an id that has no conversation yet."""
+        _validate_id(conversation_id)
+        row = await db_fetchrow(
+            "SELECT owner_id FROM conversations WHERE id = $1", conversation_id
+        )
+        if row is None:
             return True
-        return self._get_file_path(conversation_id).exists()
+        return row["owner_id"] is not None and row["owner_id"] == user_id
 
-    def __getitem__(self, conversation_id: str) -> List[Dict[str, Any]]:
-        """Get a conversation by ID (dict-like access)."""
-        return self.get(conversation_id)
-
-    def __setitem__(self, conversation_id: str, messages: List[Dict[str, Any]]) -> None:
-        """Set a conversation (dict-like access)."""
-        self._cache[conversation_id] = messages
-        self._save(conversation_id)
+    async def delete(self, conversation_id: str) -> bool:
+        _validate_id(conversation_id)
+        row = await db_fetchrow(
+            "DELETE FROM conversations WHERE id = $1 RETURNING id", conversation_id
+        )
+        return row is not None
 
 
-# Initialize conversation storage singleton
-conversations = ConversationStore()
+# Postgres when DATABASE_URL is set (Vercel's disk does not survive a cold
+# start); JSON files are the local-dev fallback.
+conversations = (
+    PostgresConversationStore() if is_database_configured() else ConversationStore()
+)

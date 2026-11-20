@@ -21,6 +21,8 @@
 DO $$
 DECLARE
   required_tables text[] := ARRAY[
+    'api_keys',
+    'conversations',
     'app_sso_auth_sessions',
     'app_sso_configurations',
     'app_sso_user_sessions',
