@@ -131,6 +131,9 @@ class PricingTier(BaseModel):
     stripe_price_id_yearly: Optional[str] = None
 
 
+# Needs a SERP/Tavily key on the API; /pricing drops it when none is configured.
+RESEARCH_MODE_FEATURE = "Research mode"
+
 # Tier configurations with pricing and limits
 PRICING_TIERS: dict[SubscriptionTier, PricingTier] = {
     SubscriptionTier.FREE: PricingTier(
@@ -154,7 +157,7 @@ PRICING_TIERS: dict[SubscriptionTier, PricingTier] = {
         features=[
             "50 generations per month",
             "Blog and book generation",
-            "Research mode",
+            RESEARCH_MODE_FEATURE,
             "Priority support",
         ],
     ),

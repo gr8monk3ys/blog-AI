@@ -5,6 +5,7 @@
 // (DESIGN.md → Components → Cards / Rows), so the entries carry no icons.
 
 import type { ToolCategory } from '../../types/tools'
+import { RESEARCH_MODE_FEATURE } from '../pricing/tiers'
 
 export interface Feature {
   number: string
@@ -102,7 +103,7 @@ export const PRICING_TIERS: PricingTier[] = [
       'Everything in Free',
       '50 generations per month',
       'Book generation',
-      'Research mode',
+      RESEARCH_MODE_FEATURE,
       'Export formats (JSON, CSV, Markdown)',
       'Priority support',
     ],

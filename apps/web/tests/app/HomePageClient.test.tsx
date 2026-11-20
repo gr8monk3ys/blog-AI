@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, beforeEach, afterAll, vi } from 'vitest'
+import { describe, it, expect, beforeAll, beforeEach, afterAll, afterEach, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { ThemeProvider } from '../../hooks/useTheme'
 import Home from '../../app/HomePageClient'
@@ -103,5 +103,24 @@ describe('HomePageClient hero CTA', () => {
     // "View Plans" is unique to the signed-out hero (the pricing section keeps
     // its own "Start Free" tier button, so that label is not a hero signal).
     expect(screen.queryByRole('link', { name: /view plans/i })).toBeNull()
+  })
+})
+
+describe('HomePageClient plans ledger', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it('does not sell research while web research is off', () => {
+    vi.stubEnv('NEXT_PUBLIC_FEATURE_WEB_RESEARCH', '')
+    renderHome()
+    expect(screen.queryByText('Research mode')).toBeNull()
+    expect(screen.queryByText('Fact-checking')).toBeNull()
+  })
+
+  it('lists research once web research is on', () => {
+    vi.stubEnv('NEXT_PUBLIC_FEATURE_WEB_RESEARCH', 'true')
+    renderHome()
+    expect(screen.getByText('Research mode')).toBeInTheDocument()
   })
 })

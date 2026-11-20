@@ -11,7 +11,7 @@ import { buttonVariants } from '../../components/ui/Button'
 import { isClerkConfigured, useAuth, useClerkUnavailable } from '../../lib/clerk-ui'
 import { UsageTier } from '../../types/usage'
 import { API_ENDPOINTS, getDefaultHeaders } from '../../lib/api'
-import { normalizePricingTiers, type PublicPricingTier } from './tiers'
+import { RESEARCH_MODE_FEATURE, normalizePricingTiers, type PublicPricingTier } from './tiers'
 import { formatNumber } from '@/lib/format'
 
 type BillingCycle = 'monthly' | 'yearly'
@@ -30,7 +30,7 @@ const TIER_POSITIONING: Record<Exclude<UsageTier, 'business'>, {
   },
   starter: {
     audience: 'Best for solo operators',
-    valueProp: 'Use Starter when you publish regularly and need more volume, research, and exports without team complexity.',
+    valueProp: 'Use Starter when you publish regularly and need more volume and exports without team complexity.',
     cta: 'Choose Starter',
   },
   pro: {
@@ -44,7 +44,7 @@ const COMPARISON_ROWS: Array<{ name: string } & Record<Exclude<UsageTier, 'busin
   { name: 'Blog generation', free: true, starter: true, pro: true },
   { name: 'Book generation', free: false, starter: true, pro: true },
   { name: 'Export formats', free: false, starter: true, pro: true },
-  { name: 'Research mode', free: false, starter: true, pro: true },
+  { name: RESEARCH_MODE_FEATURE, free: false, starter: true, pro: true },
   { name: 'Bulk generation', free: false, starter: false, pro: true },
   { name: 'Brand voice training', free: false, starter: false, pro: true },
   { name: 'Priority support', free: false, starter: true, pro: true },
@@ -57,7 +57,7 @@ const FAQ = [
   },
   {
     q: 'How should I choose between Starter and Pro?',
-    a: 'Choose Starter if one person is running the content workflow and mostly needs more volume, research, and exports. Choose Pro if you need brand voice controls, bulk generation, and enough capacity for a recurring team workflow.',
+    a: 'Choose Starter if one person is running the content workflow and mostly needs more volume and exports. Choose Pro if you need brand voice controls, bulk generation, and enough capacity for a recurring team workflow.',
   },
   {
     q: 'What happens when I reach my limit?',
@@ -93,6 +93,8 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
   const [currentTier, setCurrentTier] = useState<UsageTier | null>(null)
   const [tiers, setTiers] = useState<PublicPricingTier[]>(initialTiers)
   const [loading, setLoading] = useState(true)
+  // Stripe price ids arrive with the client fetch; until then checkout state is unknown.
+  const [pricingLoaded, setPricingLoaded] = useState(false)
   const [upgrading, setUpgrading] = useState<UsageTier | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -121,6 +123,8 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
       }
     } catch (err) {
       console.error('Error fetching pricing:', err)
+    } finally {
+      setPricingLoaded(true)
     }
   }
 
@@ -243,7 +247,7 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
   }
 
   const getButtonText = (tier: UsageTier) => {
-    if (loading) return 'Loading…'
+    if (loading || !pricingLoaded) return 'Loading…'
     if (upgrading === tier) return 'Processing…'
     if (tier === currentTier) return 'Current Plan'
     if (tier === 'free' && currentTier && currentTier !== 'free') return 'Manage in Portal'
@@ -344,6 +348,7 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
                   ? tier.stripe_price_id_monthly
                   : tier.stripe_price_id_yearly
               const stripeAvailable = tier.id === 'free' || Boolean(stripePriceId)
+              const checkoutPending = loading || !pricingLoaded
 
               return (
                 <div key={tier.id} className="flex flex-col p-6 sm:p-8">
@@ -402,23 +407,33 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
                   </dl>
 
                   {/* While the plans are still the server-rendered ones we do
-                      not know the Stripe price ids yet. Render the button shape
-                      (disabled, "Loading…") rather than the "Contact Us" link,
-                      so the CTA never flips between two different labels. */}
+                      not know the Stripe price ids yet, so the button stays
+                      disabled ("Loading…") until the fetch settles. A paid plan
+                      without a price id for this cycle cannot be bought online;
+                      say so rather than offer a checkout that can only fail. */}
                   <div className="mt-8">
-                    {loading || stripeAvailable ? (
+                    {checkoutPending || stripeAvailable ? (
                       <button
                         type="button"
                         onClick={() => !isCurrent && handleUpgrade(tier.id)}
-                        disabled={loading || isCurrent || upgrading !== null}
+                        disabled={checkoutPending || isCurrent || upgrading !== null}
                         className={getButtonClassName(tier.id)}
                       >
                         {getButtonText(tier.id)}
                       </button>
                     ) : (
-                      <a href={`mailto:${SUPPORT_EMAIL}`} className={getButtonClassName(tier.id)}>
-                        Contact Us
-                      </a>
+                      <>
+                        <button type="button" disabled className={getButtonClassName(tier.id)}>
+                          Checkout unavailable
+                        </button>
+                        <p className="mt-3 text-sm text-muted-foreground">
+                          Online checkout is not set up for this plan yet.{' '}
+                          <a href={`mailto:${SUPPORT_EMAIL}`} className="ink-underline">
+                            Email us
+                          </a>{' '}
+                          to subscribe.
+                        </p>
+                      </>
                     )}
                   </div>
 
@@ -463,7 +478,11 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/70">
-                {COMPARISON_ROWS.map((row) => (
+                {COMPARISON_ROWS.filter(
+                  (row) =>
+                    row.name !== RESEARCH_MODE_FEATURE ||
+                    tiers.some((tier) => tier.features.includes(RESEARCH_MODE_FEATURE))
+                ).map((row) => (
                   <tr key={row.name}>
                     <th scope="row" className="py-3.5 pr-8 text-left font-normal text-foreground">
                       {row.name}

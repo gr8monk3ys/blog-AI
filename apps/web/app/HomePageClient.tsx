@@ -6,6 +6,7 @@ import SiteHeader from '../components/SiteHeader'
 import SiteFooter from '../components/SiteFooter'
 import { buttonVariants } from '../components/ui/Button'
 import { useAuth } from '../lib/clerk-ui'
+import { withoutUnavailableFeatures } from './pricing/tiers'
 import {
   FEATURES,
   STEPS,
@@ -200,8 +201,8 @@ export default function Home(): React.ReactElement {
           <p className="label-mono">Plans</p>
           <h2 className="text-section-title mt-3 max-w-2xl">Plans That Grow with You</h2>
           <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground text-pretty">
-            Start with the core workflow, then move up when you need more volume, research depth,
-            brand controls, and bulk production.
+            Start with the core workflow, then move up when you need more volume, brand controls,
+            and bulk production.
           </p>
 
           <PricingLedger />
@@ -305,7 +306,7 @@ function PricingLedger(): React.ReactElement {
           </p>
 
           <ul className="mt-8 grow divide-y divide-border/70 border-y border-border/70" role="list">
-            {tier.features.map((feature) => (
+            {withoutUnavailableFeatures(tier.features).map((feature) => (
               <li key={feature} className="flex items-start gap-3 py-3 text-sm">
                 <CheckIcon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
                 <span>{feature}</span>

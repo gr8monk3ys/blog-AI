@@ -352,6 +352,22 @@ class TestPaymentStatusAndPricingRoutes(unittest.TestCase):
         self.assertEqual(business.get("stripe_price_id_monthly"), "price_m")
         self.assertEqual(business.get("stripe_price_id_yearly"), "price_y")
 
+    @patch("app.routes.payments.get_settings")
+    def test_pricing_omits_research_mode_without_research_api(self, mock_settings):
+        mock_settings.return_value.has_research_api = False
+        response = self.client.get("/api/payments/pricing")
+        self.assertEqual(response.status_code, 200)
+        features = [f for tier in response.json()["tiers"] for f in tier["features"]]
+        self.assertNotIn("Research mode", features)
+
+    @patch("app.routes.payments.get_settings")
+    def test_pricing_lists_research_mode_with_research_api(self, mock_settings):
+        mock_settings.return_value.has_research_api = True
+        response = self.client.get("/api/payments/pricing")
+        self.assertEqual(response.status_code, 200)
+        starter = next(t for t in response.json()["tiers"] if t["id"] == "starter")
+        self.assertIn("Research mode", starter["features"])
+
     @patch("app.routes.payments.get_tier_config", side_effect=RuntimeError("config unavailable"))
     @patch("app.routes.payments.stripe_service.get_price_ids_for_tier", return_value={"month": None, "year": None})
     def test_pricing_falls_back_when_usage_tier_lookup_fails(self, _mock_price_ids, _mock_tier):
