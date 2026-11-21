@@ -5,10 +5,10 @@ the Vercel project list and `GET /health` on the API host):
 
 | Piece | Where | Entry point / config | URL |
 |-------|-------|----------------------|-----|
-| `apps/web` (Next.js) | Vercel project `blog-ai`, root directory = repo root | root `vercel.json` (`bun run build`, output `apps/web/.next`) | https://blog-ai.vivancedata.com |
+| `apps/web` (Next.js) | Vercel project `blog-ai`, root directory = repo root | root `vercel.json` (`bun run build`, output `apps/web/.next`) | https://blog-ai.lscaturchio.xyz |
 | `apps/api` (FastAPI) | **Vercel project `blog-ai-api`, Python runtime** | `apps/api/vercel.json` (one function, `server.py`, `maxDuration` 300) + `[tool.vercel] entrypoint = "server:app"` in `apps/api/pyproject.toml` | https://blog-ai-api-gr8monk3ys-projects.vercel.app |
 | Postgres | Neon | `DATABASE_URL` (pooled) in both projects; `DATABASE_URL_DIRECT` for migrations | — |
-| Auth | Clerk, custom domain | `NEXT_PUBLIC_CLERK_DOMAIN=clerk.vivancedata.com`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` (web); `CLERK_JWKS_URL`, `CLERK_JWT_ISSUER` (API) | https://clerk.vivancedata.com |
+| Auth | Clerk, custom domain | `NEXT_PUBLIC_CLERK_DOMAIN=clerk.lscaturchio.xyz`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` (web); `CLERK_JWKS_URL`, `CLERK_JWT_ISSUER` (API) | https://clerk.lscaturchio.xyz |
 | Billing | Stripe | `STRIPE_*` on the API | — |
 | Errors | Sentry (`vivance` org, shared quota) | `NEXT_PUBLIC_SENTRY_DSN` (web), `SENTRY_DSN` (API) — see [MONITORING.md](./MONITORING.md) | — |
 

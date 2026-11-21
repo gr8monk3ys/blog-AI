@@ -14,22 +14,22 @@ describe('buildAllowUrls', () => {
   it('always allows the production domain', () => {
     const patterns = buildAllowUrls(null)
 
-    expect(matches(patterns, 'https://blog-ai.vivancedata.com/_next/static/chunks/app.js')).toBe(true)
+    expect(matches(patterns, 'https://blog-ai.lscaturchio.xyz/_next/static/chunks/app.js')).toBe(true)
   })
 
   it('allows the configured site host as well', () => {
     const patterns = buildAllowUrls('staging.example.test')
 
     expect(matches(patterns, 'https://staging.example.test/_next/static/chunks/app.js')).toBe(true)
-    expect(matches(patterns, 'https://blog-ai.vivancedata.com/x.js')).toBe(true)
+    expect(matches(patterns, 'https://blog-ai.lscaturchio.xyz/x.js')).toBe(true)
   })
 
   it('escapes the host so dots are literal', () => {
-    const patterns = buildAllowUrls('blog-ai.vivancedata.com')
+    const patterns = buildAllowUrls('blog-ai.lscaturchio.xyz')
     const hostPattern = patterns[patterns.length - 1]
 
-    expect(hostPattern?.source).toBe('blog-ai\\.vivancedata\\.com')
-    expect(matches([hostPattern as RegExp], 'https://blog-aixvivancedata.com/x.js')).toBe(false)
+    expect(hostPattern?.source).toBe('blog-ai\\.lscaturchio\\.xyz')
+    expect(matches([hostPattern as RegExp], 'https://blog-aixlscaturchio.xyz/x.js')).toBe(false)
   })
 
   it('keeps the local and platform hosts', () => {
@@ -41,7 +41,7 @@ describe('buildAllowUrls', () => {
   })
 
   it('does not allow unrelated origins', () => {
-    const patterns = buildAllowUrls('blog-ai.vivancedata.com')
+    const patterns = buildAllowUrls('blog-ai.lscaturchio.xyz')
 
     expect(matches(patterns, 'https://cdn.evil.example/inject.js')).toBe(false)
   })

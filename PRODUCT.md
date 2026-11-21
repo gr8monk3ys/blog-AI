@@ -48,9 +48,9 @@ per-operation rate limits. Brand voice is trained from the user's own samples an
 
 ## Operating Context
 
-- Web app at https://blog-ai.vivancedata.com on Vercel (project `blog-ai`); FastAPI backend
+- Web app at https://blog-ai.lscaturchio.xyz on Vercel (project `blog-ai`); FastAPI backend
   on Vercel's Python runtime (project `blog-ai-api`, `apps/api/vercel.json`), not on
-  Railway; Neon Postgres; Clerk auth on `clerk.vivancedata.com`; Stripe billing (README,
+  Railway; Neon Postgres; Clerk auth on `clerk.lscaturchio.xyz`; Stripe billing (README,
   `docs/DEPLOYMENT.md`). The container path (`Dockerfile.backend`, GHCR image) exists but
   is not what serves production.
 - Live configuration on 2026-10-13 (API `/health`): OpenAI and Anthropic configured, Gemini

@@ -60,7 +60,7 @@ jobs:
       - name: Run production health check
         shell: bash
         env:
-          APP_URL: https://blog-ai.vivancedata.com
+          APP_URL: https://blog-ai.lscaturchio.xyz
           ROUTES: / /pricing /blog /tool-directory /sitemap.xml
           HEALTH_ROUTE: /api/health
           LOOKBACK: 1h
@@ -78,7 +78,7 @@ jobs:
       - name: Check backend API health
         shell: bash
         env:
-          APP_URL: https://blog-ai.vivancedata.com
+          APP_URL: https://blog-ai.lscaturchio.xyz
           API_BASE_URL: ${{ vars.API_BASE_URL }}
         run: |
           set -euo pipefail

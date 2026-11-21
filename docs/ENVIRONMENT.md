@@ -82,7 +82,7 @@ dropped: the web app has no Stripe.js and never read it.
 | `NEXT_PUBLIC_API_URL` | required | web build, web runtime | FastAPI base URL. Production: https://blog-ai-api-gr8monk3ys-projects.vercel.app. next.config.mjs refuses a production build without it. |
 | `NEXT_PUBLIC_API_VERSION` | optional | web build, web runtime | API path version segment. Default v1. |
 | `NEXT_PUBLIC_APP_VERSION` | optional | web build, web runtime | Overrides the version /api/health reports (default: apps/web/package.json). |
-| `NEXT_PUBLIC_CLERK_DOMAIN` | optional | web build, web runtime | Clerk custom domain; production uses clerk.vivancedata.com. Added to the CSP connect-src. |
+| `NEXT_PUBLIC_CLERK_DOMAIN` | optional | web build, web runtime | Clerk custom domain; production uses clerk.lscaturchio.xyz. Added to the CSP connect-src. |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | required | web build, web runtime | Clerk publishable key (pk_test_/pk_live_). Without it every route is public (dev) or redirects to /auth?reason=auth-not-configured (prod). |
 | `NEXT_PUBLIC_ENABLE_KNOWLEDGE_BASE` | optional | web build, web runtime | Feature flag: /knowledge + nav link. Pair with the API's ENABLE_KNOWLEDGE_BASE. Default off. |
 | `NEXT_PUBLIC_FEATURE_BILLING` | optional | web build, web runtime | Feature flag: pricing, checkout, billing portal. Default ON (Stripe is live); set false to hide. |
@@ -96,7 +96,7 @@ dropped: the web app has no Stripe.js and never read it.
 | `NEXT_PUBLIC_SENTRY_FORCE_DISABLE` | optional | web build | =1 kill switch: a deployed build stops reporting to Sentry. |
 | `NEXT_PUBLIC_SENTRY_FORCE_ENABLE` | dev only | web build | =1 reports Sentry from a non-Vercel build (use a throwaway DSN). |
 | `NEXT_PUBLIC_SIGNUP_MODE` | optional | web build, web runtime | open \| waitlist \| invite (lib/signup-mode.ts). Default open. Must match the Clerk dashboard sign-up mode. |
-| `NEXT_PUBLIC_SITE_URL` | optional | web build, web runtime | Public origin (sitemap, RSS, Sentry allowUrls, metadataBase). Production falls back to https://blog-ai.vivancedata.com; set it anyway. |
+| `NEXT_PUBLIC_SITE_URL` | optional | web build, web runtime | Public origin (sitemap, RSS, Sentry allowUrls, metadataBase). Production falls back to https://blog-ai.lscaturchio.xyz; set it anyway. |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | optional | web build, web runtime | Support inbox shown on error/404/pricing pages. Default support@lscaturchio.xyz (lib/support.ts). |
 | `NEXT_PUBLIC_VERCEL_ENV` | platform | web build, web runtime | Mirror of VERCEL_ENV that next.config.mjs inlines for the browser bundle. Do not set by hand. |
 | `NEXT_PUBLIC_WS_URL` | optional | web build, web runtime | WebSocket base; derived from NEXT_PUBLIC_API_URL (https->wss) when unset. |
@@ -127,7 +127,7 @@ dropped: the web app has no Stripe.js and never read it.
 
 | Variable | Kind | Read by | Meaning |
 |----------|------|---------|---------|
-| `ALLOWED_ORIGINS` | required | API | Comma-separated CORS origins; production: https://blog-ai.vivancedata.com. |
+| `ALLOWED_ORIGINS` | required | API | Comma-separated CORS origins; production: https://blog-ai.lscaturchio.xyz. |
 | `ANTHROPIC_API_KEY` | optional | API | Claude provider. Configured in production. |
 | `ANTHROPIC_MODEL` | optional | API | Default Anthropic model. |
 | `API_BASE_URL` | optional | API | Legacy alias of PUBLIC_API_URL read by the extension route. |

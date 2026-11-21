@@ -4,7 +4,7 @@
 # verbatim, headers, or anything derived from VERCEL_TOKEN. No `set -x`.
 set -euo pipefail
 
-APP_URL="${APP_URL:-https://blog-ai.vivancedata.com}"
+APP_URL="${APP_URL:-https://blog-ai.lscaturchio.xyz}"
 ROUTES="${ROUTES:-/ /pricing /blog /tool-directory /sitemap.xml}"
 # The web app's own dependency report (apps/web/app/api/health/route.ts): 200
 # unless a configured dependency (database, FastAPI backend, Clerk) is down,

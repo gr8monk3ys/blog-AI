@@ -73,11 +73,11 @@ const ENV_VARS = {
   },
   NEXT_PUBLIC_CLERK_DOMAIN: {
     scope: ['web-build', 'web-runtime'],
-    note: 'Clerk custom domain; production uses clerk.vivancedata.com. Added to the CSP connect-src.',
+    note: 'Clerk custom domain; production uses clerk.lscaturchio.xyz. Added to the CSP connect-src.',
   },
   NEXT_PUBLIC_SITE_URL: {
     scope: ['web-build', 'web-runtime'],
-    note: 'Public origin (sitemap, RSS, Sentry allowUrls, metadataBase). Production falls back to https://blog-ai.vivancedata.com; set it anyway.',
+    note: 'Public origin (sitemap, RSS, Sentry allowUrls, metadataBase). Production falls back to https://blog-ai.lscaturchio.xyz; set it anyway.',
   },
   NEXT_PUBLIC_SUPPORT_EMAIL: {
     scope: ['web-build', 'web-runtime'],
@@ -240,7 +240,7 @@ const ENV_VARS = {
   ALLOWED_ORIGINS: {
     scope: ['api'],
     required: true,
-    note: 'Comma-separated CORS origins; production: https://blog-ai.vivancedata.com.',
+    note: 'Comma-separated CORS origins; production: https://blog-ai.lscaturchio.xyz.',
   },
   DEV_API_KEY: { scope: ['api'], dev: true, note: 'Static API key accepted in development only.' },
   DEV_MODE: { scope: ['api'], dev: true, note: 'scripts/smoke_test.py: skip auth locally. (pytest does not read it; conftest.py sets DEV_API_KEY itself.)' },
