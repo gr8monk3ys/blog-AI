@@ -15,12 +15,13 @@
  *   api    -- `${NEXT_PUBLIC_API_URL}/health` with a 5 s timeout. `healthy`
  *             is ok, any other 2xx answer is degraded, non-2xx or no answer
  *             is down. Unconfigured is degraded.
- *   clerk  -- both keys present is ok, exactly one is down (proxy.ts disables
- *             Clerk entirely in that case), neither is degraded.
+ *   auth   -- BETTER_AUTH_SECRET plus a mailer (RESEND_API_KEY + EMAIL_FROM)
+ *             is ok; either missing is degraded (without a mailer nobody can
+ *             verify an email or reset a password).
  *
  * HTTP 200 unless some dependency is down, then 503.
  *
- * Operators who need the detail (which Clerk key is missing, the database
+ * Operators who need the detail (which auth setting is missing, the database
  * error text, the API's services/features summary) send
  * `Authorization: Bearer ${HEALTH_DETAIL_TOKEN}`; the token is compared in
  * constant time and the extra fields appear under `details`. With no token
@@ -58,7 +59,7 @@ interface HealthDetails {
     features?: Record<string, boolean>
     error?: string
   }
-  clerk: { publishableKey: boolean; secretKey: boolean; customDomain: boolean }
+  auth: { secret: boolean; mailer: boolean }
 }
 
 export interface HealthReport {
@@ -67,7 +68,7 @@ export interface HealthReport {
   version: string
   commit: string | null
   environment: string | null
-  checks: { db: PublicCheck; api: PublicCheck; clerk: PublicCheck }
+  checks: { db: PublicCheck; api: PublicCheck; auth: PublicCheck }
   details?: HealthDetails
 }
 
@@ -163,14 +164,11 @@ async function checkApi(): Promise<{ check: PublicCheck; detail: HealthDetails['
   }
 }
 
-function checkClerk(): { check: PublicCheck; detail: HealthDetails['clerk'] } {
-  const publishableKey = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim())
-  const secretKey = Boolean(process.env.CLERK_SECRET_KEY?.trim())
-  const status: CheckStatus = publishableKey && secretKey ? 'ok' : publishableKey || secretKey ? 'down' : 'degraded'
-  return {
-    check: { status },
-    detail: { publishableKey, secretKey, customDomain: Boolean(process.env.NEXT_PUBLIC_CLERK_DOMAIN?.trim()) },
-  }
+function checkAuth(): { check: PublicCheck; detail: HealthDetails['auth'] } {
+  const secret = Boolean(process.env.BETTER_AUTH_SECRET?.trim())
+  const mailer = Boolean(process.env.RESEND_API_KEY?.trim() && process.env.EMAIL_FROM?.trim())
+  const status: CheckStatus = secret && mailer ? 'ok' : 'degraded'
+  return { check: { status }, detail: { secret, mailer } }
 }
 
 /**
@@ -195,9 +193,9 @@ const worstOf = (statuses: CheckStatus[]): CheckStatus =>
 
 export async function GET(request: Request): Promise<NextResponse<HealthReport>> {
   const [db, api] = await Promise.all([checkDb(), checkApi()])
-  const clerk = checkClerk()
+  const auth = checkAuth()
 
-  const checks = { db: db.check, api: api.check, clerk: clerk.check }
+  const checks = { db: db.check, api: api.check, auth: auth.check }
   const status = worstOf(Object.values(checks).map((check) => check.status))
 
   const report: HealthReport = {
@@ -210,7 +208,7 @@ export async function GET(request: Request): Promise<NextResponse<HealthReport>>
   }
 
   if (isDetailAuthorised(request.headers.get('authorization'))) {
-    report.details = { db: db.detail, api: api.detail, clerk: clerk.detail }
+    report.details = { db: db.detail, api: api.detail, auth: auth.detail }
   }
 
   return NextResponse.json(report, {

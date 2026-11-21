@@ -1,50 +1,8 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
-import { NextFetchEvent, NextRequest, NextResponse } from 'next/server'
-import { PROTECTED_ROUTE_PATTERNS } from './lib/protected-routes'
+import { getSessionCookie } from 'better-auth/cookies'
+import { NextRequest, NextResponse } from 'next/server'
+import { isProtectedPath } from './lib/protected-routes'
 
-const isProtectedRoute = createRouteMatcher(PROTECTED_ROUTE_PATTERNS)
-
-const clerkEnabled = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-const clerkDomain = process.env.NEXT_PUBLIC_CLERK_DOMAIN?.trim() || ''
 const isDev = process.env.NODE_ENV === 'development'
-const isProduction = process.env.NODE_ENV === 'production'
-const suppressAuthWarning =
-  process.env.SUPPRESS_PROXY_AUTH_WARNING === '1' ||
-  process.env.PLAYWRIGHT_TEST === '1'
-const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? ''
-const clerkSecretKey = process.env.CLERK_SECRET_KEY ?? ''
-const hasValidClerkPublishableKey =
-  clerkPublishableKey.startsWith('pk_test_') ||
-  clerkPublishableKey.startsWith('pk_live_')
-const hasValidClerkSecretKey =
-  clerkSecretKey.startsWith('sk_test_') || clerkSecretKey.startsWith('sk_live_')
-
-const hasValidClerkConfig =
-  clerkEnabled &&
-  hasValidClerkPublishableKey &&
-  !!clerkSecretKey &&
-  hasValidClerkSecretKey
-
-if (isProduction && !hasValidClerkConfig) {
-  console.warn(
-    '[proxy] Clerk is not fully configured in production. ' +
-    'Public routes will remain available, but protected routes will redirect to /auth.'
-  )
-}
-
-if (!clerkEnabled && !isProduction && !suppressAuthWarning) {
-  console.warn(
-    '[proxy] WARNING: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is not set. ' +
-    'Authentication is disabled and all routes are publicly accessible. ' +
-    'This is acceptable for local development only.'
-  )
-}
-
-const configuredClerkMiddleware = clerkMiddleware(async (auth, req) => {
-  if (isProtectedRoute(req)) {
-    await auth.protect()
-  }
-})
 
 // ---------------------------------------------------------------------------
 // CSP nonce helper
@@ -63,11 +21,6 @@ function buildCspHeader(nonce: string): string {
       `'nonce-${nonce}'`,
       "'unsafe-inline'",
       isDev ? "'unsafe-eval'" : '',
-      'https://*.clerk.accounts.dev',
-      'https://cdn.clerk.io',
-      'https://*.clerk.com',
-      clerkDomain ? `https://${clerkDomain}` : '',
-      'https://challenges.cloudflare.com',
     ]
       .filter(Boolean)
       .join(' '),
@@ -83,17 +36,12 @@ function buildCspHeader(nonce: string): string {
     // Sentry Session Replay compresses in a Worker created from a blob: URL.
     "worker-src 'self' blob:",
 
-    "img-src 'self' data: https://*.clerk.com https://*.unsplash.com blob:",
+    "img-src 'self' data: https://*.unsplash.com blob:",
     "font-src 'self' data:",
 
     // connect-src
     [
       "connect-src 'self'",
-      'https://*.clerk.accounts.dev',
-      'https://api.clerk.io',
-      'https://*.clerk.com',
-      clerkDomain ? `https://${clerkDomain}` : '',
-      clerkDomain ? `wss://${clerkDomain}` : '',
       isDev ? 'ws://localhost:* wss://localhost:*' : '',
       process.env.NEXT_PUBLIC_API_URL || '',
       // Sentry browser SDK. The US-region ingest host is
@@ -105,13 +53,7 @@ function buildCspHeader(nonce: string): string {
       .filter(Boolean)
       .join(' '),
 
-    [
-      "frame-src 'self'",
-      'https://*.clerk.accounts.dev',
-      'https://*.clerk.com',
-      clerkDomain ? `https://${clerkDomain}` : '',
-      'https://challenges.cloudflare.com',
-    ].filter(Boolean).join(' '),
+    "frame-src 'self'",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -132,63 +74,23 @@ function applyNonce(
   response.headers.set('Content-Security-Policy', buildCspHeader(nonce))
 }
 
-export default function proxy(req: NextRequest, event: NextFetchEvent) {
+export default function proxy(req: NextRequest) {
   // Generate a per-request nonce for CSP
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
+
+  // Cookie presence only: an optimistic redirect for signed-out visitors.
+  // Protected pages validate the session server-side (lib/auth-session.ts).
+  if (isProtectedPath(req.nextUrl.pathname) && !getSessionCookie(req)) {
+    const signInUrl = new URL('/sign-in', req.url)
+    signInUrl.searchParams.set('redirect', req.nextUrl.pathname + req.nextUrl.search)
+    const redirectResponse = NextResponse.redirect(signInUrl)
+    applyNonce(redirectResponse, nonce)
+    return redirectResponse
+  }
 
   // Forward the nonce to Server Components via a request header
   const requestHeaders = new Headers(req.headers)
   requestHeaders.set('x-nonce', nonce)
-
-  if (!hasValidClerkConfig) {
-    if (isProduction && isProtectedRoute(req)) {
-      const authUrl = new URL('/auth', req.url)
-      authUrl.searchParams.set('reason', 'auth-not-configured')
-      const redirectResponse = NextResponse.redirect(authUrl)
-      applyNonce(redirectResponse, nonce)
-      return redirectResponse
-    }
-
-    // No Clerk — pass through with nonce headers
-    const response = NextResponse.next({
-      request: { headers: requestHeaders },
-    })
-    applyNonce(response, nonce)
-    return response
-  }
-
-  // Wrap the Clerk middleware and inject the nonce into the response it produces
-  const clerkResponse = configuredClerkMiddleware(req, event)
-
-  // clerkMiddleware may return a Response/NextResponse or undefined/void.
-  // We need to handle both cases.
-  if (clerkResponse instanceof Promise) {
-    return clerkResponse.then((res) => {
-      if (res) {
-        // Clerk returned a response (redirect, rewrite, etc.)
-        res.headers.set('Content-Security-Policy', buildCspHeader(nonce))
-        // Forward nonce via a response header so layout can read it even when
-        // Clerk has overridden the request headers.
-        res.headers.set('x-nonce', nonce)
-        return res
-      }
-      // Clerk returned nothing — create a passthrough response with nonce
-      const passthroughResponse = NextResponse.next({
-        request: { headers: requestHeaders },
-      })
-      applyNonce(passthroughResponse, nonce)
-      return passthroughResponse
-    })
-  }
-
-  // Synchronous return from Clerk (unlikely but handled for safety)
-  if (clerkResponse) {
-    const res = clerkResponse as NextResponse
-    res.headers.set('Content-Security-Policy', buildCspHeader(nonce))
-    res.headers.set('x-nonce', nonce)
-    return res
-  }
-
   const response = NextResponse.next({
     request: { headers: requestHeaders },
   })

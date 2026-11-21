@@ -132,7 +132,7 @@ export default function TermsPageClient(): React.ReactElement {
             <h2>8. Third-Party Services</h2>
             <p>
               The Service integrates with third-party providers including
-              OpenAI, Anthropic, Google, Clerk, and Stripe. Your use of the
+              OpenAI, Anthropic, Google, Resend, and Stripe. Your use of the
               Service may be subject to the terms and policies of these
               providers. We are not responsible for the practices or
               availability of third-party services.

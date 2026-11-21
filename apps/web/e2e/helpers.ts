@@ -6,8 +6,7 @@ function loadingLocator(page: Page) {
 
 export function authPromptLocator(page: Page) {
   return page
-    .getByText(/clerk is not configured/i)
-    .or(page.getByRole('heading', { name: /sign in/i }))
+    .getByRole('heading', { name: /sign in|welcome back/i })
     .or(page.getByRole('button', { name: /sign in|continue/i }))
     .or(page.getByText(/enable sign-in/i))
     .first()

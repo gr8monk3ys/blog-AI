@@ -50,7 +50,7 @@ per-operation rate limits. Brand voice is trained from the user's own samples an
 
 - Web app at https://blog-ai.vivancedata.com on Vercel (project `blog-ai`); FastAPI backend
   on Vercel's Python runtime (project `blog-ai-api`, `apps/api/vercel.json`), not on
-  Railway; Neon Postgres; Clerk auth on `clerk.vivancedata.com`; Stripe billing (README,
+  Railway; Neon Postgres; Better Auth (email + password, in the web app, emails via Resend); Stripe billing (README,
   `docs/DEPLOYMENT.md`). The container path (`Dockerfile.backend`, GHCR image) exists but
   is not what serves production.
 - Live configuration on 2026-10-13 (API `/health`): OpenAI and Anthropic configured, Gemini
@@ -65,8 +65,9 @@ per-operation rate limits. Brand voice is trained from the user's own samples an
 - Long-running generation is streamed; the UI carries loading, empty, error and
   "still loading?" states (`components/RouteLoading.tsx`, `components/ErrorBoundary.tsx`).
 - Browser extension sends selected page text into the API with a user API key.
-- Development: Clerk optional (every route public without a publishable key); without
-  `DATABASE_URL`, history, brand profiles and analytics fall back to in-memory storage.
+- Development: auth needs no keys (in-memory accounts and emails printed to the log without
+  `DATABASE_URL` / `RESEND_API_KEY`); without `DATABASE_URL`, history, brand profiles and
+  analytics fall back to in-memory storage.
 
 ## Capabilities and Constraints
 
@@ -119,7 +120,7 @@ per-operation rate limits. Brand voice is trained from the user's own samples an
    the user edits, not rewrites.
 4. Do not oversell **(inferred)**: no invented proof, no claims the pipeline cannot back.
 5. Operate without third parties when they fail: the primary action never depends on
-   Clerk, the API or the database being reachable (comment in `app/HomePageClient.tsx`).
+   the session, the API or the database being reachable (comment in `app/HomePageClient.tsx`).
 
 ## Accessibility & Inclusion
 

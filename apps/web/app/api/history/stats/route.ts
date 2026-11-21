@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { requireClerkUserId } from '../../../../lib/clerk-auth'
+import { requireUserId } from '../../../../lib/auth-session'
 import { getSqlOrNull } from '../../../../lib/db'
 
 type ToolCountRow = {
@@ -15,7 +15,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Database not configured' }, { status: 503 })
     }
 
-    const userId = await requireClerkUserId()
+    const userId = await requireUserId()
 
     const [totalRows, favRows, recentRows, byToolRows] = await Promise.all([
       sql.query(

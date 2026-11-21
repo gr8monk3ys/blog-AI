@@ -70,7 +70,7 @@ export default defineConfig({
   webServer: {
     // Webpack mode is slower but substantially more stable than Turbopack for e2e startup.
     command:
-      'env -u NO_COLOR SUPPRESS_PROXY_AUTH_WARNING=1 PLAYWRIGHT_TEST=1 bun run dev -- -p 3000 --webpack',
+      'env -u NO_COLOR bun run dev -- -p 3000 --webpack',
     // Use a lightweight route for readiness checks to avoid flakiness on heavier pages.
     url: 'http://localhost:3000/tool-directory',
     reuseExistingServer: false,

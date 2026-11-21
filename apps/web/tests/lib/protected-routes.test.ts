@@ -1,14 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createPathMatcher } from '@clerk/shared/pathMatcher'
-import { PROTECTED_ROUTE_PATTERNS } from '../../lib/protected-routes'
-
-/**
- * `proxy.ts` feeds PROTECTED_ROUTE_PATTERNS to Clerk's `createRouteMatcher`,
- * which is a thin wrapper over `createPathMatcher(patterns)(req.nextUrl.pathname)`.
- * Matching the pathname through the same engine here means this test exercises
- * the real matching semantics, not a re-implementation of them.
- */
-const isProtected = createPathMatcher(PROTECTED_ROUTE_PATTERNS)
+import { isProtectedPath as isProtected } from '../../lib/protected-routes'
 
 describe('protected route matcher', () => {
   it.each([
@@ -23,6 +14,12 @@ describe('protected route matcher', () => {
     '/blog/some-post',
     '/sign-in',
     '/sign-up',
+    '/forgot-password',
+    '/reset-password',
+    '/verify-email',
+    '/api/auth/get-session',
+    // A sibling that merely shares a prefix is not under the protected tree.
+    '/historyx',
   ])('leaves the public route %s unprotected', (pathname) => {
     expect(isProtected(pathname)).toBe(false)
   })

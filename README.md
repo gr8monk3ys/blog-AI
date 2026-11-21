@@ -16,7 +16,7 @@ diagnosable and swappable. Providers (OpenAI, Anthropic, Gemini) sit behind one
 ## Layout
 
 ```
-apps/web/        Next.js 16 app (Clerk auth, Sentry, Neon via route handlers)
+apps/web/        Next.js 16 app (Better Auth, Sentry, Neon via route handlers)
 apps/api/        FastAPI: app/routes/ are handlers, src/ is the generation logic
 apps/extension/  Browser extension
 db/migrations/   SQL schema, applied by `bun run db:migrate`
@@ -41,8 +41,9 @@ python server.py                           # API on :8000
 cd ../.. && bun dev                        # web on :3000
 ```
 
-Clerk is optional in development: with no `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` every route
-is public. Without `DATABASE_URL`, history, brand profiles, and analytics fall back to
+Auth (Better Auth, email + password) works in development with no keys: without
+`DATABASE_URL` accounts live in memory and verification / reset emails are printed to the
+`bun dev` log. Without `DATABASE_URL`, history, brand profiles, and analytics fall back to
 in-memory storage. See [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md) for the full list.
 
 ## Test
@@ -60,8 +61,8 @@ a fresh-install migration smoke test, and DB-backed tests against Postgres 16.
 
 Both apps run on Vercel: the web app as project `blog-ai`
 (https://blog-ai.vivancedata.com) and the FastAPI backend as project `blog-ai-api` on
-Vercel's Python runtime (`apps/api/vercel.json`). Database on Neon, auth Clerk
-(`clerk.vivancedata.com`), billing Stripe. `Dockerfile.backend` / `railway.json` and the
+Vercel's Python runtime (`apps/api/vercel.json`). Database on Neon, auth Better Auth
+in the web app (emails via Resend), billing Stripe. `Dockerfile.backend` / `railway.json` and the
 GHCR image `deploy.yml` publishes are an alternative container path, not what production
 runs. An hourly workflow probes the site's `/api/health` and the API's `/health`. Details
 in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md), env in [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md),

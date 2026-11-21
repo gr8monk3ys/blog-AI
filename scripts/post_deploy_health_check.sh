@@ -7,7 +7,7 @@ set -euo pipefail
 APP_URL="${APP_URL:-https://blog-ai.vivancedata.com}"
 ROUTES="${ROUTES:-/ /pricing /blog /tool-directory /sitemap.xml}"
 # The web app's own dependency report (apps/web/app/api/health/route.ts): 200
-# unless a configured dependency (database, FastAPI backend, Clerk) is down,
+# unless a configured dependency (database, FastAPI backend, auth) is down,
 # then 503. Set HEALTH_ROUTE= (empty) to skip it.
 HEALTH_ROUTE="${HEALTH_ROUTE-/api/health}"
 LOOKBACK="${LOOKBACK:-1h}"
@@ -85,7 +85,7 @@ json_field() {
     | sed -E 's/^"[^"]*":"//; s/"$//' | tr -cd 'A-Za-z0-9._-' | head -c 64 || true
 }
 
-# status word of one entry under "checks" (db / api / clerk).
+# status word of one entry under "checks" (db / api / auth).
 check_status() {
   local name="$1"
   tr -d '\n ' <"$tmp_response" \
@@ -114,7 +114,7 @@ check_health_endpoint() {
 
   local summary
   summary="health=$(json_field status) version=$(json_field version) commit=$(json_field commit)"
-  summary+=" db=$(check_status db) api=$(check_status api) clerk=$(check_status clerk)"
+  summary+=" db=$(check_status db) api=$(check_status api) auth=$(check_status auth)"
   if [[ "$status" != "200" ]]; then
     log "ERROR route=${HEALTH_ROUTE} expected=200 got=${status} ${summary}"
     failures=$((failures + 1))

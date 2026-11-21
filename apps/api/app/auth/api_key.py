@@ -412,12 +412,12 @@ async def verify_api_key(
     """
     Verify API key and return user_id.
 
-    Supports Clerk JWT tokens (via Authorization header), development API keys
+    Supports session JWTs (via Authorization header), development API keys
     (via DEV_API_KEY env var, non-production only), and regular API keys
     (via X-API-Key header).
 
     Args:
-        authorization: Optional Authorization header (Bearer JWT from Clerk).
+        authorization: Optional Authorization header (Bearer session JWT).
         api_key: The API key from the X-API-Key header.
 
     Returns:
@@ -428,7 +428,7 @@ async def verify_api_key(
     """
     global _dev_api_key_warning_logged
 
-    # 1) Prefer Clerk JWTs (cloud SaaS).
+    # 1) Prefer session JWTs minted by the web app (Better Auth).
     if authorization and authorization.lower().startswith("bearer "):
         token = authorization.split(" ", 1)[1].strip()
         if not token:
@@ -437,15 +437,15 @@ async def verify_api_key(
             )
 
         try:
-            from .clerk_jwt import is_clerk_jwt_configured, verify_clerk_session_token
+            from .jwt_verifier import is_jwt_auth_configured, verify_session_token
 
-            if not is_clerk_jwt_configured():
+            if not is_jwt_auth_configured():
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Bearer auth is not configured",
                 )
 
-            claims = verify_clerk_session_token(token)
+            claims = verify_session_token(token)
             user_id = claims.get("sub")
             if not user_id:
                 raise HTTPException(
