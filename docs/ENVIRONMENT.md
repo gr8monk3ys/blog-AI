@@ -101,7 +101,7 @@ dropped: the web app has no Stripe.js and never read it.
 | `NEXT_PUBLIC_SENTRY_FORCE_DISABLE` | optional | web build | =1 kill switch: a deployed build stops reporting to Sentry. |
 | `NEXT_PUBLIC_SENTRY_FORCE_ENABLE` | dev only | web build | =1 reports Sentry from a non-Vercel build (use a throwaway DSN). |
 | `NEXT_PUBLIC_SIGNUP_MODE` | optional | web build, web runtime | open \| waitlist \| invite (lib/signup-mode.ts). Default open. waitlist and invite turn off self-serve sign-up in lib/auth.ts. |
-| `NEXT_PUBLIC_SITE_URL` | optional | web build, web runtime | Public origin (sitemap, RSS, Sentry allowUrls, metadataBase). Production falls back to https://blog-ai.vivancedata.com; set it anyway. |
+| `NEXT_PUBLIC_SITE_URL` | optional | web build, web runtime | Public origin (sitemap, RSS, Sentry allowUrls, metadataBase). Production falls back to https://blog-ai.lscaturchio.xyz; set it anyway. |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | optional | web build, web runtime | Support inbox shown on error/404/pricing pages. Default support@lscaturchio.xyz (lib/support.ts). |
 | `NEXT_PUBLIC_VERCEL_ENV` | platform | web build, web runtime | Mirror of VERCEL_ENV that next.config.mjs inlines for the browser bundle. Do not set by hand. |
 | `NEXT_PUBLIC_WS_URL` | optional | web build, web runtime | WebSocket base; derived from NEXT_PUBLIC_API_URL (https->wss) when unset. |
@@ -112,11 +112,11 @@ dropped: the web app has no Stripe.js and never read it.
 |----------|------|---------|---------|
 | `ANALYZE` | dev only | web build | =true runs the bundle analyzer (`bun run analyze`). |
 | `BETTER_AUTH_SECRET` | required | web runtime | Better Auth signing/encryption secret (32+ random bytes, e.g. `openssl rand -base64 32`). Without it a production server refuses every auth request. |
-| `BETTER_AUTH_URL` | required | web runtime | Public origin of the web app (https://blog-ai.vivancedata.com). Base for auth email links and the `iss`/`aud` of the API JWTs; must equal the API's AUTH_JWT_ISSUER and AUTH_JWT_AUDIENCE. |
+| `BETTER_AUTH_URL` | required | web runtime | Public origin of the web app (https://blog-ai.lscaturchio.xyz). Base for auth email links and the `iss`/`aud` of the API JWTs; must equal the API's AUTH_JWT_ISSUER and AUTH_JWT_AUDIENCE. |
 | `BLOG_ADMIN_KEY` | optional | web runtime | Shared secret protecting /api/blog-posts/* (x-admin-key or Bearer). Unset: those routes are closed. |
 | `CI` | platform | web build | Set by GitHub Actions; enables the production-build env checks together with VERCEL. |
 | `DEMO_DATA_ENABLED` | dev only | web runtime | Seeds demo data outside production (lib/server-mode.ts). |
-| `EMAIL_FROM` | required | web runtime | Sender for auth emails, on a domain verified in Resend, e.g. `Blog AI <auth@vivancedata.com>`. |
+| `EMAIL_FROM` | required | web runtime | Sender for auth emails, on a domain verified in Resend, e.g. `Blog AI <auth@lscaturchio.xyz>`. |
 | `HEALTH_DETAIL_TOKEN` | optional | web runtime | Bearer token that unlocks the `details` block of GET /api/health (which key is missing, error text, API services). Unset: the public aggregate view is all there is. |
 | `NEXT_RUNTIME` | platform | web runtime | nodejs \| edge, set by Next.js (instrumentation.ts). |
 | `NODE_ENV` | platform | web build, web runtime | Set by Next.js. |
@@ -133,14 +133,14 @@ dropped: the web app has no Stripe.js and never read it.
 
 | Variable | Kind | Read by | Meaning |
 |----------|------|---------|---------|
-| `ALLOWED_ORIGINS` | required | API | Comma-separated CORS origins; production: https://blog-ai.vivancedata.com. |
+| `ALLOWED_ORIGINS` | required | API | Comma-separated CORS origins; production: https://blog-ai.lscaturchio.xyz. |
 | `ANTHROPIC_API_KEY` | optional | API | Claude provider. Configured in production. |
 | `ANTHROPIC_MODEL` | optional | API | Default Anthropic model. |
 | `API_BASE_URL` | optional | API | Legacy alias of PUBLIC_API_URL read by the extension route. |
 | `API_KEY_STORAGE_PATH` | optional | API | JSON file of issued API keys (scripts/create_api_key.py), used only without DATABASE_URL. Ephemeral on Vercel. |
 | `APP_BASE_URL` | optional | API | Public web origin used for SSO redirects and emails. |
 | `APP_ENV` | optional | API | Legacy alias consulted by src/utils/logging; prefer ENVIRONMENT. |
-| `AUTH_JWKS_URL` | required | API | JWKS of the web app's Better Auth JWT plugin, used to verify Bearer tokens: https://blog-ai.vivancedata.com/api/auth/jwks. |
+| `AUTH_JWKS_URL` | required | API | JWKS of the web app's Better Auth JWT plugin, used to verify Bearer tokens: https://blog-ai.lscaturchio.xyz/api/auth/jwks. |
 | `AUTH_JWT_AUDIENCE` | required | API | Expected `aud`: the web app's BETTER_AUTH_URL. |
 | `AUTH_JWT_ISSUER` | required | API | Expected `iss`: the web app's BETTER_AUTH_URL. |
 | `BACKEND_PORT` | dev only | API | Local listen port when PORT is unset (default 8000). |

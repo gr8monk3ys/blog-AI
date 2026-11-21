@@ -7,7 +7,7 @@ The browser sends the token as `Authorization: Bearer <jwt>`; this module
 verifies signature, expiry, issuer and audience. The user id is the `sub` claim.
 
 Configuration (all three required for Bearer auth):
-- AUTH_JWKS_URL: e.g. https://blog-ai.vivancedata.com/api/auth/jwks
+- AUTH_JWKS_URL: e.g. https://blog-ai.lscaturchio.xyz/api/auth/jwks
 - AUTH_JWT_ISSUER: expected `iss` (Better Auth: its BETTER_AUTH_URL)
 - AUTH_JWT_AUDIENCE: expected `aud` (Better Auth: its BETTER_AUTH_URL)
 """

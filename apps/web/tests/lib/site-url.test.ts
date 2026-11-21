@@ -27,7 +27,7 @@ describe('getBaseUrl', () => {
     vi.stubEnv('VERCEL_URL', 'blog-ai-abc123-gr8monk3ys-projects.vercel.app')
 
     expect(getBaseUrl()).toBe(PRODUCTION_SITE_URL)
-    expect(PRODUCTION_SITE_URL).toBe('https://blog-ai.vivancedata.com')
+    expect(PRODUCTION_SITE_URL).toBe('https://blog-ai.lscaturchio.xyz')
   })
 
   it('honours the NEXT_PUBLIC_VERCEL_ENV mirror the client bundle sees', () => {

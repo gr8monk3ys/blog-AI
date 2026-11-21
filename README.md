@@ -1,7 +1,7 @@
 # Blog AI
 
 Generates long-form blog posts and books in a trained brand voice, then publishes them.
-Live at https://blog-ai.vivancedata.com. Next.js web app, FastAPI backend, browser extension.
+Live at https://blog-ai.lscaturchio.xyz. Next.js web app, FastAPI backend, browser extension.
 
 The design decision that matters: generation is a pipeline of small LLM calls, not one
 prompt. A post is researched (web search, up to 8 cited sources), outlined, written one
@@ -60,7 +60,7 @@ a fresh-install migration smoke test, and DB-backed tests against Postgres 16.
 ## Deploy
 
 Both apps run on Vercel: the web app as project `blog-ai`
-(https://blog-ai.vivancedata.com) and the FastAPI backend as project `blog-ai-api` on
+(https://blog-ai.lscaturchio.xyz) and the FastAPI backend as project `blog-ai-api` on
 Vercel's Python runtime (`apps/api/vercel.json`). Database on Neon, auth Better Auth
 in the web app (emails via Resend), billing Stripe. `Dockerfile.backend` / `railway.json` and the
 GHCR image `deploy.yml` publishes are an alternative container path, not what production

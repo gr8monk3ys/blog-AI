@@ -2,7 +2,7 @@
 
 Blog AI: Next.js web app + FastAPI API + browser extension for generating and publishing
 blog posts and books with a configurable brand voice. Bun workspace (`apps/web`) plus a
-uv-managed Python app (`apps/api`). Live at https://blog-ai.vivancedata.com. The repo is
+uv-managed Python app (`apps/api`). Live at https://blog-ai.lscaturchio.xyz. The repo is
 public: nothing committed here is private.
 
 ## Layout
@@ -80,7 +80,7 @@ deploys a Vercel preview per PR.
 ## Deploy
 
 Both apps are on Vercel: the web app is project `blog-ai` (root `vercel.json`, live at
-https://blog-ai.vivancedata.com) and the API is project `blog-ai-api` on Vercel's **Python
+https://blog-ai.lscaturchio.xyz) and the API is project `blog-ai-api` on Vercel's **Python
 runtime** (`apps/api/vercel.json` + `[tool.vercel]` in `pyproject.toml`, live at
 https://blog-ai-api-gr8monk3ys-projects.vercel.app). The API is not on Railway; the GHCR image
 is not pulled by anything. Auth is Better Auth inside the web app (tables in

@@ -68,7 +68,7 @@ const ENV_VARS = {
   },
   NEXT_PUBLIC_SITE_URL: {
     scope: ['web-build', 'web-runtime'],
-    note: 'Public origin (sitemap, RSS, Sentry allowUrls, metadataBase). Production falls back to https://blog-ai.vivancedata.com; set it anyway.',
+    note: 'Public origin (sitemap, RSS, Sentry allowUrls, metadataBase). Production falls back to https://blog-ai.lscaturchio.xyz; set it anyway.',
   },
   NEXT_PUBLIC_SUPPORT_EMAIL: {
     scope: ['web-build', 'web-runtime'],
@@ -142,7 +142,7 @@ const ENV_VARS = {
   BETTER_AUTH_URL: {
     scope: ['web-runtime'],
     required: true,
-    note: 'Public origin of the web app (https://blog-ai.vivancedata.com). Base for auth email links and the `iss`/`aud` of the API JWTs; must equal the API\'s AUTH_JWT_ISSUER and AUTH_JWT_AUDIENCE.',
+    note: 'Public origin of the web app (https://blog-ai.lscaturchio.xyz). Base for auth email links and the `iss`/`aud` of the API JWTs; must equal the API\'s AUTH_JWT_ISSUER and AUTH_JWT_AUDIENCE.',
   },
   RESEND_API_KEY: {
     scope: ['web-runtime'],
@@ -152,7 +152,7 @@ const ENV_VARS = {
   EMAIL_FROM: {
     scope: ['web-runtime'],
     required: true,
-    note: 'Sender for auth emails, on a domain verified in Resend, e.g. `Blog AI <auth@vivancedata.com>`.',
+    note: 'Sender for auth emails, on a domain verified in Resend, e.g. `Blog AI <auth@lscaturchio.xyz>`.',
   },
   DATABASE_URL: {
     scope: ['web-runtime', 'api'],
@@ -236,7 +236,7 @@ const ENV_VARS = {
   ALLOWED_ORIGINS: {
     scope: ['api'],
     required: true,
-    note: 'Comma-separated CORS origins; production: https://blog-ai.vivancedata.com.',
+    note: 'Comma-separated CORS origins; production: https://blog-ai.lscaturchio.xyz.',
   },
   DEV_API_KEY: { scope: ['api'], dev: true, note: 'Static API key accepted in development only.' },
   DEV_MODE: { scope: ['api'], dev: true, note: 'scripts/smoke_test.py: skip auth locally. (pytest does not read it; conftest.py sets DEV_API_KEY itself.)' },
@@ -299,7 +299,7 @@ const ENV_VARS = {
   AUTH_JWKS_URL: {
     scope: ['api'],
     required: true,
-    note: 'JWKS of the web app\'s Better Auth JWT plugin, used to verify Bearer tokens: https://blog-ai.vivancedata.com/api/auth/jwks.',
+    note: 'JWKS of the web app\'s Better Auth JWT plugin, used to verify Bearer tokens: https://blog-ai.lscaturchio.xyz/api/auth/jwks.',
   },
   AUTH_JWT_ISSUER: { scope: ['api'], required: true, note: 'Expected `iss`: the web app\'s BETTER_AUTH_URL.' },
   AUTH_JWT_AUDIENCE: { scope: ['api'], required: true, note: 'Expected `aud`: the web app\'s BETTER_AUTH_URL.' },

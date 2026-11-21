@@ -48,7 +48,7 @@ per-operation rate limits. Brand voice is trained from the user's own samples an
 
 ## Operating Context
 
-- Web app at https://blog-ai.vivancedata.com on Vercel (project `blog-ai`); FastAPI backend
+- Web app at https://blog-ai.lscaturchio.xyz on Vercel (project `blog-ai`); FastAPI backend
   on Vercel's Python runtime (project `blog-ai-api`, `apps/api/vercel.json`), not on
   Railway; Neon Postgres; Better Auth (email + password, in the web app, emails via Resend); Stripe billing (README,
   `docs/DEPLOYMENT.md`). The container path (`Dockerfile.backend`, GHCR image) exists but

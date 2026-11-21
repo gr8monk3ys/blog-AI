@@ -15,7 +15,7 @@
  */
 
 /** The domain production serves from (verified live 2026-10-13). */
-export const PRODUCTION_SITE_URL = 'https://blog-ai.vivancedata.com'
+export const PRODUCTION_SITE_URL = 'https://blog-ai.lscaturchio.xyz'
 
 const stripTrailingSlash = (url: string): string => url.replace(/\/$/, '')
 

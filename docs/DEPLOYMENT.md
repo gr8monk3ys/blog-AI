@@ -5,10 +5,10 @@ the Vercel project list and `GET /health` on the API host):
 
 | Piece | Where | Entry point / config | URL |
 |-------|-------|----------------------|-----|
-| `apps/web` (Next.js) | Vercel project `blog-ai`, root directory = repo root | root `vercel.json` (`bun run build`, output `apps/web/.next`) | https://blog-ai.vivancedata.com |
+| `apps/web` (Next.js) | Vercel project `blog-ai`, root directory = repo root | root `vercel.json` (`bun run build`, output `apps/web/.next`) | https://blog-ai.lscaturchio.xyz |
 | `apps/api` (FastAPI) | **Vercel project `blog-ai-api`, Python runtime** | `apps/api/vercel.json` (one function, `server.py`, `maxDuration` 300) + `[tool.vercel] entrypoint = "server:app"` in `apps/api/pyproject.toml` | https://blog-ai-api-gr8monk3ys-projects.vercel.app |
 | Postgres | Neon | `DATABASE_URL` (pooled) in both projects; `DATABASE_URL_DIRECT` for migrations | — |
-| Auth | Better Auth in the web app (email + password, Postgres tables from `db/migrations/011_better_auth.sql`); emails via Resend | `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `RESEND_API_KEY`, `EMAIL_FROM` (web); `AUTH_JWKS_URL`, `AUTH_JWT_ISSUER`, `AUTH_JWT_AUDIENCE` (API) | https://blog-ai.vivancedata.com/api/auth/jwks |
+| Auth | Better Auth in the web app (email + password, Postgres tables from `db/migrations/011_better_auth.sql`); emails via Resend | `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `RESEND_API_KEY`, `EMAIL_FROM` (web); `AUTH_JWKS_URL`, `AUTH_JWT_ISSUER`, `AUTH_JWT_AUDIENCE` (API) | https://blog-ai.lscaturchio.xyz/api/auth/jwks |
 | Billing | Stripe | `STRIPE_*` on the API | — |
 | Errors | Sentry (`vivance` org, shared quota) | `NEXT_PUBLIC_SENTRY_DSN` (web), `SENTRY_DSN` (API) — see [MONITORING.md](./MONITORING.md) | — |
 
@@ -64,9 +64,9 @@ may advertise given this.
    apply `db/migrations/011_better_auth.sql` to production (same `bun run db:migrate`
    command as above; it only adds tables); verify a sending domain in Resend; in
    `blog-ai` set `BETTER_AUTH_SECRET` (`openssl rand -base64 32`),
-   `BETTER_AUTH_URL=https://blog-ai.vivancedata.com`, `RESEND_API_KEY` and `EMAIL_FROM`; in
-   `blog-ai-api` set `AUTH_JWKS_URL=https://blog-ai.vivancedata.com/api/auth/jwks` and
-   `AUTH_JWT_ISSUER` / `AUTH_JWT_AUDIENCE` to `https://blog-ai.vivancedata.com`. The web
+   `BETTER_AUTH_URL=https://blog-ai.lscaturchio.xyz`, `RESEND_API_KEY` and `EMAIL_FROM`; in
+   `blog-ai-api` set `AUTH_JWKS_URL=https://blog-ai.lscaturchio.xyz/api/auth/jwks` and
+   `AUTH_JWT_ISSUER` / `AUTH_JWT_AUDIENCE` to `https://blog-ai.lscaturchio.xyz`. The web
    build fails without its four. After the deploy, delete the old Clerk variables from both
    projects, then retire the Clerk instance and its DNS record. Existing Clerk accounts are not migrated.
 
@@ -112,13 +112,13 @@ may advertise given this.
 ## Minimum production environment
 
 Web (Vercel `blog-ai`): `NEXT_PUBLIC_API_URL`, `DATABASE_URL`, `BETTER_AUTH_SECRET`,
-`BETTER_AUTH_URL=https://blog-ai.vivancedata.com`, `RESEND_API_KEY`, `EMAIL_FROM`,
+`BETTER_AUTH_URL=https://blog-ai.lscaturchio.xyz`, `RESEND_API_KEY`, `EMAIL_FROM`,
 `NEXT_PUBLIC_SITE_URL`. Apply `db/migrations/011_better_auth.sql` before the first deploy.
 
 API (Vercel `blog-ai-api`): `ENVIRONMENT=production`, `ALLOWED_ORIGINS` (the web origin;
 localhost entries are stripped and the process exits if none remain), `DATABASE_URL`,
-`AUTH_JWKS_URL=https://blog-ai.vivancedata.com/api/auth/jwks`,
-`AUTH_JWT_ISSUER` and `AUTH_JWT_AUDIENCE` (both `https://blog-ai.vivancedata.com`), at least one of `OPENAI_API_KEY` /
+`AUTH_JWKS_URL=https://blog-ai.lscaturchio.xyz/api/auth/jwks`,
+`AUTH_JWT_ISSUER` and `AUTH_JWT_AUDIENCE` (both `https://blog-ai.lscaturchio.xyz`), at least one of `OPENAI_API_KEY` /
 `ANTHROPIC_API_KEY`, and the `STRIPE_*` set for billing.
 
 The full list with required/optional per environment is in
