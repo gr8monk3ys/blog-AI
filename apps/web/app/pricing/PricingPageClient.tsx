@@ -8,7 +8,7 @@ import SiteHeader from '../../components/SiteHeader'
 import SiteFooter from '../../components/SiteFooter'
 import { Badge } from '../../components/ui/Badge'
 import { buttonVariants } from '../../components/ui/Button'
-import { isClerkConfigured, useAuth, useClerkUnavailable } from '../../lib/clerk-ui'
+import { useAuth } from '../../lib/auth-ui'
 import { UsageTier } from '../../types/usage'
 import { API_ENDPOINTS, getDefaultHeaders } from '../../lib/api'
 import { RESEARCH_MODE_FEATURE, normalizePricingTiers, type PublicPricingTier } from './tiers'
@@ -101,8 +101,6 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
 
   const router = useRouter()
   const { isLoaded, isSignedIn } = useAuth()
-  const clerkUnavailable = useClerkUnavailable()
-  const authSettled = isLoaded || clerkUnavailable
 
   const fetchPricing = async () => {
     try {
@@ -145,13 +143,13 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
     }
   }
 
-  // The tier needs a session token, which exists only once Clerk has loaded a
-  // signed-in session; asking earlier, or signed out, is a guaranteed 401.
+  // The tier needs an API token, which exists only for a signed-in session;
+  // asking earlier, or signed out, is a guaranteed 401.
   useEffect(() => {
-    if (!authSettled) return
-    if (isSignedIn || !isClerkConfigured()) fetchCurrentTier()
+    if (!isLoaded) return
+    if (isSignedIn) fetchCurrentTier()
     else setLoading(false)
-  }, [authSettled, isSignedIn])
+  }, [isLoaded, isSignedIn])
 
   useEffect(() => {
     fetchPricing()

@@ -411,111 +411,132 @@ class TestWebSocketAuthentication:
 
 
 # ---------------------------------------------------------------------------
-# 3. JWT Algorithm Pinning (RS256)
+# 3. Session JWT verification (app.auth.jwt_verifier)
 # ---------------------------------------------------------------------------
 
+_JWT_ENV = {
+    "AUTH_JWKS_URL": "https://app.example.test/api/auth/jwks",
+    "AUTH_JWT_ISSUER": "https://app.example.test",
+    "AUTH_JWT_AUDIENCE": "https://app.example.test",
+}
 
-class TestJWTAlgorithmPinning:
+
+class TestSessionJWTVerification:
     """
-    Tests for Clerk JWT verification in app.auth.clerk_jwt.
-
-    The critical security property is that the decode call MUST use
-    algorithms=["RS256"] and MUST NOT trust the algorithm header from the
-    incoming token. This prevents algorithm confusion attacks (e.g.,
-    switching to HS256 with a public key as the HMAC secret).
+    Real tokens signed with an Ed25519 key, the Better Auth JWT plugin default.
+    Only the JWKS fetch is stubbed. The algorithm list is pinned server-side so
+    a token's own `alg` header (e.g. HS256 keyed with the public key) is never
+    trusted.
     """
 
-    def test_decode_uses_rs256_algorithm(self):
-        """jwt.decode must be called with algorithms=['RS256']."""
-        from app.auth.clerk_jwt import verify_clerk_session_token
+    @pytest.fixture
+    def keypair(self):
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import (
+            Ed25519PrivateKey,
+        )
 
-        mock_jwks_client = MagicMock()
-        mock_signing_key = MagicMock()
-        mock_signing_key.key = 'fake-rsa-public-key'
-        mock_jwks_client.get_signing_key_from_jwt.return_value = mock_signing_key
+        private_key = Ed25519PrivateKey.generate()
+        return private_key, private_key.public_key()
 
-        with patch.dict(os.environ, {
-            'CLERK_JWKS_URL': 'https://clerk.example.com/.well-known/jwks.json',
-        }):
-            with patch('app.auth.clerk_jwt._get_jwks_client', return_value=mock_jwks_client):
-                with patch('app.auth.clerk_jwt.jwt.decode', return_value={'sub': 'user_123'}) as mock_decode:
-                    result = verify_clerk_session_token('fake.jwt.token')
+    def _sign(self, private_key, **overrides):
+        import time
 
-                    mock_decode.assert_called_once()
-                    call_kwargs = mock_decode.call_args
-                    # The algorithms parameter should be exactly ["RS256"]
-                    assert call_kwargs.kwargs.get('algorithms') == ['RS256'] or (len(call_kwargs.args) > 2 and call_kwargs.args[2] == ['RS256'])
-                    # Check via keyword argument (preferred)
-                    if 'algorithms' in call_kwargs[1]:
-                        assert call_kwargs[1]['algorithms'] == ['RS256']
-                    else:
-                        # Check via positional argument (3rd arg)
-                        assert call_kwargs[0][2] == ['RS256']
+        import jwt
 
-    def test_algorithm_from_token_header_is_not_used(self):
-        """
-        The algorithm specified in the JWT header MUST NOT be trusted.
+        now = int(time.time())
+        claims = {
+            "sub": "user_123",
+            "iss": _JWT_ENV["AUTH_JWT_ISSUER"],
+            "aud": _JWT_ENV["AUTH_JWT_AUDIENCE"],
+            "iat": now,
+            "exp": now + 900,
+        }
+        claims.update(overrides)
+        return jwt.encode(
+            {k: v for k, v in claims.items() if v is not None},
+            private_key,
+            algorithm="EdDSA",
+        )
 
-        Even if the token header says "HS256", the decode call must use RS256.
-        This prevents algorithm confusion attacks where an attacker crafts
-        a token using HS256 with a known public key as the HMAC secret.
-        """
-        from app.auth.clerk_jwt import verify_clerk_session_token
+    def _verify(self, token, public_key):
+        from app.auth.jwt_verifier import verify_session_token
 
-        mock_jwks_client = MagicMock()
-        mock_signing_key = MagicMock()
-        mock_signing_key.key = 'fake-rsa-public-key'
-        mock_jwks_client.get_signing_key_from_jwt.return_value = mock_signing_key
+        jwks_client = MagicMock()
+        jwks_client.get_signing_key_from_jwt.return_value = MagicMock(key=public_key)
+        with (
+            patch.dict(os.environ, _JWT_ENV),
+            patch("app.auth.jwt_verifier._get_jwks_client", return_value=jwks_client),
+        ):
+            return verify_session_token(token)
 
-        with patch.dict(os.environ, {
-            'CLERK_JWKS_URL': 'https://clerk.example.com/.well-known/jwks.json',
-        }):
-            with patch('app.auth.clerk_jwt._get_jwks_client', return_value=mock_jwks_client):
-                with patch('app.auth.clerk_jwt.jwt.decode', return_value={'sub': 'user_456'}) as mock_decode:
-                    verify_clerk_session_token('fake.jwt.token')
+    def test_valid_token_returns_claims_with_sub(self, keypair):
+        private_key, public_key = keypair
+        claims = self._verify(self._sign(private_key), public_key)
+        assert claims["sub"] == "user_123"
 
-                    # Inspect all calls to jwt.decode - none should use HS256
-                    for call in mock_decode.call_args_list:
-                        _, kwargs = call
-                        algorithms = kwargs.get('algorithms', [])
-                        assert 'HS256' not in algorithms, (
-                            'jwt.decode must not accept HS256 - algorithm confusion attack vector'
-                        )
-                        assert 'none' not in algorithms, (
-                            'jwt.decode must not accept "none" algorithm'
-                        )
-                        assert algorithms == ['RS256'], (
-                            f'Expected algorithms=["RS256"], got {algorithms}'
-                        )
+    @pytest.mark.parametrize(
+        "overrides",
+        [
+            {"iss": "https://evil.example.test"},
+            {"aud": "https://other.example.test"},
+            {"exp": 1},
+            {"sub": None},
+        ],
+        ids=["wrong-issuer", "wrong-audience", "expired", "missing-sub"],
+    )
+    def test_rejects_bad_claims(self, keypair, overrides):
+        import jwt
 
-    def test_verify_clerk_session_token_returns_claims(self):
-        """On successful verification, decoded claims should be returned."""
-        from app.auth.clerk_jwt import verify_clerk_session_token
+        private_key, public_key = keypair
+        with pytest.raises(jwt.PyJWTError):
+            self._verify(self._sign(private_key, **overrides), public_key)
 
-        expected_claims = {'sub': 'user_789', 'iss': 'https://clerk.example.com', 'exp': 9999999999}
+    def test_rejects_token_signed_by_another_key(self, keypair):
+        import jwt
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import (
+            Ed25519PrivateKey,
+        )
 
-        mock_jwks_client = MagicMock()
-        mock_signing_key = MagicMock()
-        mock_signing_key.key = 'fake-rsa-public-key'
-        mock_jwks_client.get_signing_key_from_jwt.return_value = mock_signing_key
+        _, public_key = keypair
+        forged = self._sign(Ed25519PrivateKey.generate())
+        with pytest.raises(jwt.PyJWTError):
+            self._verify(forged, public_key)
 
-        with patch.dict(os.environ, {
-            'CLERK_JWKS_URL': 'https://clerk.example.com/.well-known/jwks.json',
-        }):
-            with patch('app.auth.clerk_jwt._get_jwks_client', return_value=mock_jwks_client):
-                with patch('app.auth.clerk_jwt.jwt.decode', return_value=expected_claims):
-                    result = verify_clerk_session_token('fake.jwt.token')
+    def test_rejects_hs256_token_keyed_with_public_key(self, keypair):
+        """Algorithm confusion: an HMAC token keyed with the public key bytes."""
+        import time
 
-        assert result == expected_claims
-        assert result['sub'] == 'user_789'
+        import jwt
+        from cryptography.hazmat.primitives import serialization
 
-    def test_missing_jwks_url_raises_value_error(self):
-        """If CLERK_JWKS_URL is not configured, a ValueError must be raised."""
-        from app.auth.clerk_jwt import get_clerk_jwks_url
+        _, public_key = keypair
+        public_bytes = public_key.public_bytes(
+            serialization.Encoding.Raw, serialization.PublicFormat.Raw
+        )
+        now = int(time.time())
+        forged = jwt.encode(
+            {
+                "sub": "attacker",
+                "iss": _JWT_ENV["AUTH_JWT_ISSUER"],
+                "aud": _JWT_ENV["AUTH_JWT_AUDIENCE"],
+                "iat": now,
+                "exp": now + 900,
+            },
+            public_bytes,
+            algorithm="HS256",
+        )
+        with pytest.raises(jwt.PyJWTError):
+            self._verify(forged, public_key)
 
-        with patch.dict(os.environ, {'CLERK_JWKS_URL': ''}, clear=False):
-            with pytest.raises(ValueError, match='CLERK_JWKS_URL'):
-                get_clerk_jwks_url()
+    @pytest.mark.parametrize("missing", sorted(_JWT_ENV))
+    def test_each_setting_is_required(self, missing):
+        from app.auth.jwt_verifier import is_jwt_auth_configured, verify_session_token
+
+        env = {**_JWT_ENV, missing: ""}
+        with patch.dict(os.environ, env):
+            assert is_jwt_auth_configured() is False
+            with pytest.raises(ValueError, match=missing):
+                verify_session_token("any.jwt.token")
 
 
 # ---------------------------------------------------------------------------
@@ -804,11 +825,11 @@ class TestSecurityFixesIntegration:
         assert asyncio.iscoroutinefunction(authenticate_websocket)
         assert router is not None
 
-    def test_clerk_jwt_module_imports_cleanly(self):
-        """The clerk_jwt module should import without errors."""
-        from app.auth.clerk_jwt import verify_clerk_session_token, is_clerk_jwt_configured
-        assert callable(verify_clerk_session_token)
-        assert callable(is_clerk_jwt_configured)
+    def test_jwt_verifier_module_imports_cleanly(self):
+        """The jwt_verifier module should import without errors."""
+        from app.auth.jwt_verifier import is_jwt_auth_configured, verify_session_token
+        assert callable(verify_session_token)
+        assert callable(is_jwt_auth_configured)
 
     def test_dependencies_module_imports_cleanly(self):
         """The dependencies module should import without errors."""

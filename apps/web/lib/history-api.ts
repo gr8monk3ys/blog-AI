@@ -2,7 +2,7 @@
  * History API client for Blog-AI
  *
  * Talks to same-origin Next.js route handlers which persist to Neon.
- * Requires an authenticated Clerk session for persistence.
+ * Requires an authenticated session for persistence.
  */
 
 import type {

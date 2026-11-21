@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSqlOrNull } from '../../../lib/db'
-import { requireClerkUserId } from '../../../lib/clerk-auth'
+import { requireUserId } from '../../../lib/auth-session'
 import { databaseUnavailableResponse } from '../../../lib/api-route-errors'
 import { canServeDemoData } from '../../../lib/server-mode'
 import { SAMPLE_TEMPLATES } from '../../../types/templates'
@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
 
     let userId: string
     try {
-      userId = await requireClerkUserId()
+      userId = await requireUserId()
     } catch {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },

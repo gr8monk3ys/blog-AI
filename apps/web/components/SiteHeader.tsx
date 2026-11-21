@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Bars3Icon, XMarkIcon, SunIcon, MoonIcon, ComputerDesktopIcon } from '@heroicons/react/24/outline'
 import { useTheme } from '../hooks/useTheme'
-import { SignedIn, SignedOut, UserButton } from '../lib/clerk-ui'
+import { AccountMenu, SignedIn, SignedOut } from '../lib/auth-ui'
 import { Logo } from './brand/Logo'
 
 interface NavLink {
@@ -52,7 +52,6 @@ const THEME_CYCLE = ['light', 'dark', 'system'] as const
  */
 export default function SiteHeader(): React.ReactElement {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const isClerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
   const { theme, setTheme } = useTheme()
 
   const cycleTheme = (): void => {
@@ -85,12 +84,6 @@ export default function SiteHeader(): React.ReactElement {
     </li>
   )
 
-  const signInLink = (href: string): React.ReactElement => (
-    <Link href={href} className="cta-primary h-9 rounded-full px-4 text-sm">
-      Sign In
-    </Link>
-  )
-
   return (
     <header className="header-sheet sticky top-0 z-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -100,14 +93,8 @@ export default function SiteHeader(): React.ReactElement {
           </Link>
 
           <nav className="hidden items-center gap-7 md:flex" aria-label="Primary">
-            {isClerkConfigured ? (
-              <>
-                {publicLinks.map(renderNavLink)}
-                <SignedIn>{authLinks.map(renderNavLink)}</SignedIn>
-              </>
-            ) : (
-              navLinks.map(renderNavLink)
-            )}
+            {publicLinks.map(renderNavLink)}
+            <SignedIn>{authLinks.map(renderNavLink)}</SignedIn>
           </nav>
 
           {/* The round hairline pill: theme, then the account control. */}
@@ -130,18 +117,12 @@ export default function SiteHeader(): React.ReactElement {
                 aria-hidden="true"
               />
             </button>
-            {isClerkConfigured ? (
-              <>
-                <SignedIn>
-                  <span className="inline-flex size-9 items-center justify-center">
-                    <UserButton afterSignOutUrl="/" />
-                  </span>
-                </SignedIn>
-                <SignedOut>{signInLink('/sign-in')}</SignedOut>
-              </>
-            ) : (
-              signInLink('/auth')
-            )}
+            <AccountMenu />
+            <SignedOut>
+              <Link href="/sign-in" className="cta-primary h-9 rounded-full px-4 text-sm">
+                Sign In
+              </Link>
+            </SignedOut>
             <button
               type="button"
               className="inline-flex size-9 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted hover:text-primary md:hidden"
@@ -167,14 +148,8 @@ export default function SiteHeader(): React.ReactElement {
           aria-label="Primary"
         >
           <ul className="mx-auto max-w-7xl divide-y divide-border/60 px-4 py-2 sm:px-6">
-            {isClerkConfigured ? (
-              <>
-                {publicLinks.map(renderMobileNavLink)}
-                <SignedIn>{authLinks.map(renderMobileNavLink)}</SignedIn>
-              </>
-            ) : (
-              navLinks.map(renderMobileNavLink)
-            )}
+            {publicLinks.map(renderMobileNavLink)}
+            <SignedIn>{authLinks.map(renderMobileNavLink)}</SignedIn>
           </ul>
         </nav>
       )}

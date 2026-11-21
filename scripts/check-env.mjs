@@ -64,20 +64,11 @@ const ENV_VARS = {
   NEXT_PUBLIC_API_KEY: {
     scope: ['web-build', 'web-runtime'],
     dev: true,
-    note: 'Local-only API key fallback (X-API-Key) when Clerk is absent. Never set in production.',
-  },
-  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: {
-    scope: ['web-build', 'web-runtime'],
-    required: true,
-    note: 'Clerk publishable key (pk_test_/pk_live_). Without it every route is public (dev) or redirects to /auth?reason=auth-not-configured (prod).',
-  },
-  NEXT_PUBLIC_CLERK_DOMAIN: {
-    scope: ['web-build', 'web-runtime'],
-    note: 'Clerk custom domain; production uses clerk.vivancedata.com. Added to the CSP connect-src.',
+    note: 'Local-only API key fallback (X-API-Key) when there is no session. Never set in production.',
   },
   NEXT_PUBLIC_SITE_URL: {
     scope: ['web-build', 'web-runtime'],
-    note: 'Public origin (sitemap, RSS, Sentry allowUrls, metadataBase). Production falls back to https://blog-ai.vivancedata.com; set it anyway.',
+    note: 'Public origin (sitemap, RSS, Sentry allowUrls, metadataBase). Production falls back to https://blog-ai.lscaturchio.xyz; set it anyway.',
   },
   NEXT_PUBLIC_SUPPORT_EMAIL: {
     scope: ['web-build', 'web-runtime'],
@@ -89,7 +80,7 @@ const ENV_VARS = {
   },
   NEXT_PUBLIC_SIGNUP_MODE: {
     scope: ['web-build', 'web-runtime'],
-    note: 'open | waitlist | invite (lib/signup-mode.ts). Default open. Must match the Clerk dashboard sign-up mode.',
+    note: 'open | waitlist | invite (lib/signup-mode.ts). Default open. waitlist and invite turn off self-serve sign-up in lib/auth.ts.',
   },
   NEXT_PUBLIC_ENABLE_KNOWLEDGE_BASE: {
     scope: ['web-build', 'web-runtime'],
@@ -143,10 +134,25 @@ const ENV_VARS = {
   },
 
   // --- Web: server-only runtime ---
-  CLERK_SECRET_KEY: {
+  BETTER_AUTH_SECRET: {
     scope: ['web-runtime'],
     required: true,
-    note: 'Clerk secret (sk_test_/sk_live_) for proxy.ts and route handlers. Clerk is disabled unless both keys are present.',
+    note: 'Better Auth signing/encryption secret (32+ random bytes, e.g. `openssl rand -base64 32`). Without it a production server refuses every auth request.',
+  },
+  BETTER_AUTH_URL: {
+    scope: ['web-runtime'],
+    required: true,
+    note: 'Public origin of the web app (https://blog-ai.lscaturchio.xyz). Base for auth email links and the `iss`/`aud` of the API JWTs; must equal the API\'s AUTH_JWT_ISSUER and AUTH_JWT_AUDIENCE.',
+  },
+  RESEND_API_KEY: {
+    scope: ['web-runtime'],
+    required: true,
+    note: 'Resend key for the auth emails (verification, password reset). Unset outside production: the email is printed to the server console instead.',
+  },
+  EMAIL_FROM: {
+    scope: ['web-runtime'],
+    required: true,
+    note: 'Sender for auth emails, on a domain verified in Resend, e.g. `Blog AI <auth@lscaturchio.xyz>`.',
   },
   DATABASE_URL: {
     scope: ['web-runtime', 'api'],
@@ -165,16 +171,6 @@ const ENV_VARS = {
     scope: ['web-runtime'],
     dev: true,
     note: 'Seeds demo data outside production (lib/server-mode.ts).',
-  },
-  SUPPRESS_PROXY_AUTH_WARNING: {
-    scope: ['web-runtime'],
-    dev: true,
-    note: '=1 silences the "Clerk not configured" warning from proxy.ts in local runs.',
-  },
-  PLAYWRIGHT_TEST: {
-    scope: ['web-runtime'],
-    dev: true,
-    note: '=1 set by the Playwright config; proxy.ts suppresses its auth warning under e2e.',
   },
 
   // --- Web: build-only ---
@@ -240,7 +236,7 @@ const ENV_VARS = {
   ALLOWED_ORIGINS: {
     scope: ['api'],
     required: true,
-    note: 'Comma-separated CORS origins; production: https://blog-ai.vivancedata.com.',
+    note: 'Comma-separated CORS origins; production: https://blog-ai.lscaturchio.xyz.',
   },
   DEV_API_KEY: { scope: ['api'], dev: true, note: 'Static API key accepted in development only.' },
   DEV_MODE: { scope: ['api'], dev: true, note: 'scripts/smoke_test.py: skip auth locally. (pytest does not read it; conftest.py sets DEV_API_KEY itself.)' },
@@ -300,13 +296,13 @@ const ENV_VARS = {
   SUPABASE_SERVICE_KEY: { scope: ['api'], note: 'Deprecated supabase-py fallback (content versioning).' },
 
   // --- API: auth ---
-  CLERK_JWKS_URL: {
+  AUTH_JWKS_URL: {
     scope: ['api'],
     required: true,
-    note: 'Clerk JWKS endpoint used to verify the web app\'s Bearer tokens.',
+    note: 'JWKS of the web app\'s Better Auth JWT plugin, used to verify Bearer tokens: https://blog-ai.lscaturchio.xyz/api/auth/jwks.',
   },
-  CLERK_JWT_ISSUER: { scope: ['api'], required: true, note: 'Expected `iss` of Clerk session tokens.' },
-  CLERK_JWT_AUDIENCE: { scope: ['api'], note: 'Expected `aud`, when the Clerk template sets one.' },
+  AUTH_JWT_ISSUER: { scope: ['api'], required: true, note: 'Expected `iss`: the web app\'s BETTER_AUTH_URL.' },
+  AUTH_JWT_AUDIENCE: { scope: ['api'], required: true, note: 'Expected `aud`: the web app\'s BETTER_AUTH_URL.' },
 
   // --- API: billing ---
   STRIPE_SECRET_KEY: { scope: ['api'], note: 'Enables payments (/health features.payments). Live in production.' },

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useAuth } from '../lib/clerk-ui'
+import { useAuth } from '../lib/auth-ui'
 
 interface RequireAuthProps {
   /** Content to render when the user is authenticated. */
@@ -12,7 +12,7 @@ interface RequireAuthProps {
    */
   redirectTo?: string
   /**
-   * Optional loading indicator shown while Clerk is still loading.
+   * Optional loading indicator shown while the session is still loading.
    * When omitted a minimal branded spinner is rendered.
    */
   fallback?: React.ReactNode
@@ -39,7 +39,7 @@ export default function RequireAuth({
 }: RequireAuthProps): React.ReactElement | null {
   const { isLoaded, isSignedIn } = useAuth()
 
-  // Clerk is still initializing -- show a loading state.
+  // Session is still loading -- show a loading state.
   if (!isLoaded) {
     if (fallback) {
       return <>{fallback}</>

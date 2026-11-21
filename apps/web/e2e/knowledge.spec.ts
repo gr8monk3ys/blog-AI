@@ -1,25 +1,9 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Knowledge Base page', () => {
-  test('should navigate to /knowledge and display page title', async ({
-    page,
-  }) => {
+  test('sends a signed-out visitor to sign-in and back', async ({ page }) => {
     await page.goto('/knowledge')
-    await expect(page.getByRole('heading', { name: /knowledge base/i })).toBeVisible()
-  })
-
-  test('should show upload area', async ({ page }) => {
-    await page.goto('/knowledge')
-    await expect(page.getByText(/click to upload/i)).toBeVisible()
-    await expect(page.getByText(/PDF, DOCX, TXT, or MD/i)).toBeVisible()
-  })
-
-  test('should show empty state when no documents exist', async ({ page }) => {
-    await page.goto('/knowledge')
-    // Either shows documents or empty state
-    const emptyState = page.getByText(/no documents yet/i)
-    const docTable = page.locator('table')
-    await expect(emptyState.or(docTable)).toBeVisible()
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fknowledge$/)
   })
 
   test('hides the Knowledge Base nav link when the feature flag is off', async ({
@@ -38,7 +22,7 @@ test.describe('Knowledge Base page', () => {
 test.describe('Blog generator KB toggle', () => {
   // The "Use Knowledge Base" toggle lives in the content-generator advanced
   // options, which only render on the auth-gated /generate and tool-detail
-  // pages. In the unauthenticated E2E environment (no Clerk) /tools redirects
+  // pages. In the unauthenticated E2E environment /tools redirects
   // to /sign-in, so this assertion is unreachable as written. Re-enable once
   // E2E runs with an authenticated session (tracked in docs/SCHEMA_AUDIT.md).
   test.fixme('should show Use Knowledge Base toggle in advanced options', async ({

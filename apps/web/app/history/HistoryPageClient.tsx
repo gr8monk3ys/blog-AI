@@ -16,7 +16,7 @@ import HistoryCard from '../../components/history/HistoryCard'
 import HistoryFilters from '../../components/history/HistoryFilters'
 import { historyApi } from '../../lib/history-api'
 import type { GeneratedContentItem, HistoryFilters as HistoryFiltersType } from '../../types/history'
-import { useAuth } from '../../lib/clerk-ui'
+import { useAuth } from '../../lib/auth-ui'
 
 function useHistoryPageView() {
   const [items, setItems] = useState<GeneratedContentItem[]>([])
@@ -94,7 +94,7 @@ function useHistoryPageView() {
   useEffect(() => {
     fetchHistory()
     fetchStats()
-    // We want to refetch when auth becomes available (Clerk loads / user signs in).
+    // We want to refetch when auth becomes available (session loads / user signs in).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAvailable])
 

@@ -945,8 +945,8 @@ Create a Stripe checkout session.
 ```json
 {
   "price_id": "price_xxx",
-  "success_url": "https://blog-ai.vivancedata.com/success?session_id={CHECKOUT_SESSION_ID}",
-  "cancel_url": "https://blog-ai.vivancedata.com/pricing"
+  "success_url": "https://blog-ai.lscaturchio.xyz/success?session_id={CHECKOUT_SESSION_ID}",
+  "cancel_url": "https://blog-ai.lscaturchio.xyz/pricing"
 }
 ```
 
@@ -966,7 +966,7 @@ Create a Stripe customer portal session.
 **Request Body**:
 ```json
 {
-  "return_url": "https://blog-ai.vivancedata.com/settings"
+  "return_url": "https://blog-ai.lscaturchio.xyz/settings"
 }
 ```
 
@@ -1200,5 +1200,5 @@ curl -X POST "https://<your-api-host>/export/markdown" \
 
 - **Documentation**: this file and `{base_url}/docs` (Swagger UI) on a running API
 - **API status**: `GET {base_url}/health` (no auth); the web app's `GET /api/health` at
-  https://blog-ai.vivancedata.com/api/health probes the API too
+  https://blog-ai.lscaturchio.xyz/api/health probes the API too
 - **Email**: support@lscaturchio.xyz (security reports: see `SECURITY.md`)

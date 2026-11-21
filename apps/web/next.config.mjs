@@ -24,34 +24,11 @@ if (isVercelProductionBuild) {
       '(production: https://blog-ai-api-gr8monk3ys-projects.vercel.app).'
     )
   }
-  if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
-    throw new Error(
-      'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is required in production. ' +
-      'Set it to your Clerk publishable key for authentication.'
-    )
-  }
-  if (!process.env.CLERK_SECRET_KEY) {
-    throw new Error(
-      'CLERK_SECRET_KEY is required in production. ' +
-      'Set it to your Clerk secret key for server-side authentication.'
-    )
-  }
-  if (
-    !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.startsWith('pk_test_') &&
-    !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.startsWith('pk_live_')
-  ) {
-    throw new Error(
-      'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY must be a valid Clerk key in production ' +
-      '(pk_test_... or pk_live_...).'
-    )
-  }
-  if (
-    !process.env.CLERK_SECRET_KEY.startsWith('sk_test_') &&
-    !process.env.CLERK_SECRET_KEY.startsWith('sk_live_')
-  ) {
-    throw new Error(
-      'CLERK_SECRET_KEY must be a valid Clerk key in production (sk_test_... or sk_live_...).'
-    )
+  // Better Auth: sessions and users live in Postgres; auth emails go through Resend.
+  for (const name of ['BETTER_AUTH_SECRET', 'BETTER_AUTH_URL', 'DATABASE_URL', 'RESEND_API_KEY', 'EMAIL_FROM']) {
+    if (!process.env[name]) {
+      throw new Error(`${name} is required in production. See docs/ENVIRONMENT.md.`)
+    }
   }
   if (process.env.NEXT_PUBLIC_API_URL.includes('localhost')) {
     console.warn(

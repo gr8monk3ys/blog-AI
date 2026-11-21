@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { getClerkUserIdOrNull } from '../../lib/clerk-auth'
+import { getUserIdOrNull } from '../../lib/auth-session'
 import OnboardingPageClient from './OnboardingPageClient'
 
 export const metadata: Metadata = {
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 }
 
 export default async function OnboardingPage() {
-  const userId = await getClerkUserIdOrNull()
+  const userId = await getUserIdOrNull()
   if (!userId) {
     redirect('/sign-in')
   }

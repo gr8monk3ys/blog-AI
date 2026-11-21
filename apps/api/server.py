@@ -355,7 +355,7 @@ Blog AI provides a comprehensive API for generating high-quality content includi
 
 All API endpoints require authentication. Supported methods:
 
-- **Cloud SaaS (recommended):** Clerk session JWT via `Authorization: Bearer <token>`
+- **Cloud SaaS (recommended):** session JWT from the web app (Better Auth) via `Authorization: Bearer <token>`
 - **API / CLI:** API key via `X-API-Key: <key>`
 
 ### Rate Limiting

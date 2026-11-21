@@ -4,7 +4,7 @@ Provides endpoints for conversational content creation, including
 synchronous message handling, SSE streaming, and conversation management.
 
 Authorization:
-    All endpoints require an authenticated user (Clerk session JWT via
+    All endpoints require an authenticated user (session JWT via
     ``Authorization: Bearer ...`` or API key via ``X-API-Key``).
 """
 

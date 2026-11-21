@@ -15,9 +15,9 @@ import { GET, isDetailAuthorised } from '../../../app/api/health/route'
 const ENV_KEYS = [
   'DATABASE_URL',
   'NEXT_PUBLIC_API_URL',
-  'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY',
-  'CLERK_SECRET_KEY',
-  'NEXT_PUBLIC_CLERK_DOMAIN',
+  'BETTER_AUTH_SECRET',
+  'RESEND_API_KEY',
+  'EMAIL_FROM',
   'NEXT_PUBLIC_APP_VERSION',
   'VERCEL_GIT_COMMIT_SHA',
   'VERCEL_ENV',
@@ -81,9 +81,9 @@ function configureDb() {
 function configureEverything() {
   configureDb()
   vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.example.test/')
-  vi.stubEnv('NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY', 'pk_live_secretvalue')
-  vi.stubEnv('CLERK_SECRET_KEY', 'sk_live_secretvalue')
-  vi.stubEnv('NEXT_PUBLIC_CLERK_DOMAIN', 'clerk.example.test')
+  vi.stubEnv('BETTER_AUTH_SECRET', 'auth_secretvalue')
+  vi.stubEnv('RESEND_API_KEY', 're_secretvalue')
+  vi.stubEnv('EMAIL_FROM', 'auth@mail.example.test')
   fetchMock.mockResolvedValue(jsonResponse(healthyUpstream))
 }
 
@@ -98,7 +98,7 @@ describe('GET /api/health (public)', () => {
     expect(body.checks).toEqual({
       db: { status: 'degraded' },
       api: { status: 'degraded' },
-      clerk: { status: 'degraded' },
+      auth: { status: 'degraded' },
     })
     expect(body.details).toBeUndefined()
     expect(fetchMock).not.toHaveBeenCalled()
@@ -115,14 +115,14 @@ describe('GET /api/health (public)', () => {
     expect(body.checks.db.status).toBe('ok')
     expect(typeof body.checks.db.latencyMs).toBe('number')
     expect(body.checks.api).toMatchObject({ status: 'ok', version: '0.1.0' })
-    expect(body.checks.clerk).toEqual({ status: 'ok' })
+    expect(body.checks.auth).toEqual({ status: 'ok' })
     expect(mockQuery).toHaveBeenCalledWith('SELECT 1')
   })
 
   it('never names an environment variable, key, provider or error in the public body', async () => {
     configureEverything()
     mockQuery.mockRejectedValue(new Error('connection to host db.example.test refused; DATABASE_URL invalid'))
-    vi.stubEnv('CLERK_SECRET_KEY', '') // half-configured Clerk
+    vi.stubEnv('RESEND_API_KEY', '') // no mailer
     fetchMock.mockResolvedValue(jsonResponse({ ...healthyUpstream, status: 'degraded' }))
 
     const res = await get()
@@ -132,12 +132,12 @@ describe('GET /api/health (public)', () => {
     expect(res.status).toBe(503)
     expect(body.details).toBeUndefined()
     expect(text).not.toMatch(ENV_NAME)
-    for (const forbidden of ['secretvalue', 'pk_live', 'sk_live', 'openai', 'anthropic', 'gemini', 'redis', 'web_research', 'refused', 'db.example.test', 'clerk.example.test', 'publishableKey', 'secretKey', 'configured', 'error', 'upstream', 'healthy']) {
+    for (const forbidden of ['secretvalue', 're_secretvalue', 'auth_secret', 'openai', 'anthropic', 'gemini', 'redis', 'web_research', 'refused', 'db.example.test', 'mail.example.test', 'mailer', 'secret"', 'configured', 'error', 'upstream', 'healthy']) {
       expect(text).not.toContain(forbidden)
     }
     // Only aggregate words appear.
     expect(Object.keys(body.checks.db).sort()).toEqual(['latencyMs', 'status'])
-    expect(Object.keys(body.checks.clerk)).toEqual(['status'])
+    expect(Object.keys(body.checks.auth)).toEqual(['status'])
   })
 
   it('reports the package version, and the Vercel commit when present', async () => {
@@ -218,14 +218,14 @@ describe('GET /api/health (public)', () => {
     expect((await res.json()).checks.api.status).toBe('down')
   })
 
-  it('treats a half-configured Clerk as down', async () => {
-    vi.stubEnv('NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY', 'pk_test_only')
+  it('treats auth without a mailer as degraded', async () => {
+    vi.stubEnv('BETTER_AUTH_SECRET', 'auth_secretvalue')
 
     const res = await get()
     const body = await res.json()
 
-    expect(res.status).toBe(503)
-    expect(body.checks.clerk).toEqual({ status: 'down' })
+    expect(res.status).toBe(200)
+    expect(body.checks.auth).toEqual({ status: 'degraded' })
   })
 })
 
@@ -268,7 +268,7 @@ describe('GET /api/health (detail view)', () => {
         services: { database: 'connected', redis: 'disconnected', llmProviders: ['openai', 'anthropic'] },
         features: { content_generation: true, web_research: false },
       },
-      clerk: { publishableKey: true, secretKey: true, customDomain: true },
+      auth: { secret: true, mailer: true },
     })
     // Even the detail view reports presence, never values.
     expect(text).not.toContain('secretvalue')

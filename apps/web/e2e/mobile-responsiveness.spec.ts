@@ -32,7 +32,7 @@ test.describe('Mobile Responsiveness', () => {
 
     expect(response?.status()).toBeLessThan(500)
     await expect(page.locator('body')).toContainText(
-      /sign in|Clerk is not configured/i
+      /sign in/i
     )
   })
 

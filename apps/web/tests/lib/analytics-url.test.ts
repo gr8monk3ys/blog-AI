@@ -5,10 +5,10 @@ describe('withoutQueryString', () => {
   it('removes OAuth values from the callback URL', () => {
     const event = withoutQueryString({
       type: 'pageview',
-      url: 'https://blog-ai.vivancedata.com/social/callback?code=secret&state=twitter:abc',
+      url: 'https://blog-ai.lscaturchio.xyz/social/callback?code=secret&state=twitter:abc',
     })
 
-    expect(event.url).toBe('https://blog-ai.vivancedata.com/social/callback')
+    expect(event.url).toBe('https://blog-ai.lscaturchio.xyz/social/callback')
     expect(event.type).toBe('pageview')
   })
 

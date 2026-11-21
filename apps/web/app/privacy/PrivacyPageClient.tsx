@@ -30,10 +30,9 @@ export default function PrivacyPageClient(): React.ReactElement {
 
             <h3>Account Information</h3>
             <p>
-              When you create an account through our authentication provider
-              (Clerk), we collect your name, email address, and profile
-              information. We do not store passwords directly — authentication
-              is handled by Clerk’s secure infrastructure.
+              When you create an account, we collect your name and email
+              address. Your password is stored only as a salted one-way hash;
+              we never store or see it in plain text.
             </p>
 
             <h3>Payment Information</h3>
@@ -90,8 +89,8 @@ export default function PrivacyPageClient(): React.ReactElement {
             <p>We share your information only with:</p>
             <ul>
               <li>
-                <strong>Authentication provider (Clerk)</strong> — for account
-                management and sign-in
+                <strong>Email delivery provider (Resend)</strong> — to send
+                account emails such as address confirmation and password resets
               </li>
               <li>
                 <strong>Payment processor (Stripe)</strong> — for subscription

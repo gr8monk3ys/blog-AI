@@ -1,43 +1,18 @@
-import { describe, it, expect, beforeAll, beforeEach, afterAll, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { ThemeProvider } from '../../hooks/useTheme'
 import Home from '../../app/HomePageClient'
+import { sessionState, signedInSession } from '../auth-mock'
 
 /**
- * The hero CTA must never disappear.
- *
- * Clerk's <SignedIn>/<SignedOut> both render nothing until clerk.browser.js has
- * loaded — and forever if it fails to load (a blocked script, a misconfigured
- * custom domain). That left the homepage with a headline, a subhead, an empty
- * gap where the buttons belong, and a "No credit card required" line pointing
- * at nothing. These tests pin the unauthenticated CTA to the "not yet loaded"
- * state so the primary action never depends on a third-party script.
+ * The hero CTA must never disappear: the signed-out CTA renders until the
+ * session positively loads, so the primary action is in the first paint.
  */
-const authState = {
-  isLoaded: false,
-  isSignedIn: false,
-  userId: null as string | null,
-}
-
-vi.mock('../../lib/clerk-ui', () => ({
-  isClerkConfigured: () => true,
-  useAuth: () => authState,
-  // SiteHeader/SiteFooter render inside the page; mirror Clerk's real
-  // behaviour, where both gates render nothing until the script has loaded.
-  SignedIn: () => null,
-  SignedOut: () => null,
-  UserButton: () => null,
-}))
-
 function renderHome() {
   return render(<Home />, { wrapper: ThemeProvider })
 }
 
-const originalClerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-
 beforeAll(() => {
-  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = 'pk_test_dummy'
-
   if (!('IntersectionObserver' in globalThis)) {
     class MockIntersectionObserver {
       observe(): void {}
@@ -54,22 +29,13 @@ beforeAll(() => {
   }
 })
 
-afterAll(() => {
-  if (originalClerkKey) {
-    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = originalClerkKey
-  } else {
-    delete process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-  }
-})
-
 beforeEach(() => {
-  authState.isLoaded = false
-  authState.isSignedIn = false
-  authState.userId = null
+  sessionState.data = null
+  sessionState.isPending = true
 })
 
 describe('HomePageClient hero CTA', () => {
-  it('renders the signed-out CTA while Clerk is still loading', () => {
+  it('renders the signed-out CTA while the session is loading', () => {
     renderHome()
 
     const startFree = screen.getAllByRole('link', { name: /start free/i })
@@ -81,8 +47,8 @@ describe('HomePageClient hero CTA', () => {
     )
   })
 
-  it('still renders the signed-out CTA when Clerk loads with no session', () => {
-    authState.isLoaded = true
+  it('still renders the signed-out CTA when the session loads empty', () => {
+    sessionState.isPending = false
 
     renderHome()
 
@@ -90,10 +56,9 @@ describe('HomePageClient hero CTA', () => {
     expect(screen.queryByRole('link', { name: /start generating/i })).toBeNull()
   })
 
-  it('swaps to the authenticated CTA once Clerk reports a session', () => {
-    authState.isLoaded = true
-    authState.isSignedIn = true
-    authState.userId = 'user_test'
+  it('swaps to the authenticated CTA once a session loads', () => {
+    sessionState.isPending = false
+    sessionState.data = signedInSession
 
     renderHome()
 

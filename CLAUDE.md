@@ -2,11 +2,11 @@
 
 Blog AI: Next.js web app + FastAPI API + browser extension for generating and publishing
 blog posts and books with a configurable brand voice. Bun workspace (`apps/web`) plus a
-uv-managed Python app (`apps/api`). Live at https://blog-ai.vivancedata.com. The repo is
+uv-managed Python app (`apps/api`). Live at https://blog-ai.lscaturchio.xyz. The repo is
 public: nothing committed here is private.
 
 ## Layout
-- `apps/web` — Next.js 16 (App Router, React 19, TypeScript 6, Tailwind 4, Clerk, Sentry).
+- `apps/web` — Next.js 16 (App Router, React 19, TypeScript 6, Tailwind 4, Better Auth, Sentry).
   `proxy.ts` is the middleware (per-request CSP nonce). Unit tests in `tests/` (Vitest + jsdom),
   Playwright journeys in `e2e/`.
 - `apps/api` — FastAPI. `server.py` wires routes from `app/routes/`; logic in `src/`; config in
@@ -39,8 +39,9 @@ cd apps/api && uv sync && uv run python server.py     # :8000 (or: python -m ven
 bun dev                                                # :3000
 ```
 Minimum env: `OPENAI_API_KEY` in `.env`; `NEXT_PUBLIC_API_URL=http://localhost:8000` in
-`apps/web/.env.local`. Clerk is optional in dev: with no publishable key every route is public.
-Without `DATABASE_URL`, history, brand profiles and analytics fall back to in-memory storage.
+`apps/web/.env.local`. Auth (Better Auth, `lib/auth.ts`) needs no keys in dev: accounts live in
+memory and verification / reset emails are printed to the `bun dev` log. Without `DATABASE_URL`,
+history, brand profiles and analytics fall back to in-memory storage.
 
 ## Test
 ```bash
@@ -79,12 +80,14 @@ deploys a Vercel preview per PR.
 ## Deploy
 
 Both apps are on Vercel: the web app is project `blog-ai` (root `vercel.json`, live at
-https://blog-ai.vivancedata.com) and the API is project `blog-ai-api` on Vercel's **Python
+https://blog-ai.lscaturchio.xyz) and the API is project `blog-ai-api` on Vercel's **Python
 runtime** (`apps/api/vercel.json` + `[tool.vercel]` in `pyproject.toml`, live at
 https://blog-ai-api-gr8monk3ys-projects.vercel.app). The API is not on Railway; the GHCR image
-is not pulled by anything. Clerk runs on `clerk.vivancedata.com`. As of 2026-10-13 the
-`blog-ai-api` project still deploys from a deleted branch and does not track `main` — a
-dashboard fix listed under "Owner to-do" in `docs/DEPLOYMENT.md`. Health: web
+is not pulled by anything. Auth is Better Auth inside the web app (tables in
+`db/migrations/011_better_auth.sql`, emails via Resend); the API verifies the web app's JWTs
+against `/api/auth/jwks`. As of 2026-10-13 the `blog-ai-api` project still deploys from a
+deleted branch and does not track `main` — a dashboard fix listed under "Owner to-do" in
+`docs/DEPLOYMENT.md`. Health: web
 `GET /api/health` (`apps/web/app/api/health/route.ts`), API `GET /health` and `/ready`.
 
 `bun run env:check` (`scripts/check-env.mjs`) prints every env var the web app and API read,

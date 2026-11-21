@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { requireClerkUserId } from '../../../../lib/clerk-auth'
+import { requireUserId } from '../../../../lib/auth-session'
 import { getSqlOrNull } from '../../../../lib/db'
 
 export async function GET(
@@ -13,7 +13,7 @@ export async function GET(
       return NextResponse.json({ error: 'Database not configured' }, { status: 503 })
     }
 
-    const userId = await requireClerkUserId()
+    const userId = await requireUserId()
     const { id } = await params
 
     const rows = await sql.query(
@@ -45,7 +45,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Database not configured' }, { status: 503 })
     }
 
-    const userId = await requireClerkUserId()
+    const userId = await requireUserId()
     const { id } = await params
     const body = await request.json()
 
@@ -104,7 +104,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Database not configured' }, { status: 503 })
     }
 
-    const userId = await requireClerkUserId()
+    const userId = await requireUserId()
     const { id } = await params
 
     const rows = await sql.query(
