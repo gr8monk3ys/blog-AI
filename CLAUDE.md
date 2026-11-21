@@ -180,5 +180,4 @@ The five canonical roles, label string equal to role name. See `docs/agents/tria
 
 ### Domain docs
 
-Single-context layout: `CONTEXT.md` + `docs/adr/` at the repo root, created lazily — neither
-exists yet, and that is fine. See `docs/agents/domain.md`.
+Single-context: `GLOSSARY.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
