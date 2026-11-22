@@ -1,5 +1,6 @@
 'use client'
 
+import type { ErrorBody } from '@/types/api'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { API_ENDPOINTS, getDefaultHeaders } from '../../../lib/api'
@@ -52,7 +53,7 @@ export default function SocialCallbackPage() {
       const res = await fetch(url, { headers })
 
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}))
+        const errData = (await res.json().catch(() => ({}))) as ErrorBody
         throw new Error(errData?.detail || errData?.error || `HTTP ${res.status}`)
       }
 

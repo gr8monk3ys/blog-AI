@@ -1,3 +1,4 @@
+import { fromPartial } from '@total-typescript/shoehorn'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -101,10 +102,10 @@ describe('ExportMenu', () => {
     it('should include auth headers when exporting markdown', async () => {
       const user = userEvent.setup()
 
-      vi.mocked(global.fetch).mockResolvedValue({
+      vi.mocked(global.fetch).mockResolvedValue(fromPartial<Response>({
         ok: true,
         blob: () => Promise.resolve(new Blob(['# test'], { type: 'text/markdown' })),
-      } as Response)
+      }))
 
       // Mock URL.createObjectURL and URL.revokeObjectURL for file download
       const createObjectURLSpy = vi.fn().mockReturnValue('blob:test-url')
@@ -137,10 +138,10 @@ describe('ExportMenu', () => {
     it('should include auth headers when exporting PDF', async () => {
       const user = userEvent.setup()
 
-      vi.mocked(global.fetch).mockResolvedValue({
+      vi.mocked(global.fetch).mockResolvedValue(fromPartial<Response>({
         ok: true,
         blob: () => Promise.resolve(new Blob(['pdf-data'], { type: 'application/pdf' })),
-      } as Response)
+      }))
 
       global.URL.createObjectURL = vi.fn().mockReturnValue('blob:test-url')
       global.URL.revokeObjectURL = vi.fn()
@@ -167,10 +168,10 @@ describe('ExportMenu', () => {
     it('should send the correct request body for export', async () => {
       const user = userEvent.setup()
 
-      vi.mocked(global.fetch).mockResolvedValue({
+      vi.mocked(global.fetch).mockResolvedValue(fromPartial<Response>({
         ok: true,
         blob: () => Promise.resolve(new Blob(['<html>test</html>'])),
-      } as Response)
+      }))
 
       global.URL.createObjectURL = vi.fn().mockReturnValue('blob:test-url')
       global.URL.revokeObjectURL = vi.fn()
@@ -199,10 +200,10 @@ describe('ExportMenu', () => {
     it('should export plain text format', async () => {
       const user = userEvent.setup()
 
-      vi.mocked(global.fetch).mockResolvedValue({
+      vi.mocked(global.fetch).mockResolvedValue(fromPartial<Response>({
         ok: true,
         blob: () => Promise.resolve(new Blob(['plain text'], { type: 'text/plain' })),
-      } as Response)
+      }))
 
       global.URL.createObjectURL = vi.fn().mockReturnValue('blob:test-url')
       global.URL.revokeObjectURL = vi.fn()
@@ -305,10 +306,10 @@ describe('ExportMenu', () => {
         configurable: true,
       })
 
-      vi.mocked(global.fetch).mockResolvedValue({
+      vi.mocked(global.fetch).mockResolvedValue(fromPartial<Response>({
         ok: true,
         json: () => Promise.resolve({ content: 'wordpress-formatted' }),
-      } as Response)
+      }))
 
       render(<ExportMenu content={sampleContent} />)
 
@@ -329,10 +330,10 @@ describe('ExportMenu', () => {
         configurable: true,
       })
 
-      vi.mocked(global.fetch).mockResolvedValue({
+      vi.mocked(global.fetch).mockResolvedValue(fromPartial<Response>({
         ok: true,
         json: () => Promise.resolve({ content: 'medium-formatted' }),
-      } as Response)
+      }))
 
       render(<ExportMenu content={sampleContent} />)
 

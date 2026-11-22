@@ -72,7 +72,7 @@ export default function BlogPostEditor() {
       const response = await fetch('/api/blog-posts', {
         headers: { 'x-admin-key': adminKey },
       })
-      const payload = await response.json()
+      const payload = (await response.json()) as { error?: string; data?: BlogPost[] }
       if (!response.ok) {
         throw new Error(payload.error || 'Failed to load posts')
       }
@@ -100,7 +100,7 @@ export default function BlogPostEditor() {
           tags: form.tags,
         }),
       })
-      const payload = await response.json()
+      const payload = (await response.json()) as { error?: string; data?: { slug?: string } }
       if (!response.ok) {
         throw new Error(payload.error || 'Failed to save post')
       }
@@ -125,7 +125,7 @@ export default function BlogPostEditor() {
         method: 'DELETE',
         headers: { 'x-admin-key': adminKey },
       })
-      const payload = await response.json()
+      const payload = (await response.json()) as { error?: string }
       if (!response.ok) {
         throw new Error(payload.error || 'Failed to delete post')
       }

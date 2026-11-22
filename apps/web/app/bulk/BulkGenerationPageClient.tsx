@@ -162,7 +162,7 @@ function useBulkGenerationPageView() {
       )
 
       if (response.ok) {
-        const estimate: CostEstimate = await response.json()
+        const estimate = (await response.json()) as CostEstimate
         setCostEstimate(estimate)
       }
     } catch (err) {
@@ -206,7 +206,7 @@ function useBulkGenerationPageView() {
         throw new Error('Failed to start retry')
       }
 
-      const data = await response.json()
+      const data = (await response.json()) as { retry_job_id: string }
       setJobId(data.retry_job_id)
       setStatus(null)
       setResults([])
@@ -326,13 +326,14 @@ function useBulkGenerationPageView() {
 	      })
 
 	      if (!response.ok) {
-	        const errorData = await response.json()
+	        const errorData = (await response.json()) as { detail?: string | { error?: string } }
+	        const detail = errorData.detail
 	        throw new Error(
-	          errorData.detail?.error || errorData.detail || 'Failed to start batch generation'
+	          (typeof detail === 'string' ? detail : detail?.error) || 'Failed to start batch generation'
 	        )
 	      }
 
-	      const data: BulkJobStartResponse = await response.json()
+	      const data = (await response.json()) as BulkJobStartResponse
 	      setJobId(data.job_id)
 	      setStatus(null)
 	      setProvidersUsed({})
@@ -362,7 +363,7 @@ function useBulkGenerationPageView() {
           throw new Error('Failed to fetch status')
         }
 
-	        const statusData: EnhancedBatchStatus = await response.json()
+	        const statusData = (await response.json()) as EnhancedBatchStatus
 	        setStatus(statusData)
 	        setProvidersUsed(statusData.providers_used || {})
 	        setActualCost(statusData.actual_cost_usd || 0)
@@ -399,7 +400,11 @@ function useBulkGenerationPageView() {
         throw new Error('Failed to fetch results')
       }
 
-	      const data = await response.json()
+	      const data = (await response.json()) as {
+	        results?: EnhancedBatchItemResult[]
+	        providers_used?: Record<string, number>
+	        total_cost_usd?: number
+	      }
 	      setResults(data.results || [])
 	      setProvidersUsed(data.providers_used || {})
 	      setActualCost(data.total_cost_usd || 0)

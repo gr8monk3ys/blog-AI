@@ -1,5 +1,6 @@
 'use client'
 
+import type { ErrorBody } from '@/types/api'
 import { useState } from 'react'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import { API_ENDPOINTS, getDefaultHeaders } from '../../../lib/api'
@@ -75,7 +76,7 @@ export default function CreateCampaignForm({ accounts, onClose, onSuccess, showT
       })
 
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}))
+        const errData = (await res.json().catch(() => ({}))) as ErrorBody
         throw new Error(errData?.detail || errData?.error || `HTTP ${res.status}`)
       }
 

@@ -1,0 +1,3 @@
+# Web app and API are separate Vercel projects over one Postgres
+
+The Next.js web app (`apps/web`, project `blog-ai`) and the FastAPI API (`apps/api`, project `blog-ai-api`, Vercel Python runtime) deploy independently and share one Neon Postgres. The web app reaches it with `@neondatabase/serverless` from route handlers and the API with `asyncpg`; the schema lives once in `db/migrations/`. We chose this over a single Next.js backend because the generation pipeline is Python, and over Railway because production already ran on Vercel (`Dockerfile.backend` and the GHCR image remain an unused alternative path). The cost is two deploy targets and two DB clients that must agree on one schema, which CI's schema-smoke job guards.
