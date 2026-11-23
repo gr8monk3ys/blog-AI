@@ -1,5 +1,6 @@
 'use client'
 
+import type { ErrorBody } from '@/types/api'
 import { useState } from 'react'
 import { API_ENDPOINTS, getDefaultHeaders } from '../../../lib/api'
 import type { ToastOptions } from '../../../hooks/useToast'
@@ -42,7 +43,7 @@ export default function PostComposer({ accounts, showToast, onScheduled }: PostC
       const headers = await getDefaultHeaders()
       const res = await fetch(`${API_ENDPOINTS.social.suggestTime}?platform=${platform}`, { headers })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = await res.json()
+      const data = (await res.json()) as { suggested_time?: string }
       if (data.suggested_time) {
         setScheduledAt(data.suggested_time.slice(0, 16))
         showToast({ message: 'Optimal time suggested!', variant: 'success' })
@@ -79,7 +80,7 @@ export default function PostComposer({ accounts, showToast, onScheduled }: PostC
       })
 
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}))
+        const errData = (await res.json().catch(() => ({}))) as ErrorBody
         throw new Error(errData?.detail || errData?.error || `HTTP ${res.status}`)
       }
 

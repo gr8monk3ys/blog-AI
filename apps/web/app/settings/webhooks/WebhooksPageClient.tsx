@@ -25,7 +25,7 @@ export default function WebhooksPageClient() {
       const headers = await getDefaultHeaders()
       const res = await fetch(API_ENDPOINTS.webhooks.list, { headers })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = await res.json()
+      const data = (await res.json()) as WebhookSubscription[] | { subscriptions?: WebhookSubscription[] }
       setSubscriptions(Array.isArray(data) ? data : data.subscriptions || [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load webhooks.')

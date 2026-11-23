@@ -1,5 +1,6 @@
 'use client'
 
+import type { ApiEnvelope } from '@/types/api'
 import { Fragment, useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Listbox, Transition, Switch } from '@headlessui/react'
@@ -21,7 +22,7 @@ async function fetchActiveBrandVoiceProfiles(): Promise<BrandProfile[]> {
     const response = await fetch('/api/brand-profiles?activeOnly=true', {
       headers: await getDefaultHeaders(),
     })
-    const data = await response.json()
+    const data = (await response.json()) as ApiEnvelope<BrandProfile[]>
     if (data.success && Array.isArray(data.data) && data.data.length > 0) {
       return data.data
     }

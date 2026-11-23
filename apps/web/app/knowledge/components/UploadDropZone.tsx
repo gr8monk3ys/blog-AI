@@ -168,7 +168,7 @@ export default function UploadDropZone({
           } else {
             let errMsg = 'Upload failed'
             try {
-              const body = JSON.parse(xhr.responseText)
+              const body = JSON.parse(xhr.responseText) as { detail?: string | { error?: string } } | null
               const detail = body?.detail
               if (typeof detail === 'string') errMsg = detail
               else if (detail?.error) errMsg = detail.error

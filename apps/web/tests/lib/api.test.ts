@@ -1,3 +1,4 @@
+import { fromPartial } from '@total-typescript/shoehorn'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   API_BASE_URL,
@@ -112,18 +113,18 @@ describe('checkServerConnection', () => {
   })
 
   it('should return true when server responds with ok', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
+    vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
       ok: true,
-    } as Response)
+    }))
 
     const result = await checkServerConnection()
     expect(result).toBe(true)
   })
 
   it('should return false when server responds with error', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
+    vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
       ok: false,
-    } as Response)
+    }))
 
     const result = await checkServerConnection()
     expect(result).toBe(false)
@@ -137,9 +138,9 @@ describe('checkServerConnection', () => {
   })
 
   it('should call fetch with correct endpoint', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
+    vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
       ok: true,
-    } as Response)
+    }))
 
     await checkServerConnection()
 
@@ -162,65 +163,65 @@ describe('apiFetch', () => {
 
   it('should return JSON data on successful response', async () => {
     const mockData = { success: true, data: 'test' }
-    vi.mocked(global.fetch).mockResolvedValueOnce({
+    vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
       ok: true,
       json: vi.fn().mockResolvedValueOnce(mockData),
-    } as unknown as Response)
+    }))
 
     const result = await apiFetch('/test')
     expect(result).toEqual(mockData)
   })
 
   it('should throw error on non-ok response', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
+    vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
       ok: false,
       status: 500,
       json: vi.fn().mockResolvedValueOnce({ detail: 'Server error' }),
-    } as unknown as Response)
+    }))
 
     await expect(apiFetch('/test')).rejects.toThrow('Server error')
   })
 
   it('should throw generic error when response has no detail', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
+    vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
       ok: false,
       status: 404,
       json: vi.fn().mockResolvedValueOnce({}),
-    } as unknown as Response)
+    }))
 
     await expect(apiFetch('/test')).rejects.toThrow('HTTP error! status: 404')
   })
 
   it('should extract validation message from detail array', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
+    vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
       ok: false,
       status: 422,
       json: vi.fn().mockResolvedValueOnce({
         detail: [{ msg: 'Field is required' }],
       }),
-    } as unknown as Response)
+    }))
 
     await expect(apiFetch('/test')).rejects.toThrow('Field is required')
   })
 
   it('should extract message from nested detail object', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
+    vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
       ok: false,
       status: 429,
       json: vi.fn().mockResolvedValueOnce({
         detail: { error: 'Rate limit reached' },
       }),
-    } as unknown as Response)
+    }))
 
     await expect(apiFetch('/test')).rejects.toThrow('Rate limit reached')
   })
 
   it('should merge custom headers with default headers', async () => {
     const mockData = { success: true }
-    vi.mocked(global.fetch).mockResolvedValueOnce({
+    vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
       ok: true,
       json: vi.fn().mockResolvedValueOnce(mockData),
-    } as unknown as Response)
+    }))
 
     await apiFetch('/test', {
       headers: { 'X-Custom-Header': 'custom-value' },
@@ -251,15 +252,15 @@ describe('apiFetchWithRetry', () => {
 
   it('should retry on 503 and eventually succeed', async () => {
     vi.mocked(global.fetch)
-      .mockResolvedValueOnce({
+      .mockResolvedValueOnce(fromPartial<Response>({
         ok: false,
         status: 503,
         json: vi.fn().mockResolvedValueOnce({ detail: 'Service unavailable' }),
-      } as unknown as Response)
-      .mockResolvedValueOnce({
+      }))
+      .mockResolvedValueOnce(fromPartial<Response>({
         ok: true,
         json: vi.fn().mockResolvedValueOnce({ success: true }),
-      } as unknown as Response)
+      }))
 
     const promise = apiFetchWithRetry('/retry', {}, 1)
     await vi.runAllTimersAsync()
@@ -269,11 +270,11 @@ describe('apiFetchWithRetry', () => {
   })
 
   it('should not retry on 400 errors', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
+    vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
       ok: false,
       status: 400,
       json: vi.fn().mockResolvedValueOnce({ detail: 'Bad request' }),
-    } as unknown as Response)
+    }))
 
     await expect(apiFetchWithRetry('/no-retry', {}, 2)).rejects.toThrow(ApiError)
     expect(global.fetch).toHaveBeenCalledTimes(1)

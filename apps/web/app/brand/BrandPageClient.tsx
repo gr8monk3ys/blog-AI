@@ -1,5 +1,6 @@
 'use client'
 
+import type { ApiEnvelope } from '@/types/api'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { m, AnimatePresence } from 'framer-motion'
@@ -21,7 +22,7 @@ async function loadBrandProfiles(): Promise<BrandProfile[]> {
     const response = await fetch('/api/brand-profiles', {
       headers: await getDefaultHeaders(),
     })
-    const data = await response.json()
+    const data = (await response.json()) as ApiEnvelope<BrandProfile[]>
     if (data.success && Array.isArray(data.data)) {
       return data.data
     }
@@ -72,7 +73,7 @@ function useBrandPageView() {
         body: JSON.stringify(data),
       })
 
-      const result = await response.json()
+      const result = (await response.json()) as ApiEnvelope<BrandProfile>
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to create profile')
@@ -101,7 +102,7 @@ function useBrandPageView() {
         body: JSON.stringify(data),
       })
 
-      const result = await response.json()
+      const result = (await response.json()) as ApiEnvelope<BrandProfile>
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to update profile')
@@ -138,7 +139,7 @@ function useBrandPageView() {
         headers: await getDefaultHeaders(),
       })
 
-      const result = await response.json()
+      const result = (await response.json()) as ApiEnvelope<BrandProfile>
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to delete profile')
@@ -158,7 +159,7 @@ function useBrandPageView() {
         body: JSON.stringify({}),
       })
 
-      const result = await response.json()
+      const result = (await response.json()) as ApiEnvelope<BrandProfile>
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to set default profile')

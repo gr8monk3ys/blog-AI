@@ -64,7 +64,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Database not configured' }, { status: 503 })
   }
 
-  const payload = await request.json()
+  const payload = (await request.json()) as {
+    title?: string
+    slug?: string
+    excerpt?: string
+    body?: string
+    tags?: string[]
+    status?: string
+    published_at?: string
+    cover_image?: string
+    seo_title?: string
+    seo_description?: string
+  } | null
 
   if (!payload?.title || !payload?.slug || !payload?.body) {
     return NextResponse.json(

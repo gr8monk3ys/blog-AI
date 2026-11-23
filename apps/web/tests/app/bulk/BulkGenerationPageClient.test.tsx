@@ -1,3 +1,4 @@
+import { fromPartial } from '@total-typescript/shoehorn'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import BulkGenerationPageClient from '@/app/bulk/BulkGenerationPageClient'
@@ -51,10 +52,10 @@ vi.mock('../../../hooks/useLlmConfig', () => ({
 describe('BulkGenerationPageClient', () => {
   beforeEach(() => {
     vi.mocked(global.fetch).mockReset()
-    vi.mocked(global.fetch).mockResolvedValue({
+    vi.mocked(global.fetch).mockResolvedValue(fromPartial<Response>({
       ok: true,
       json: async () => ({}),
-    } as Response)
+    }))
   })
 
   it('renders the empty state with CSV/manual guidance', () => {

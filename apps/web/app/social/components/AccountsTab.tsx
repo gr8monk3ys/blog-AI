@@ -25,7 +25,7 @@ export default function AccountsTab({ showToast, confirm }: AccountsTabProps) {
       const headers = await getDefaultHeaders()
       const res = await fetch(API_ENDPOINTS.social.accounts, { headers })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = await res.json()
+      const data = (await res.json()) as SocialAccount[] | { accounts?: SocialAccount[] }
       setAccounts(Array.isArray(data) ? data : data.accounts || [])
     } catch {
       showToast({ message: 'Failed to load accounts.', variant: 'error' })

@@ -1,3 +1,4 @@
+import { fromPartial } from '@total-typescript/shoehorn'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { act, render, screen, waitFor } from '@testing-library/react'
 import ConversationHistory from '../../components/ConversationHistory'
@@ -102,7 +103,7 @@ describe('ConversationHistory', () => {
   describe('Server Connection', () => {
     it('should fetch conversation history when server is connected', async () => {
       vi.mocked(api.checkServerConnection).mockResolvedValue(true)
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
         ok: true,
         json: vi.fn().mockResolvedValueOnce({
           conversation: [
@@ -118,7 +119,7 @@ describe('ConversationHistory', () => {
             },
           ],
         }),
-      } as unknown as Response)
+      }))
 
       render(<ConversationHistory {...defaultProps} />)
 
@@ -141,10 +142,10 @@ describe('ConversationHistory', () => {
 
     it('should display error when fetch fails', async () => {
       vi.mocked(api.checkServerConnection).mockResolvedValue(true)
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
         ok: false,
         status: 500,
-      } as Response)
+      }))
 
       render(<ConversationHistory {...defaultProps} />)
 
@@ -158,10 +159,10 @@ describe('ConversationHistory', () => {
 
     it('should show retry button on error', async () => {
       vi.mocked(api.checkServerConnection).mockResolvedValue(true)
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
         ok: false,
         status: 500,
-      } as Response)
+      }))
 
       render(<ConversationHistory {...defaultProps} />)
 
@@ -174,10 +175,10 @@ describe('ConversationHistory', () => {
   describe('Empty State', () => {
     it('should display empty state when no messages', async () => {
       vi.mocked(api.checkServerConnection).mockResolvedValue(true)
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
         ok: true,
         json: vi.fn().mockResolvedValueOnce({ conversation: [] }),
-      } as unknown as Response)
+      }))
 
       render(<ConversationHistory {...defaultProps} />)
 
@@ -193,7 +194,7 @@ describe('ConversationHistory', () => {
   describe('Message Display', () => {
     it('should display user messages with correct styling', async () => {
       vi.mocked(api.checkServerConnection).mockResolvedValue(true)
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
         ok: true,
         json: vi.fn().mockResolvedValueOnce({
           conversation: [
@@ -204,7 +205,7 @@ describe('ConversationHistory', () => {
             },
           ],
         }),
-      } as unknown as Response)
+      }))
 
       render(<ConversationHistory {...defaultProps} />)
 
@@ -216,7 +217,7 @@ describe('ConversationHistory', () => {
 
     it('should display assistant messages with correct label', async () => {
       vi.mocked(api.checkServerConnection).mockResolvedValue(true)
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
         ok: true,
         json: vi.fn().mockResolvedValueOnce({
           conversation: [
@@ -227,7 +228,7 @@ describe('ConversationHistory', () => {
             },
           ],
         }),
-      } as unknown as Response)
+      }))
 
       render(<ConversationHistory {...defaultProps} />)
 
@@ -239,7 +240,7 @@ describe('ConversationHistory', () => {
 
     it('should display relative timestamps', async () => {
       vi.mocked(api.checkServerConnection).mockResolvedValue(true)
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
         ok: true,
         json: vi.fn().mockResolvedValueOnce({
           conversation: [
@@ -250,7 +251,7 @@ describe('ConversationHistory', () => {
             },
           ],
         }),
-      } as unknown as Response)
+      }))
 
       render(<ConversationHistory {...defaultProps} />)
 
@@ -263,7 +264,7 @@ describe('ConversationHistory', () => {
   describe('Message Grouping', () => {
     it('should group consecutive messages from same sender', async () => {
       vi.mocked(api.checkServerConnection).mockResolvedValue(true)
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
         ok: true,
         json: vi.fn().mockResolvedValueOnce({
           conversation: [
@@ -279,7 +280,7 @@ describe('ConversationHistory', () => {
             },
           ],
         }),
-      } as unknown as Response)
+      }))
 
       render(<ConversationHistory {...defaultProps} />)
 
@@ -295,10 +296,10 @@ describe('ConversationHistory', () => {
   describe('Conversation ID Changes', () => {
     it('should refetch when conversationId changes', async () => {
       vi.mocked(api.checkServerConnection).mockResolvedValue(true)
-      vi.mocked(global.fetch).mockResolvedValue({
+      vi.mocked(global.fetch).mockResolvedValue(fromPartial<Response>({
         ok: true,
         json: vi.fn().mockResolvedValue({ conversation: [] }),
-      } as unknown as Response)
+      }))
 
       const { rerender } = render(<ConversationHistory conversationId="conv-1" />)
 

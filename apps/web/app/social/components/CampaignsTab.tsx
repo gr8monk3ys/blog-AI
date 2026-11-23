@@ -30,11 +30,11 @@ export default function CampaignsTab({ showToast, confirm }: CampaignsTabProps) 
       ])
 
       if (campaignsRes.ok) {
-        const data = await campaignsRes.json()
+        const data = (await campaignsRes.json()) as Campaign[] | { campaigns?: Campaign[] }
         setCampaigns(Array.isArray(data) ? data : data.campaigns || [])
       }
       if (accountsRes.ok) {
-        const data = await accountsRes.json()
+        const data = (await accountsRes.json()) as SocialAccount[] | { accounts?: SocialAccount[] }
         setAccounts(Array.isArray(data) ? data : data.accounts || [])
       }
     } catch {

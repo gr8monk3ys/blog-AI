@@ -3,7 +3,7 @@ import { getSqlOrNull } from '../../../../lib/db'
 import { requireClerkUserId } from '../../../../lib/clerk-auth'
 import { databaseUnavailableResponse } from '../../../../lib/api-route-errors'
 import { canServeDemoData } from '../../../../lib/server-mode'
-import { SAMPLE_BRAND_PROFILES } from '../../../../types/brand'
+import { SAMPLE_BRAND_PROFILES, type UpdateBrandProfileInput } from '../../../../types/brand'
 
 type BrandProfileRow = {
   id: string
@@ -144,7 +144,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params
-    const body = await request.json()
+    const body = (await request.json()) as UpdateBrandProfileInput
 
     const sql = getSqlOrNull()
 

@@ -46,7 +46,7 @@ export default function ImageGenerationPage() {
         const headers = await getDefaultHeaders()
         const res = await fetch(API_ENDPOINTS.images.styles, { headers })
         if (res.ok) {
-          const data: ImageStylesResponse = await res.json()
+          const data = (await res.json()) as ImageStylesResponse
           setStyles(data)
         }
       } catch {

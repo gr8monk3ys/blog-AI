@@ -1,5 +1,6 @@
 'use client'
 
+import type { ErrorBody } from '@/types/api'
 import { useState } from 'react'
 import { API_ENDPOINTS, getDefaultHeaders } from '../../../../lib/api'
 import type { ToastOptions } from '../../../../hooks/useToast'
@@ -27,11 +28,11 @@ export default function TestWebhookButton({ subscriptionId, showToast }: TestWeb
       })
 
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}))
+        const errData = (await res.json().catch(() => ({}))) as ErrorBody
         throw new Error(errData?.detail || errData?.error || `HTTP ${res.status}`)
       }
 
-      const data: WebhookTestResponse = await res.json()
+      const data = (await res.json()) as WebhookTestResponse
       setResult(data)
 
       if (data.success) {

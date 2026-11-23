@@ -47,7 +47,7 @@ export async function PATCH(
 
     const userId = await requireClerkUserId()
     const { id } = await params
-    const body = await request.json()
+    const body = (await request.json()) as { toggle?: boolean; isFavorite?: boolean } | null
 
     const wantsToggle = body?.toggle === true
     const wantsSet = typeof body?.isFavorite === 'boolean'

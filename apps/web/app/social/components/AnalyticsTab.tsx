@@ -19,7 +19,7 @@ export default function AnalyticsTab() {
       const headers = await getDefaultHeaders()
       const res = await fetch(API_ENDPOINTS.social.campaigns, { headers })
       if (res.ok) {
-        const data = await res.json()
+        const data = (await res.json()) as Campaign[] | { campaigns?: Campaign[] }
         const list: Campaign[] = Array.isArray(data) ? data : data.campaigns || []
         setCampaigns(list)
         const first = list[0]
@@ -41,7 +41,7 @@ export default function AnalyticsTab() {
       const headers = await getDefaultHeaders()
       const res = await fetch(API_ENDPOINTS.social.campaignAnalytics(campaignId), { headers })
       if (res.ok) {
-        const data: CampaignAnalytics = await res.json()
+        const data = (await res.json()) as CampaignAnalytics
         setAnalytics(data)
       } else {
         setAnalytics(null)

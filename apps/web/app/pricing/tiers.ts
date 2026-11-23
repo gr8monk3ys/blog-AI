@@ -139,7 +139,7 @@ export async function loadPricingTiers(): Promise<PublicPricingTier[]> {
 
     if (!response.ok) return fallbackTiers()
 
-    const data = await response.json()
+    const data = (await response.json()) as { success?: boolean; tiers?: unknown }
     if (!data?.success || !Array.isArray(data?.tiers)) return fallbackTiers()
 
     const tiers = normalizePricingTiers(data.tiers as PublicPricingTier[])

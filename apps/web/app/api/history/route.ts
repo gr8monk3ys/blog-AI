@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   let body: Record<string, unknown>
   try {
-    body = await request.json()
+    body = (await request.json()) as Record<string, unknown>
   } catch {
     return NextResponse.json(
       { error: 'Invalid JSON' },

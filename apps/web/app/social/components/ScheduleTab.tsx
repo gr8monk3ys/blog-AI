@@ -28,11 +28,11 @@ export default function ScheduleTab({ showToast, confirm }: ScheduleTabProps) {
       ])
 
       if (accountsRes.ok) {
-        const data = await accountsRes.json()
+        const data = (await accountsRes.json()) as SocialAccount[] | { accounts?: SocialAccount[] }
         setAccounts(Array.isArray(data) ? data : data.accounts || [])
       }
       if (postsRes.ok) {
-        const data = await postsRes.json()
+        const data = (await postsRes.json()) as ScheduledPost[] | { posts?: ScheduledPost[] }
         setPosts(Array.isArray(data) ? data : data.posts || [])
       }
     } catch {
