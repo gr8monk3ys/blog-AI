@@ -1,5 +1,6 @@
 'use client'
 
+import type { ErrorBody } from '@/types/api'
 import { useState } from 'react'
 import { API_ENDPOINTS, getDefaultHeaders } from '../../../lib/api'
 import type { ToastOptions } from '../../../hooks/useToast'
@@ -63,11 +64,11 @@ export default function BlogImagesTab({ styles, showToast }: BlogImagesTabProps)
       })
 
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}))
+        const errData = (await res.json().catch(() => ({}))) as ErrorBody
         throw new Error(errData?.detail || errData?.error || `HTTP ${res.status}`)
       }
 
-      const data: BlogImagesResult = await res.json()
+      const data = (await res.json()) as BlogImagesResult
       setResult(data)
       showToast({ message: `Generated ${data.total_generated} image${data.total_generated !== 1 ? 's' : ''}!`, variant: 'success' })
     } catch (err) {

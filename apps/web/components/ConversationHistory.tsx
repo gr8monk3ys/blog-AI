@@ -17,7 +17,7 @@ async function fetchConversationMessages(conversationId: string): Promise<Messag
     throw new Error(`Failed to load conversation: ${response.status}`)
   }
 
-  const data = await response.json()
+  const data = (await response.json()) as { conversation?: Message[] }
   return Array.isArray(data.conversation) ? data.conversation : []
 }
 
@@ -145,7 +145,7 @@ function useConversationHistoryView({ conversationId }: ConversationHistoryProps
 
         ws.onmessage = (event) => {
           try {
-            const message = JSON.parse(event.data);
+            const message = JSON.parse(event.data) as { type?: string } & Message;
             if (message.type === 'message') {
               if (isMounted) {
                 applyIncomingMessage(message);

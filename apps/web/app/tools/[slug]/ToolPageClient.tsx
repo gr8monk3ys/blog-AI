@@ -1,5 +1,6 @@
 'use client'
 
+import type { ApiEnvelope } from '@/types/api'
 import { Suspense, useState, useMemo, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { m } from 'framer-motion'
@@ -483,7 +484,7 @@ function useToolPageContentView() {
       }),
     })
 
-    const result = await response.json()
+    const result = (await response.json()) as ApiEnvelope<unknown>
 
     if (!result.success) {
       throw new Error(result.error || 'Failed to save template')

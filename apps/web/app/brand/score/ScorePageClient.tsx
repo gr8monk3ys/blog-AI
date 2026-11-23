@@ -1,5 +1,6 @@
 'use client'
 
+import type { ApiEnvelope } from '@/types/api'
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { m, AnimatePresence } from 'framer-motion'
@@ -26,7 +27,7 @@ async function fetchActiveBrandProfiles(): Promise<BrandProfile[]> {
     const response = await fetch('/api/brand-profiles?activeOnly=true', {
       headers: await getDefaultHeaders(),
     })
-    const data = await response.json().catch(() => ({}))
+    const data = (await response.json().catch(() => ({}))) as ApiEnvelope<BrandProfile[]>
     if (data?.success && Array.isArray(data?.data)) {
       return data.data
     }

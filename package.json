@@ -17,6 +17,7 @@
     "lint": "bun run --cwd apps/web lint",
     "lint:fix": "bun run --cwd apps/web lint:fix",
     "type-check": "bun run --cwd apps/web type-check",
+    "depcruise": "depcruise apps/web/app apps/web/components apps/web/lib apps/web/hooks --ignore-known",
     "design:check": "node scripts/check-design-system.mjs",
     "brand:generate": "node scripts/generate-brand.mjs",
     "db:migrate": "bun scripts/migrate_db.mjs",
@@ -37,14 +38,15 @@
     "test:api:blocking": "pytest apps/api/tests/test_feature_smoke.py apps/api/tests/test_routes_health.py -q",
     "test:api:full": "pytest apps/api/tests -q",
     "verify": "bun run verify:web && bun run verify:api",
-    "verify:web": "bun run lint && bun run design:check && bun run type-check && bun run test:coverage && node scripts/verify-summary.mjs web-unit apps/web/reports/unit.json && bun run build",
+    "verify:web": "bun run lint && bun run depcruise && bun run design:check && bun run type-check && bun run test:coverage && node scripts/verify-summary.mjs web-unit apps/web/reports/unit.json && bun run build",
     "verify:api": "cd apps/api && uv run --frozen bash ../../scripts/verify-api.sh smoke routes full",
     "verify:api:db": "cd apps/api && uv run --frozen bash ../../scripts/verify-api.sh db",
     "verify:e2e": "bun run test:e2e:coverage && node scripts/verify-summary.mjs e2e apps/web/reports/e2e.json"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
-    "@playwright/test": "^1.58.2"
+    "@playwright/test": "^1.58.2",
+    "dependency-cruiser": "^18.8.0"
   },
   "overrides": {
     "glob": "^13.0.6",

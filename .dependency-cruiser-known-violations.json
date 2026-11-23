@@ -1,0 +1,16 @@
+[
+  {
+    "type": "dependency",
+    "from": "apps/web/app/tools/[slug]/ToolPageClient.tsx",
+    "to": "apps/web/components/tools/tool-page/index.ts",
+    "unresolvedTo": "../../../components/tools/tool-page",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "entrypoint-boundary-from-app"
+    }
+  }
+]

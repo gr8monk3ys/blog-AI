@@ -1,5 +1,6 @@
 'use client'
 
+import type { ErrorBody } from '@/types/api'
 import { useState } from 'react'
 import { Dialog } from '@headlessui/react'
 import { XMarkIcon } from '@heroicons/react/24/outline'
@@ -32,11 +33,11 @@ export default function ConnectAccountModal({ onClose, onConnected, showToast }:
       })
 
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}))
+        const errData = (await res.json().catch(() => ({}))) as ErrorBody
         throw new Error(errData?.detail || errData?.error || `HTTP ${res.status}`)
       }
 
-      const data = await res.json()
+      const data = (await res.json()) as { authorization_url?: string }
       const authUrl = data.authorization_url
 
       if (!authUrl) throw new Error('No authorization URL returned.')

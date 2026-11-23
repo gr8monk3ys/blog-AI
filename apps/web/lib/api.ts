@@ -353,7 +353,7 @@ export const apiFetch = async <T>(
     throw new ApiError(message, response.status, errorData)
   }
 
-  return response.json();
+  return response.json() as Promise<T>;
 };
 
 /**

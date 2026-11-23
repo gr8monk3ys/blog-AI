@@ -1,3 +1,4 @@
+import { fromPartial } from '@total-typescript/shoehorn'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -194,14 +195,14 @@ describe('BookGenerator', () => {
 
     it('should make API call when server is connected', async () => {
       vi.mocked(api.checkServerConnection).mockResolvedValue(true)
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
         ok: true,
         json: vi.fn().mockResolvedValueOnce({
           success: true,
           type: 'book',
           content: { title: 'Generated Book', chapters: [] },
         }),
-      } as unknown as Response)
+      }))
 
       render(<BookGenerator {...defaultProps} />)
 
@@ -223,10 +224,10 @@ describe('BookGenerator', () => {
 
     it('should display error message on API failure', async () => {
       vi.mocked(api.checkServerConnection).mockResolvedValue(true)
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
         ok: false,
         json: vi.fn().mockResolvedValueOnce({ detail: 'Generation failed' }),
-      } as unknown as Response)
+      }))
 
       render(<BookGenerator {...defaultProps} />)
 
@@ -243,14 +244,14 @@ describe('BookGenerator', () => {
 
     it('should call setLoading(false) after completion', async () => {
       vi.mocked(api.checkServerConnection).mockResolvedValue(true)
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
         ok: true,
         json: vi.fn().mockResolvedValueOnce({
           success: true,
           type: 'book',
           content: { title: 'Test', chapters: [] },
         }),
-      } as unknown as Response)
+      }))
 
       render(<BookGenerator {...defaultProps} />)
 
@@ -283,14 +284,14 @@ describe('BookGenerator', () => {
 
     it('should include brand_profile_id when a brand profile is selected', async () => {
       vi.mocked(api.checkServerConnection).mockResolvedValue(true)
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
         ok: true,
         json: vi.fn().mockResolvedValueOnce({
           success: true,
           type: 'book',
           content: { title: 'Branded Book', chapters: [] },
         }),
-      } as unknown as Response)
+      }))
 
       render(<BookGenerator {...defaultProps} />)
 
@@ -351,14 +352,14 @@ describe('BookGenerator', () => {
       })
 
       // Second call succeeds
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
         ok: true,
         json: vi.fn().mockResolvedValueOnce({
           success: true,
           type: 'book',
           content: { title: 'Test', chapters: [] },
         }),
-      } as unknown as Response)
+      }))
 
       fireEvent.submit(screen.getByRole('button', { name: /generate book/i }))
 
@@ -369,11 +370,11 @@ describe('BookGenerator', () => {
 
     it('should map 401/403 responses to sign-in message', async () => {
       vi.mocked(api.checkServerConnection).mockResolvedValue(true)
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
         ok: false,
         status: 401,
         json: vi.fn().mockResolvedValueOnce({}),
-      } as unknown as Response)
+      }))
 
       render(<BookGenerator {...defaultProps} />)
       fireEvent.change(screen.getByLabelText(/book title/i), {
@@ -390,11 +391,11 @@ describe('BookGenerator', () => {
 
     it('should map 429 responses to usage limit message', async () => {
       vi.mocked(api.checkServerConnection).mockResolvedValue(true)
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
         ok: false,
         status: 429,
         json: vi.fn().mockResolvedValueOnce({}),
-      } as unknown as Response)
+      }))
 
       render(<BookGenerator {...defaultProps} />)
       fireEvent.change(screen.getByLabelText(/book title/i), {
@@ -411,11 +412,11 @@ describe('BookGenerator', () => {
 
     it('should use detail.error when detail is an object', async () => {
       vi.mocked(api.checkServerConnection).mockResolvedValue(true)
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
         ok: false,
         status: 500,
         json: vi.fn().mockResolvedValueOnce({ detail: { error: 'Nested detail error' } }),
-      } as unknown as Response)
+      }))
 
       render(<BookGenerator {...defaultProps} />)
       fireEvent.change(screen.getByLabelText(/book title/i), {
@@ -430,11 +431,11 @@ describe('BookGenerator', () => {
 
     it('should use top-level error when detail is missing', async () => {
       vi.mocked(api.checkServerConnection).mockResolvedValue(true)
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(global.fetch).mockResolvedValueOnce(fromPartial<Response>({
         ok: false,
         status: 500,
         json: vi.fn().mockResolvedValueOnce({ error: 'Top level error message' }),
-      } as unknown as Response)
+      }))
 
       render(<BookGenerator {...defaultProps} />)
       fireEvent.change(screen.getByLabelText(/book title/i), {

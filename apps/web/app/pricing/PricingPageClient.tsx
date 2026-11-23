@@ -16,6 +16,11 @@ import { formatNumber } from '@/lib/format'
 
 type BillingCycle = 'monthly' | 'yearly'
 
+interface BillingErrorBody {
+  detail?: { error?: string }
+  error?: string
+}
+
 const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? 'support@lscaturchio.xyz'
 
 const TIER_POSITIONING: Record<Exclude<UsageTier, 'business'>, {
@@ -112,7 +117,7 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
         throw new Error('Failed to load pricing')
       }
 
-      const data = await response.json()
+      const data = (await response.json()) as { success?: boolean; tiers?: unknown }
       if (data?.success && Array.isArray(data?.tiers)) {
         const filtered = normalizePricingTiers(data.tiers as PublicPricingTier[])
         // Only ever replace the server-rendered plans with a non-empty list:
@@ -133,7 +138,7 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
       })
 
       if (response.ok) {
-        const data = await response.json()
+        const data = (await response.json()) as { tier?: UsageTier }
         if (data?.tier) setCurrentTier(data.tier)
       }
     } catch (err) {
@@ -190,11 +195,11 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
         })
 
         if (!portalResponse.ok) {
-          const portalData = await portalResponse.json().catch(() => ({}))
+          const portalData = (await portalResponse.json().catch(() => ({}))) as BillingErrorBody
           throw new Error(portalData.detail?.error || portalData.error || 'Failed to open billing portal')
         }
 
-        const portalData = await portalResponse.json()
+        const portalData = (await portalResponse.json()) as { url?: string }
         if (portalData.url && typeof window !== 'undefined') {
           window.location.assign(portalData.url)
           return
@@ -226,11 +231,11 @@ export default function PricingPage({ initialTiers }: PricingPageClientProps) {
       })
 
       if (!checkoutResponse.ok) {
-        const checkoutData = await checkoutResponse.json().catch(() => ({}))
+        const checkoutData = (await checkoutResponse.json().catch(() => ({}))) as BillingErrorBody
         throw new Error(checkoutData.detail?.error || checkoutData.error || 'Failed to create checkout session')
       }
 
-      const checkoutData = await checkoutResponse.json()
+      const checkoutData = (await checkoutResponse.json()) as { url?: string }
       if (checkoutData.url && typeof window !== 'undefined') {
         window.location.assign(checkoutData.url)
         return

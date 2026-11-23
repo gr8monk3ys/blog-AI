@@ -1,5 +1,6 @@
 'use client'
 
+import type { ErrorBody } from '@/types/api'
 import { useState, useEffect } from 'react'
 import { ShieldCheckIcon } from '@heroicons/react/24/outline'
 import { API_ENDPOINTS, getDefaultHeaders } from '../../lib/api'
@@ -59,7 +60,7 @@ export default function PlagiarismPageClient() {
       const headers = await getDefaultHeaders()
       const res = await fetch(API_ENDPOINTS.content.plagiarismQuota, { headers })
       if (res.ok) {
-        const data: PlagiarismQuotaResponse = await res.json()
+        const data = (await res.json()) as PlagiarismQuotaResponse
         setQuota(data)
       }
     } catch {
@@ -91,11 +92,11 @@ export default function PlagiarismPageClient() {
       })
 
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}))
+        const errData = (await res.json().catch(() => ({}))) as ErrorBody
         throw new Error(errData?.detail || errData?.error || `HTTP ${res.status}`)
       }
 
-      const data: PlagiarismCheckResponse = await res.json()
+      const data = (await res.json()) as PlagiarismCheckResponse
       if (data.success && data.data) {
         setResult(data.data)
         showToast({ message: 'Plagiarism check complete.', variant: 'success' })

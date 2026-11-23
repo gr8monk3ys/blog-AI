@@ -3,7 +3,7 @@ import { getSqlOrNull } from '../../../../lib/db'
 import { getUserIdOrNull, requireUserId } from '../../../../lib/auth-session'
 import { databaseUnavailableResponse } from '../../../../lib/api-route-errors'
 import { canServeDemoData } from '../../../../lib/server-mode'
-import { SAMPLE_TEMPLATES } from '../../../../types/templates'
+import { SAMPLE_TEMPLATES, type UpdateTemplateInput } from '../../../../types/templates'
 
 type TemplateRow = {
   id: string
@@ -126,7 +126,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params
-    const body = await request.json()
+    const body = (await request.json()) as UpdateTemplateInput
 
     const sql = getSqlOrNull()
 

@@ -58,6 +58,9 @@ JSON/JUnit report by `scripts/verify-summary.mjs` (which fails if it cannot pars
 appended to the CI job summary. The e2e job uploads a screenshot + trace of every test as the
 `ui-evidence` artifact on every run and lists the screenshots in its job summary.
 
+## Domain docs and boundaries
+`GLOSSARY.md` holds the domain vocabulary and `docs/adr/` the recorded decisions. `bun run depcruise` (config `.dependency-cruiser.cjs`, one baselined violation in `.dependency-cruiser-known-violations.json`) forbids import cycles and imports into a `components/<group>/<subfolder>/`; it runs inside `verify:web`. `apps/web/reset.d.ts` loads ts-reset, so `Response.json()` and `JSON.parse()` return `unknown`: narrow with a body type (`apps/web/types/api.ts`).
+
 ## Checks
 Run `bun run verify` (and `bun run verify:e2e` for UI changes) before opening a PR, and paste
 the `VERIFY …` lines it prints into the PR body under an "Evidence" heading.
@@ -183,5 +186,4 @@ The five canonical roles, label string equal to role name. See `docs/agents/tria
 
 ### Domain docs
 
-Single-context layout: `CONTEXT.md` + `docs/adr/` at the repo root, created lazily — neither
-exists yet, and that is fine. See `docs/agents/domain.md`.
+Single-context: `GLOSSARY.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.

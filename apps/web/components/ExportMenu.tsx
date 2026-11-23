@@ -260,7 +260,7 @@ function useExportMenuView({
             }),
           })
           if (response.ok) {
-            const data = await response.json()
+            const data = (await response.json()) as { content: string }
             success = await copyToClipboard(data.content)
             if (success) {
               setCopied(format)
@@ -282,7 +282,7 @@ function useExportMenuView({
             }),
           })
           if (response.ok) {
-            const data = await response.json()
+            const data = (await response.json()) as { content: string }
             success = await copyToClipboard(data.content)
             if (success) {
               setCopied(format)

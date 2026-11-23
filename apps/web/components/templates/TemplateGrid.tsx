@@ -1,5 +1,6 @@
 'use client'
 
+import type { ApiEnvelope } from '@/types/api'
 import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { m, AnimatePresence } from 'framer-motion'
@@ -40,7 +41,7 @@ async function fetchTemplatesFromApi(
     const response = await fetch(`/api/templates?${params.toString()}`, {
       headers: await getDefaultHeaders(),
     })
-    const data = await response.json()
+    const data = (await response.json()) as ApiEnvelope<Template[]>
 
     if (data.success && Array.isArray(data.data)) {
       return data.data

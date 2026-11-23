@@ -1,5 +1,6 @@
 'use client'
 
+import type { ApiEnvelope } from '@/types/api'
 import React, { memo, useEffect, useState } from 'react'
 import Link from 'next/link'
 import type { BrandProfile } from '../../types/brand'
@@ -18,7 +19,7 @@ async function fetchActiveBrandProfiles(): Promise<BrandProfile[]> {
     const response = await fetch('/api/brand-profiles?activeOnly=true', {
       headers: await getDefaultHeaders(),
     })
-    const data = await response.json().catch(() => ({}))
+    const data = (await response.json().catch(() => ({}))) as ApiEnvelope<BrandProfile[]>
 
     if (data?.success && Array.isArray(data?.data)) {
       return data.data

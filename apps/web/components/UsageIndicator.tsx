@@ -9,7 +9,7 @@ import {
   ExclamationTriangleIcon,
   SparklesIcon,
 } from '@heroicons/react/24/outline'
-import { UsageStats, TIER_DISPLAY } from '../types/usage'
+import { UsageStats, UsageCheckResponse, TIER_DISPLAY } from '../types/usage'
 import { API_ENDPOINTS, getDefaultHeaders } from '../lib/api'
 
 interface UsageIndicatorProps {
@@ -41,7 +41,7 @@ export default function UsageIndicator({
         throw new Error('Failed to fetch usage stats')
       }
 
-      const data = await response.json()
+      const data = (await response.json()) as UsageStats
       setUsage(data)
       setError(null)
       consecutiveErrors.current = 0
@@ -321,7 +321,7 @@ export function useUsageCheck() {
         return true
       }
 
-      const data = await response.json()
+      const data = (await response.json()) as Partial<UsageCheckResponse>
       setCanGenerate(!!data.has_quota)
       // Prefer daily remaining if present; fallback to period remaining.
       const rem =

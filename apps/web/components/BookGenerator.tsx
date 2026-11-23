@@ -131,7 +131,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
       });
 
       if (!response.ok) {
-        const errorData: Record<string, unknown> = await response.json().catch(() => ({}));
+        const errorData = (await response.json().catch(() => ({}))) as Record<string, unknown>;
         const detail = errorData?.detail
         const message =
           typeof detail === 'string'
@@ -146,7 +146,7 @@ Finally, this paragraph would wrap up the topic and potentially transition to th
         throw err
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as ContentGenerationResponse;
       if (!data.success) {
         throw new Error(data.detail || 'Failed to generate book');
       }
