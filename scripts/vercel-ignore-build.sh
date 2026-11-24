@@ -20,7 +20,7 @@ if git diff --quiet "$base" HEAD -- . \
   ':(exclude)docs' \
   ':(exclude).github' \
   ':(exclude).impeccable' \
-  ':(exclude)apps/api' \
+  ':(exclude)apps/api/tests' \
   ':(exclude)apps/web/e2e' \
   ':(exclude)apps/web/tests' \
   ':(exclude)content/drafts' \

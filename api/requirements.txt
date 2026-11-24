@@ -1,0 +1,3 @@
+# Dependencies for api/backend.py (the FastAPI app served from the web project).
+# apps/api/requirements.txt stays the single list; this file only points at it.
+-r ../apps/api/requirements.txt
