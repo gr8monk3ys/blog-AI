@@ -23,6 +23,18 @@ if str(_API_DIR) not in sys.path:
     sys.path.insert(0, str(_API_DIR))
 os.chdir(_API_DIR)
 
+# A function's file system is read-only outside /tmp, and the API's storage
+# defaults (./data/...) would crash it at startup. Env vars set on the project
+# still win.
+if os.environ.get("VERCEL"):
+    for _name, _path in (
+        ("CONVERSATION_STORAGE_DIR", "/tmp/blog-ai/conversations"),
+        ("USAGE_STORAGE_DIR", "/tmp/blog-ai/usage"),
+        ("API_KEY_STORAGE_PATH", "/tmp/blog-ai/api_keys.json"),
+        ("CHROMA_PERSIST_PATH", "/tmp/blog-ai/chroma"),
+    ):
+        os.environ.setdefault(_name, _path)
+
 from server import app as _api  # noqa: E402
 
 PREFIX = "/backend"
