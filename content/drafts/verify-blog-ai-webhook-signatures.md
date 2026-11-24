@@ -25,7 +25,7 @@ Each saved endpoint gets a Test button. It sends one event of type `test`, signe
 
 The event picker lists nine types in four groups: two content events, four batch events, two quota events and `test`. Only three of them are sent by anything in the API today:
 
-- `content.generated`, when a post finishes on /generate,
+- `content.generated`, when a post finishes on /generate or through the Zapier integration,
 - `batch.completed`, when a bulk run from /bulk finishes,
 - `test`, from the Test button.
 
@@ -99,15 +99,15 @@ import time
 def verify_blog_ai_webhook(raw_body: bytes, signature_header: str, secret: str, tolerance: int = 300) -> bool:
     parts = dict(p.split("=", 1) for p in signature_header.split(",") if "=" in p)
     t, v1 = parts.get("t", ""), parts.get("v1", "")
-    if not t.isdigit() or not v1:
+    if not (t.isascii() and t.isdigit()) or not v1:
         return False
     if abs(time.time() - int(t)) > tolerance:
         return False
     expected = hmac.new(secret.encode(), t.encode() + b"." + raw_body, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(expected, v1)
+    return hmac.compare_digest(expected.encode(), v1.encode())
 ```
 
-[`hmac.compare_digest`](https://docs.python.org/3/library/hmac.html#hmac.compare_digest) compares in a way designed to avoid leaking, through timing, how many leading characters matched. A plain `==` is free to stop at the first difference, and that early exit is the leak.
+[`hmac.compare_digest`](https://docs.python.org/3/library/hmac.html#hmac.compare_digest) compares in a way designed to avoid leaking, through timing, how many leading characters matched. A plain `==` is free to stop at the first difference, and that early exit is the leak. The verifier compares bytes rather than strings because `compare_digest` raises `TypeError` when handed a `str` with non-ASCII characters, and it checks `isascii()` before `isdigit()` because `isdigit()` also accepts characters such as `²` that `int()` rejects. Either way a junk header returns `False` instead of crashing the handler.
 
 ## The raw body, and why your framework is the usual suspect
 
