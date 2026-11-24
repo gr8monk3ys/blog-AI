@@ -95,7 +95,9 @@ The web project also serves the same FastAPI app on its own origin under `/backe
 `/backend/*` to it and `proxy.ts` skips it). It is the replacement for `blog-ai-api`: once the
 API's env vars are on the `blog-ai` project and `NEXT_PUBLIC_API_URL` points at
 `https://blog-ai.vivancedata.com/backend`, the `blog-ai-api` project can be deleted. In dev,
-`/backend/*` proxies to uvicorn on :8000 (`BACKEND_DEV_ORIGIN` overrides).
+`/backend/*` proxies to uvicorn on :8000 (`BACKEND_DEV_ORIGIN` overrides). `api/requirements.txt`
+is a copy of `apps/api/requirements.txt` (Vercel's parser can't follow `-r`); add a dependency
+to both, and `apps/api/tests/test_web_function_requirements.py` fails if they drift.
 
 `bun run env:check` (`scripts/check-env.mjs`) prints every env var the web app and API read,
 with required/optional and which environment (web build, web runtime, API) reads it;

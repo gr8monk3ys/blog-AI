@@ -1,3 +1,30 @@
 # Dependencies for api/backend.py (the FastAPI app served from the web project).
-# apps/api/requirements.txt stays the single list; this file only points at it.
--r ../apps/api/requirements.txt
+# A copy of apps/api/requirements.txt: Vercel's requirements parser can't follow
+# "-r" includes. apps/api/tests/test_web_function_requirements.py keeps the two equal.
+
+tenacity>=9.1.4
+openai>=2.15.0
+anthropic>=0.76.0
+requests>=2.31.0
+pydantic>=2.5.2,<3.0.0
+pydantic-settings>=2.1.0
+python-dotenv>=1.0.0
+Pillow>=12.1.1
+starlette>=0.47.2  # CVE: DoS via multipart/form-data (transitive via fastapi)
+protobuf>=5.29.6  # CVE: JSON recursion depth bypass (transitive via google-generativeai)
+fastapi>=0.115.0,<1.0.0
+uvicorn>=0.27.0,<1.0.0
+websockets>=12.0
+python-multipart>=0.0.31  # CVEs: DoS via malformed multipart boundaries/parts (8 alerts)
+uvloop>=0.19.0; platform_system != "Windows"
+asyncpg>=0.29.0
+bcrypt>=4.0.0,<6.0.0
+nh3>=0.2.14
+python3-saml>=1.16.0  # SAML 2.0 support
+authlib>=1.7.2  # OIDC/OAuth2 support
+httpx>=0.27.0,<1.0.0  # Async HTTP client for OIDC
+PyJWT>=2.13.0  # JWT token validation
+cryptography>=50.0.0,<51.0.0  # CVE fixes + certificate handling
+redis>=5.0.0
+stripe>=7.0.0
+sentry-sdk[fastapi]>=1.40.0
