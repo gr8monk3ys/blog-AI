@@ -90,6 +90,15 @@ is not pulled by anything. Clerk runs on `clerk.vivancedata.com`. As of 2026-10-
 dashboard fix listed under "Owner to-do" in `docs/DEPLOYMENT.md`. Health: web
 `GET /api/health` (`apps/web/app/api/health/route.ts`), API `GET /health` and `/ready`.
 
+The web project also serves the same FastAPI app on its own origin under `/backend`
+(`api/backend.py`, a Python function next to the Next.js build; `next.config.mjs` rewrites
+`/backend/*` to it and `proxy.ts` skips it). It is the replacement for `blog-ai-api`: once the
+API's env vars are on the `blog-ai` project and `NEXT_PUBLIC_API_URL` points at
+`https://blog-ai.vivancedata.com/backend`, the `blog-ai-api` project can be deleted. In dev,
+`/backend/*` proxies to uvicorn on :8000 (`BACKEND_DEV_ORIGIN` overrides). `api/requirements.txt`
+is a copy of `apps/api/requirements.txt` (Vercel's parser can't follow `-r`); add a dependency
+to both, and `apps/api/tests/test_web_function_requirements.py` fails if they drift.
+
 `bun run env:check` (`scripts/check-env.mjs`) prints every env var the web app and API read,
 with required/optional and which environment (web build, web runtime, API) reads it;
 `bun run env:check -- --check <dotenv file>` reports the required ones missing from a file

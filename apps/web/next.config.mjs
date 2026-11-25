@@ -167,6 +167,23 @@ const nextConfig = {
     minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
   },
 
+  // The FastAPI app (apps/api) is served from this same Vercel project as the
+  // Python function api/backend.py, under /backend on this origin. In local
+  // dev the same path is proxied to uvicorn on :8000, so /backend behaves the
+  // same everywhere. beforeFiles: checked before pages, so no page can shadow it.
+  async rewrites() {
+    const destination =
+      process.env.NODE_ENV === 'development'
+        ? `${process.env.BACKEND_DEV_ORIGIN || 'http://127.0.0.1:8000'}/:path*`
+        : '/api/backend'
+    return {
+      beforeFiles: [
+        { source: '/backend', destination: destination.replace('/:path*', '/') },
+        { source: '/backend/:path*', destination },
+      ],
+    }
+  },
+
   // Custom headers for security and caching
   async headers() {
     return [

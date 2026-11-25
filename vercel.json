@@ -9,5 +9,12 @@
       "**": false,
       "main": true
     }
+  },
+  "functions": {
+    "api/backend.py": {
+      "maxDuration": 300,
+      "includeFiles": "apps/api/**",
+      "excludeFiles": "{node_modules/**,apps/web/**,apps/extension/**,docs/**,content/**,db/**,scripts/**,.github/**,.worktrees/**,apps/api/tests/**,apps/api/data/**,apps/api/migrations/**,**/__pycache__/**,**/*.pyc}"
+    }
   }
 }
