@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Fast gate that Claude Code runs before a session can finish: `bun run verify`
+# minus the Next.js production build. No database, browser or deploy needed.
+# The full check before a PR is still `bun run verify` (plus `verify:e2e` for UI).
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+bun install --frozen-lockfile
+bun run lint
+bun run depcruise
+bun run design:check
+bun run type-check
+bun run test:coverage
+bun run verify:api
