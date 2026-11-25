@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "extraKnownMarketplaces": {
+    "lorenzos-claude-code": {
+      "source": {
+        "source": "github",
+        "repo": "gr8monk3ys/skills"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "lorenzos-claude-code@lorenzos-claude-code": true,
+    "mattpocock-skills@lorenzos-claude-code": true,
+    "impeccable@lorenzos-claude-code": true,
+    "ponytail@lorenzos-claude-code": true
+  }
+}
