@@ -6,7 +6,7 @@
 --
 -- Notes:
 -- - We use `gen_random_uuid()` from the `pgcrypto` extension for UUID PKs.
--- - AuthZ is enforced at the application layer (Clerk user_id scoping).
+-- - AuthZ is enforced at the application layer (user_id scoping).
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 

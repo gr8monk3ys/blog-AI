@@ -153,8 +153,7 @@ jobs:
       # API root on load, and an unset URL falls back to localhost:8000, which
       # the CSP blocks and which logs a console.error, both of which sink the
       # best-practices score for reasons unrelated to the code under test.
-      # No Clerk key, same as frontend-checks: every route is public without
-      # one, and these are the public routes anyway.
+      # No auth env, same as frontend-checks: these are public routes.
       - name: Build
         run: bun run build
         env:
@@ -162,7 +161,9 @@ jobs:
 
       - name: Start application
         run: |
-          bun run start -- -p 3000 > /tmp/blog-ai-web.log 2>&1 &
+          # A production server refuses auth requests without a secret; the
+          # home page asks for the session on load.
+          BETTER_AUTH_SECRET="$(openssl rand -hex 32)" bun run start -- -p 3000 > /tmp/blog-ai-web.log 2>&1 &
           echo $! > /tmp/blog-ai-web.pid
           for _ in $(seq 1 30); do
             if curl -fsS http://127.0.0.1:3000/ > /dev/null; then

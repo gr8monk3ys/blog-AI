@@ -3,24 +3,14 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import { ThemeProvider } from '../../hooks/useTheme'
 import PricingPage from '../../app/pricing/PricingPageClient'
 import { API_ENDPOINTS } from '../../lib/api'
+import { sessionState, signedInSession } from '../auth-mock'
 
 /**
- * The visitor's current tier comes from an endpoint that needs a Clerk
- * session token. Asking for it before Clerk has loaded, or while signed out,
- * is a guaranteed 401 in the console, and for a signed-in visitor it also
- * meant the "Current Plan" marker never appeared.
+ * The visitor's current tier comes from an endpoint that needs an API token.
+ * Asking for it before the session has loaded, or while signed out, is a
+ * guaranteed 401 in the console, and for a signed-in visitor it also meant
+ * the "Current Plan" marker never appeared.
  */
-const auth = { configured: true, isLoaded: false, isSignedIn: false, unavailable: false }
-
-vi.mock('../../lib/clerk-ui', () => ({
-  isClerkConfigured: () => auth.configured,
-  useAuth: () => ({ isLoaded: auth.isLoaded, isSignedIn: auth.isSignedIn, userId: null }),
-  useClerkUnavailable: () => auth.unavailable,
-  SignedIn: () => null,
-  SignedOut: () => null,
-  UserButton: () => null,
-}))
-
 const fetchMock = vi.fn(async () => new Response(JSON.stringify({}), { status: 200 }))
 const tierRequests = () =>
   fetchMock.mock.calls.filter(([url]) => String(url) === API_ENDPOINTS.usage.stats).length
@@ -28,7 +18,7 @@ const tierRequests = () =>
 const renderPricing = () => render(<PricingPage initialTiers={[]} />, { wrapper: ThemeProvider })
 
 beforeEach(() => {
-  Object.assign(auth, { configured: true, isLoaded: false, isSignedIn: false, unavailable: false })
+  Object.assign(sessionState, { data: null, isPending: true })
   fetchMock.mockClear()
   vi.stubGlobal('fetch', fetchMock)
 })
@@ -38,14 +28,14 @@ afterEach(() => {
 })
 
 describe('PricingPage current tier', () => {
-  it('waits for Clerk before asking', async () => {
+  it('waits for the session before asking', async () => {
     renderPricing()
     await waitFor(() => expect(fetchMock).toHaveBeenCalled())
     expect(tierRequests()).toBe(0)
   })
 
   it('does not ask for a signed-out visitor', async () => {
-    auth.isLoaded = true
+    sessionState.isPending = false
     renderPricing()
     await waitFor(() => expect(fetchMock).toHaveBeenCalled())
     expect(tierRequests()).toBe(0)
@@ -53,16 +43,11 @@ describe('PricingPage current tier', () => {
 
   it('asks once a session is loaded', async () => {
     const { rerender } = renderPricing()
-    Object.assign(auth, { isLoaded: true, isSignedIn: true })
+    Object.assign(sessionState, { data: signedInSession, isPending: false })
     rerender(<PricingPage initialTiers={[]} />)
     await waitFor(() => expect(tierRequests()).toBe(1))
   })
 
-  it('asks without a session when Clerk is not configured', async () => {
-    Object.assign(auth, { configured: false, isLoaded: true })
-    renderPricing()
-    await waitFor(() => expect(tierRequests()).toBe(1))
-  })
 })
 
 /**
@@ -90,7 +75,7 @@ describe('PricingPage checkout availability', () => {
     screen.getByRole('heading', { level: 2, name: 'Starter' }).closest('div.flex-col') as HTMLElement
 
   beforeEach(() => {
-    Object.assign(auth, { configured: false, isLoaded: true })
+    Object.assign(sessionState, { data: signedInSession, isPending: false })
   })
 
   afterEach(() => {

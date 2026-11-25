@@ -22,6 +22,7 @@ Rollback scripts **must be run in reverse numerical order** (highest number
 first):
 
 ```bash
+psql "$DATABASE_URL" -f rollback/011_drop_better_auth.sql
 psql "$DATABASE_URL" -f rollback/005_drop_organizations.sql
 psql "$DATABASE_URL" -f rollback/004_drop_deep_research.sql
 psql "$DATABASE_URL" -f rollback/003_drop_workflows_sso_runtime.sql
@@ -33,6 +34,7 @@ psql "$DATABASE_URL" -f rollback/001_drop_init.sql
 
 | Rollback Script | Rolls Back | Objects Dropped |
 |---|---|---|
+| `011_drop_better_auth.sql` | `011_better_auth.sql` | Better Auth `user`, `session`, `account`, `verification`, `jwks` tables |
 | `005_drop_organizations.sql` | `005_organizations.sql` | `organizations`, `organization_members`, `organization_invites`, `audit_logs` tables |
 | `004_drop_deep_research.sql` | `004_deep_research.sql` | `research_queries`, `research_sources` tables |
 | `003_drop_workflows_sso_runtime.sql` | `003_workflows_sso_runtime.sql` | `app_workflows`, `app_workflow_executions`, `app_sso_configurations`, `app_sso_auth_sessions`, `app_sso_user_sessions` tables |

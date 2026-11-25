@@ -5,10 +5,10 @@ the Vercel project list and `GET /health` on the API host):
 
 | Piece | Where | Entry point / config | URL |
 |-------|-------|----------------------|-----|
-| `apps/web` (Next.js) | Vercel project `blog-ai`, root directory = repo root | root `vercel.json` (`bun run build`, output `apps/web/.next`) | https://blog-ai.vivancedata.com |
+| `apps/web` (Next.js) | Vercel project `blog-ai`, root directory = repo root | root `vercel.json` (`bun run build`, output `apps/web/.next`) | https://blog-ai.lscaturchio.xyz |
 | `apps/api` (FastAPI) | **Vercel project `blog-ai-api`, Python runtime** | `apps/api/vercel.json` (one function, `server.py`, `maxDuration` 300) + `[tool.vercel] entrypoint = "server:app"` in `apps/api/pyproject.toml` | https://blog-ai-api-gr8monk3ys-projects.vercel.app |
 | Postgres | Neon | `DATABASE_URL` (pooled) in both projects; `DATABASE_URL_DIRECT` for migrations | — |
-| Auth | Clerk, custom domain | `NEXT_PUBLIC_CLERK_DOMAIN=clerk.vivancedata.com`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` (web); `CLERK_JWKS_URL`, `CLERK_JWT_ISSUER` (API) | https://clerk.vivancedata.com |
+| Auth | Better Auth in the web app (email + password, Postgres tables from `db/migrations/011_better_auth.sql`); emails via Resend | `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `RESEND_API_KEY`, `EMAIL_FROM` (web); `AUTH_JWKS_URL`, `AUTH_JWT_ISSUER`, `AUTH_JWT_AUDIENCE` (API) | https://blog-ai.lscaturchio.xyz/api/auth/jwks |
 | Billing | Stripe | `STRIPE_*` on the API | — |
 | Errors | Sentry (`vivance` org, shared quota) | `NEXT_PUBLIC_SENTRY_DSN` (web), `SENTRY_DSN` (API) — see [MONITORING.md](./MONITORING.md) | — |
 
@@ -60,6 +60,15 @@ may advertise given this.
    with `DATABASE_URL` pointing at production. It puts the key in the macOS Keychain or
    the clipboard (`pbcopy`, `wl-copy` or `xclip`) and refuses to create one when none of
    those is available.
+5. **Clerk → Better Auth cut-over.** Before merging the change that ships it:
+   apply `db/migrations/011_better_auth.sql` to production (same `bun run db:migrate`
+   command as above; it only adds tables); verify a sending domain in Resend; in
+   `blog-ai` set `BETTER_AUTH_SECRET` (`openssl rand -base64 32`),
+   `BETTER_AUTH_URL=https://blog-ai.lscaturchio.xyz`, `RESEND_API_KEY` and `EMAIL_FROM`; in
+   `blog-ai-api` set `AUTH_JWKS_URL=https://blog-ai.lscaturchio.xyz/api/auth/jwks` and
+   `AUTH_JWT_ISSUER` / `AUTH_JWT_AUDIENCE` to `https://blog-ai.lscaturchio.xyz`. The web
+   build fails without its four. After the deploy, delete the old Clerk variables from both
+   projects, then retire the Clerk instance and its DNS record. Existing Clerk accounts are not migrated.
 
 ## How a deploy happens
 
@@ -68,7 +77,7 @@ may advertise given this.
   after `CI` succeeds on `main`, when `VERCEL_TOKEN` / `VERCEL_ORG_ID` /
   `VERCEL_PROJECT_ID` secrets are present; without them it logs a warning and skips.
   `next.config.mjs` refuses a `VERCEL_ENV=production` build without `NEXT_PUBLIC_API_URL`
-  and valid Clerk keys.
+  and the Better Auth / Resend / database variables (see below).
 - **API.** Vercel's Git integration on the `blog-ai-api` project (see owner to-do 1).
   There is no GitHub Action that deploys the API; `deploy.yml`'s backend job only builds
   and pushes the container image.
@@ -92,7 +101,7 @@ may advertise given this.
   Production deployment attached (the silent-drop failure mode from 2026-09-14).
 - Health endpoints:
   - Web `GET /api/health`: `status`, `version`, `commit`, and `checks.db` / `checks.api`
-    / `checks.clerk`, each `ok | degraded | down` with latency; 503 only when something is
+    / `checks.auth`, each `ok | degraded | down` with latency; 503 only when something is
     down. The public body is aggregate only (no variable names, key presence or error
     text). `Authorization: Bearer $HEALTH_DETAIL_TOKEN` adds a `details` block for
     operators; with the token unset there is no detail view.
@@ -102,12 +111,14 @@ may advertise given this.
 
 ## Minimum production environment
 
-Web (Vercel `blog-ai`): `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`,
-`CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_DOMAIN`, `DATABASE_URL`, `NEXT_PUBLIC_SITE_URL`.
+Web (Vercel `blog-ai`): `NEXT_PUBLIC_API_URL`, `DATABASE_URL`, `BETTER_AUTH_SECRET`,
+`BETTER_AUTH_URL=https://blog-ai.lscaturchio.xyz`, `RESEND_API_KEY`, `EMAIL_FROM`,
+`NEXT_PUBLIC_SITE_URL`. Apply `db/migrations/011_better_auth.sql` before the first deploy.
 
 API (Vercel `blog-ai-api`): `ENVIRONMENT=production`, `ALLOWED_ORIGINS` (the web origin;
 localhost entries are stripped and the process exits if none remain), `DATABASE_URL`,
-`CLERK_JWKS_URL`, `CLERK_JWT_ISSUER`, at least one of `OPENAI_API_KEY` /
+`AUTH_JWKS_URL=https://blog-ai.lscaturchio.xyz/api/auth/jwks`,
+`AUTH_JWT_ISSUER` and `AUTH_JWT_AUDIENCE` (both `https://blog-ai.lscaturchio.xyz`), at least one of `OPENAI_API_KEY` /
 `ANTHROPIC_API_KEY`, and the `STRIPE_*` set for billing.
 
 The full list with required/optional per environment is in

@@ -53,14 +53,14 @@ jobs:
         run: echo "Using bunx vercel@50.13.2 for production checks."
 
       # Public routes, then GET /api/health (the web app's own report on its
-      # database, the FastAPI backend and Clerk; 503 fails the run), then the
+      # database, the FastAPI backend and auth config; 503 fails the run), then the
       # Vercel deployment status and recent production logs when a token exists.
       # The script prints status codes and aggregate health words only: no
       # response bodies and no log lines, since this log is public.
       - name: Run production health check
         shell: bash
         env:
-          APP_URL: https://blog-ai.vivancedata.com
+          APP_URL: https://blog-ai.lscaturchio.xyz
           ROUTES: / /pricing /blog /tool-directory /sitemap.xml
           HEALTH_ROUTE: /api/health
           LOOKBACK: 1h
@@ -78,7 +78,7 @@ jobs:
       - name: Check backend API health
         shell: bash
         env:
-          APP_URL: https://blog-ai.vivancedata.com
+          APP_URL: https://blog-ai.lscaturchio.xyz
           API_BASE_URL: ${{ vars.API_BASE_URL }}
         run: |
           set -euo pipefail

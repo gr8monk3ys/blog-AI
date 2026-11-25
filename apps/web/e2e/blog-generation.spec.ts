@@ -23,6 +23,7 @@ test.describe('Blog Generation', () => {
     const response = await page.goto('/tools/blog-post')
 
     expect(response?.status()).toBeLessThan(500)
-    await expect(page).toHaveURL(/.*tools\/blog-post.*/)
+    // The per-tool workspace needs a session.
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Ftools%2Fblog-post$/)
   })
 })

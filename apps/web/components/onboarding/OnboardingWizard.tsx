@@ -65,7 +65,7 @@ const slideVariants = {
 /* -------------------------------------------------------------------------- */
 
 interface OnboardingWizardProps {
-  /** Pre-fill the name field (e.g. from Clerk user profile). */
+  /** Pre-fill the name field (e.g. from the account profile). */
   initialName?: string
 }
 

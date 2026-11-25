@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSqlOrNull } from '../../../../lib/db'
-import { getClerkUserIdOrNull, requireClerkUserId } from '../../../../lib/clerk-auth'
+import { getUserIdOrNull, requireUserId } from '../../../../lib/auth-session'
 import { databaseUnavailableResponse } from '../../../../lib/api-route-errors'
 import { canServeDemoData } from '../../../../lib/server-mode'
 import { SAMPLE_TEMPLATES, type UpdateTemplateInput } from '../../../../types/templates'
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       })
     }
 
-    const userId = await getClerkUserIdOrNull()
+    const userId = await getUserIdOrNull()
 
     // Check if it's a UUID
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
@@ -136,7 +136,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     let userId: string
     try {
-      userId = await requireClerkUserId()
+      userId = await requireUserId()
     } catch {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
@@ -260,7 +260,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     let userId: string
     try {
-      userId = await requireClerkUserId()
+      userId = await requireUserId()
     } catch {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },

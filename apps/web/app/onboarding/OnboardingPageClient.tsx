@@ -1,86 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import OnboardingWizard from '../../components/onboarding/OnboardingWizard'
-
-/* -------------------------------------------------------------------------- */
-/*  Clerk user helper                                                          */
-/* -------------------------------------------------------------------------- */
-
-interface ClerkGlobal {
-  user?: { firstName?: string; lastName?: string }
-  loaded?: boolean
-}
-
-function getClerkGlobal(): ClerkGlobal | undefined {
-  if (typeof window === 'undefined') return undefined
-  return (window as unknown as Record<string, unknown>).Clerk as
-    | ClerkGlobal
-    | undefined
-}
-
-function formatClerkName(clerk: ClerkGlobal | undefined): string {
-  if (!clerk?.user) return ''
-  const first = clerk.user.firstName || ''
-  const last = clerk.user.lastName || ''
-  return first ? `${first}${last ? ` ${last}` : ''}` : ''
-}
-
-/**
- * Safely read the Clerk user name without calling hooks that depend on
- * ClerkProvider being in the tree. Falls back to an empty string when
- * Clerk is not configured or the user has not signed in.
- */
-function useClerkUserName(): { name: string; isLoaded: boolean } {
-  const [result, setResult] = useState({ name: '', isLoaded: false })
-  const applyClerkResult = (name: string, isLoaded: boolean) => {
-    setResult({ name, isLoaded })
-  }
-
-  useEffect(() => {
-    const clerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-    let resolved = false
-
-    if (!clerkConfigured) {
-      resolved = true
-      applyClerkResult('', true)
-      return
-    }
-
-    // Clerk injects a global `window.Clerk` singleton. If it is already
-    // loaded we can read the user immediately; otherwise we poll briefly.
-    const existing = getClerkGlobal()
-    if (existing?.loaded) {
-      resolved = true
-      applyClerkResult(formatClerkName(existing), true)
-      return
-    }
-
-    const interval = setInterval(() => {
-      const c = getClerkGlobal()
-      if (c?.loaded) {
-        clearInterval(interval)
-        resolved = true
-        applyClerkResult(formatClerkName(c), true)
-      }
-    }, 200)
-
-    // Give up after 3 seconds so we never block onboarding.
-    const timeout = setTimeout(() => {
-      clearInterval(interval)
-      if (!resolved) {
-        applyClerkResult('', true)
-      }
-    }, 3000)
-
-    return () => {
-      clearInterval(interval)
-      clearTimeout(timeout)
-    }
-  }, [])
-
-  return result
-}
+import { authClient } from '../../lib/auth-client'
 
 /* -------------------------------------------------------------------------- */
 /*  Page component                                                             */
@@ -92,9 +13,10 @@ function useClerkUserName(): { name: string; isLoaded: boolean } {
  * Renders the onboarding wizard in a distraction-free layout (no header/footer).
  */
 export default function OnboardingPageClient() {
-  const { name: userName, isLoaded } = useClerkUserName()
+  const { data: session, isPending } = authClient.useSession()
+  const userName = session?.user.name ?? ''
 
-  if (!isLoaded) {
+  if (isPending) {
     return (
       <main id="main-content" tabIndex={-1} className="min-h-screen flex items-center justify-center">
         <div className="flex items-center gap-3" role="status" aria-label="Loading">

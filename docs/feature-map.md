@@ -5,7 +5,7 @@ name features by the first column; `pr-review` and `fuzz` walk this table.
 
 "Where" is the route in `apps/web` (Next.js) and, when the page calls it, the FastAPI route in
 `apps/api`. Run locally as in `CLAUDE.md` (`bun dev` on :3000, API on :8000). Several actions
-need things a bare local run does not have: a signed-in Clerk user, a Blog AI API key, an LLM
+need things a bare local run does not have: a signed-in user, a Blog AI API key, an LLM
 key, or `DATABASE_URL`. The last column says what you see when it works.
 
 Not mapped yet: the browser extension (`apps/extension`) and the public REST API.
@@ -21,7 +21,9 @@ Not mapped yet: the browser extension (`apps/extension`) and the public REST API
 | RSS feed | `/rss` | Open `/rss` | `200` with `application/rss+xml`, channel title "Blog AI" |
 | Tool directory | `/tool-directory` | Footer → Tool Directory | "Browse Every AI Tool in One Place", tools grouped by category with links |
 | Privacy policy and terms | `/privacy`, `/terms` | Footer → Privacy Policy / Terms of Service | Headings "Privacy Policy" / "Terms of Service" with numbered sections |
-| Sign in / sign up | `/sign-in`, `/sign-up`, `/auth` | Header sign-in button | With Clerk keys: the Clerk form. Without: "Clerk is not configured", and `/auth` says "No Sign-In Required" |
+| Sign in / sign up | `/sign-in`, `/sign-up` (`/auth` redirects to `/sign-in`) | Header sign-in button | Email + password forms. Sign-up lands on `/verify-email` ("Check your inbox"); the emailed link signs you in and shows "You are in." |
+| Password reset | `/forgot-password` → emailed link → `/reset-password` | "Forgot password?" on `/sign-in` | "If an account uses that address, a reset link is on its way", then "Set a new password." and back to `/sign-in` |
+| Account menu | header, signed in | Account icon | Your email, Settings, Sign out |
 
 ## Writing
 

@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, within, RenderOptions } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ThemeProvider } from '../../hooks/useTheme'
-import * as clerkNext from '@clerk/nextjs'
+import { sessionState } from '../auth-mock'
 import SiteHeader from '../../components/SiteHeader'
 
 function renderWithProviders(ui: React.ReactElement, options?: RenderOptions) {
@@ -10,19 +10,8 @@ function renderWithProviders(ui: React.ReactElement, options?: RenderOptions) {
 }
 
 describe('SiteHeader', () => {
-  const originalClerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-
   beforeEach(() => {
     vi.clearAllMocks()
-    delete process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-  })
-
-  afterAll(() => {
-    if (originalClerkKey) {
-      process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = originalClerkKey
-    } else {
-      delete process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-    }
   })
 
   describe('Rendering', () => {
@@ -55,7 +44,8 @@ describe('SiteHeader', () => {
       }
     })
 
-    it('should render a sign-in link', () => {
+    it('should render a sign-in link when signed out', () => {
+      sessionState.data = null
       renderWithProviders(<SiteHeader />)
 
       const signInLinks = screen.getAllByRole('link', { name: /sign in/i })
@@ -212,38 +202,38 @@ describe('SiteHeader', () => {
     })
   })
 
-  describe('Clerk-configured branch', () => {
-    // The global Clerk mock is signed in. These two used to be one test that
-    // expected the account button and the sign-in link together, a state the
-    // pass-through <SignedIn>/<SignedOut> mocks made possible and Clerk never does.
-    it('should render the account button, not the sign-in link, when signed in', () => {
-      process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = 'pk_test_mock'
-
+  describe('Session states', () => {
+    // The global auth-client mock is signed in.
+    it('should render the account menu, not the sign-in link, when signed in', () => {
       renderWithProviders(<SiteHeader />)
 
-      expect(screen.getByTestId('clerk-user-button')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /account menu/i })).toBeInTheDocument()
       expect(screen.queryByRole('link', { name: /^sign in$/i })).not.toBeInTheDocument()
     })
 
-    it('should render the sign-in link, not the account button, when signed out', () => {
-      process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = 'pk_test_mock'
-      const useAuth = vi
-        .spyOn(clerkNext, 'useAuth')
-        .mockReturnValue({ isLoaded: true, isSignedIn: false, userId: null } as never)
+    it('should render the sign-in link, not the account menu, when signed out', () => {
+      sessionState.data = null
 
       renderWithProviders(<SiteHeader />)
 
       const signInLink = screen.getByRole('link', { name: /^sign in$/i })
       expect(signInLink).toHaveAttribute('href', '/sign-in')
-      expect(screen.queryByTestId('clerk-user-button')).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /account menu/i })).not.toBeInTheDocument()
       expect(screen.queryByRole('link', { name: 'Generate' })).not.toBeInTheDocument()
-
-      useAuth.mockRestore()
     })
 
-    it('should render auth links in mobile navigation when Clerk is configured', async () => {
+    it('should keep the sign-in link while the session is loading', () => {
+      sessionState.data = null
+      sessionState.isPending = true
+
+      renderWithProviders(<SiteHeader />)
+
+      expect(screen.getByRole('link', { name: /^sign in$/i })).toBeInTheDocument()
+      expect(screen.queryByRole('link', { name: 'Generate' })).not.toBeInTheDocument()
+    })
+
+    it('should render auth links in mobile navigation when signed in', async () => {
       const user = userEvent.setup()
-      process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = 'pk_test_mock'
 
       renderWithProviders(<SiteHeader />)
 

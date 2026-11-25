@@ -1,8 +1,9 @@
 import '@testing-library/jest-dom'
-import { afterEach, vi } from 'vitest'
+import { afterEach, beforeEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import React from 'react'
 import type { ReactNode } from 'react'
+import { resetSessionState } from './auth-mock'
 
 // Cleanup after each test
 afterEach(() => {
@@ -77,31 +78,16 @@ vi.mock('next/link', () => ({
 }))
 
 // ---------------------------------------------------------------------------
-// Mock @clerk/nextjs
+// Mock the Better Auth client (signed in by default; see tests/auth-mock.ts)
 // ---------------------------------------------------------------------------
-// <SignedIn>/<SignedOut> throw on render in @clerk/nextjs 7 (Core 3). The mock
-// throws too, so a component that reaches for them fails here and not only in
-// a production build that has a publishable key.
-const removedClerkComponent = (name: string) => (): never => {
-  throw new Error(`Clerk: <${name}> is not available in @clerk/nextjs Core 3.`)
-}
+vi.mock('../lib/auth-client', async () => {
+  const { authClientMock } = await import('./auth-mock')
+  return { authClient: authClientMock }
+})
 
-vi.mock('@clerk/nextjs', () => ({
-  SignedIn: removedClerkComponent('SignedIn'),
-  SignedOut: removedClerkComponent('SignedOut'),
-  UserButton: () => <div data-testid="clerk-user-button" />,
-  SignIn: () => <div data-testid="clerk-sign-in" />,
-  SignUp: () => <div data-testid="clerk-sign-up" />,
-  useUser: () => ({ isSignedIn: true, user: { id: 'test-user' } }),
-  useAuth: () => ({
-    isLoaded: true,
-    isSignedIn: true,
-    userId: 'test-user',
-    getToken: vi.fn().mockResolvedValue('mock-token'),
-  }),
-  ClerkProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
-  auth: () => ({ userId: 'test-user' }),
-}))
+beforeEach(() => {
+  resetSessionState()
+})
 
 // Mock scrollIntoView. Route-handler tests opt into the node environment
 // (`// @vitest-environment node`), where there is no DOM to patch.

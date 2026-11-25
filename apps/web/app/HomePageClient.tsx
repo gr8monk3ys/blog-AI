@@ -5,7 +5,7 @@ import { CheckIcon } from '@heroicons/react/24/outline'
 import SiteHeader from '../components/SiteHeader'
 import SiteFooter from '../components/SiteFooter'
 import { buttonVariants } from '../components/ui/Button'
-import { useAuth } from '../lib/clerk-ui'
+import { useAuth } from '../lib/auth-ui'
 import { withoutUnavailableFeatures } from './pricing/tiers'
 import {
   FEATURES,
@@ -26,17 +26,12 @@ import {
 const labelLink = 'label-mono label-link ink-underline transition-colors hover:text-primary'
 
 export default function Home(): React.ReactElement {
-  const isClerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
   const { isLoaded, isSignedIn } = useAuth()
 
-  // Render the signed-out CTA until Clerk positively reports a session.
-  // Clerk's <SignedIn>/<SignedOut> BOTH render nothing while clerk.browser.js
-  // is still loading — and forever if it fails to load — which left the hero
-  // with a subhead, an empty gap, and a "No credit card required" line
-  // pointing at no button. The primary action must not depend on a
-  // third-party script being reachable.
-  const showSignedInCta = isClerkConfigured && isLoaded && isSignedIn
-  const startFreeHref = isClerkConfigured ? '/sign-up' : '/auth'
+  // Render the signed-out CTA until the session positively loads, so the
+  // hero's primary action is in the first paint.
+  const showSignedInCta = isLoaded && isSignedIn
+  const startFreeHref = '/sign-up'
 
   const primaryCta = showSignedInCta
     ? { href: '/generate', label: 'Start Generating' }

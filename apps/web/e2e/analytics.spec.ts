@@ -11,10 +11,8 @@ test.describe('Analytics Dashboard', () => {
     await expect(page).toHaveURL(/.*analytics.*/)
   })
 
-  test('analytics page includes dashboard content', async ({ page }) => {
+  test('sends a signed-out visitor to sign-in and back', async ({ page }) => {
     await page.goto('/analytics')
-    await expect(page.locator('body')).toContainText(
-      /Analytics Dashboard|Track your content generation|Quick Actions/i
-    )
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fanalytics$/)
   })
 })

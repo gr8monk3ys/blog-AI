@@ -1,5 +1,6 @@
 import { fromPartial } from '@total-typescript/shoehorn'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { jwtState } from '../auth-mock'
 import {
   API_BASE_URL,
   API_V1_BASE_URL,
@@ -86,18 +87,18 @@ describe('API Configuration', () => {
       expect(headers['Content-Type']).toBe('application/json')
     })
 
-    it('should include Clerk bearer token when available', async () => {
-      Object.defineProperty(window, 'Clerk', {
-        configurable: true,
-        value: {
-          session: {
-            getToken: vi.fn().mockResolvedValue('token-123'),
-          },
-        },
-      })
+    it('should attach the Better Auth JWT as a bearer token', async () => {
+      jwtState.header = 'token-123'
 
       const headers = (await getDefaultHeaders()) as Record<string, string>
       expect(headers['Authorization']).toBe('Bearer token-123')
+    })
+
+    it('should send no bearer token without a session', async () => {
+      jwtState.header = null
+
+      const headers = (await getDefaultHeaders()) as Record<string, string>
+      expect(headers['Authorization']).toBeUndefined()
     })
   })
 })

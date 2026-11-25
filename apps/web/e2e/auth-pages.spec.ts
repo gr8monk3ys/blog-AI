@@ -11,15 +11,11 @@ test.describe('Auth Pages', () => {
     await expect(page).toHaveURL(/.*sign-in.*/)
   })
 
-  test('sign-in page renders auth UI or configuration notice', async ({
-    page,
-  }) => {
+  test('sign-in page renders the sign-in form', async ({ page }) => {
     await page.goto('/sign-in')
-    // When Clerk is configured, the sign-in widget renders.
-    // When Clerk is not configured, a fallback message is shown.
-    await expect(page.locator('body')).toContainText(
-      /sign in|Clerk is not configured/i
-    )
+    await expect(page.getByLabel('Email')).toBeVisible()
+    await expect(page.getByLabel('Password')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible()
   })
 
   test('sign-up page loads successfully', async ({ page }) => {
@@ -29,13 +25,10 @@ test.describe('Auth Pages', () => {
     await expect(page).toHaveURL(/.*sign-up.*/)
   })
 
-  test('sign-up page renders auth UI or configuration notice', async ({
-    page,
-  }) => {
+  test('sign-up page renders the sign-up form', async ({ page }) => {
     await page.goto('/sign-up')
-    await expect(page.locator('body')).toContainText(
-      /sign up|Clerk is not configured/i
-    )
+    await expect(page.getByLabel('Name')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Create Account' })).toBeVisible()
   })
 
   test('sign-in page includes site header', async ({ page }) => {

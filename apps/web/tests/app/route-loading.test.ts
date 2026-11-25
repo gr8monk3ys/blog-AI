@@ -1,11 +1,9 @@
 import { existsSync, readdirSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { describe, it, expect } from 'vitest'
-import { createPathMatcher } from '@clerk/shared/pathMatcher'
-import { PROTECTED_ROUTE_PATTERNS } from '../../lib/protected-routes'
+import { isProtectedPath as isProtected } from '../../lib/protected-routes'
 
 const APP_DIR = resolve(__dirname, '../../app')
-const isProtected = createPathMatcher(PROTECTED_ROUTE_PATTERNS)
 
 function pageDirs(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {

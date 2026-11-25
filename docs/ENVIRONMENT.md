@@ -15,7 +15,8 @@ Rules of thumb:
 
 - `NEXT_PUBLIC_*` is inlined at **build** time into the client and server bundles. Set it for
   `bun run build` and in every Vercel environment, not only for `start`.
-- The web app's server-only variables (`CLERK_SECRET_KEY`, `DATABASE_URL`, `BLOG_ADMIN_KEY`)
+- The web app's server-only variables (`BETTER_AUTH_SECRET`, `RESEND_API_KEY`, `DATABASE_URL`,
+  `BLOG_ADMIN_KEY`)
   live in `apps/web/.env.local` locally and in the Vercel `blog-ai` project in production.
 - API variables live in the root `.env` locally (`apps/api/.env` is a symlink to it) and in the
   Vercel `blog-ai-api` project in production. See [DEPLOYMENT.md](./DEPLOYMENT.md) for what
@@ -46,19 +47,25 @@ ALLOWED_ORIGINS=http://localhost:3000
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
-Clerk is optional in development (every route is public without a publishable key). Without
-`DATABASE_URL`, history, brand profiles, templates and analytics fall back to in-memory storage.
+Auth works in development with no extra setup: without `DATABASE_URL` Better Auth keeps accounts
+in memory (gone on restart) and without `RESEND_API_KEY` the verification and password-reset
+emails are printed to the `bun dev` log. Without `DATABASE_URL`, history, brand profiles,
+templates and analytics also fall back to in-memory storage. To call the API as a signed-in user
+locally, set `AUTH_JWKS_URL=http://localhost:3000/api/auth/jwks` and
+`AUTH_JWT_ISSUER=AUTH_JWT_AUDIENCE=http://localhost:3000` in `.env`.
 
 ## Minimum for production
 
-Web (Vercel `blog-ai`): `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`,
-`CLERK_SECRET_KEY`, `DATABASE_URL`; strongly recommended `NEXT_PUBLIC_SITE_URL`,
-`NEXT_PUBLIC_CLERK_DOMAIN`, `NEXT_PUBLIC_SUPPORT_EMAIL`, `NEXT_PUBLIC_SENTRY_DSN`.
+Web (Vercel `blog-ai`): `NEXT_PUBLIC_API_URL`, `DATABASE_URL` (with
+`db/migrations/011_better_auth.sql` applied), `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`,
+`RESEND_API_KEY`, `EMAIL_FROM`; strongly recommended `NEXT_PUBLIC_SITE_URL`,
+`NEXT_PUBLIC_SUPPORT_EMAIL`, `NEXT_PUBLIC_SENTRY_DSN`.
 
 API (Vercel `blog-ai-api`): `ENVIRONMENT=production`, `ALLOWED_ORIGINS`, `DATABASE_URL`,
-`CLERK_JWKS_URL`, `CLERK_JWT_ISSUER`, one of `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`;
+`AUTH_JWKS_URL` (`<BETTER_AUTH_URL>/api/auth/jwks`), `AUTH_JWT_ISSUER` and `AUTH_JWT_AUDIENCE`
+(both equal to the web app's `BETTER_AUTH_URL`), one of `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`;
 `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` + `STRIPE_PRICE_ID_{STARTER,PRO}_{MONTHLY,YEARLY}`
-for billing. `next.config.mjs` refuses a production web build without the first three web
+for billing. `next.config.mjs` refuses a production web build without any of the six web
 variables; the API exits at start-up in production if `ALLOWED_ORIGINS` has no non-localhost
 entry.
 
@@ -78,12 +85,10 @@ dropped: the web app has no Stripe.js and never read it.
 
 | Variable | Kind | Read by | Meaning |
 |----------|------|---------|---------|
-| `NEXT_PUBLIC_API_KEY` | dev only | web build, web runtime | Local-only API key fallback (X-API-Key) when Clerk is absent. Never set in production. |
+| `NEXT_PUBLIC_API_KEY` | dev only | web build, web runtime | Local-only API key fallback (X-API-Key) when there is no session. Never set in production. |
 | `NEXT_PUBLIC_API_URL` | required | web build, web runtime | FastAPI base URL. Production: https://blog-ai-api-gr8monk3ys-projects.vercel.app. next.config.mjs refuses a production build without it. |
 | `NEXT_PUBLIC_API_VERSION` | optional | web build, web runtime | API path version segment. Default v1. |
 | `NEXT_PUBLIC_APP_VERSION` | optional | web build, web runtime | Overrides the version /api/health reports (default: apps/web/package.json). |
-| `NEXT_PUBLIC_CLERK_DOMAIN` | optional | web build, web runtime | Clerk custom domain; production uses clerk.vivancedata.com. Added to the CSP connect-src. |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | required | web build, web runtime | Clerk publishable key (pk_test_/pk_live_). Without it every route is public (dev) or redirects to /auth?reason=auth-not-configured (prod). |
 | `NEXT_PUBLIC_ENABLE_KNOWLEDGE_BASE` | optional | web build, web runtime | Feature flag: /knowledge + nav link. Pair with the API's ENABLE_KNOWLEDGE_BASE. Default off. |
 | `NEXT_PUBLIC_FEATURE_BILLING` | optional | web build, web runtime | Feature flag: pricing, checkout, billing portal. Default ON (Stripe is live); set false to hide. |
 | `NEXT_PUBLIC_FEATURE_IMAGE_GENERATION` | optional | web build, web runtime | Feature flag: /images. Pair with IMAGE_PROVIDER + OpenAI/Stability key on the API. Default off. |
@@ -95,8 +100,8 @@ dropped: the web app has no Stripe.js and never read it.
 | `NEXT_PUBLIC_SENTRY_DSN` | optional | web build, web runtime | Browser/server/edge Sentry DSN. Reports only on a Vercel deployment (lib/sentry-env.ts). |
 | `NEXT_PUBLIC_SENTRY_FORCE_DISABLE` | optional | web build | =1 kill switch: a deployed build stops reporting to Sentry. |
 | `NEXT_PUBLIC_SENTRY_FORCE_ENABLE` | dev only | web build | =1 reports Sentry from a non-Vercel build (use a throwaway DSN). |
-| `NEXT_PUBLIC_SIGNUP_MODE` | optional | web build, web runtime | open \| waitlist \| invite (lib/signup-mode.ts). Default open. Must match the Clerk dashboard sign-up mode. |
-| `NEXT_PUBLIC_SITE_URL` | optional | web build, web runtime | Public origin (sitemap, RSS, Sentry allowUrls, metadataBase). Production falls back to https://blog-ai.vivancedata.com; set it anyway. |
+| `NEXT_PUBLIC_SIGNUP_MODE` | optional | web build, web runtime | open \| waitlist \| invite (lib/signup-mode.ts). Default open. waitlist and invite turn off self-serve sign-up in lib/auth.ts. |
+| `NEXT_PUBLIC_SITE_URL` | optional | web build, web runtime | Public origin (sitemap, RSS, Sentry allowUrls, metadataBase). Production falls back to https://blog-ai.lscaturchio.xyz; set it anyway. |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | optional | web build, web runtime | Support inbox shown on error/404/pricing pages. Default support@lscaturchio.xyz (lib/support.ts). |
 | `NEXT_PUBLIC_VERCEL_ENV` | platform | web build, web runtime | Mirror of VERCEL_ENV that next.config.mjs inlines for the browser bundle. Do not set by hand. |
 | `NEXT_PUBLIC_WS_URL` | optional | web build, web runtime | WebSocket base; derived from NEXT_PUBLIC_API_URL (https->wss) when unset. |
@@ -106,18 +111,19 @@ dropped: the web app has no Stripe.js and never read it.
 | Variable | Kind | Read by | Meaning |
 |----------|------|---------|---------|
 | `ANALYZE` | dev only | web build | =true runs the bundle analyzer (`bun run analyze`). |
+| `BETTER_AUTH_SECRET` | required | web runtime | Better Auth signing/encryption secret (32+ random bytes, e.g. `openssl rand -base64 32`). Without it a production server refuses every auth request. |
+| `BETTER_AUTH_URL` | required | web runtime | Public origin of the web app (https://blog-ai.lscaturchio.xyz). Base for auth email links and the `iss`/`aud` of the API JWTs; must equal the API's AUTH_JWT_ISSUER and AUTH_JWT_AUDIENCE. |
 | `BLOG_ADMIN_KEY` | optional | web runtime | Shared secret protecting /api/blog-posts/* (x-admin-key or Bearer). Unset: those routes are closed. |
 | `CI` | platform | web build | Set by GitHub Actions; enables the production-build env checks together with VERCEL. |
-| `CLERK_SECRET_KEY` | required | web runtime | Clerk secret (sk_test_/sk_live_) for proxy.ts and route handlers. Clerk is disabled unless both keys are present. |
 | `DEMO_DATA_ENABLED` | dev only | web runtime | Seeds demo data outside production (lib/server-mode.ts). |
+| `EMAIL_FROM` | required | web runtime | Sender for auth emails, on a domain verified in Resend, e.g. `Blog AI <auth@lscaturchio.xyz>`. |
 | `HEALTH_DETAIL_TOKEN` | optional | web runtime | Bearer token that unlocks the `details` block of GET /api/health (which key is missing, error text, API services). Unset: the public aggregate view is all there is. |
 | `NEXT_RUNTIME` | platform | web runtime | nodejs \| edge, set by Next.js (instrumentation.ts). |
 | `NODE_ENV` | platform | web build, web runtime | Set by Next.js. |
-| `PLAYWRIGHT_TEST` | dev only | web runtime | =1 set by the Playwright config; proxy.ts suppresses its auth warning under e2e. |
+| `RESEND_API_KEY` | required | web runtime | Resend key for the auth emails (verification, password reset). Unset outside production: the email is printed to the server console instead. |
 | `SENTRY_AUTH_TOKEN` | optional | web build | Sentry auth token; without it source maps are not uploaded (build still passes). |
 | `SENTRY_ORG` | optional | web build | Sentry org slug for source-map upload. |
 | `SENTRY_PROJECT` | optional | web build | Sentry project slug for source-map upload. |
-| `SUPPRESS_PROXY_AUTH_WARNING` | dev only | web runtime | =1 silences the "Clerk not configured" warning from proxy.ts in local runs. |
 | `VERCEL` | platform | web build | Set to 1 by Vercel builds. |
 | `VERCEL_ENV` | platform | web build, web runtime | production \| preview \| development on Vercel. Gates Sentry and the production-build env checks. |
 | `VERCEL_GIT_COMMIT_SHA` | platform | web runtime | Deployed commit, reported by /api/health as `commit`. |
@@ -127,13 +133,16 @@ dropped: the web app has no Stripe.js and never read it.
 
 | Variable | Kind | Read by | Meaning |
 |----------|------|---------|---------|
-| `ALLOWED_ORIGINS` | required | API | Comma-separated CORS origins; production: https://blog-ai.vivancedata.com. |
+| `ALLOWED_ORIGINS` | required | API | Comma-separated CORS origins; production: https://blog-ai.lscaturchio.xyz. |
 | `ANTHROPIC_API_KEY` | optional | API | Claude provider. Configured in production. |
 | `ANTHROPIC_MODEL` | optional | API | Default Anthropic model. |
 | `API_BASE_URL` | optional | API | Legacy alias of PUBLIC_API_URL read by the extension route. |
-| `API_KEY_STORAGE_PATH` | optional | API | JSON file of issued API keys (scripts/create_api_key.py); used only without `DATABASE_URL` (else the `api_keys` table). Ephemeral on Vercel. |
+| `API_KEY_STORAGE_PATH` | optional | API | JSON file of issued API keys (scripts/create_api_key.py), used only without DATABASE_URL. Ephemeral on Vercel. |
 | `APP_BASE_URL` | optional | API | Public web origin used for SSO redirects and emails. |
 | `APP_ENV` | optional | API | Legacy alias consulted by src/utils/logging; prefer ENVIRONMENT. |
+| `AUTH_JWKS_URL` | required | API | JWKS of the web app's Better Auth JWT plugin, used to verify Bearer tokens: https://blog-ai.lscaturchio.xyz/api/auth/jwks. |
+| `AUTH_JWT_AUDIENCE` | required | API | Expected `aud`: the web app's BETTER_AUTH_URL. |
+| `AUTH_JWT_ISSUER` | required | API | Expected `iss`: the web app's BETTER_AUTH_URL. |
 | `BACKEND_PORT` | dev only | API | Local listen port when PORT is unset (default 8000). |
 | `BLOGAI_API_KEY` | dev only | API | scripts/smoke_test.py: API key for authenticated probes. |
 | `BLOGAI_BASE_URL` | dev only | API | scripts/smoke_test.py: API base URL to probe. |
@@ -142,11 +151,8 @@ dropped: the web app has no Stripe.js and never read it.
 | `BOOK_SECTION_WORKERS` | optional | API | Parallel section writers for book generation. |
 | `BUFFER_ACCESS_TOKEN` | optional | API | Buffer publishing (covers Facebook/Instagram, which have no direct OAuth here). |
 | `CHROMA_PERSIST_PATH` | optional | API | Chroma on-disk path. |
-| `CLERK_JWKS_URL` | required | API | Clerk JWKS endpoint used to verify the web app's Bearer tokens. |
-| `CLERK_JWT_AUDIENCE` | optional | API | Expected `aud`, when the Clerk template sets one. |
-| `CLERK_JWT_ISSUER` | required | API | Expected `iss` of Clerk session tokens. |
 | `COHERE_API_KEY` | optional | API | Cohere embeddings. |
-| `CONVERSATION_STORAGE_DIR` | optional | API | File fallback for conversations, used only without `DATABASE_URL` (else the `conversations` table). Ephemeral on Vercel. |
+| `CONVERSATION_STORAGE_DIR` | optional | API | File fallback for conversations, used only without DATABASE_URL. Ephemeral on Vercel. |
 | `COPYSCAPE_API_KEY` | optional | API | Plagiarism check. |
 | `COPYSCAPE_USERNAME` | optional | API | Plagiarism check (with COPYSCAPE_API_KEY). |
 | `DATABASE_POOL_MAX_SIZE` | optional | API | asyncpg pool maximum. |

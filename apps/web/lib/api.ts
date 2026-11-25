@@ -2,6 +2,8 @@
  * API configuration and utilities
  */
 
+import { authClient } from './auth-client';
+
 /**
  * Determine if we're in a production environment based on URL or env var
  */
@@ -230,31 +232,23 @@ export const getDefaultHeaders = async (): Promise<HeadersInit> => {
     'Content-Type': 'application/json',
   };
 
-  // In the cloud SaaS, clients authenticate with Clerk session JWTs.
-  // We attach the current session token as `Authorization: Bearer ...` so the
-  // FastAPI backend can verify it against Clerk's JWKS.
+  // Signed-in browsers attach a short-lived Better Auth JWT, which the FastAPI
+  // backend verifies against /api/auth/jwks. The JWT plugin returns it in the
+  // `set-auth-jwt` header of get-session; a signed-out visitor gets a plain 200
+  // with no header (GET /api/auth/token would answer 401 and log an error).
   if (typeof window !== 'undefined') {
-    try {
-      // Clerk injects a global `window.Clerk` when configured.
-      const clerk = (
-        window as Window & {
-          Clerk?: {
-            session?: {
-              getToken?: () => Promise<string | null>
-            }
-          }
-        }
-      ).Clerk
-      if (clerk?.session?.getToken) {
-        const token = await clerk.session.getToken()
-        if (token) headers['Authorization'] = `Bearer ${token}`
-      }
-    } catch {
-      // Ignore auth header if Clerk is not configured or session is unavailable.
-    }
+    let token: string | null = null
+    await authClient.getSession({
+      fetchOptions: {
+        onSuccess: (context) => {
+          token = context.response.headers.get('set-auth-jwt')
+        },
+      },
+    })
+    if (token) headers['Authorization'] = `Bearer ${token}`
   }
 
-  // Local-only fallback for realistic end-to-end testing without Clerk.
+  // Local-only fallback for realistic end-to-end testing without a session.
   // Never attach a static public API key in production.
   if (
     !('Authorization' in headers) &&

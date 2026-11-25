@@ -5,7 +5,7 @@ Endpoints for analyzing, training, and scoring brand voices.
 Includes security validation for all inputs.
 
 Authorization:
-- All endpoints require an authenticated user (Clerk session JWT via `Authorization: Bearer ...`).
+- All endpoints require an authenticated user (session JWT via `Authorization: Bearer ...`).
 """
 
 import logging
@@ -315,7 +315,7 @@ async def add_sample(
     Samples are used to train the voice fingerprint. Adding more diverse
     samples improves training quality.
 
-    **Authorization:** Authenticated user (Clerk).
+    **Authorization:** Authenticated user.
     """
     try:
         content_type = ContentType(request.content_type)
@@ -375,7 +375,7 @@ async def list_samples(
     """
     List all voice samples for a brand profile.
 
-    **Authorization:** Authenticated user (Clerk).
+    **Authorization:** Authenticated user.
     """
     try:
         storage = get_brand_voice_storage()
@@ -420,7 +420,7 @@ async def delete_sample(
     """
     Delete a voice sample from a profile.
 
-    **Authorization:** Authenticated user (Clerk).
+    **Authorization:** Authenticated user.
     """
     try:
         storage = get_brand_voice_storage()
@@ -466,7 +466,7 @@ async def train_voice(
     Aggregates analysis from all samples into a unified voice fingerprint
     that can be used for content generation and scoring.
 
-    **Authorization:** Authenticated user (Clerk).
+    **Authorization:** Authenticated user.
     """
     try:
         storage = get_brand_voice_storage()
@@ -542,7 +542,7 @@ async def get_fingerprint(
     """
     Get the trained voice fingerprint for a profile.
 
-    **Authorization:** Authenticated user (Clerk).
+    **Authorization:** Authenticated user.
     """
     try:
         storage = get_brand_voice_storage()
@@ -584,7 +584,7 @@ async def score_content(
 
     Returns consistency scores and suggestions for improvement.
 
-    **Authorization:** Authenticated user (Clerk).
+    **Authorization:** Authenticated user.
     """
     try:
         storage = get_brand_voice_storage()
@@ -650,7 +650,7 @@ async def get_training_status(
     """
     Get the training status for a profile.
 
-    **Authorization:** Authenticated user (Clerk).
+    **Authorization:** Authenticated user.
     """
     try:
         storage = get_brand_voice_storage()

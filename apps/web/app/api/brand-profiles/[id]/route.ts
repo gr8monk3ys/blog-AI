@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSqlOrNull } from '../../../../lib/db'
-import { requireClerkUserId } from '../../../../lib/clerk-auth'
+import { requireUserId } from '../../../../lib/auth-session'
 import { databaseUnavailableResponse } from '../../../../lib/api-route-errors'
 import { canServeDemoData } from '../../../../lib/server-mode'
 import { SAMPLE_BRAND_PROFILES, type UpdateBrandProfileInput } from '../../../../types/brand'
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     let userId: string
     try {
-      userId = await requireClerkUserId()
+      userId = await requireUserId()
     } catch {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
@@ -154,7 +154,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     let userId: string
     try {
-      userId = await requireClerkUserId()
+      userId = await requireUserId()
     } catch {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
@@ -302,7 +302,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     let userId: string
     try {
-      userId = await requireClerkUserId()
+      userId = await requireUserId()
     } catch {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },

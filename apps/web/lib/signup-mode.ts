@@ -1,14 +1,13 @@
 /**
  * How sign-up is gated, read in one place.
  *
- * Clerk owns identity, so the real gate is Clerk's dashboard setting
- * (Restricted / Waitlist mode). This flag only tells the pages which story to
- * tell so the surface and the dashboard agree:
+ * The real gate is lib/auth.ts: any mode but `open` disables self-serve
+ * email sign-up in Better Auth. The mode also tells the pages which story to
+ * tell:
  *
- *   open      -- `/sign-up` renders <SignUp>; CTAs say "Start free".
- *   waitlist  -- `/sign-up` renders Clerk's <Waitlist>; CTAs say "Join the waitlist".
- *   invite    -- `/sign-up` shows an invitation notice (still <SignUp> when
- *                `__clerk_ticket` is in the query); CTAs say "Sign in".
+ *   open      -- `/sign-up` renders the sign-up form; CTAs say "Start free".
+ *   waitlist  -- CTAs say "Join the waitlist".
+ *   invite    -- CTAs say "Sign in".
  *
  * Unknown or empty values fall back to `open`, which is today's behaviour.
  * Consumers (sign-up page, header, hero and pricing CTAs) land in the pages PR.
